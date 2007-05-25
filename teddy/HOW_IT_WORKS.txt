@@ -1,0 +1,30 @@
+How the server is configured.
+-----------------------------------------
+
+- TeddyGrowlServer: let __init__ add the necessary loading of observers.  It creates the following stack:
+
+	1. itself
+		- splits a document in the parts as send by Sahara:
+			- fields (only applicable for DAREnet, the LOREnet mapping doen't have it anymore)
+			- meta-metadata (repository id etc, supplied by Sahara)
+			- a OAI header record
+			- an 'original' DC, LOM or CZP record (or whatever)
+	2. fields convertor (connected to 1.)
+		- acts on field part
+		- replaces old <field name="a">value</field> tags with <a>value</a>
+		- let other parts go by
+	3. cross walk czp2lom (connected to 2.)
+		- detects CZP records and *adds* a pure LOM variant (notifies twice)
+		- let other parts go by
+	4. LOM 'mapping' (connected to 3.)
+		- acts on IEEE LOM records and *adds* a simple field parts (notifies twice)
+		- acts on OAI header and adds a simplified part?
+		- let other parts go by
+	5. indexer (connected to 4.)
+		- stupidly indexes al text in the top-level tags (just under the root tag)
+			- indexes XML in the field part: <a>value</a> is indexed as a=value
+			- indexes XML in the meta-metadata parts idem
+			- indexes XML in the header idem
+			- indexes XML in the 'original' idem
+	6. storage (connected to 4.)
+		- smartly stores anything it gets
