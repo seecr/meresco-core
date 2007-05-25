@@ -1,3 +1,4 @@
+#!/bin/sh
 ## begin license ##
 #
 #    Meresco Core is part of Meresco.
@@ -25,22 +26,40 @@
 #
 ## end license ##
 
-from oaitestcase import OaiTestCase
-from observers.oaicomponent import OaiComponent
-from cq2utils.observable import Observable
+set -o errexit
 
-class OaiComponentTest(OaiTestCase):
-	
-	def getSubject(self):
-		return OaiComponent()
-	
-	def testChaining(self):
-		self.request.args = {'verb': ['Identify']}
-		self.observable.changed(self.request)
-		self.assertTrue(self.stream.getvalue().find('<Identify>') >-1)
-	
-	def testChainingEndsUpInSink(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Argument value "Nonsense" for verb illegal.')
-		
-	def testComponentSeemsOne(self):
-		pass #KVS:!! dit testen is voor mij 10x zo veel werk als de code. Ik houd me aanbevolen voor een goed actieplan!
+basedir=$(dirname $0)
+
+source $basedir/functions.sh
+
+echo "*
+* Checking installation of daemontools."
+
+if isDebian ; then
+	if [ ! -f /usr/bin/svc ]; then
+		echo "* Installing daemaontools."
+		aptitude install daemontools-installer
+echo "* You will be asked a couple of questions.
+* The default answer should be good enough.
+[Press Enter to continue]"
+		read
+		build-daemontools
+	fi
+else
+  # if svc is not in its common place (non debian common place) then download 
+  # the official package and patch it. Then compile and install it as
+  # instructed on http://cr.yp.to
+	if [ ! -f /command/svc ]; then
+		echo "* Downloading and compiling deamontools"
+		mkdir --parents /package
+		chmod 1755 /package
+		cd /package
+		wget http://cr.yp.to/daemontools/daemontools-0.76.tar.gz
+		gunzip daemontools-0.76.tar
+		tar -xpf daemontools-0.76.tar
+		rm -f daemontools-0.76.tar
+		cd admin/daemontools-0.76
+		sed --in-place 's,extern int errno;,#include <errno.h>,g' src/error.h
+		package/install
+	fi
+fi

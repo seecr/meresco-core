@@ -1,3 +1,4 @@
+#!/bin/bash
 ## begin license ##
 #
 #    Meresco Core is part of Meresco.
@@ -25,22 +26,28 @@
 #
 ## end license ##
 
-from oaitestcase import OaiTestCase
-from observers.oaicomponent import OaiComponent
-from cq2utils.observable import Observable
+set -o errexit
 
-class OaiComponentTest(OaiTestCase):
+basedir=$(cd $(dirname $0); pwd)
+source $basedir/functions.sh
+
+isroot
+
+if [ $# -ne 3 ]; then 
+	echo "Usage: $0 <cq2_dep_dir> <package_name> <package_version>"
+	exit 1
+fi
+cq2_dep_dir=$1
+package_name=$2
+package_version=$3
+
+package_dir=$cq2_dep_dir/$package_name
+
+if [ ! -d $package_dir ]; then
+	pack=$basedir/../dist/${package_name}_${package_version}.tar.gz
+	mkdir -p $cq2_dep_dir
+	tar --directory $cq2_dep_dir -xzf $pack
+	mv $cq2_dep_dir/${package_name}_${package_version}/${package_name} $cq2_dep_dir/${package_name}
+	rm -rf $cq2_dep_dir/${package_name}_${package_version}
+fi
 	
-	def getSubject(self):
-		return OaiComponent()
-	
-	def testChaining(self):
-		self.request.args = {'verb': ['Identify']}
-		self.observable.changed(self.request)
-		self.assertTrue(self.stream.getvalue().find('<Identify>') >-1)
-	
-	def testChainingEndsUpInSink(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Argument value "Nonsense" for verb illegal.')
-		
-	def testComponentSeemsOne(self):
-		pass #KVS:!! dit testen is voor mij 10x zo veel werk als de code. Ik houd me aanbevolen voor een goed actieplan!

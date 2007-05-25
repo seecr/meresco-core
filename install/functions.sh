@@ -26,14 +26,6 @@
 #
 ## end license ##
 
-
-function isroot {
- if [ $(id -u) -ne 0 ]; then
-  echo "Need to be root"
-  exit -1
- fi
-}
-
 function isSuSE {
 	test -e /etc/SuSE-release
 }
@@ -44,6 +36,14 @@ function isFedora {
 		
 function isDebian {
 	test -e /etc/debian_version
+}
+
+function isroot {
+ if [ "`id -u`" != "0" ]
+ then
+   echo "Need to be root"
+   exit -1
+ fi
 }
 
 PM_INSTALL="UNDEFINED"

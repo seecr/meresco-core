@@ -1,0 +1,20 @@
+Wishlist:
+--------
+
+
+- Support for 64 bit
+- PyLucene 2.0
+- SRU Update
+- Support for SRU version 1.2
+- Support for multiple indexes.
+- Demo portal demonstrating the working of various aspects
+- Drilldown (faceted search)
+- CQL
+- Level 1.1 compliant SRU/SRW
+- Highly flexible lightweight extensible plugins/components.
+- Improve metadata store (get rid of mime-type files)
+- Integration API for Java / C++
+- Stopword support
+- Fulltext indexing
+- Service statics over SNMP
+- 
