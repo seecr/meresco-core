@@ -53,6 +53,21 @@ from oaitooltest import OaiToolTest
 from resetplugintest import ResetPluginTest
 from stampcomponenttest import StampComponentTest
 from portaltest import PortalTest
+from configurationtest import ConfigurationTest
+from documenttest import DocumentTest
+from lucenetest import LuceneTest
+from srurecordupdateplugintest import SRURecordUpdatePluginTest
+#from stresstest import StressTest #TJ/JJ: TODO rewrite stresstest.
+from teddyinterfacetest import TeddyInterfaceTest
+from teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
+from teddygrowlservertest import TeddyGrowlServerTest
+from xml2documenttest import Xml2DocumentTest
+from storagecomponenttest import StorageComponentTest
+from indexcomponenttest import IndexComponentTest
+from fields2xmlcomponenttest import Fields2XmlComponentTest
+from logcomponenttest import LogComponentTest
+from venturitest import VenturiTest
+from xmlpumptest import XmlPumpTest
 
 if __name__ == '__main__':
         unittest.main()
