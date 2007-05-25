@@ -27,13 +27,11 @@
 
 
 from cq2utils.cq2testcase import CQ2TestCase
-import plugins.srwplugin
 from cq2utils.calltrace import CallTrace
-from plugins.queryplugin import PluginException
+from queryserver.plugins.queryplugin import PluginException
 from cStringIO import StringIO
-from plugins.sruplugin import SRUPlugin, GENERAL_SYSTEM_ERROR
-from plugins.srwplugin import SRWPlugin
-from plugins import srwplugin
+from queryserver.plugins.sruplugin import SRUPlugin, GENERAL_SYSTEM_ERROR
+from queryserver.plugins.srwplugin import SRWPlugin, SOAP_VERSIONMISMATCH
 
 soapEnvelope = '<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>'
 
@@ -113,7 +111,7 @@ class SRWPluginTest(CQ2TestCase):
 			self.plugin.process()
 			self.fail()
 		except PluginException, e:
-			self.assertEqualsWS(srwplugin.SOAP_VERSIONMISMATCH, str(e))
+			self.assertEqualsWS(SOAP_VERSIONMISMATCH, str(e))
 			self.assertEquals(500, e.errorCode)
 			self.assertEquals('text/xml; charset="UTF-8"', e.contentType)
 	

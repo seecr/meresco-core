@@ -27,7 +27,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from observers.oai.oaivalidator import assertValidString, validate
+from queryserver.observers.oai.oaivalidator import assertValidString, validate
 from cStringIO import StringIO
 
 class OaiValidatorTest(CQ2TestCase):

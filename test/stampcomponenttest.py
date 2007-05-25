@@ -26,7 +26,7 @@
 ## end license ##
 
 from unittest import TestCase
-from observers.stampcomponent import StampComponent
+from queryserver.observers.stampcomponent import StampComponent
 
 class StampComponentTest(TestCase):
 	

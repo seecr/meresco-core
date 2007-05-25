@@ -26,9 +26,10 @@
 ## end license ##
 
 import unittest
-import server
-from plugins.queryplugin import PluginException, QueryPlugin
-from pluginregistry import PluginRegistry
+import queryserver.server
+from queryserver.server import WebRequest
+from queryserver.plugins.queryplugin import PluginException, QueryPlugin
+from queryserver.pluginregistry import PluginRegistry
 
 class ServerTest(unittest.TestCase):
 	def setUp(self):
@@ -38,14 +39,14 @@ class ServerTest(unittest.TestCase):
 		self.configuration = {}
 		self.registry = PluginRegistry({})
 		self.searchInterfaces = {'database': None}
-		self.request = server.WebRequest(self.configuration, self.registry, self.searchInterfaces, channel, None)
+		self.request = WebRequest(self.configuration, self.registry, self.searchInterfaces, channel, None)
 		self.request.finish = lambda : ''
 		self.request.write = self.write
 		self.contentType = 'text/plain'
 		self.request.args = {}
 		self.request.path = '/database/command'
 		self.process_exception = None
-		server.log = lambda *args: None
+		queryserver.server.log = lambda *args: None
 		
 	def testHandleBasicDefault(self):
 		"""Test handle without a Plugin"""

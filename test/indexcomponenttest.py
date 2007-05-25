@@ -27,8 +27,8 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 from cq2utils.component import Notification
-from indexcomponent import IndexComponent
-from xml2document import TEDDY_NS, Xml2Document
+from teddy.indexcomponent import IndexComponent
+from teddy.xml2document import TEDDY_NS, Xml2Document
 from cq2utils.observable import Observable
 from amara import binderytools
 
@@ -56,7 +56,7 @@ class IndexComponentTest(CQ2TestCase):
 		self.observable.changed(self.notification)
 		self.assertEquals(2,len(self.index.calledMethods))
 		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
-		self.assertEquals('addToIndex(<document.Document>)', str(self.index.calledMethods[1]))
+		self.assertEquals('addToIndex(<teddy.document.Document>)', str(self.index.calledMethods[1]))
 		
 	def testDelete(self):
 		self.notification.method = "delete"
@@ -80,7 +80,7 @@ class IndexComponentTest(CQ2TestCase):
 			self.assertEquals('uhoh', str(e))
 		self.assertEquals(3,len(self.index.calledMethods))
 		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
-		self.assertEquals('addToIndex(<document.Document>)', str(self.index.calledMethods[1]))
+		self.assertEquals('addToIndex(<teddy.document.Document>)', str(self.index.calledMethods[1]))
 		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[2]))
 
 	

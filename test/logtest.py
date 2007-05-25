@@ -26,7 +26,7 @@
 ## end license ##
 from unittest import TestCase
 
-from plugins.log import Log
+from queryserver.plugins.log import Log
 from cStringIO import StringIO
 from cq2utils.calltrace import CallTrace
 

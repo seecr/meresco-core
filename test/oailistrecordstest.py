@@ -27,9 +27,9 @@
 
 from oaitestcase import OaiTestCase
 
-from observers.oailistrecords import OaiListRecords, BATCH_SIZE
+from queryserver.observers.oailistrecords import OaiListRecords, BATCH_SIZE
 from cq2utils.calltrace import CallTrace
-from observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
+from queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
 from amara.binderytools import bind_string
 
 class OaiListRecordsTest(OaiTestCase):

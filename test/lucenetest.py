@@ -34,12 +34,12 @@ from tempfile import mkdtemp, gettempdir
 import os
 from shutil import rmtree
 import PyLucene
-import document
+from teddy.document import Document
 
-import lucene
-from document import IDFIELD
+from teddy.lucene import LuceneIndex
+from teddy.document import IDFIELD
 
-from PyLucene import Document, Field, IndexReader, IndexWriter, StandardAnalyzer, Term
+from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, StandardAnalyzer, Term
 
 class LuceneTest(unittest.TestCase):
 
@@ -52,7 +52,7 @@ class LuceneTest(unittest.TestCase):
 	def setUp(self):
 		self._tempdir = gettempdir()+'/testing'
 		self.directoryName = os.path.join(self._tempdir, 'lucene-index')
-		self._luceneIndex = lucene.LuceneIndex(self.directoryName)
+		self._luceneIndex = LuceneIndex(self.directoryName)
 		
 	def tearDown(self):
 		del self._luceneIndex
@@ -64,7 +64,7 @@ class LuceneTest(unittest.TestCase):
 		self.assertTrue(self._luceneIndex._indexExists())
 						
 	def testAddToIndex(self):
-		myDocument = document.Document('0123456789')
+		myDocument = Document('0123456789')
 		myDocument.addIndexedField('title', 'een titel')
 		self._luceneIndex.addToIndex(myDocument)
 		self._luceneIndex.reOpen()
@@ -81,11 +81,11 @@ class LuceneTest(unittest.TestCase):
 		self.assertEquals(hit.getField(IDFIELD).stringValue(), '0123456789')
 		
 	def testAddTwoDocuments(self):
-		myDocument = document.Document('1')
+		myDocument = Document('1')
 		myDocument.addIndexedField('title', 'een titel')
 		self._luceneIndex.addToIndex(myDocument)
 
-		myDocument = document.Document('2')
+		myDocument = Document('2')
 		myDocument.addIndexedField('title', 'een titel')
 		self._luceneIndex.addToIndex(myDocument)
 		
@@ -96,7 +96,7 @@ class LuceneTest(unittest.TestCase):
 		self.assertEquals(2, len(hits))
 		
 	def testAddDocumentWithTwoValuesForOneField(self):
-		myDocument = document.Document('1')
+		myDocument = Document('1')
 		myDocument.addIndexedField('field1', 'value_1')
 		myDocument.addIndexedField('field1', 'value_2')
 		self._luceneIndex.addToIndex(myDocument)
@@ -111,16 +111,16 @@ class LuceneTest(unittest.TestCase):
 		check('value_2')
 		
 	def testAddUTF8Document(self):
-		myDocument = document.Document('0123456789')
+		myDocument = Document('0123456789')
 		myDocument.addIndexedField('title', 'BijenkorfÂ´s')
 		self._luceneIndex.addToIndex(myDocument)
 
 	def testDeleteFromIndex(self):
-		myDocument = document.Document('0123456789')
+		myDocument = Document('0123456789')
 		myDocument.addIndexedField('title', 'een titel')
 		self._luceneIndex.addToIndex(myDocument)
 
-		myDocument = document.Document('01234567890')
+		myDocument = Document('01234567890')
 		myDocument.addIndexedField('title', 'een titel')
 		self._luceneIndex.addToIndex(myDocument)
 
@@ -135,12 +135,12 @@ class LuceneTest(unittest.TestCase):
 	def testCountField(self):
 		self.assertEquals([], self._luceneIndex.countField('title'))
 
-		myDocument = document.Document('0')
+		myDocument = Document('0')
 		myDocument.addIndexedField('title', 'titel')
 		myDocument.addIndexedField('creator', 'one')
 		self._luceneIndex.addToIndex(myDocument)
 		
-		my2Document = document.Document('1')
+		my2Document = Document('1')
 		my2Document.addIndexedField('title', 'een titel')
 		my2Document.addIndexedField('creator', 'two')
 		self._luceneIndex.addToIndex(my2Document)
@@ -160,7 +160,7 @@ class LuceneTest(unittest.TestCase):
 		"""
 		directory = mkdtemp()
 		try:
-			document = Document()
+			document = PyDocument()
 			document.add(Field("id", "1", Field.Store.YES, Field.Index.TOKENIZED))
 			document.add(Field("label", "value", Field.Store.NO, Field.Index.UN_TOKENIZED))
 			
@@ -179,7 +179,7 @@ class LuceneTest(unittest.TestCase):
 			self.assertTrue(reader.hasDeletions())
 			self.assertEquals(1, reader.docFreq(Term('label', 'value')))
 			
-			document = Document()
+			document = PyDocument()
 			document.add(Field("id", "1", Field.Store.YES, Field.Index.TOKENIZED))
 			document.add(Field("label", "newvalue", Field.Store.NO, Field.Index.UN_TOKENIZED))
 			

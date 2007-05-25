@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-import teddygrowlserver
+from teddy.teddygrowlserver import TeddyGrowlServer
 from amara import binderytools
 
 DOCUMENT = """<document id="anId_1">%s</document>"""
@@ -40,7 +40,7 @@ TEXT_PART = """<part name="part_2" type="text/plain">Containing plain text</part
 class TeddyGrowlServerTest(unittest.TestCase):
 	
 	def setUp(self):
-		self.server = teddygrowlserver.TeddyGrowlServer(None)
+		self.server = TeddyGrowlServer(None)
 		self.server.changed = self.notify
 		self.notifications = []
 	
@@ -82,7 +82,7 @@ class TeddyGrowlServerTest(unittest.TestCase):
 		self.assertEquals("anId_1", self.notifications[0].id)
 	
 	def testObservable(self):
-		server = teddygrowlserver.TeddyGrowlServer(None)
+		server = TeddyGrowlServer(None)
 		server.addObserver(self)
 		server.changed("a notification")
 		self.assertEquals(["a notification"], self.notifications)

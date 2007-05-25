@@ -27,9 +27,9 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from fields2xmlcomponent import Fields2XmlComponent
+from teddy.fields2xmlcomponent import Fields2XmlComponent
 from cq2utils.component import Notification
-from xml2document import TEDDY_NS
+from teddy.xml2document import TEDDY_NS
 from amara import binderytools
 
 FIELDS = """<fields>

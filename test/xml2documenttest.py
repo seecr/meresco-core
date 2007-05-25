@@ -28,8 +28,8 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from xml2document import Xml2Document, TEDDY_NS
-from document import Document, IDFIELD
+from teddy.xml2document import Xml2Document, TEDDY_NS
+from teddy.document import Document, IDFIELD
 from amara import binderytools 
 from cq2utils.observable import Function
 from cq2utils.component import Notification

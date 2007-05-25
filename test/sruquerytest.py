@@ -27,7 +27,7 @@
 
 from unittest import TestCase
 
-from plugins.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
+from queryserver.plugins.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 
 class SRUQueryTest(TestCase):
 	def testSortingArgument(self):

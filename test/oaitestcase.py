@@ -30,10 +30,10 @@ from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 from cq2utils.observable import Observable
 from cStringIO import StringIO
-from observers.oai.oaivalidator import assertValidString
+from queryserver.observers.oai.oaivalidator import assertValidString
 
-from observers.oaicomponent import OaiComponent
-from observers.oaisink import OaiSink
+from queryserver.observers.oaicomponent import OaiComponent
+from queryserver.observers.oaisink import OaiSink
 
 class OaiTestCase(CQ2TestCase):
 	

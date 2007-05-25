@@ -26,8 +26,8 @@
 ## end license ##
 
 import unittest
-import document
-from document import IDFIELD, CONTENTFIELD
+import teddy.document
+from teddy.document import IDFIELD, CONTENTFIELD, Document, DocumentException
 
 class DocumentTest(unittest.TestCase):
 
@@ -35,60 +35,60 @@ class DocumentTest(unittest.TestCase):
 		self._contentField = False
 
 	def testCreation(self):
-		d = document.Document('1')
+		d = Document('1')
 		self.assertEquals(d.fields(), [IDFIELD])
 		
 		try:
 			d.validate()
 			self.fail()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.assertEquals("Empty document", str(e))
 
 		try:
-			d = document.Document(' ')
+			d = Document(' ')
 			self.fail()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.assertEquals('Empty ID', str(e))
 
 		try:
-			d = document.Document(1234)
+			d = Document(1234)
 			self.fail()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.assertEquals('Empty ID', str(e))
 
 	def testAddInvalidField(self):
-		d = document.Document('1234')
+		d = Document('1234')
 		try:
 			d.addIndexedField(None, None)
 			self.fail()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.assertEquals('Invalid fieldname', str(e))
 		self.assertEquals(d.fields(), [IDFIELD])
 		
 	def testIgnoreEmptyField(self):
-		d = document.Document('1234')
+		d = Document('1234')
 		d.addIndexedField("x", None)
 		self.assertEquals(d.fields(), [IDFIELD])
 
 	def testAddField(self):
-		d = document.Document('1234')
+		d = Document('1234')
 		d.addIndexedField('x', 'y')
 		d.addIndexedField('y', 'x')
 		self.assertEquals(d.fields(), [IDFIELD, 'x', 'y'])
 		
 		try:
 			d.validate()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.fail()
 		
 	def testContentField(self):
-		d = document.Document('1234')
+		d = Document('1234')
 		d.addIndexedField('x', 'y')
 		d.addIndexedField('y', 'x')
 		self.assertEquals('y x', d.contentField())
 		
 	def testAddToIndex(self):
-		d = document.Document('1234')
+		d = Document('1234')
 		d.addIndexedField('x', 'y')
 		d.addIndexedField('y', 'x')
 		d.addToIndexWith(self)
@@ -96,20 +96,20 @@ class DocumentTest(unittest.TestCase):
 		self.assertEquals(self._contentField, 'y x')
 
 	def testReservedFieldName(self):
-		d = document.Document('1234')
+		d = Document('1234')
 		try:
-			d.addIndexedField(document.CONTENTFIELD, 'not allowed')
+			d.addIndexedField(CONTENTFIELD, 'not allowed')
 			self.fail()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.assertEquals('Invalid fieldname', str(e))
 
 		try:
-			d.addIndexedField(document.IDFIELD, 'not allowed')
+			d.addIndexedField(IDFIELD, 'not allowed')
 			self.fail()
-		except document.DocumentException,e:
+		except DocumentException,e:
 			self.assertEquals('Invalid fieldname', str(e))
 
 
 	""" self-shunt """
 	def addDocument(self, aDocument):
-		self._contentField = aDocument.getField(document.CONTENTFIELD).stringValue()
+		self._contentField = aDocument.getField(CONTENTFIELD).stringValue()

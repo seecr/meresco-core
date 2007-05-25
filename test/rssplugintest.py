@@ -26,10 +26,10 @@
 ## end license ##
 
 from cq2utils.cq2testcase import CQ2TestCase
-from plugins.rssplugin import RSSPlugin, registerOn
+from queryserver.plugins.rssplugin import RSSPlugin, registerOn
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
-from plugins.rssprofile import RSSTestProfile, readProfilesInDirectory
+from queryserver.plugins.rssprofile import RSSTestProfile, readProfilesInDirectory
 from tempfile import mkdtemp
 from shutil import rmtree
 

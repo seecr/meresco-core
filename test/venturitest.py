@@ -33,7 +33,7 @@ from cq2utils.component import Notification
 from cStringIO import StringIO
 from amara import binderytools
 
-from venturi import Venturi
+from teddy.venturi import Venturi
 
 class VenturiTest(CQ2TestCase):
 	def setUp(self):

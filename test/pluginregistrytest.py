@@ -26,8 +26,8 @@
 ## end license ##
 from unittest import TestCase
 
-from plugins.queryplugin import QueryPlugin
-from pluginregistry import PluginRegistry
+from queryserver.plugins.queryplugin import QueryPlugin
+from queryserver.pluginregistry import PluginRegistry
 from cq2utils.calltrace import CallTrace
 
 class PluginRegistryTest(TestCase):

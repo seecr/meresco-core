@@ -27,7 +27,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from teddyinterfaceconstructor import construct
+from teddy.teddyinterfaceconstructor import construct
 import os
 
 def writeFile(filename, content):

@@ -25,7 +25,7 @@
 #
 ## end license ##
 import unittest
-import srurecordupdateplugin
+from teddy.srurecordupdateplugin import SRURecordUpdatePlugin
 from StringIO import StringIO
 
 XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -54,7 +54,7 @@ class SRURecordUpdatePluginTest(unittest.TestCase):
 	"""http://www.loc.gov/standards/sru/record-update/"""
 	
 	def setUp(self):
-		self.plugin = srurecordupdateplugin.SRURecordUpdatePlugin()
+		self.plugin = SRURecordUpdatePlugin()
 		self.plugin.changed = self.pluginChanged
 		self.notifications = []
 		self.dictionary = {

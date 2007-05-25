@@ -27,7 +27,7 @@
 
 import unittest
 import cStringIO
-import configuration
+from teddy.configuration import Configuration
 import tempfile
 import os
 
@@ -41,7 +41,7 @@ config = """<?xml version="1.0"?>
 class ConfigurationTest(unittest.TestCase):
 
 	def testReading(self):
-		myConfiguration = configuration.Configuration()
+		myConfiguration = Configuration()
 		myConfiguration.readFrom(cStringIO.StringIO(config))
 		
 		self.assertEquals(myConfiguration.getStorage(), 'x')
@@ -56,7 +56,7 @@ class ConfigurationTest(unittest.TestCase):
 			fd.close()
 		
 		try:
-			myConfiguration = configuration.Configuration()
+			myConfiguration = Configuration()
 			myConfiguration.readFromFile(fname)
 			self.assertEquals(myConfiguration.getStorage(), 'x')
 			self.assertEquals(myConfiguration.getLucene(), 'y')

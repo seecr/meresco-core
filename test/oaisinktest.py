@@ -26,7 +26,7 @@
 ## end license ##
 
 from oaitestcase import OaiTestCase
-from observers.oaisink import OaiSink
+from queryserver.observers.oaisink import OaiSink
 
 class OaiSinkTest(OaiTestCase):
 	

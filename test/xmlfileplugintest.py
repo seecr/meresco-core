@@ -25,8 +25,8 @@
 #
 ## end license ##
 from unittest import TestCase
-from plugins.xmlfileplugin import XMLFilePlugin, FILE_PATH, registerOn
-from pluginregistry import PluginRegistry
+from queryserver.plugins.xmlfileplugin import XMLFilePlugin, FILE_PATH, registerOn
+from queryserver.pluginregistry import PluginRegistry
 from cq2utils.calltrace import CallTrace
 from tempfile import mkdtemp
 from shutil import rmtree

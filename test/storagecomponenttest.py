@@ -27,7 +27,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from storagecomponent import StorageComponent
+from teddy.storagecomponent import StorageComponent
 from cq2utils.component import Notification
 from cStringIO import StringIO
 from cq2utils.observable import Observable
