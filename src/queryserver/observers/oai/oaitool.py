@@ -28,6 +28,7 @@
 from time import gmtime, strftime
 from xml.sax.saxutils import escape as xmlEscape
 from meresco.queryserver.observers.stampcomponent import STAMP_PART
+from xml.utils import iso8601
 
 DONE = 1
 
@@ -124,6 +125,38 @@ class ResumptionToken:
 				if k in ResumptionToken.SHORT:
 					#this is a possible location for validity check of v
 					setattr(self, ResumptionToken.SHORT[k], v)
+					
+class ISO8601Exception(Exception):
+	pass
+
+class ISO8601:
+	short, long = [len('YYYY-MM-DD'), len('YYYY-MM-DDThh:mm:ssZ')]
+	
+	def __init__(self, s):
+		if not len(s) in [self.short, self.long]:
+			raise ISO8601Exception(s)
+		try:
+			iso8601.parse(s)
+		except ValueError, e:
+			raise ISO8601Exception(s)
+		self.s = s
+	
+	def _extend(self, extension):
+		if not self.isShort():
+			return self.s
+		return self.s + extension
+	
+	def floor(self):
+		return self._extend("T00:00:00Z")
+	
+	def ceil(self):
+		return self._extend("T23:59:59Z")
+	
+	def __str__(self):
+		return self.floor()
+	
+	def isShort(self):
+		return len(self.s) == self.short
 
 OAIHEADER = """<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 

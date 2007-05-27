@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken
+from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
 from cq2utils.observable import Observable
 from meresco.queryserver.observers.stampcomponent import TIME_FIELD
 
@@ -88,7 +88,21 @@ Error and Exception Conditions
 			return self.writeError(webRequest, 'badArgument', 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch)))
 		
 		partName = webRequest.args['metadataPrefix'][0]
-		queryResult = self.any.listRecords()
+		try:
+			oaiFrom = webRequest.args.get('from', [None])[0]
+			oaiFrom = oaiFrom and ISO8601(oaiFrom)
+			oaiUntil = webRequest.args.get('until', [None])[0]
+			oaiUntil = oaiUntil and ISO8601(oaiUntil)
+			if oaiFrom and oaiUntil:
+				if oaiFrom.isShort() != oaiUntil.isShort():
+					return self.writeError(webRequest, 'badArgument', 'from and/or until arguments must match in length')
+				if str(oaiFrom) > str(oaiUntil):
+					return self.writeError(webRequest, 'badArgument', 'from argument must be smaller than until argument')
+			oaiFrom = oaiFrom and oaiFrom.floor()
+			oaiUntil = oaiUntil and oaiUntil.ceil()
+		except ISO8601Exception, e:
+			return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
+		queryResult = self.any.listRecords(oaiFrom = oaiFrom, oaiUntil = oaiUntil)
 		return self.writeMessage(webRequest, partName, queryResult)
 		
 	def writeMessage(self, webRequest, partName, queryResult, writeCloseToken = False):

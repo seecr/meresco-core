@@ -29,6 +29,9 @@ from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
 
+LO = '0' #sorts lower/eq than all numbers (as strings)
+HI = 'A' #sorts higher than all numbers (as strings)
+
 class IndexComponent(Component):
 	def __init__(self, anIndex):
 		self._index = anIndex
@@ -49,8 +52,10 @@ class IndexComponent(Component):
 		self._index.addToIndex(notification.document)
 		self._latestId = notification.id
 			
-	def listRecords(self, continueAt = '0'):
+	def listRecords(self, continueAt = '0', oaiFrom = None, oaiUntil = None):
 		#TODO test this method
 		#TODO ik (KVS) vermoed dat bij een lege index het sorteren tot problemen leidt (dwz excepties)
-		query = '__internal__.unique:{%s TO A}' % continueAt
+		oaiFrom = oaiFrom or LO
+		oaiUntil = oaiUntil or HI
+		query = '__internal__.unique:{%s TO %s} AND __internal__.datestamp:[%s TO %s]' % (continueAt, HI, oaiFrom, oaiUntil)
 		return self._index.createQuery(query, aCount = float('Infinity'), sortBy = '__internal__.unique').perform()
