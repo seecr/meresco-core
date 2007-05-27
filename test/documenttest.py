@@ -26,8 +26,8 @@
 ## end license ##
 
 import unittest
-import teddy.document
-from teddy.document import IDFIELD, CONTENTFIELD, Document, DocumentException
+import meresco.teddy.document
+from meresco.teddy.document import IDFIELD, CONTENTFIELD, Document, DocumentException
 
 class DocumentTest(unittest.TestCase):
 

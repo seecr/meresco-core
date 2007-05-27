@@ -31,7 +31,7 @@ from cq2utils.component import Notification
 from cq2utils.calltrace import CallTrace
 from amara import binderytools
 
-from teddy.xmlpump import XmlInflate, XmlDeflate
+from meresco.teddy.xmlpump import XmlInflate, XmlDeflate
 
 class XmlPumpTest(CQ2TestCase):
 	def testInflate(self):

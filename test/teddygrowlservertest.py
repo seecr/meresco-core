@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-from teddy.teddygrowlserver import TeddyGrowlServer
+from meresco.teddy.teddygrowlserver import TeddyGrowlServer
 from amara import binderytools
 
 DOCUMENT = """<document id="anId_1">%s</document>"""

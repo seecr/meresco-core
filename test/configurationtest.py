@@ -27,7 +27,7 @@
 
 import unittest
 import cStringIO
-from teddy.configuration import Configuration
+from meresco.teddy.configuration import Configuration
 import tempfile
 import os
 
