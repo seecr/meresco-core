@@ -38,6 +38,11 @@ class StorageComponent(Component):
 		finally:
 			stream.close()
 			
+	def deletePart(self, id, partName):
+		#TODO deze methode testen
+		unit = self._storage.getUnit(id)
+		unit.removeBox(partName)
+			
 	def isAvailable(self, id, partName):
 		"""returns (hasId, hasPartName)"""
 		if self._storage.hasUnit(id):

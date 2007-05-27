@@ -37,7 +37,7 @@ class IndexComponent(Component):
 	def delete(self, notification):
 		self._index.deleteID(notification.id)
 		self._latestId = None
-			
+		
 	def undo(self, *args, **kwargs):
 		if self._latestId:
 			self._index.deleteID(self._latestId)

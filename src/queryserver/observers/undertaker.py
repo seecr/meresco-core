@@ -36,8 +36,8 @@ class Undertaker(Observable):
 		if notification.method == "delete":
 			graveStone = Notification("add", notification.id, "__tombstone__", bind_string("<__tombstone__>__tombstone__</__tombstone__>").__tombstone__)
 			self.changed(graveStone)
-		#if notification.method == "add":
-		#	graveDestruction = Notification("delete", notification.id)
+		if notification.method == "add":
+			self.any.deletePart(notification.id, "__tombstone__")
 	
 	def undo(self, *args, **kwargs):
 		pass
