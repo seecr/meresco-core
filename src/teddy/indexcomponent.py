@@ -52,5 +52,5 @@ class IndexComponent(Component):
 	def listRecords(self, continueAt = '0'):
 		#TODO test this method
 		#TODO ik (KVS) vermoed dat bij een lege index het sorteren tot problemen leidt (dwz excepties)
-		query = '__internal__.unique:{%s TO A} NOT __internal__.__tombstone__:__tombstone__' % continueAt
+		query = '__internal__.unique:{%s TO A}' % continueAt
 		return self._index.createQuery(query, aCount = float('Infinity'), sortBy = '__internal__.unique').perform()

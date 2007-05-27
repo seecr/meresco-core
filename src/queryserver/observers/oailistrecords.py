@@ -104,14 +104,21 @@ Error and Exception Conditions
 				writeCloseToken = False
 				break
 			
-			webRequest.write("""<record><header>
-		<identifier>%s</identifier>
-		<datestamp>""" % id.encode('utf-8'))
+			from StringIO import StringIO
+			buffer = StringIO()
+			self.all.write(buffer, id, "__tombstone__")
+			isDeleted = buffer.getvalue() and ' status="deleted"' or ''
 			
-			webRequest.write(self.xmlSteal(id, TIME_FIELD))
-			webRequest.write("""</datestamp></header><metadata>""")
-			self.all.write(webRequest, id, partName)
-			webRequest.write('</metadata></record>')
+			webRequest.write("""<record><header %s>
+				<identifier>%s</identifier>
+				<datestamp>%s</datestamp>
+			</header>""" % (isDeleted, id.encode('utf-8'), self.xmlSteal(id, TIME_FIELD)))
+			
+			if not isDeleted:
+				webRequest.write('<metadata>')
+				self.all.write(webRequest, id, partName)
+				webRequest.write('</metadata>')
+			webRequest.write('</record>')
 			prevId = id
 			j = i
 		if writeCloseToken and j <= BATCH_SIZE:

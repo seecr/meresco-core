@@ -67,6 +67,8 @@ class OaiListRecordsTest(OaiTestCase):
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
 			<unique>UNIQUE_NOT_USED_YET</unique>
 		</__internal__>""")
+				elif partName == '__tombstone__':
+					pass
 				else:
 					self.fail(partName + ' is unexpected')
 			
@@ -101,7 +103,6 @@ class OaiListRecordsTest(OaiTestCase):
     </metadata>
    </record>
  </ListRecords>""", self.stream.getvalue())
- 
  		self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
 	
 	def testListRecordsUsingToken(self):
@@ -162,3 +163,56 @@ class OaiListRecordsTest(OaiTestCase):
 		self.assertTrue(self.stream.getvalue().find("resumptionToken") > -1)
 		self.assertEquals('', str(bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken))
 	
+
+	def testDeteledTombstones(self):
+		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
+		
+		class Observer:
+			def listRecords(sself, continueAt = '0'):
+				self.assertEquals('0', continueAt)
+				return ['id_0', 'id_1']
+					
+			def write(sself, sink, id, partName):
+				if partName == 'oai_dc':
+					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
+				elif partName == '__internal__':
+					sink.write("""<__internal__>
+			<datestamp>DATESTAMP_FOR_TEST</datestamp>
+			<unique>UNIQUE_NOT_USED_YET</unique>
+		</__internal__>""")
+				elif partName == '__tombstone__':
+					if id == "id_1":
+						sink.write("SOME TOMBSTONE")
+				else:
+					self.fail(partName + ' is unexpected')
+			
+			def undo(sself, *args, **kwargs):
+				pass
+			def notify(sself, *args, **kwargs):
+				pass
+		
+		self.subject.addObserver(Observer())
+		self.observable.changed(self.request)
+		
+		self.assertEqualsWS(self.OAIPMH % """
+<request metadataPrefix="oai_dc"
+ verb="ListRecords">http://server:9000/path/to/oai</request>
+ <ListRecords>
+   <record> 
+    <header>
+      <identifier>id_0</identifier> 
+      <datestamp>DATESTAMP_FOR_TEST</datestamp>
+    </header>
+    <metadata>
+      <some:recorddata xmlns:some="http://some.example.org" id="id_0"/>
+    </metadata>
+   </record>
+   <record> 
+    <header status="deleted">
+      <identifier>id_1</identifier> 
+      <datestamp>DATESTAMP_FOR_TEST</datestamp>
+    </header>
+   </record>
+ </ListRecords>""", self.stream.getvalue())
+ 
+ 		self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)

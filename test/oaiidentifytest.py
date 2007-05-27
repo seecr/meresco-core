@@ -48,7 +48,7 @@ class OaiIdentifyTest(OaiTestCase):
     <protocolVersion>2.0</protocolVersion>
     <adminEmail>info@cq2.nl</adminEmail>
     <earliestDatestamp>1970-01-01T00:00:00Z</earliestDatestamp>
-    <deletedRecord>no</deletedRecord>
+    <deletedRecord>persistent</deletedRecord>
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>""", self.stream.getvalue())
 		assertValidString(self.stream.getvalue())

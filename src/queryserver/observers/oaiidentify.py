@@ -74,7 +74,8 @@ The response may include multiple instances of the following optional elements:
 		values = {
 			'repositoryName': 'The Repository Name',
 			'baseURL': self.getRequestUrl(webRequest),
-			'adminEmails': ''.join([ADMIN_EMAIL % email for email in ['info@cq2.nl']])
+			'adminEmails': ''.join([ADMIN_EMAIL % email for email in ['info@cq2.nl']]),
+			'deletedRecord': 'persistent'
 		}
 		values.update(hardcoded_values)
 		webRequest.write(IDENTIFY % values)
@@ -89,7 +90,6 @@ The response may include multiple instances of the following optional elements:
 hardcoded_values = {
 	'protocolVersion': '2.0',
 	'earliestDatestamp': '1970-01-01T00:00:00Z',
-	'deletedRecord': 'no',
 	'granularity': 'YYYY-MM-DDThh:mm:ssZ'
 }
 
