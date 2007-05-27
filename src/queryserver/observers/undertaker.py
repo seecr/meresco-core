@@ -34,7 +34,6 @@ class Undertaker(Observable):
 		#TODO not tested yet!
 		self.changed(notification)
 		if notification.method == "delete":
-			print "THiS IS WHERE THE TROUBLE STARTS"
 			graveStone = Notification("add", notification.id, "__tombstone__", bind_string("<__tombstone__>__tombstone__</__tombstone__>").__tombstone__)
 			self.changed(graveStone)
 		#if notification.method == "add":
