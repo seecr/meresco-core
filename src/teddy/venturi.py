@@ -40,12 +40,15 @@ class Venturi(Component, Observable):
 		self._venturiName = venturiName
 		
 	def add(self, notification):
+		"VENTURI"
 		unit = self._storage.getUnit(notification.id)
 		newNode = notification.payload
 		if unit.hasBox(self._venturiName):
+			print "VENTURI CONTINUES"
 			box = unit.openBox(self._venturiName)
 			try:
 				venturiObject = binderytools.bind_stream(box).rootNode.childNodes[0]
+				print "VENTURI ORIGINAL", venturiObject.xml(), "\n\n"
 				existingNode = getattr(venturiObject, newNode.localName, None)
 				if existingNode:
 					venturiObject.xml_remove_child(existingNode)
@@ -56,4 +59,5 @@ class Venturi(Component, Observable):
 		venturiObject.xml_append(newNode)
 		
 		newNotification = Notification('add', notification.id, self._venturiName, venturiObject)
+		print "VENTURI NEXT STEP", venturiObject.xml(), "\n\n"
 		self.changed(newNotification)

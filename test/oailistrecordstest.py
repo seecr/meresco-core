@@ -27,9 +27,9 @@
 
 from oaitestcase import OaiTestCase
 
-from meresco.queryserver.observers.oailistrecords import OaiListRecords, BATCH_SIZE
+from queryserver.observers.oailistrecords import OaiListRecords, BATCH_SIZE
 from cq2utils.calltrace import CallTrace
-from meresco.queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
+from queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
 from amara.binderytools import bind_string
 
 class OaiListRecordsTest(OaiTestCase):
@@ -67,10 +67,13 @@ class OaiListRecordsTest(OaiTestCase):
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
 			<unique>UNIQUE_NOT_USED_YET</unique>
 		</__internal__>""")
-				elif partName == '__tombstone__':
-					pass
 				else:
 					self.fail(partName + ' is unexpected')
+			
+			def isAvailable(sself, id, partName):
+				if partName == '__tombstone__':
+					return True, False
+				return True, True
 			
 			def undo(sself, *args, **kwargs):
 				pass
@@ -180,11 +183,13 @@ class OaiListRecordsTest(OaiTestCase):
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
 			<unique>UNIQUE_NOT_USED_YET</unique>
 		</__internal__>""")
-				elif partName == '__tombstone__':
-					if id == "id_1":
-						sink.write("SOME TOMBSTONE")
 				else:
 					self.fail(partName + ' is unexpected')
+			
+			def isAvailable(sself, id, partName):
+				if partName == '__tombstone__' and id == 'id_1':
+					return True, True
+				return True, False
 			
 			def undo(sself, *args, **kwargs):
 				pass

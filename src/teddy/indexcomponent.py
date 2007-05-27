@@ -35,6 +35,7 @@ class IndexComponent(Component):
 		self._latestId = None
 		
 	def delete(self, notification):
+		print "OLD FASHIONED DELETE"
 		self._index.deleteID(notification.id)
 		self._latestId = None
 			
@@ -44,6 +45,7 @@ class IndexComponent(Component):
 		self._latestId = None
 	
 	def add(self, notification):
+		print "ADD", notification.id, notification.document._fields, notification.document._contentField
 		self._latestId = None
 		self._index.deleteID(notification.id)
 		self._index.addToIndex(notification.document)

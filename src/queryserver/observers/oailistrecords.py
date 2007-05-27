@@ -104,10 +104,9 @@ Error and Exception Conditions
 				writeCloseToken = False
 				break
 			
-			from StringIO import StringIO
-			buffer = StringIO()
-			self.all.write(buffer, id, "__tombstone__")
-			isDeleted = buffer.getvalue() and ' status="deleted"' or ''
+			aTuple = self.any.isAvailable(id, "__tombstone__")
+			ignored, hasTombstonePart = aTuple or (False, False)
+			isDeleted = hasTombstonePart and ' status="deleted"' or ''
 			
 			webRequest.write("""<record><header %s>
 				<identifier>%s</identifier>
