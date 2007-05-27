@@ -27,7 +27,7 @@
 
 from time import gmtime, strftime
 from xml.sax.saxutils import escape as xmlEscape
-from queryserver.observers.stampcomponent import STAMP_PART
+from meresco.queryserver.observers.stampcomponent import STAMP_PART
 
 DONE = 1
 

@@ -28,7 +28,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from queryserver.plugins.fieldcountplugin import FieldCountPlugin, registerOn, XML_CONTENT_TYPE, PluginException, ERROR_MESSAGE
+from meresco.queryserver.plugins.fieldcountplugin import FieldCountPlugin, registerOn, XML_CONTENT_TYPE, PluginException, ERROR_MESSAGE
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
 
@@ -47,7 +47,7 @@ class FieldCountPluginTest(CQ2TestCase):
 		registry = CallTrace('PluginRegistry')
 		registerOn(registry)
 		self.assertEquals(1, len(registry.calledMethods))
-		self.assertEquals("registerByCommand('fieldcount', <class queryserver.plugins.fieldcountplugin.FieldCountPlugin>)", str(registry.calledMethods[0]))
+		self.assertEquals("registerByCommand('fieldcount', <class meresco.queryserver.plugins.fieldcountplugin.FieldCountPlugin>)", str(registry.calledMethods[0]))
 		
 	def testFieldNotSpecified(self):
 		try:

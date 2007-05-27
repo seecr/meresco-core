@@ -26,7 +26,7 @@
 ## end license ##
 
 from oaitestcase import OaiTestCase
-from queryserver.observers.oaicomponent import OaiComponent
+from meresco.queryserver.observers.oaicomponent import OaiComponent
 from cq2utils.observable import Observable
 
 class OaiComponentTest(OaiTestCase):

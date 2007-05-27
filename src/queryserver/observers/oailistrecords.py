@@ -27,7 +27,7 @@
 
 from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken
 from cq2utils.observable import Observable
-from queryserver.observers.stampcomponent import TIME_FIELD
+from meresco.queryserver.observers.stampcomponent import TIME_FIELD
 
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'

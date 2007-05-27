@@ -24,7 +24,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from queryserver.plugins.searchinterface import SearchInterface, SearchResult, SearchRecord
+from meresco.queryserver.plugins.searchinterface import SearchInterface, SearchResult, SearchRecord
 from cqlparser.lucenecomposer import fromString as cqlToLucene
 from storage.storage import StorageException
 from cStringIO import StringIO

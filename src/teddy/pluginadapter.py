@@ -27,7 +27,7 @@
 import sys
 import traceback
 import time
-from queryserver.pluginregistry import PluginRegistry
+from meresco.queryserver.pluginregistry import PluginRegistry
 from teddy.teddyinterfaceconstructor import construct as constructSearchInterfaces
 
 def log(aString):

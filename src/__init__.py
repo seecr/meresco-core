@@ -24,20 +24,3 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-
-from oaitestcase import OaiTestCase
-from meresco.queryserver.observers.oaisink import OaiSink
-
-class OaiSinkTest(OaiTestCase):
-	
-	def getSubject(self):
-		return OaiSink()
-	
-	def testNoVerb(self):
-		self.assertBadArgument({}, 'No "verb" argument found.')
-	
-	def testNVerbs(self):
-		self.assertBadArgument({'verb': ['ListRecords', 'Indentify']}, 'More than one "verb" argument found.')
-		
-	def testWrongVerb(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Argument value "Nonsense" for verb illegal.')

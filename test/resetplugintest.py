@@ -28,7 +28,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from queryserver.plugins.resetplugin import ResetPlugin, registerOn
+from meresco.queryserver.plugins.resetplugin import ResetPlugin, registerOn
 from cStringIO import StringIO
 
 class ResetPluginTest(CQ2TestCase):
@@ -49,7 +49,7 @@ class ResetPluginTest(CQ2TestCase):
 		registry = CallTrace('PluginRegistry')
 		registerOn(registry)
 		self.assertEquals(1, len(registry.calledMethods))
-		self.assertEquals("registerByCommand('reset', <class queryserver.plugins.resetplugin.ResetPlugin>)", str(registry.calledMethods[0]))
+		self.assertEquals("registerByCommand('reset', <class meresco.queryserver.plugins.resetplugin.ResetPlugin>)", str(registry.calledMethods[0]))
 		
 	def testReset(self):
 		self.plugin.process()

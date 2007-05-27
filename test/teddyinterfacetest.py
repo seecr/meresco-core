@@ -28,7 +28,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from queryserver.plugins.sruquery import SRUQuery
+from meresco.queryserver.plugins.sruquery import SRUQuery
 from teddy.teddyinterface import TeddyInterface, TeddyRecord, TeddyResult
 from cStringIO import StringIO
 

@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from queryserver.observers.oai.oaitool import ResumptionToken, resumptionTokenFromString
+from meresco.queryserver.observers.oai.oaitool import ResumptionToken, resumptionTokenFromString
 from cq2utils.cq2testcase import CQ2TestCase
 
 class OaiToolTest(CQ2TestCase):

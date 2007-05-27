@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-from queryserver.plugins.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory, RSSTestProfile
+from meresco.queryserver.plugins.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory, RSSTestProfile
 from cStringIO import StringIO
 from tempfile import mkdtemp
 from shutil import rmtree

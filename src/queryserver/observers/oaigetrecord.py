@@ -27,7 +27,7 @@
 
 from oai.oaitool import OaiVerb, DONE
 from cq2utils.observable import Observable
-from queryserver.observers.stampcomponent import TIME_FIELD
+from meresco.queryserver.observers.stampcomponent import TIME_FIELD
 
 class OaiGetRecord(OaiVerb, Observable):
 	"""4.1 GetRecord

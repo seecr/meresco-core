@@ -26,7 +26,7 @@
 ## end license ##
 from observabletestcase import ObservableTestCase
 
-from queryserver.observers.portal import Portal
+from meresco.queryserver.observers.portal import Portal
 
 PORTAL_PAGE = """<html>
 	<body>
