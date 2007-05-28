@@ -73,9 +73,11 @@ Error and Exception Conditions
 		
 		if set(webRequest.args.keys()) == set(['verb', 'resumptionToken']):
 			token = resumptionTokenFromString(webRequest.args['resumptionToken'][0])
-			partName = token._metadataPrefix
-			queryResult = self.any.listRecords(token._continueAt)
-			return self.writeMessage(webRequest, partName, queryResult, True)
+			self.partName = token._metadataPrefix
+			self.oaiFrom = token._from
+			self.oaiUntil = token._until
+			queryResult = self.any.listRecords(token._continueAt, token._from, token._until)
+			return self.writeMessage(webRequest, queryResult, True)
 		
 		if webRequest.args.get('resumptionToken', None):
 			return self.writeError(webRequest, 'badArgument', '"resumptionToken" argument may only be used exclusively.')
@@ -87,7 +89,7 @@ Error and Exception Conditions
 		if tooMuch:
 			return self.writeError(webRequest, 'badArgument', 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch)))
 		
-		partName = webRequest.args['metadataPrefix'][0]
+		self.partName = webRequest.args['metadataPrefix'][0]
 		try:
 			oaiFrom = webRequest.args.get('from', [None])[0]
 			oaiFrom = oaiFrom and ISO8601(oaiFrom)
@@ -98,14 +100,14 @@ Error and Exception Conditions
 					return self.writeError(webRequest, 'badArgument', 'from and/or until arguments must match in length')
 				if str(oaiFrom) > str(oaiUntil):
 					return self.writeError(webRequest, 'badArgument', 'from argument must be smaller than until argument')
-			oaiFrom = oaiFrom and oaiFrom.floor()
-			oaiUntil = oaiUntil and oaiUntil.ceil()
+			self.oaiFrom = oaiFrom and oaiFrom.floor()
+			self.oaiUntil = oaiUntil and oaiUntil.ceil()
 		except ISO8601Exception, e:
 			return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
-		queryResult = self.any.listRecords(oaiFrom = oaiFrom, oaiUntil = oaiUntil)
-		return self.writeMessage(webRequest, partName, queryResult)
+		queryResult = self.any.listRecords(oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil)
+		return self.writeMessage(webRequest, queryResult)
 		
-	def writeMessage(self, webRequest, partName, queryResult, writeCloseToken = False):
+	def writeMessage(self, webRequest, queryResult, writeCloseToken = False):
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
 		webRequest.write('<ListRecords>')
@@ -113,7 +115,7 @@ Error and Exception Conditions
 		for i, id in enumerate(queryResult):
 			if i == BATCH_SIZE:
 				continueAt = self.xmlSteal(prevId, 'unique')
-				resumptionToken = ResumptionToken(partName, continueAt)
+				resumptionToken = ResumptionToken(self.partName, continueAt, self.oaiFrom, self.oaiUntil)
 				webRequest.write('<resumptionToken>%s</resumptionToken>' % str(resumptionToken))
 				writeCloseToken = False
 				break
@@ -129,7 +131,7 @@ Error and Exception Conditions
 			
 			if not isDeleted:
 				webRequest.write('<metadata>')
-				self.all.write(webRequest, id, partName)
+				self.all.write(webRequest, id, self.partName)
 				webRequest.write('</metadata>')
 			webRequest.write('</record>')
 			prevId = id

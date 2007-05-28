@@ -37,28 +37,28 @@ class OaiListRecordsTest(OaiTestCase):
 	def getSubject(self):
 		return OaiListRecords()
 	
-	def xtestNoArguments(self):
+	def testNoArguments(self):
 		self.assertBadArgument({'verb': ['ListRecords']}, 'Missing argument "resumptionToken" or "metadataPrefix"')
 		
-	def xtestTokenNotUsedExclusively(self):
+	def testTokenNotUsedExclusively(self):
 		self.assertBadArgument({'verb': ['ListRecords'], 'resumptionToken': ['aToken'], 'from': ['aDate']}, '"resumptionToken" argument may only be used exclusively.')
 
-	def xtestNeitherTokenNorMetadataPrefix(self):
+	def testNeitherTokenNorMetadataPrefix(self):
 		self.assertBadArgument({'verb': ['ListRecords'], 'from': ['aDate']}, 'Missing argument "resumptionToken" or "metadataPrefix"')
 
-	def xtestNonsenseArguments(self):
+	def testNonsenseArguments(self):
 		self.assertBadArgument({'verb': ['ListRecords'], 'metadataPrefix': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
 
-	def xtestDoubleArguments(self):
+	def testDoubleArguments(self):
 		self.assertBadArgument({'verb':['ListRecords'], 'metadataPrefix': ['oai_dc', '2']}, 'Argument "metadataPrefix" may not be repeated.')
 	
-	def xtestListRecordsUsingMetadataPrefix(self):
+	def testListRecordsUsingMetadataPrefix(self):
 		#TODO test that unique is past down
 		
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, continueAt = '0'):
+			def listRecords(sself, continueAt = '0', oaiFrom = None, oaiUntil = None):
 				self.assertEquals('0', continueAt)
 				return ['id_0', 'id_1']
 					
@@ -111,22 +111,24 @@ class OaiListRecordsTest(OaiTestCase):
  </ListRecords>""", self.stream.getvalue())
  		self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
 	
-	def xtestListRecordsUsingToken(self):
-		self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10'))]}
+	def testListRecordsUsingToken(self):
+		self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL'))]}
 		
 		observer = CallTrace('RecordAnswering')
-		def listRecords(continueAt = '0'):
+		def listRecords(continueAt = '0', oaiFrom = None, oaiUntil = None):
 			self.assertEquals('10', continueAt)
+			self.assertEquals('FROM', oaiFrom)
+			self.assertEquals('UNTIL', oaiUntil)
 			return []
 				
 		observer.listRecords = listRecords
 		self.subject.addObserver(observer)
 		self.observable.changed(self.request)
 		
-	def xtestResumptionTokensAreProduced(self):
-		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
+	def testResumptionTokensAreProduced(self):
+		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z']}
 		observer = CallTrace('RecordAnswering')
-		def listRecords(continueAt = '0'):
+		def listRecords(continueAt = '0', oaiFrom = None, oaiUntil = None):
 			return map(lambda i: 'id_%i' % i, range(1000))
 				
 		def write(sink, id, partName):
@@ -148,11 +150,13 @@ class OaiListRecordsTest(OaiTestCase):
 		resumptionToken = resumptionTokenFromString(str(xml))
 		self.assertEquals('666', resumptionToken._continueAt)
 		self.assertEquals('oai_dc', resumptionToken._metadataPrefix)
+		self.assertEquals('2000-01-01T00:00:00Z', resumptionToken._from)
+		self.assertEquals('2000-12-31T00:00:00Z', resumptionToken._until)
 			
-	def xtestFinalResumptionToken(self):
+	def testFinalResumptionToken(self):
 		self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '200'))]}
 		observer = CallTrace('RecordAnswering')
-		def listRecords(continueAt = '0'):
+		def listRecords(continueAt = '0', oaiFrom = None, oaiUntil = None):
 			return map(lambda i: 'id_%i' % i, range(BATCH_SIZE))
 		def write(sink, id, partName):
 			if partName == '__internal__':
@@ -169,11 +173,11 @@ class OaiListRecordsTest(OaiTestCase):
 		self.assertTrue(self.stream.getvalue().find("resumptionToken") > -1)
 		self.assertEquals('', str(bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken))
 	
-	def xtestDeteledTombstones(self):
+	def testDeteledTombstones(self):
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, continueAt = '0'):
+			def listRecords(sself, continueAt = '0', oaiFrom = None, oaiUntil = None):
 				self.assertEquals('0', continueAt)
 				return ['id_0', 'id_1']
 					

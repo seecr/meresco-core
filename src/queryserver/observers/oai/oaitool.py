@@ -99,8 +99,8 @@ class ResumptionToken:
 		_set = ''):
 		self._metadataPrefix = _metadataPrefix
 		self._continueAt = _continueAt
-		self._from = _from
-		self._until = _until
+		self._from = _from or '' #blank out "None"
+		self._until = _until or ''
 		self._set = _set
 	
 	def __str__(self):
