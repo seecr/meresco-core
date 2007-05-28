@@ -341,3 +341,20 @@ class OaiListTest(OaiTestCase):
     </header>
    </record>
  </ListIdentifiers>""", self.stream.getvalue())
+
+	def testNoRecordsMatch(self):
+		self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
+		
+		class Observer:
+			def listRecords(sself, continueAt = '0', oaiFrom = None, oaiUntil = None):
+				return []
+					
+			def undo(sself, *args, **kwargs):
+				pass
+			def notify(sself, *args, **kwargs):
+				pass
+		
+		self.subject.addObserver(Observer())
+		self.observable.changed(self.request)
+		
+		self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)

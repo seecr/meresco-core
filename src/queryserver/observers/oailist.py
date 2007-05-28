@@ -126,6 +126,8 @@ Error and Exception Conditions
 		except ISO8601Exception, e:
 			return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
 		queryResult = self.any.listRecords(oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil)
+		if len(queryResult) == 0:
+			return self.writeError(webRequest, 'noRecordsMatch')
 		return self.writeMessage(webRequest, queryResult)
 		
 	def writeMessage(self, webRequest, queryResult, writeCloseToken = False):
