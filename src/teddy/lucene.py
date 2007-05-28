@@ -74,9 +74,6 @@ class LuceneQuery:
 
 	def getHitCount(self):
 		return self._hitCount
-	
-	def __len__(self):
-		return self.getHitCount()
 
 	def _getSort(self):
 		sortDir = bool(self._sortDescending)

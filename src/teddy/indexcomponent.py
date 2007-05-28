@@ -58,4 +58,23 @@ class IndexComponent(Component):
 		oaiFrom = oaiFrom or LO
 		oaiUntil = oaiUntil or HI
 		query = '__internal__.unique:{%s TO %s} AND __internal__.datestamp:["%s" TO "%s"]' % (continueAt, HI, oaiFrom, oaiUntil)
-		return self._index.createQuery(query, aCount = float('Infinity'), sortBy = '__internal__.unique').perform()
+		
+		#TODO: deze onderstaande bende is een gevolg van de staat van self._index.createQuery. Dit is ooit opgeschoond geweest in de andere versie van Teddy (huil huil, KVS)
+		class Wrapper:
+			def __init__(self, wrapped, length):
+				self._wrapped = wrapped
+				self._len = length
+			
+			def __hasattr__(self, attr):
+				return hasattr(self._wrapped, attr)
+			
+			def __getattr__(self, attr):
+				return getattr(self._wrapped, attr)
+			
+			def __len__(self):
+				return self._len
+		
+		result = self._index.createQuery(query, aCount = float('Infinity'), sortBy = '__internal__.unique')
+		aap = result.perform() # forces execution order
+		return Wrapper(aap, result.getHitCount())
+		#return self._index.createQuery(query, aCount = float('Infinity'), sortBy = '__internal__.unique').perform()
