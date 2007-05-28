@@ -34,8 +34,28 @@ assert getdefaultencoding() == 'utf-8'
 
 BATCH_SIZE = 200
 
-class OaiListRecords(OaiVerb, Observable):
-	"""4.5 ListRecords
+class OaiList(OaiVerb, Observable):
+	"""4.3 ListIdentifiers
+Summary and Usage Notes
+
+This verb is an abbreviated form of ListRecords, retrieving only headers rather than records. Optional arguments permit selective harvesting of headers based on set membership and/or datestamp. Depending on the repository's support for deletions, a returned header may have a status attribute of "deleted" if a record matching the arguments specified in the request has been deleted.
+Arguments
+
+    * from an optional argument with a UTCdatetime value, which specifies a lower bound for datestamp-based selective harvesting.
+    * until an optional argument with a UTCdatetime value, which specifies a upper bound for datestamp-based selective harvesting.
+    * metadataPrefix a required argument, which specifies that headers should be returned only if the metadata format matching the supplied metadataPrefix is available or, depending on the repository's support for deletions, has been deleted. The metadata formats supported by a repository and for a particular item can be retrieved using the ListMetadataFormats request.
+    * set an optional argument with a setSpec value , which specifies set criteria for selective harvesting.
+    * resumptionToken an exclusive argument with a value that is the flow control token returned by a previous ListIdentifiers request that issued an incomplete list.
+
+Error and Exception Conditions
+
+    * badArgument - The request includes illegal arguments or is missing required arguments.
+    * badResumptionToken - The value of the resumptionToken argument is invalid or expired.
+    * cannotDisseminateFormat - The value of the metadataPrefix argument is not supported by the repository.
+    * noRecordsMatch- The combination of the values of the from, until, and set arguments results in an empty list.
+    * noSetHierarchy - The repository does not support sets.
+
+4.5 ListRecords
 Summary and Usage Notes
 
 This verb is used to harvest records from a repository. Optional arguments permit selective harvesting of records based on set membership and/or datestamp. Depending on the repository's support for deletions, a returned header may have a status attribute of "deleted" if a record matching the arguments specified in the request has been deleted. No metadata will be present for records with deleted status.
@@ -65,7 +85,8 @@ Error and Exception Conditions
 		#verrotte resumptionTokens
 		#metadataPrefixen die niet voorkomen
 		
-		if webRequest.args.get('verb', None) != ['ListRecords']:
+		self.verb = webRequest.args.get('verb', [None])[0]
+		if not self.verb in ['ListIdentifiers', 'ListRecords']:
 			return
 		
 		if self.isArgumentRepeated(webRequest):
@@ -108,9 +129,10 @@ Error and Exception Conditions
 		return self.writeMessage(webRequest, queryResult)
 		
 	def writeMessage(self, webRequest, queryResult, writeCloseToken = False):
+		
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
-		webRequest.write('<ListRecords>')
+		webRequest.write('<%s>' % self.verb)
 		j = -1
 		for i, id in enumerate(queryResult):
 			if i == BATCH_SIZE:
@@ -129,7 +151,7 @@ Error and Exception Conditions
 				<datestamp>%s</datestamp>
 			</header>""" % (isDeleted, id.encode('utf-8'), self.xmlSteal(id, TIME_FIELD).upper())) #TODO remove UPPERCASEHACK
 			
-			if not isDeleted:
+			if self.verb == "ListRecords" and not isDeleted:
 				webRequest.write('<metadata>')
 				self.all.write(webRequest, id, self.partName)
 				webRequest.write('</metadata>')
@@ -138,7 +160,7 @@ Error and Exception Conditions
 			j = i
 		if writeCloseToken and j <= BATCH_SIZE:
 			webRequest.write('<resumptionToken/>')
-		webRequest.write('</ListRecords>')
+		webRequest.write('</%s>' % self.verb)
 		self.writeFooter(webRequest)
 		return DONE
 

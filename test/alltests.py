@@ -46,7 +46,7 @@ from logtest import LogTest
 from oaiidentifytest import OaiIdentifyTest
 from oaivalidatortest import OaiValidatorTest
 from oaigetrecordtest import OaiGetRecordTest
-from oailistrecordstest import OaiListRecordsTest
+from oailisttest import OaiListTest
 from oaisinktest import OaiSinkTest
 from oaicomponenttest import OaiComponentTest
 from oaitooltest import OaiToolTest

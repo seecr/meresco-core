@@ -28,7 +28,7 @@
 from oai.oaitool import OaiVerb
 from oaiidentify import OaiIdentify
 from oaigetrecord import OaiGetRecord
-from oailistrecords import OaiListRecords
+from oailist import OaiList
 from oaisink import OaiSink
 
 from cq2utils.observable import Observable
@@ -38,7 +38,7 @@ class OaiComponent(Observable):
 	def __init__(self):
 		Observable.__init__(self)
 		self._privateTree = Observable()
-		for aClass in [OaiIdentify, OaiGetRecord, OaiListRecords, OaiSink]:
+		for aClass in [OaiIdentify, OaiGetRecord, OaiList, OaiSink]:
 			branch = aClass()
 			branch.changed = self.changed
 			branch.any = self.any

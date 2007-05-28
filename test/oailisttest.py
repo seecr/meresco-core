@@ -27,15 +27,15 @@
 
 from oaitestcase import OaiTestCase
 
-from queryserver.observers.oailistrecords import OaiListRecords, BATCH_SIZE
+from queryserver.observers.oailist import OaiList, BATCH_SIZE
 from cq2utils.calltrace import CallTrace
 from queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
 from amara.binderytools import bind_string
 from StringIO import StringIO
 
-class OaiListRecordsTest(OaiTestCase):
+class OaiListTest(OaiTestCase):
 	def getSubject(self):
-		return OaiListRecords()
+		return OaiList()
 	
 	def testNoArguments(self):
 		self.assertBadArgument({'verb': ['ListRecords']}, 'Missing argument "resumptionToken" or "metadataPrefix"')
@@ -297,3 +297,47 @@ class OaiListRecordsTest(OaiTestCase):
 		wrong('thisIsNotEvenADateStamp', 'thisIsNotEvenADateStamp')
 		wrong('2000-01-01T00:00:00Z', '2000-01-01')
 		wrong('2000-01-01T00:00:00Z', '1999-01-01T00:00:00Z')
+		
+	def testListIdentifiers(self):
+		self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
+		
+		class Observer:
+			def listRecords(sself, continueAt = '0', oaiFrom = None, oaiUntil = None):
+				self.assertEquals('0', continueAt)
+				return ['id_0']
+					
+			def write(sself, sink, id, partName):
+				if partName == 'oai_dc':
+					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
+				elif partName == '__internal__':
+					sink.write("""<__internal__>
+			<datestamp>DATESTAMP_FOR_TEST</datestamp>
+			<unique>UNIQUE_NOT_USED_YET</unique>
+		</__internal__>""")
+				else:
+					self.fail(partName + ' is unexpected')
+			
+			def isAvailable(sself, id, partName):
+				if partName == '__tombstone__':
+					return True, False
+				return True, True
+			
+			def undo(sself, *args, **kwargs):
+				pass
+			def notify(sself, *args, **kwargs):
+				pass
+		
+		self.subject.addObserver(Observer())
+		self.observable.changed(self.request)
+		
+		self.assertEqualsWS(self.OAIPMH % """
+<request metadataPrefix="oai_dc"
+ verb="ListIdentifiers">http://server:9000/path/to/oai</request>
+ <ListIdentifiers>
+   <record> 
+    <header>
+      <identifier>id_0</identifier> 
+      <datestamp>DATESTAMP_FOR_TEST</datestamp>
+    </header>
+   </record>
+ </ListIdentifiers>""", self.stream.getvalue())
