@@ -50,7 +50,9 @@ class StampComponent(Observable):
 		#na al dat nadenken wat we hier eerder over gedaan hebben (denk aan urlcache ed.) kan ik me niet voorstellen dat het zo simpel is.
 	
 	def notify(self, notification):
-		time = self.getTime()
+		time = self.getTime().lower() #TODO remove UPPERCASEHACK
+		#what is the uppercase hack? - we parse queries using lucene's standard query parser. this parser changes everything into lowercase. So, we have to put stuff in the index as lowercase too (real solution = adapt query)
+
 		unique = self.unique.next()
 		newNotification = Notification()
 		newNotification.method = "add"
@@ -66,6 +68,6 @@ class StampComponent(Observable):
 			'TIME_FIELD': TIME_FIELD,
 			'UNIQUE_FIELD': UNIQUE_FIELD} #hmmm...
 			)
-		newNotification.payload = thexml.rootNode.childNodes[0] #TODO tokenize = false
+		newNotification.payload = thexml.rootNode.childNodes[0]
 		self.changed(newNotification)
 		

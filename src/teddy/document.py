@@ -73,7 +73,6 @@ class Document:
 	def _addIndexedField(self, aKey, aValue, tokenize = True):
 		self._document.add(PyLucene.Field(aKey, aValue, PyLucene.Field.Store.NO, tokenize and PyLucene.Field.Index.TOKENIZED or PyLucene.Field.Index.UN_TOKENIZED))
 
-		
 	def contentField(self):
 		return ' '.join(self._contentField)
 	

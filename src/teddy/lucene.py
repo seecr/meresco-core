@@ -55,7 +55,6 @@ class LuceneQuery:
 		queryParser.setDefaultOperator(PyLucene.QueryParser.Operator.AND)
 		self._query = queryParser.parse(self._queryString)
 
-
 	def perform(self):
 		hits = self._index.search(self._getQuery(), self._getSort())
 		self._hitCount = hits.length()

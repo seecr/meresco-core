@@ -57,5 +57,5 @@ class IndexComponent(Component):
 		#TODO ik (KVS) vermoed dat bij een lege index het sorteren tot problemen leidt (dwz excepties)
 		oaiFrom = oaiFrom or LO
 		oaiUntil = oaiUntil or HI
-		query = '__internal__.unique:{%s TO %s} AND __internal__.datestamp:[%s TO %s]' % (continueAt, HI, oaiFrom, oaiUntil)
+		query = '__internal__.unique:{%s TO %s} AND __internal__.datestamp:["%s" TO "%s"]' % (continueAt, HI, oaiFrom, oaiUntil)
 		return self._index.createQuery(query, aCount = float('Infinity'), sortBy = '__internal__.unique').perform()

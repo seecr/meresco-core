@@ -125,7 +125,7 @@ Error and Exception Conditions
 			webRequest.write("""<record><header %s>
 				<identifier>%s</identifier>
 				<datestamp>%s</datestamp>
-			</header>""" % (isDeleted, id.encode('utf-8'), self.xmlSteal(id, TIME_FIELD)))
+			</header>""" % (isDeleted, id.encode('utf-8'), self.xmlSteal(id, TIME_FIELD).upper())) #TODO remove UPPERCASEHACK
 			
 			if not isDeleted:
 				webRequest.write('<metadata>')
