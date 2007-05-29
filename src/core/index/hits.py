@@ -12,7 +12,7 @@ class Hits:
 			- These ids are returned for __getitem__, __getslice__ and __iter__
 		- __len__ is equal for these two approaches
 		
-	Implementation hint: the performance benefit is achieved because we know exactly how many documents will be needed. Note the positions of self._loadScoreDocs in the code
+	Implementation hint: the performance benefit is achieved because we know exactly how many documents will be needed. Note the positions of self._loadScoreDocs() in the code
 	"""
 		
 	def __init__(self, searcher, pyLuceneQuery, pyLuceneSort):
