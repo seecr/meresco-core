@@ -32,6 +32,7 @@ import os
 import PyLucene
 import xml.sax.saxutils
 from document import IDFIELD, CONTENTFIELD
+from meresco.core.index.hits import Hits
 
 DEFAULT_OFFSET = 0
 DEFAULT_COUNT = 10
@@ -109,6 +110,10 @@ class LuceneIndex:
 	
 	def createQuery(self, aString, anOffset = DEFAULT_OFFSET, aCount = DEFAULT_COUNT, sortBy = None, sortDescending = False):
 		return LuceneQuery(self, aString, anOffset, aCount, sortBy, sortDescending)
+	
+	#TODO needs test (probably just test method calls)
+	def executeQuery(self, aQueryWrapper):
+		return Hits(self._searcher, aQueryWrapper.getPyLuceneQuery(), aQueryWrapper.getPyLuceneSort())
 
 	def search(self, query, sort):
 		search = self._getSearch()

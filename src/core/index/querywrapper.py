@@ -1,5 +1,5 @@
 import PyLucene
-from teddy import document
+from meresco.teddy import document
 
 class QueryWrapper:
 	"""QueryWrapper wraps a PyLucene query
@@ -9,7 +9,8 @@ class QueryWrapper:
 	in Teddy 2.0 (commented out): knowledge about __untokenized__ fields (sorting)
 	"""
 		
-	def __init__(self, queryString, sortBy = None, sortDescending = None, untokenizedFieldNames = []):
+	def __init__(self, queryString, sortBy = None, sortDescending = None):
+		#TEDDY2.0: , untokenizedFieldNames = []):
 		self._queryString = queryString
 		self._sortBy = sortBy #TEDDY2.0: and sortBy + '__untokenized__' or sortBy
 		self._sortDescending = sortDescending
