@@ -1,7 +1,3 @@
-#
-# $Id: searchintegrationtest.py 146 2006-07-11 12:13:27Z svn $
-#
-
 from meresco.teddy import document
 
 DEFAULT_FETCHED_DOCS_COUNT = 10
