@@ -7,7 +7,7 @@ from meresco.teddy import document
 DEFAULT_FETCHED_DOCS_COUNT = 10
 
 class Hits:
-	#TJ/KVS: we zien in dat deze class nu twee dingen doet (zoekachtige dingen en slicen). Echter, we zijn nog niet in staat geweest het mes netjes te zetten. 2006-08-24
+	"""TJ/KVS: we zien in dat deze class nu twee dingen doet (zoekachtige dingen en slicen). Echter, we zijn nog niet in staat geweest het mes netjes te zetten. 2006-08-24"""
 		
 	def __init__(self, searcher, pyLuceneQuery, pyLuceneSort):
 		self._searcher = searcher

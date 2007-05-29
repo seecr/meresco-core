@@ -14,9 +14,9 @@ class HitsTest(unittest.TestCase):
 		self.assertEquals(["id0", "id1", "id2"], list(iterator))
 		
 	def testSliceOperator(self):
-		def check(expected, length, i, j):
-			hits = self.createHits(range(length))
-			self.assertEquals(expected, list(hits[i:j]))
+		def check(expected, inputListLength, slice_lo, slice_hi):
+			hits = self.createHits(range(inputListLength))
+			self.assertEquals(expected, list(hits[slice_lo:slice_hi]))
 		
 		check([], 100, 10, 10)
 		check([], 0, 10, 100)
