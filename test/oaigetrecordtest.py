@@ -108,3 +108,28 @@ class OaiGetRecordTest(OaiTestCase):
     </metadata>
   </record>
  </GetRecord>""", self.stream.getvalue())
+
+	def testDeletedRecord(self):
+		self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
+		
+		class Observable:
+			def isAvailable(sself, id, partName):
+				return True, True # so the tombstone is available too
+						
+			def write(sself, sink, id, partName):
+				if partName == 'oai_dc':
+					self.fail()
+				if partName == '__internal__':
+					sink.write("""<__internal__>
+			<datestamp>DATESTAMP_FOR_TEST</datestamp>
+			<unique>UNIQUE_NOT_USED_YET</unique>
+		</__internal__>""")
+			
+			def undo(sself, *args, **kwargs):
+				pass
+			def notify(sself, *args, **kwargs):
+				pass
+			
+		self.subject.addObserver(Observable())
+		self.observable.changed(self.request)
+		self.assertTrue("deleted" in self.stream.getvalue())
