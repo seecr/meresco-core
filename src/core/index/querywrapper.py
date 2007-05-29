@@ -1,19 +1,24 @@
 import PyLucene
-import teddy.document
+from teddy import document
 
 class QueryWrapper:
+	"""QueryWrapper wraps a PyLucene query
+	- It has functionality for parsing and sorting
+	- It has intelligence about the "teddy approach" - i.e. defaulting to __content__ field
+	
+	in Teddy 2.0 (commented out): knowledge about __untokenized__ fields (sorting)
+	"""
 		
 	def __init__(self, queryString, sortBy = None, sortDescending = None, untokenizedFieldNames = []):
 		self._queryString = queryString
-		self._sortBy = sortBy and sortBy + '__untokenized__' or sortBy
+		self._sortBy = sortBy #TEDDY2.0: and sortBy + '__untokenized__' or sortBy
 		self._sortDescending = sortDescending
 		
 		analyzer = PyLucene.StandardAnalyzer()
-		analyzer = PyLucene.PerFieldAnalyzerWrapper(analyzer)
-		
-		analyzer.addAnalyzer(document.IDFIELD, PyLucene.KeywordAnalyzer())
-		for fieldName in untokenizedFieldNames:
-			analyzer.addAnalyzer(fieldName, PyLucene.KeywordAnalyzer())
+		#TEDDY2.0: analyzer = PyLucene.PerFieldAnalyzerWrapper(analyzer)
+		#TEDDY2.0: analyzer.addAnalyzer(document.IDFIELD, PyLucene.KeywordAnalyzer())
+		#TEDDY2.0:for fieldName in untokenizedFieldNames:
+		#TEDDY2.0:	analyzer.addAnalyzer(fieldName, PyLucene.KeywordAnalyzer())
 		
 		queryParser = PyLucene.QueryParser(document.CONTENTFIELD, analyzer)
 		queryParser.setDefaultOperator(PyLucene.QueryParser.Operator.AND)
@@ -24,16 +29,3 @@ class QueryWrapper:
 	
 	def getPyLuceneSort(self):
 		return self._sortBy and	PyLucene.Sort(self._sortBy, bool(self._sortDescending)) or None
-	
-#class TermQueryWrapper:
-	
-	#def __init__(self, field, value):
-		#self._pyLuceneQuery = PyLucene.TermQuery(PyLucene.Term(field, value))
-		#self._sortBy = None
-		#self._sortDescending = None
-		
-	#def getPyLuceneQuery(self):
-		#return self._pyLuceneQuery
-	
-	#def getPyLuceneSort(self):
-		#return None
