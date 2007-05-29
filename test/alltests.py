@@ -68,6 +68,7 @@ from fields2xmlcomponenttest import Fields2XmlComponentTest
 from logcomponenttest import LogComponentTest
 from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
+from hitstest import HitsTest
 
 if __name__ == '__main__':
         unittest.main()
