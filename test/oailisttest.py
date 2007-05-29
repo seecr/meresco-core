@@ -280,13 +280,11 @@ class OaiListTest(OaiTestCase):
 			resultingOaiFrom, resultingOaiUntil = doIt(oaiFrom, oaiUntil)
 			self.assertEquals(expectedFrom, resultingOaiFrom)
 			self.assertEquals(expectedUntil, resultingOaiUntil)
-			result = self.stream.getvalue()
-			self.assertTrue(result.find("""<error code="badArgument">""") == -1)
+			self.assertTrue(not "<error" in self.stream.getvalue())
 		
 		def wrong(oaiFrom, oaiUntil):
 			doIt(oaiFrom, oaiUntil)
-			result = self.stream.getvalue()
-			self.assertTrue(result.find("""<error code="badArgument">""") > -1)
+			self.assertTrue("""<error code="badArgument">""" in self.stream.getvalue())
 		
 		#start reading here
 		right(None, None)
