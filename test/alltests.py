@@ -69,6 +69,7 @@ from logcomponenttest import LogComponentTest
 from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
 from hitstest import HitsTest
+from querywrappertest import QueryWrapperTest
 
 if __name__ == '__main__':
         unittest.main()
