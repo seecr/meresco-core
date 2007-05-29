@@ -55,9 +55,7 @@ class IndexComponent(Component):
 			
 	def listRecords(self, continueAt = '0', oaiFrom = None, oaiUntil = None):
 		#TODO test this method
-		#TODO ik (KVS) vermoed dat bij een lege index het sorteren tot problemen leidt (dwz excepties)
 		oaiFrom = oaiFrom or LO
 		oaiUntil = oaiUntil or HI
 		queryString = '__internal__.unique:{%s TO %s} AND __internal__.datestamp:["%s" TO "%s"]' % (continueAt, HI, oaiFrom, oaiUntil)
-		
 		return self._index.executeQuery(QueryWrapper(queryString))
