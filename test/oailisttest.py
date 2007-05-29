@@ -60,11 +60,11 @@ class OaiListTest(OaiTestCase):
 		class Observer:
 			def listRecords(sself, continueAt = '0', oaiFrom = None, oaiUntil = None):
 				self.assertEquals('0', continueAt)
-				return ['id_0', 'id_1']
+				return ['id_0&0', 'id_1&1']
 					
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
-					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
+					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
 				elif partName == '__internal__':
 					sink.write("""<__internal__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
@@ -92,20 +92,20 @@ class OaiListTest(OaiTestCase):
  <ListRecords>
    <record> 
     <header>
-      <identifier>id_0</identifier> 
+      <identifier>id_0&amp;0</identifier> 
       <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </header>
     <metadata>
-      <some:recorddata xmlns:some="http://some.example.org" id="id_0"/>
+      <some:recorddata xmlns:some="http://some.example.org" id="id_0&amp;0"/>
     </metadata>
    </record>
    <record> 
     <header>
-      <identifier>id_1</identifier> 
+      <identifier>id_1&amp;1</identifier> 
       <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </header>
     <metadata>
-      <some:recorddata xmlns:some="http://some.example.org" id="id_1"/>
+      <some:recorddata xmlns:some="http://some.example.org" id="id_1&amp;1"/>
     </metadata>
    </record>
  </ListRecords>""", self.stream.getvalue())

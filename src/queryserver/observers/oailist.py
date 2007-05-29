@@ -28,7 +28,7 @@
 from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
 from cq2utils.observable import Observable
 from meresco.queryserver.observers.stampcomponent import TIME_FIELD
-
+from xml.sax.saxutils import escape as xmlEscape
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'
 
@@ -151,7 +151,7 @@ Error and Exception Conditions
 			webRequest.write("""<record><header %s>
 				<identifier>%s</identifier>
 				<datestamp>%s</datestamp>
-			</header>""" % (isDeleted, id.encode('utf-8'), self.xmlSteal(id, TIME_FIELD).upper())) #TODO remove UPPERCASEHACK
+			</header>""" % (isDeleted, xmlEscape(id.encode('utf-8')), self.xmlSteal(id, TIME_FIELD).upper())) #TODO remove UPPERCASEHACK
 			
 			if self.verb == "ListRecords" and not isDeleted:
 				webRequest.write('<metadata>')
