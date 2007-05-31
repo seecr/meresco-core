@@ -54,20 +54,19 @@ class IndexComponent(Component):
 		self._latestId = notification.id
 			
 	def listRecords(self, continueAt = '0', oaiFrom = None, oaiUntil = None):
+		def addRange(root, field, lo, hi, inclusive):
+			range = RangeQuery(Term(field, lo), Term(field, hi), inclusive)
+			root.add(range, BooleanClause.Occur.MUST)
 		#TODO test this method
-		oaiFrom = oaiFrom or LO
-		oaiUntil = oaiUntil or HI
 		
 		#It is necessery here to work with the elematal objects, because the query parser transforms everything into lowercase
 		from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term
-		range1 = RangeQuery(
-				Term('__internal__.unique', continueAt),
-				Term('__internal__.unique', HI), False)
-		range2 = RangeQuery(
-				Term('__internal__.datestamp', oaiFrom),
-				Term('__internal__.datestamp', oaiUntil), True)
-		pyLuceneQuery = BooleanQuery()
-		pyLuceneQuery.add(range1, BooleanClause.Occur.MUST)
-		pyLuceneQuery.add(range2, BooleanClause.Occur.MUST)
+		query = BooleanQuery()
+		addRange(query, '__internal__.unique', continueAt, HI, False)
+		if oaiFrom or oaiUntil:
+			oaiFrom = oaiFrom or LO
+			oaiUntil = oaiUntil or HI
+			addRange(query, '__internal__.datestamp', oaiFrom, oaiUntil, True)
 
-		return self._index.executeQuery(QueryWrapper(pyLuceneQuery, '__internal__.unique'))
+		return self._index.executeQuery(QueryWrapper(query, '__internal__.unique'))
+		
