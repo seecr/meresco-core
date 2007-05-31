@@ -1,16 +1,16 @@
 import unittest
-from core.index.querywrapper import QueryWrapper
+from core.index.querywrapper import AdvancedQueryWrapper
 
 class QueryWrapperTest(unittest.TestCase):
 	
 	def testDefaultBehavior(self):
-		queryWrapper = QueryWrapper('field:value')
+		queryWrapper = AdvancedQueryWrapper('field:value')
 		self.assertEquals("field:value", str(queryWrapper.getPyLuceneQuery()))
-		queryWrapper = QueryWrapper('value')
+		queryWrapper = AdvancedQueryWrapper('value')
 		self.assertEquals("__content__:value", str(queryWrapper.getPyLuceneQuery()))
 	
 	def testDefaultOperatorIsAND(self):
-		queryWrapper = QueryWrapper('one two')
+		queryWrapper = AdvancedQueryWrapper('one two')
 		pyLuceneQuery = queryWrapper.getPyLuceneQuery()
 		self.assertTrue(pyLuceneQuery.isBooleanQuery())
 		self.assertTrue("+" in str(pyLuceneQuery))

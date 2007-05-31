@@ -57,5 +57,17 @@ class IndexComponent(Component):
 		#TODO test this method
 		oaiFrom = oaiFrom or LO
 		oaiUntil = oaiUntil or HI
-		queryString = '__internal__.unique:{%s TO %s} AND __internal__.datestamp:["%s" TO "%s"]' % (continueAt, HI, oaiFrom, oaiUntil)
-		return self._index.executeQuery(QueryWrapper(queryString))
+		
+		#It is necessery here to work with the elematal objects, because the query parser transforms everything into lowercase
+		from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term
+		range1 = RangeQuery(
+				Term('__internal__.unique', continueAt),
+				Term('__internal__.unique', HI), False)
+		range2 = RangeQuery(
+				Term('__internal__.datestamp', oaiFrom),
+				Term('__internal__.datestamp', oaiUntil), True)
+		pyLuceneQuery = BooleanQuery()
+		pyLuceneQuery.add(range1, BooleanClause.Occur.MUST)
+		pyLuceneQuery.add(range2, BooleanClause.Occur.MUST)
+
+		return self._index.executeQuery(QueryWrapper(pyLuceneQuery, '__internal__.unique'))

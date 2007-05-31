@@ -2,6 +2,19 @@ import PyLucene
 from meresco.teddy import document
 
 class QueryWrapper:
+	
+	def __init__(self, pyLuceneQuery, sortBy = None, sortDescending = None):
+		self._sortBy = sortBy
+		self._sortDescending = sortDescending
+		self._pyLuceneQuery = pyLuceneQuery
+
+	def getPyLuceneQuery(self):
+		return self._pyLuceneQuery
+	
+	def getPyLuceneSort(self):
+		return self._sortBy and	PyLucene.Sort(self._sortBy, bool(self._sortDescending)) or None
+
+class AdvancedQueryWrapper(QueryWrapper):
 	"""QueryWrapper wraps a PyLucene query
 	- It has functionality for parsing and sorting
 	- It has intelligence about the "teddy approach" - i.e. defaulting to __content__ field

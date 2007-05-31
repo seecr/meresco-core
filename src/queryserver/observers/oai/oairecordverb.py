@@ -9,7 +9,7 @@ class OaiRecordVerb(OaiVerb):
 		webRequest.write("""<record><header %s>
 			<identifier>%s</identifier>
 			<datestamp>%s</datestamp>
-		</header>""" % (isDeletedStr, xmlEscape(id.encode('utf-8')), self.xmlSteal(id, TIME_FIELD).upper())) #TODO remove UPPERCASEHACK
+		</header>""" % (isDeletedStr, xmlEscape(id.encode('utf-8')), self.xmlSteal(id, TIME_FIELD)))
 		if writeBody and not isDeletedStr:
 			webRequest.write('<metadata>')
 			self.all.write(webRequest, id, self.partName)
