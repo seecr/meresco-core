@@ -26,15 +26,14 @@
 ## end license ##
 
 from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
+from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
 from cq2utils.observable import Observable
-from meresco.queryserver.observers.stampcomponent import TIME_FIELD
-from xml.sax.saxutils import escape as xmlEscape
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'
 
 BATCH_SIZE = 200
 
-class OaiList(OaiVerb, Observable):
+class OaiList(OaiRecordVerb, Observable):
 	"""4.3 ListIdentifiers
 Summary and Usage Notes
 
@@ -77,7 +76,7 @@ Error and Exception Conditions
     * noSetHierarchy - The repository does not support sets.
 """
 	def __init__(self):
-		OaiVerb.__init__(self)
+		OaiRecordVerb.__init__(self)
 		Observable.__init__(self)
 	
 	def notify(self, webRequest):
@@ -144,20 +143,8 @@ Error and Exception Conditions
 				writeCloseToken = False
 				break
 			
-			aTuple = self.any.isAvailable(id, "__tombstone__")
-			ignored, hasTombstonePart = aTuple or (False, False)
-			isDeleted = hasTombstonePart and ' status="deleted"' or ''
+			self.writeRecord(webRequest, id, self.verb == "ListRecords")
 			
-			webRequest.write("""<record><header %s>
-				<identifier>%s</identifier>
-				<datestamp>%s</datestamp>
-			</header>""" % (isDeleted, xmlEscape(id.encode('utf-8')), self.xmlSteal(id, TIME_FIELD).upper())) #TODO remove UPPERCASEHACK
-			
-			if self.verb == "ListRecords" and not isDeleted:
-				webRequest.write('<metadata>')
-				self.all.write(webRequest, id, self.partName)
-				webRequest.write('</metadata>')
-			webRequest.write('</record>')
 			prevId = id
 			j = i
 		if writeCloseToken and j <= BATCH_SIZE:

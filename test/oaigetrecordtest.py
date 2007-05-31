@@ -75,6 +75,8 @@ class OaiGetRecordTest(OaiTestCase):
 		
 		class Observable:
 			def isAvailable(sself, id, partName):
+				if partName == "__tombstone__":
+					return True, False
 				return True, True
 			
 			def write(sself, sink, id, partName):

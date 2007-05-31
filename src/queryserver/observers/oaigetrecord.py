@@ -25,11 +25,11 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb, DONE
+from oai.oaitool import DONE
 from cq2utils.observable import Observable
-from meresco.queryserver.observers.stampcomponent import TIME_FIELD
+from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
 
-class OaiGetRecord(OaiVerb, Observable):
+class OaiGetRecord(OaiRecordVerb, Observable):
 	"""4.1 GetRecord
 Summary and Usage Notes
 
@@ -47,7 +47,7 @@ Error and Exception Conditions
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
 """
 	def __init__(self):
-		OaiVerb.__init__(self)
+		OaiRecordVerb.__init__(self)
 		Observable.__init__(self)
 	
 	def notify(self, webRequest):
@@ -72,9 +72,9 @@ Error and Exception Conditions
 			return DONE
 		
 		id = webRequest.args['identifier'][0]
-		partName = webRequest.args['metadataPrefix'][0]
+		self.partName = webRequest.args['metadataPrefix'][0]
 		
-		hasId, hasPartName = self.any.isAvailable(id, partName)
+		hasId, hasPartName = self.any.isAvailable(id, self.partName)
 		
 		if not hasId:
 			self.writeError(webRequest, 'idDoesNotExist')
@@ -86,17 +86,11 @@ Error and Exception Conditions
 		
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
-		webRequest.write('<GetRecord><record>')
-		webRequest.write("""<header>
-      <identifier>%s</identifier>
-      <datestamp>%s</datestamp>
-    </header>""" % (id, self.xmlSteal(id, TIME_FIELD)))
-
-		webRequest.write('<metadata>')
-		self.all.write(webRequest, id, partName)
-		webRequest.write('</metadata>')
 		
-		webRequest.write('</record></GetRecord>')
+		webRequest.write('<GetRecord>')
+		self.writeRecord(webRequest, id)
+		webRequest.write('</GetRecord>')
+		
 		self.writeFooter(webRequest)
 		return DONE
 		
