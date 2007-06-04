@@ -27,6 +27,8 @@
 
 from oai.oaitool import OaiVerb, DONE
 
+OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
+
 class OaiListMetadataFormats(OaiVerb):
 	"""4.4 ListMetadataFormats
 Summary and Usage Notes
@@ -43,7 +45,7 @@ Error and Exception Conditions
     * noMetadataFormats - There are no metadata formats available for the specified item.
 	"""
 	
-	def __init__(self, metadataFormats):
+	def __init__(self, metadataFormats = [OAI_DC]):
 		OaiVerb.__init__(self)
 		self.metadataFormats = metadataFormats
 	
@@ -65,8 +67,6 @@ Error and Exception Conditions
 			raise Exception("not implemented yet")
 		
 		webRequest.write("""<ListMetadataFormats>""")
-		
-		somePlace = "oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/"
 		
 		for metadataPrefix, schema, metadataNamespace in self.metadataFormats:
 			webRequest.write("""<metadataFormat>

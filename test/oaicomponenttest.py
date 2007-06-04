@@ -32,7 +32,7 @@ from cq2utils.observable import Observable
 class OaiComponentTest(OaiTestCase):
 	
 	def getSubject(self):
-		return OaiComponent()
+		return OaiComponent("metadataformats (not tested, not important here)")
 	
 	def testChaining(self):
 		self.request.args = {'verb': ['Identify']}
