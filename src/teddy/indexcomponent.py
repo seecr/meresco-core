@@ -29,6 +29,8 @@ from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
 from meresco.core.index.querywrapper import QueryWrapper
+from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term
+from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 
 LO = '0' #sorts lower/eq than all numbers (as strings)
 HI = 'A' #sorts higher than all numbers (as strings)
@@ -54,19 +56,19 @@ class IndexComponent(Component):
 		self._latestId = notification.id
 			
 	def listRecords(self, continueAt = '0', oaiFrom = None, oaiUntil = None):
+		#TODO add test cases.
 		def addRange(root, field, lo, hi, inclusive):
 			range = RangeQuery(Term(field, lo), Term(field, hi), inclusive)
 			root.add(range, BooleanClause.Occur.MUST)
-		#TODO test this method
 		
 		#It is necessery here to work with the elematal objects, because the query parser transforms everything into lowercase
-		from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term
+		
 		query = BooleanQuery()
-		addRange(query, '__internal__.unique', continueAt, HI, False)
+		addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, HI, False)
 		if oaiFrom or oaiUntil:
 			oaiFrom = oaiFrom or LO
 			oaiUntil = oaiUntil or HI
-			addRange(query, '__internal__.datestamp', oaiFrom, oaiUntil, True)
+			addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
 
-		return self._index.executeQuery(QueryWrapper(query, '__internal__.unique'))
+		return self._index.executeQuery(QueryWrapper(query, '%s.%s' % (STAMP_PART, UNIQUE)))
 		

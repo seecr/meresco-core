@@ -27,6 +27,7 @@
 
 from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
 from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
+from meresco.queryserver.observers.stampcomponent import UNIQUE
 from cq2utils.observable import Observable
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'
@@ -137,7 +138,7 @@ Error and Exception Conditions
 		j = -1
 		for i, id in enumerate(queryResult):
 			if i == BATCH_SIZE:
-				continueAt = self.xmlSteal(prevId, 'unique')
+				continueAt = str(getattr(self.xmlSteal(prevId), UNIQUE))
 				resumptionToken = ResumptionToken(self.partName, continueAt, self.oaiFrom, self.oaiUntil)
 				webRequest.write('<resumptionToken>%s</resumptionToken>' % str(resumptionToken))
 				writeCloseToken = False

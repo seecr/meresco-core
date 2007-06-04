@@ -111,7 +111,6 @@ class LuceneIndex:
 	def createQuery(self, aString, anOffset = DEFAULT_OFFSET, aCount = DEFAULT_COUNT, sortBy = None, sortDescending = False):
 		return LuceneQuery(self, aString, anOffset, aCount, sortBy, sortDescending)
 	
-	#TODO needs test (probably just test method calls)
 	def executeQuery(self, aQueryWrapper):
 		return Hits(self._searcher, aQueryWrapper.getPyLuceneQuery(), aQueryWrapper.getPyLuceneSort())
 

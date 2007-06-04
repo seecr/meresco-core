@@ -60,13 +60,12 @@ class OaiVerb(object):
 		self.writeFooter(webRequest)
 		return DONE
 		
-	def xmlSteal(self, id, field):
+	def xmlSteal(self, id):
 		from StringIO import StringIO
 		from amara.binderytools import bind_string
 		buffer = StringIO()
 		self.all.write(buffer, id, STAMP_PART)
-		xml = bind_string(buffer.getvalue())
-		return str(getattr(xml.__internal__, field))
+		return bind_string(buffer.getvalue()).childNodes[0]
 		
 	def writeFooter(self, webRequest):
 		webRequest.write(OAIFOOTER)

@@ -71,6 +71,7 @@ from xmlpumptest import XmlPumpTest
 from hitstest import HitsTest
 from querywrappertest import QueryWrapperTest
 from xslicetest import XSliceTest
+from undertakertest import UnderTakerTest
 
 if __name__ == '__main__':
         unittest.main()

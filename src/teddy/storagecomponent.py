@@ -39,7 +39,6 @@ class StorageComponent(Component):
 			stream.close()
 			
 	def deletePart(self, id, partName):
-		#TODO deze methode testen
 		unit = self._storage.getUnit(id)
 		unit.removeBox(partName)
 			

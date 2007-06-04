@@ -28,16 +28,17 @@ from cq2utils.observable import Observable
 from cq2utils.component import Notification
 from amara.binderytools import bind_string
 
+TOMBSTONE_PART = '__tombstone__'
+
 class Undertaker(Observable):
 	
 	def notify(self, notification):
-		#TODO not tested yet!
 		self.changed(notification)
 		if notification.method == "delete":
-			graveStone = Notification("add", notification.id, "__tombstone__", bind_string("<__tombstone__>__tombstone__</__tombstone__>").__tombstone__)
-			self.changed(graveStone)
+			tombStone = Notification("add", notification.id, TOMBSTONE_PART, bind_string("<%s/>" % TOMBSTONE_PART).childNodes[0])
+			self.changed(tombStone)
 		if notification.method == "add":
-			self.all.deletePart(notification.id, "__tombstone__")
+			self.all.deletePart(notification.id, TOMBSTONE_PART)
 	
 	def undo(self, *args, **kwargs):
 		pass

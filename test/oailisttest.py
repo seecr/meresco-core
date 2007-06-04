@@ -53,8 +53,6 @@ class OaiListTest(OaiTestCase):
 		self.assertBadArgument({'verb':['ListRecords'], 'metadataPrefix': ['oai_dc', '2']}, 'Argument "metadataPrefix" may not be repeated.')
 	
 	def testListRecordsUsingMetadataPrefix(self):
-		#TODO test that unique is past down
-		
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
@@ -65,11 +63,10 @@ class OaiListTest(OaiTestCase):
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
 					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
-				elif partName == '__internal__':
-					sink.write("""<__internal__>
+				elif partName == '__stamp__':
+					sink.write("""<__stamp__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
-			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__internal__>""")
+		</__stamp__>""")
 				else:
 					self.fail(partName + ' is unexpected')
 			
@@ -134,11 +131,11 @@ class OaiListTest(OaiTestCase):
 		def write(sink, id, partName):
 			if partName == 'oai_dc':
 				pass
-			elif partName == '__internal__':
-				sink.write("""<__internal__>
+			elif partName == '__stamp__':
+				sink.write("""<__stamp__>
 		<datestamp>DATESTAMP_FOR_TEST</datestamp>
-		<unique>666</unique>
-	</__internal__>""")
+		<unique>UNIQUE_FOR_TEST</unique>
+	</__stamp__>""")
 		observer.listRecords = listRecords
 		observer.write = write
 		self.subject.addObserver(observer)
@@ -148,7 +145,7 @@ class OaiListTest(OaiTestCase):
 		self.assertTrue(self.stream.getvalue().find("<resumptionToken>") > -1)
 		xml = bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken
 		resumptionToken = resumptionTokenFromString(str(xml))
-		self.assertEquals('666', resumptionToken._continueAt)
+		self.assertEquals('UNIQUE_FOR_TEST', resumptionToken._continueAt)
 		self.assertEquals('oai_dc', resumptionToken._metadataPrefix)
 		self.assertEquals('2000-01-01T00:00:00Z', resumptionToken._from)
 		self.assertEquals('2000-12-31T00:00:00Z', resumptionToken._until)
@@ -159,11 +156,10 @@ class OaiListTest(OaiTestCase):
 		def listRecords(continueAt = '0', oaiFrom = None, oaiUntil = None):
 			return map(lambda i: 'id_%i' % i, range(BATCH_SIZE))
 		def write(sink, id, partName):
-			if partName == '__internal__':
-				sink.write("""<__internal__>
+			if partName == '__stamp__':
+				sink.write("""<__stamp__>
 		<datestamp>DATESTAMP_FOR_TEST</datestamp>
-		<unique>666</unique>
-	</__internal__>""")
+	</__stamp__>""")
 		observer.listRecords = listRecords
 		observer.write = write
 		self.subject.addObserver(observer)
@@ -184,11 +180,10 @@ class OaiListTest(OaiTestCase):
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
 					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
-				elif partName == '__internal__':
-					sink.write("""<__internal__>
+				elif partName == '__stamp__':
+					sink.write("""<__stamp__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
-			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__internal__>""")
+		</__stamp__>""")
 				else:
 					self.fail(partName + ' is unexpected')
 			
@@ -243,11 +238,10 @@ class OaiListTest(OaiTestCase):
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
 					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
-				elif partName == '__internal__':
-					sink.write("""<__internal__>
+				elif partName == '__stamp__':
+					sink.write("""<__stamp__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
-			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__internal__>""")
+		</__stamp__>""")
 				else:
 					self.fail(partName + ' is unexpected')
 			
@@ -307,11 +301,10 @@ class OaiListTest(OaiTestCase):
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
 					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
-				elif partName == '__internal__':
-					sink.write("""<__internal__>
+				elif partName == '__stamp__':
+					sink.write("""<__stamp__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
-			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__internal__>""")
+		</__stamp__>""")
 				else:
 					self.fail(partName + ' is unexpected')
 			

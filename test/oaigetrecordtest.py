@@ -82,11 +82,11 @@ class OaiGetRecordTest(OaiTestCase):
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
 					sink.write('<some:recorddata xmlns:some="http://some.example.org"/>')
-				elif partName == '__internal__':
-					sink.write("""<__internal__>
+				elif partName == '__stamp__':
+					sink.write("""<__stamp__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
 			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__internal__>""")
+		</__stamp__>""")
 			
 			def undo(sself, *args, **kwargs):
 				pass
@@ -121,11 +121,11 @@ class OaiGetRecordTest(OaiTestCase):
 			def write(sself, sink, id, partName):
 				if partName == 'oai_dc':
 					self.fail()
-				if partName == '__internal__':
-					sink.write("""<__internal__>
+				if partName == '__stamp__':
+					sink.write("""<__stamp__>
 			<datestamp>DATESTAMP_FOR_TEST</datestamp>
 			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__internal__>""")
+		</__stamp__>""")
 			
 			def undo(sself, *args, **kwargs):
 				pass

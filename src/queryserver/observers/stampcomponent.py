@@ -27,9 +27,9 @@
 from cq2utils.observable import Observable
 from cq2utils.component import Notification
 
-STAMP_PART = '__internal__'
-TIME_FIELD = 'datestamp'
-UNIQUE_FIELD = 'unique'
+STAMP_PART = '__stamp__' # __ because purpose is internal use only!
+DATESTAMP = 'datestamp'
+UNIQUE = 'unique'
 
 from time import gmtime, strftime
 from amara.binderytools import bind_string
@@ -64,8 +64,8 @@ class StampComponent(Observable):
 			{'time': time,
 			'unique': self.uniqueFormat % unique,
 			'STAMP_PART': STAMP_PART,
-			'TIME_FIELD': TIME_FIELD,
-			'UNIQUE_FIELD': UNIQUE_FIELD} #hmmm...
+			'TIME_FIELD': DATESTAMP,
+			'UNIQUE_FIELD': UNIQUE} #hmmm...
 			)
 		newNotification.payload = thexml.rootNode.childNodes[0]
 		self.changed(newNotification)
