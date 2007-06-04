@@ -71,7 +71,11 @@ class OaiTestCase(CQ2TestCase):
 		result = self.stream.getvalue()
 		self.assertTrue(result.find("""<error code="badArgument">""") > -1)
 		self.assertTrue(result.find(additionalMessage) > -1, 'Expected "%s" in "%s"' %(additionalMessage, result))
-		assertValidString(result)
+		
+		try:
+			assertValidString(result)
+		except Exception, e:
+			self.fail("Not a valid string:\n" + result + "\n" + str(e))
 		
 	OAIPMH = """<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
