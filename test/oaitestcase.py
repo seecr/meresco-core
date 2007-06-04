@@ -63,7 +63,9 @@ class OaiTestCase(CQ2TestCase):
 		self.assertEquals('', self.stream.getvalue())
 		
 	def assertBadArgument(self, arguments, additionalMessage = ''):
-		#NOTE: this method can be used only once per test (not very pretty, but not priority now (20/04/2007 - KVS)
+		if hasattr(self, 'ranAssertBadArgument'):
+			self.fail("""NOTE: this method can be used only once per test (not very pretty, but not priority now (20/04/2007 - KVS)""")
+		self.ranAssertBadArgument = True
 		
 		self.request.args = arguments
 		self.observable.changed(self.request)

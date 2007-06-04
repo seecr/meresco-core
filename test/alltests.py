@@ -73,6 +73,7 @@ from querywrappertest import QueryWrapperTest
 from xslicetest import XSliceTest
 from undertakertest import UnderTakerTest
 from oailistmetadataformatstest import OaiListMetadataFormatsTest
+from partscomponenttest import PartsComponentTest
 
 if __name__ == '__main__':
         unittest.main()
