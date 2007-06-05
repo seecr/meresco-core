@@ -27,10 +27,11 @@
 
 from oai.oaitool import OaiVerb, DONE
 from meresco.queryserver.observers.partscomponent import PARTS_PART
+from cq2utils.observable import Observable
 
 OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
 
-class OaiListMetadataFormats(OaiVerb):
+class OaiListMetadataFormats(OaiVerb, Observable):
 	"""4.4 ListMetadataFormats
 Summary and Usage Notes
 
@@ -48,6 +49,7 @@ Error and Exception Conditions
 	
 	def __init__(self, metadataFormats = [OAI_DC]):
 		OaiVerb.__init__(self)
+		Observable.__init__(self)
 		self.metadataFormats = metadataFormats
 	
 	def notify(self, webRequest):

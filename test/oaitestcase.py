@@ -44,7 +44,6 @@ class OaiTestCase(CQ2TestCase):
 		self.subject.getTime = lambda : '2007-02-07T00:00:00Z'
 		self.observable.addObserver(self.subject)
 		self.request = CallTrace('Request')
-		#self.request.serverurl = 'http://:9000'
 		self.request.path = '/path/to/oai'
 		self.request.getRequestHostname = lambda: 'server'
 		class Host:
