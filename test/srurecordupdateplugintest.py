@@ -71,7 +71,7 @@ class SRURecordUpdatePluginTest(unittest.TestCase):
 		self.httpServerNotification = MockHTTPRequest(content)
 		self.plugin.notify(self.httpServerNotification)
 	
-	def xxxtestAddXML(self):
+	def testAddXML(self):
 		self.notifyPlugin()
 		self.assertEquals(1, len(self.notifications))
 		notification = self.notifications[0]
@@ -88,7 +88,7 @@ class SRURecordUpdatePluginTest(unittest.TestCase):
 		notification = self.notifications[0]
 		self.assertEquals("<one><a/></one><two/>", notification.extraRecordData)
 		
-	def xxxtestAddText(self):
+	def testAddText(self):
 		self.dictionary["recordPacking"] = "text/plain"
 		self.dictionary["recordData"] = TEXT_DOCUMENT
 		self.notifyPlugin()
@@ -96,25 +96,25 @@ class SRURecordUpdatePluginTest(unittest.TestCase):
 		notification = self.notifications[0]
 		self.assertEquals(TEXT_DOCUMENT, notification.payload)
 		
-	def xxxtestDelete(self):
+	def testDelete(self):
 		self.dictionary["action"] = DELETE
 		self.notifyPlugin()
 		self.assertEquals(1, len(self.notifications))
 		notification = self.notifications[0]
 		self.assertEquals("delete", notification.method)
 		
-	def xxxtestReplaceIsAdd(self):
+	def testReplaceIsAdd(self):
 		self.dictionary["action"] = REPLACE
 		self.notifyPlugin()
 		self.assertEquals(1, len(self.notifications))
 		notification = self.notifications[0]
 		self.assertEquals("add", notification.method)
 		
-	def xxxtestResponse(self):
+	def testResponse(self):
 		self.notifyPlugin()
 		self.assertTrue(self.httpServerNotification.written.find("""<ucp:operationStatus>succes</ucp:operationStatus>""") > -1)
 		
-	def xxxtestNotCorrectXml(self):
+	def testNotCorrectXml(self):
 		httpServerNotification = MockHTTPRequest("nonsense")
 		try:
 			self.plugin.notify(httpServerNotification)
@@ -123,7 +123,7 @@ class SRURecordUpdatePluginTest(unittest.TestCase):
 			self.assertEquals('SAXParseException', str(e.__class__).split('.')[-1])
 		self.assertTrue(httpServerNotification.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
 		
-	def xxxtestErrorsArePassed(self):
+	def testErrorsArePassed(self):
 		self.plugin.changed = self.pluginChangedThrowsException
 		try:
 			self.notifyPlugin()
