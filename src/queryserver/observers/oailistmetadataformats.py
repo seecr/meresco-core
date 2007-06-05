@@ -26,6 +26,7 @@
 ## end license ##
 
 from oai.oaitool import OaiVerb, DONE
+from meresco.queryserver.observers.partscomponent import PARTS_PART
 
 OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
 
@@ -55,20 +56,24 @@ Error and Exception Conditions
 		
 		if set(webRequest.args.keys()) == set(['verb', 'identifier']):
 			self.identifier = webRequest.args['identifier'][0]
+			if self.all.isAvailable(self.identifier, PARTS_PART) != (True, True):
+				return self.writeError(webRequest, 'idDoesNotExist')
+			
+			names = self.xmlSteal(self.identifier, PARTS_PART)
+			names = map(str, names.part)
+			metadataFormats = filter(lambda (name, y, z): name in names, self.metadataFormats)
 		else:
 			if set(webRequest.args.keys()) != set(['verb']):
 				return self.writeError(webRequest, 'badArgument', 'The only legal argument for the verb "ListMetadataFormats" is the optional argument "identifier".')
 			self.identifier = None
+			metadataFormats = self.metadataFormats
 		
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
 		
-		if self.identifier:
-			raise Exception("not implemented yet")
-		
 		webRequest.write("""<ListMetadataFormats>""")
 		
-		for metadataPrefix, schema, metadataNamespace in self.metadataFormats:
+		for metadataPrefix, schema, metadataNamespace in metadataFormats:
 			webRequest.write("""<metadataFormat>
 				<metadataPrefix>%s</metadataPrefix>
 				<schema>%s</schema>
