@@ -97,7 +97,7 @@ Error and Exception Conditions
 			self.partName = token._metadataPrefix
 			self.oaiFrom = token._from
 			self.oaiUntil = token._until
-			queryResult = self.any.listRecords(token._continueAt, token._from, token._until)
+			queryResult = self.any.listRecords(self.partName, token._continueAt, token._from, token._until)
 			return self.writeMessage(webRequest, queryResult, True)
 		
 		if webRequest.args.get('resumptionToken', None):
@@ -125,7 +125,7 @@ Error and Exception Conditions
 			self.oaiUntil = oaiUntil and oaiUntil.ceil()
 		except ISO8601Exception, e:
 			return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
-		queryResult = self.any.listRecords(oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil)
+		queryResult = self.any.listRecords(self.partName, oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil)
 		if len(queryResult) == 0:
 			return self.writeError(webRequest, 'noRecordsMatch')
 		return self.writeMessage(webRequest, queryResult)

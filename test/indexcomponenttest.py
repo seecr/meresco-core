@@ -84,15 +84,15 @@ class IndexComponentTest(CQ2TestCase):
 		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[2]))
 
 	def testListRecords(self):
-		self.subject.listRecords()
+		self.subject.listRecords(partName = 'PART')
 		executeQueryMethod = self.index.calledMethods[0]
 		queryWrapper = executeQueryMethod.arguments[0]
-		self.assertEquals('+__stamp__.unique:{0 TO A}', str(queryWrapper.getPyLuceneQuery()))
+		self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0 TO A}', str(queryWrapper.getPyLuceneQuery()))
 		self.assertEquals('__stamp__.unique', str(queryWrapper._sortBy))
 
 	def testListRecordsParams(self):
-		self.subject.listRecords(continueAt = '0010', oaiFrom = '2000-01-01T00:00:00Z', oaiUntil = '2000-31-12T00:00:00Z')
+		self.subject.listRecords(partName = 'PART', continueAt = '0010', oaiFrom = '2000-01-01T00:00:00Z', oaiUntil = '2000-31-12T00:00:00Z')
 		executeQueryMethod = self.index.calledMethods[0]
 		queryWrapper = executeQueryMethod.arguments[0]
-		self.assertEquals('+__stamp__.unique:{0010 TO A} +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z]', str(queryWrapper.getPyLuceneQuery()))
+		self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0010 TO A} +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z]', str(queryWrapper.getPyLuceneQuery()))
 		self.assertEquals('__stamp__.unique', str(queryWrapper._sortBy))

@@ -29,8 +29,9 @@ from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
 from meresco.core.index.querywrapper import QueryWrapper
-from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term
+from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term, TermQuery
 from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
+from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
 
 LO = '0' #sorts lower/eq than all numbers (as strings)
 HI = 'A' #sorts higher than all numbers (as strings)
@@ -55,7 +56,7 @@ class IndexComponent(Component):
 		self._index.addToIndex(notification.document)
 		self._latestId = notification.id
 			
-	def listRecords(self, continueAt = '0', oaiFrom = None, oaiUntil = None):
+	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
 		#TODO add test cases.
 		def addRange(root, field, lo, hi, inclusive):
 			range = RangeQuery(Term(field, lo), Term(field, hi), inclusive)
@@ -64,6 +65,7 @@ class IndexComponent(Component):
 		#It is necessery here to work with the elematal objects, because the query parser transforms everything into lowercase
 		
 		query = BooleanQuery()
+		query.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), partName)), BooleanClause.Occur.MUST)
 		addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, HI, False)
 		if oaiFrom or oaiUntil:
 			oaiFrom = oaiFrom or LO
