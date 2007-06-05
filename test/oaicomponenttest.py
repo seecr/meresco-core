@@ -32,7 +32,7 @@ from cq2utils.observable import Observable
 class OaiComponentTest(OaiTestCase):
 	
 	def getSubject(self):
-		return OaiComponent("metadataformats (not tested, not important here)")
+		return OaiComponent([("Not relevant", "even less so", "even less so")])
 	
 	def testChaining(self):
 		self.request.args = {'verb': ['Identify']}

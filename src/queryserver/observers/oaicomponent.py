@@ -37,12 +37,14 @@ from cq2utils.observable import Observable
 class OaiComponent(Observable):
 	
 	def __init__(self, metadataFormats):
+		names = map(lambda (name, x, y): name, metadataFormats)
+		
 		Observable.__init__(self)
 		self._privateTree = Observable()
 		for branch in [
 				OaiIdentify(),
-				OaiGetRecord(),
-				OaiList(),
+				OaiGetRecord(names),
+				OaiList(names),
 				OaiListMetadataFormats(metadataFormats),
 				OaiSink()]:
 			branch.changed = self.changed

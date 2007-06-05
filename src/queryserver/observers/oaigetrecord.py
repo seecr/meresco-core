@@ -46,8 +46,8 @@ Error and Exception Conditions
     * cannotDisseminateFormat - The value of the metadataPrefix argument is not supported by the item identified by the value of the identifier argument.
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
 """
-	def __init__(self):
-		OaiRecordVerb.__init__(self)
+	def __init__(self, partNames):
+		OaiRecordVerb.__init__(self, partNames)
 		Observable.__init__(self)
 	
 	def notify(self, webRequest):
@@ -73,6 +73,9 @@ Error and Exception Conditions
 		
 		id = webRequest.args['identifier'][0]
 		self.partName = webRequest.args['metadataPrefix'][0]
+		
+		if not self.partName in self.partNames:
+			return self.writeError(webRequest, 'cannotDisseminateFormat')
 		
 		hasId, hasPartName = self.any.isAvailable(id, self.partName)
 		

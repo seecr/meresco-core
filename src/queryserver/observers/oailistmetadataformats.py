@@ -48,7 +48,7 @@ Error and Exception Conditions
 	"""
 	
 	def __init__(self, metadataFormats = [OAI_DC]):
-		OaiVerb.__init__(self)
+		OaiVerb.__init__(self, None)
 		Observable.__init__(self)
 		self.metadataFormats = metadataFormats
 	

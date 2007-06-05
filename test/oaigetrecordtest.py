@@ -33,7 +33,7 @@ from cq2utils.calltrace import CallTrace
 
 class OaiGetRecordTest(OaiTestCase):
 	def getSubject(self):
-		return OaiGetRecord()	
+		return OaiGetRecord(['oai_dc'])	
 		
 	def testGetRecordNoArguments(self):
 		self.assertBadArgument({'verb': ['GetRecord']}, 'Missing argument(s) "identifier", "metadataPrefix".')

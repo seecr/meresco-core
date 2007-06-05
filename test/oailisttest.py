@@ -35,7 +35,7 @@ from StringIO import StringIO
 
 class OaiListTest(OaiTestCase):
 	def getSubject(self):
-		return OaiList()
+		return OaiList(['oai_dc'])
 	
 	def testNoArguments(self):
 		self.assertBadArgument({'verb': ['ListRecords']}, 'Missing argument "resumptionToken" or "metadataPrefix"')

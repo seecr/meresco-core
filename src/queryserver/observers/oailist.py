@@ -76,8 +76,8 @@ Error and Exception Conditions
     * noRecordsMatch - The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.
     * noSetHierarchy - The repository does not support sets.
 """
-	def __init__(self):
-		OaiRecordVerb.__init__(self)
+	def __init__(self, partNames):
+		OaiRecordVerb.__init__(self, partNames)
 		Observable.__init__(self)
 	
 	def notify(self, webRequest):
@@ -131,7 +131,9 @@ Error and Exception Conditions
 		return self.writeMessage(webRequest, queryResult)
 		
 	def writeMessage(self, webRequest, queryResult, writeCloseToken = False):
-		
+		if not self.partName in self.partNames:
+			return self.writeError(webRequest, 'cannotDisseminateFormat')
+
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
 		webRequest.write('<%s>' % self.verb)

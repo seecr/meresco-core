@@ -33,6 +33,10 @@ from xml.utils import iso8601
 DONE = 1
 
 class OaiVerb(object):
+	
+	def __init__(self, partNames):
+		self.partNames = partNames
+	
 	def getTime(self):
 		return strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
 	
@@ -48,7 +52,7 @@ class OaiVerb(object):
 		url = self.getRequestUrl(webRequest)
 		args = ' '.join(['%s="%s"' % (xmlEscape(k), xmlEscape(v[0])) for k,v in sorted(webRequest.args.items())])
 		webRequest.write(REQUEST % locals())
-
+	
 	def writeError(self, webRequest, statusCode, addionalMessage = ''):
 		space = addionalMessage and ' ' or '' 
 		message = ERROR_CODES[statusCode] + space + addionalMessage
