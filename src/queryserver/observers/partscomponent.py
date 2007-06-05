@@ -26,11 +26,10 @@
 ## end license ##
 from cq2utils.observable import Observable
 from cq2utils.component import Notification
+from amara.binderytools import bind_stream, bind_string
 
 PARTS_PART = '__parts__' # __ because purpose is internal use only!
 PART = 'part'
-
-from amara.binderytools import bind_string
 
 class PartsComponent(Observable):
 	
@@ -49,7 +48,7 @@ class PartsComponent(Observable):
 			if unit.hasBox(PARTS_PART):
 				box = unit.openBox(PARTS_PART)
 				try:
-					parts_xml = binderytools.bind_stream(box).__parts__
+					parts_xml = bind_stream(box).__parts__
 					for part in parts_xml:
 						parts.add(str(part))
 				finally:

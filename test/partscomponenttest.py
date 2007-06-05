@@ -30,11 +30,13 @@ from meresco.queryserver.observers.partscomponent import PartsComponent
 from cq2utils.calltrace import CallTrace
 from cq2utils.component import Notification
 from amara.binderytools import bind_string
+from StringIO import StringIO
 
 class PartsComponentTest(TestCase):
 	
 	def setUp(self):
-		self.unit = CallTrace("Unit")
+		self.box = StringIO("<__parts__><part>partA</part></__parts__>")
+		self.unit = CallTrace("Unit", returnValues = {"hasBox": True, "openBox": self.box})
 		self.storage = CallTrace("Storage", returnValues = {"getUnit": self.unit})
 		self.subject = PartsComponent(self.storage, ["partA", "partB"])
 		self.subject.addObserver(self)
@@ -46,10 +48,19 @@ class PartsComponentTest(TestCase):
 		self.assertEquals([(notification, )], self.notifications)
 		
 	def testAdd(self):
-		notification = Notification("add", "id_1", "partA", "payload")
+		notification = Notification("add", "id_1", "partB", "payload")
 		self.subject.notify(notification)
 		
 		partNotification = Notification("add", "id_1", "__parts__", bind_string("<__parts__><part>partA</part><part>partB</part></__parts__>").__parts__)
+		self.assertEquals([
+			(notification, ),
+			(partNotification, )], self.notifications)
+	
+	def testDelete(self):
+		notification = Notification("delete", "id_1", "partA", "payload")
+		self.subject.notify(notification)
+		
+		partNotification = Notification("add", "id_1", "__parts__", bind_string("<__parts__></__parts__>").__parts__)
 		self.assertEquals([
 			(notification, ),
 			(partNotification, )], self.notifications)
