@@ -33,6 +33,9 @@ from cq2utils.observable import Observable
 
 class SRURecordUpdatePlugin(Observable):
 
+	def _flattenXml(self, xml):
+		return ''.join([child.xml() for child in xml.childNodes if is_element(child)])
+	
 	def notify(self, httpRequest):
 		try:
 			result = Notification()
@@ -44,13 +47,12 @@ class SRURecordUpdatePlugin(Observable):
 				result.partName = str(updateRequest.record.recordSchema)
 				packing = updateRequest.record.recordPacking
 				recordData = updateRequest.record.recordData
-			
+				if hasattr(updateRequest.record, "extraRecordData"):
+					result.extraRecordData = self._flattenXml(updateRequest.record.extraRecordData)
 				if packing == 'text/plain':
 					result.payload = str(recordData)
 				elif packing == 'text/xml':
-					result.payload = ''.join([child.xml()
-						for child in recordData.childNodes 
-							if is_element(child)])
+					result.payload = self._flattenXml(recordData)
 				else:
 					raise Exception("updateRequest.record.recordPacking should be either 'text/plain' or 'text/xml'.") 
 	
