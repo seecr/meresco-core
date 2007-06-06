@@ -33,13 +33,33 @@ SETS_PART = "__sets__"
 
 class SetsComponent(Observable):
 	
+	def __init__(self, flattenedHierarchyListener = None):
+		Observable.__init__(self)
+		self._flattenedHierarchyListener = flattenedHierarchyListener
+	
 	def notify(self, notification):
 		if hasattr(notification, 'sets'):
-			setsNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(notification.sets)))
+			setsNotification = Notification("add", notification.id, SETS_PART, bind_string(self.tupleXml(notification.sets)))
 			self.changed(setsNotification)
+			
+			if self._flattenedHierarchyListener:
+				flattenedNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(self.flattenHierarchy(notification.sets))))
+				self._flattenedHierarchyListener.notify(flattenedNotification)
 	
 	def xml(self, sets):
-		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % x, sets)), SETS_PART)
+		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set>%s</set>""" % x, sets)), SETS_PART)
+	
+	def tupleXml(self, sets):
+		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda (x, y): """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % (x, y), sets)), SETS_PART)
+	
+	def flattenHierarchy(self, sets):
+		""""[1:2:3, 1:2:4] => [1, 1:2, 1:2:3, 1:2:4]"""
+		result = set()
+		for setSpec, setName in sets:
+			parts = setSpec.split(':')
+			for i in range(1, len(parts) + 1):
+				result.add(':'.join(parts[:i]))
+		return result
 
 	def undo(self, *args, **kwargs):
 		pass
