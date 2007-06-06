@@ -74,7 +74,10 @@ class SRURecordUpdatePlugin(Observable):
 	
 	def interpretExtraRecordData(self, notification, extraRecordData):
 		if hasattr(extraRecordData, "sets"):
-			notification.sets = map(str, extraRecordData.sets.set)
+			if hasattr(extraRecordData.sets, "set"):
+				notification.sets = map(lambda set: (set.setSpec, set.setName), extraRecordData.sets.set)
+			else:
+				notification.sets = []
 	
 	def writeSucces(self, httpRequest):
 		response = RESPONSE_XML % {"operationStatus": "succes", "hook": ""}

@@ -89,11 +89,18 @@ class SRURecordUpdatePluginTest(unittest.TestCase):
 		self.assertEquals("<one><a/></one><two/>", notification.extraRecordData)
 		
 	def testSets(self):
-		self.dictionary["hook"] = "<srw:extraRecordData><sets><set>one</set><set>two</set></sets></srw:extraRecordData>"
+		self.dictionary["hook"] = "<srw:extraRecordData><sets><set><setSpec>one</setSpec><setName>One name</setName></set><set><setSpec>two</setSpec><setName>Two</setName></set></sets></srw:extraRecordData>"
 		self.notifyPlugin()
 		self.assertEquals(1, len(self.notifications))
 		notification = self.notifications[0]
-		self.assertEquals(["one", "two"], notification.sets)
+		self.assertEquals([("one", "One name"), ("two", "Two")], notification.sets)
+		
+	def testEmptySets(self):
+		self.dictionary["hook"] = "<srw:extraRecordData><sets></sets></srw:extraRecordData>"
+		self.notifyPlugin()
+		self.assertEquals(1, len(self.notifications))
+		notification = self.notifications[0]
+		self.assertEquals([], notification.sets)
 		
 	def testAddText(self):
 		self.dictionary["recordPacking"] = "text/plain"

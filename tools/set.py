@@ -47,7 +47,7 @@ SRU_UPDATE_REQUEST = """<?xml version="1.0" encoding="UTF-8"?>
 </updateRequest>"""
 
 def sets(l):
-	return """<sets>%s</sets>""" % map(lambda x: """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % x, l)
+	return """<sets>%s</sets>""" % "".join(map(lambda x: """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % x, l))
 
 
 def send(data, baseurl, port, path):
