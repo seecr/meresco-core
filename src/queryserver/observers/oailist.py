@@ -97,7 +97,8 @@ Error and Exception Conditions
 			self.partName = token._metadataPrefix
 			self.oaiFrom = token._from
 			self.oaiUntil = token._until
-			queryResult = self.any.listRecords(self.partName, token._continueAt, token._from, token._until)
+			self.oaiSet = token._set
+			queryResult = self.any.listRecords(self.partName, token._continueAt, token._from, token._until, token._set)
 			return self.writeMessage(webRequest, queryResult, True)
 		
 		if webRequest.args.get('resumptionToken', None):
@@ -109,6 +110,8 @@ Error and Exception Conditions
 		tooMuch = set(webRequest.args.keys()).difference(['verb', 'metadataPrefix', 'from', 'until', 'set'])
 		if tooMuch:
 			return self.writeError(webRequest, 'badArgument', 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch)))
+		
+		self.oaiSet = webRequest.args.get('set', [''])[0]
 		
 		self.partName = webRequest.args['metadataPrefix'][0]
 		try:
@@ -125,7 +128,7 @@ Error and Exception Conditions
 			self.oaiUntil = oaiUntil and oaiUntil.ceil()
 		except ISO8601Exception, e:
 			return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
-		queryResult = self.any.listRecords(self.partName, oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil)
+		queryResult = self.any.listRecords(self.partName, oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil, oaiSet = self.oaiSet)
 		if len(queryResult) == 0:
 			return self.writeError(webRequest, 'noRecordsMatch')
 		return self.writeMessage(webRequest, queryResult)
@@ -141,7 +144,7 @@ Error and Exception Conditions
 		for i, id in enumerate(queryResult):
 			if i == BATCH_SIZE:
 				continueAt = str(getattr(self.xmlSteal(prevId, STAMP_PART), UNIQUE))
-				resumptionToken = ResumptionToken(self.partName, continueAt, self.oaiFrom, self.oaiUntil)
+				resumptionToken = ResumptionToken(self.partName, continueAt, self.oaiFrom, self.oaiUntil, self.oaiSet)
 				webRequest.write('<resumptionToken>%s</resumptionToken>' % str(resumptionToken))
 				writeCloseToken = False
 				break

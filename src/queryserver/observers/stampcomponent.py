@@ -58,7 +58,7 @@ class StampComponent(Observable):
 		newNotification.id = notification.id
 		newNotification.partName = STAMP_PART
 		thexml = bind_string("""<%(STAMP_PART)s xmlns:teddy="http://www.cq2.nl/teddy">
-			<%(TIME_FIELD)s teddy:tokenize='false'>%(time)s</%(TIME_FIELD)s>
+			<%(TIME_FIELD)s teddy:tokenize="false">%(time)s</%(TIME_FIELD)s>
 			<%(UNIQUE_FIELD)s>%(unique)s</%(UNIQUE_FIELD)s>
 		</%(STAMP_PART)s>""" % 
 			{'time': time,

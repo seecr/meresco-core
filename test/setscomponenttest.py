@@ -29,16 +29,16 @@ class SetsComponentTest(TestCase):
 
 		self.assertEquals([], self.notifications)
 		
-	def testSets(self):
+	def testFlattenedSets(self):
 		notification = Notification("add", "id_1")
 		notification.sets = [("one:two:three", "Three Piggies"), ("one:two:four", "Four Chickies")]
 		setsComponent = SetsComponent(self)
 		setsComponent.notify(notification)
 		
-		setsNotification = Notification("add", "id_1", "__sets__", bind_string("""<__sets__><set>one:two:three</set><set>one:two</set><set>one:two:four</set><set>one</set></__sets__>"""))
+		setsNotification = Notification("add", "id_1", "__sets__", bind_string("""<__sets__><set %(tokenized)s>one:two:three</set><set %(tokenized)s>one:two</set><set %(tokenized)s>one:two:four</set><set %(tokenized)s>one</set></__sets__>""" % {"tokenized": 'xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false"'}).__sets__)
 		
 		self.assertEquals([(setsNotification, )], self.notifications)
-	
+
 	def notify(self, *args):
 		self.notifications.append(args)
 	

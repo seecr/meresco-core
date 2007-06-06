@@ -32,6 +32,7 @@ from meresco.core.index.querywrapper import QueryWrapper
 from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term, TermQuery
 from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
+from meresco.queryserver.observers.setscomponent import SETS_PART, SET
 
 LO = '0' #sorts lower/eq than all numbers (as strings)
 HI = 'A' #sorts higher than all numbers (as strings)
@@ -56,8 +57,7 @@ class IndexComponent(Component):
 		self._index.addToIndex(notification.document)
 		self._latestId = notification.id
 			
-	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
-		#TODO add test cases.
+	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None):
 		def addRange(root, field, lo, hi, inclusive):
 			range = RangeQuery(Term(field, lo), Term(field, hi), inclusive)
 			root.add(range, BooleanClause.Occur.MUST)
@@ -71,6 +71,8 @@ class IndexComponent(Component):
 			oaiFrom = oaiFrom or LO
 			oaiUntil = oaiUntil or HI
 			addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
+		if oaiSet:
+			query.add(TermQuery(Term('%s.%s' % (SETS_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
 
 		return self._index.executeQuery(QueryWrapper(query, '%s.%s' % (STAMP_PART, UNIQUE)))
 		

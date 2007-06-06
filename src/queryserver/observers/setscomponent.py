@@ -30,6 +30,7 @@ from cq2utils.component import Notification
 from amara.binderytools import bind_string
 
 SETS_PART = "__sets__"
+SET = 'set'
 
 class SetsComponent(Observable):
 	
@@ -43,11 +44,11 @@ class SetsComponent(Observable):
 			self.changed(setsNotification)
 			
 			if self._flattenedHierarchyListener:
-				flattenedNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(self.flattenHierarchy(notification.sets))))
+				flattenedNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(self.flattenHierarchy(notification.sets))).__sets__)
 				self._flattenedHierarchyListener.notify(flattenedNotification)
 	
 	def xml(self, sets):
-		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set>%s</set>""" % x, sets)), SETS_PART)
+		return """<%s xmlns:teddy="http://www.cq2.nl/teddy">%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set teddy:tokenize="false">%s</set>""" % x, sets)), SETS_PART)
 	
 	def tupleXml(self, sets):
 		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda (x, y): """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % (x, y), sets)), SETS_PART)

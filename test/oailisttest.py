@@ -56,7 +56,7 @@ class OaiListTest(OaiTestCase):
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				self.assertEquals('oai_dc', partName)
 				self.assertEquals('0', continueAt)
 				return ['id_0&0', 'id_1&1']
@@ -110,14 +110,15 @@ class OaiListTest(OaiTestCase):
  		self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
 	
 	def testListRecordsUsingToken(self):
-		self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL'))]}
+		self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL', 'SET'))]}
 		
 		observer = CallTrace('RecordAnswering')
-		def listRecords(partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+		def listRecords(partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 			self.assertEquals('oai_dc', partName)
 			self.assertEquals('10', continueAt)
 			self.assertEquals('FROM', oaiFrom)
 			self.assertEquals('UNTIL', oaiUntil)
+			self.assertEquals('SET', oaiSet)
 			return []
 				
 		observer.listRecords = listRecords
@@ -125,9 +126,9 @@ class OaiListTest(OaiTestCase):
 		self.observable.changed(self.request)
 		
 	def testResumptionTokensAreProduced(self):
-		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z']}
+		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z'], 'set': ['SET']}
 		observer = CallTrace('RecordAnswering')
-		def listRecords(partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+		def listRecords(partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 			return map(lambda i: 'id_%i' % i, range(1000))
 				
 		def write(sink, id, partName):
@@ -151,11 +152,12 @@ class OaiListTest(OaiTestCase):
 		self.assertEquals('oai_dc', resumptionToken._metadataPrefix)
 		self.assertEquals('2000-01-01T00:00:00Z', resumptionToken._from)
 		self.assertEquals('2000-12-31T00:00:00Z', resumptionToken._until)
+		self.assertEquals('SET', resumptionToken._set)
 			
 	def testFinalResumptionToken(self):
 		self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '200'))]}
 		observer = CallTrace('RecordAnswering')
-		def listRecords(partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+		def listRecords(partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 			return map(lambda i: 'id_%i' % i, range(BATCH_SIZE))
 		def write(sink, id, partName):
 			if partName == '__stamp__':
@@ -175,7 +177,7 @@ class OaiListTest(OaiTestCase):
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				self.assertEquals('0', continueAt)
 				return ['id_0', 'id_1']
 					
@@ -231,7 +233,7 @@ class OaiListTest(OaiTestCase):
 		#helper methods:
 		results = [None, None]
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				results[0] = oaiFrom
 				results[1] = oaiUntil
 				return ['id_0', 'id_1']
@@ -295,7 +297,7 @@ class OaiListTest(OaiTestCase):
 		self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				self.assertEquals('0', continueAt)
 				return ['id_0']
 					
@@ -338,7 +340,7 @@ class OaiListTest(OaiTestCase):
 		self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				return []
 					
 			def undo(sself, *args, **kwargs):
@@ -351,11 +353,11 @@ class OaiListTest(OaiTestCase):
 		
 		self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)
 
-	def testSets(self):
+	def testSetsInHeader(self):
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				self.assertEquals('oai_dc', partName)
 				self.assertEquals('0', continueAt)
 				return ['id_0&0', 'id_1&1']
@@ -387,3 +389,20 @@ class OaiListTest(OaiTestCase):
 		
 		self.assertTrue("<setSpec>one:two:three</setSpec>" in self.stream.getvalue())
 		self.assertTrue("<setSpec>one:two:four</setSpec>" in self.stream.getvalue())	
+		
+	def testListRecordsUsingMetadataPrefix(self):
+		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'set': ['SET']}
+		
+		class Observer:
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
+				self.assertEquals('SET', oaiSet)
+				return []
+					
+			def undo(sself, *args, **kwargs):
+				pass
+			def notify(sself, *args, **kwargs):
+				pass
+		
+		self.subject.addObserver(Observer())
+		self.observable.changed(self.request)
+		
