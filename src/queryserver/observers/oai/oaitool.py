@@ -27,7 +27,6 @@
 
 from time import gmtime, strftime
 from xml.sax.saxutils import escape as xmlEscape
-from meresco.queryserver.observers.stampcomponent import STAMP_PART
 from xml.utils import iso8601
 
 DONE = 1
@@ -64,7 +63,7 @@ class OaiVerb(object):
 		self.writeFooter(webRequest)
 		return DONE
 		
-	def xmlSteal(self, id, partName = STAMP_PART):
+	def xmlSteal(self, id, partName):
 		from StringIO import StringIO
 		from amara.binderytools import bind_string
 		buffer = StringIO()

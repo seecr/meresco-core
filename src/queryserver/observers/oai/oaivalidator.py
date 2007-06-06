@@ -30,13 +30,16 @@ from lxml.etree import parse, XMLSchema, XMLSchemaParseError
 from os.path import join, abspath, dirname
 from cStringIO import StringIO
 
+# Lines with 'SLOW' are commented out because they are superfluous (we dare to say the official OAI XSD is indeed a valid XSD) and phase-of-the-moon-slow
 
 schemaLocation = join(abspath(dirname(__file__)), 'data')
 # Create an XSD validator to validate the XSD
-xsdxsd = XMLSchema(parse(join(schemaLocation, 'XMLSchema.xsd')))
+# xsdxsd = XMLSchema(parse(join(schemaLocation, 'XMLSchema.xsd'))) # SLOW
+
 # Parse the XSD and validate it as XSD
 oai = parse(join(schemaLocation, 'OAI-PMH.xsd'))
-xsdxsd.validate(oai)
+# xsdxsd.validate(oai) # SLOW
+
 # Create an XSD validator to validate the XML instance
 oaixsd = XMLSchema(oai)
 

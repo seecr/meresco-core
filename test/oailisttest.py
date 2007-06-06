@@ -72,9 +72,9 @@ class OaiListTest(OaiTestCase):
 					self.fail(partName + ' is unexpected')
 			
 			def isAvailable(sself, id, partName):
-				if partName == '__tombstone__':
-					return True, False
-				return True, True
+				if partName == 'oai_dc':
+					return True, True
+				return True, False
 			
 			def undo(sself, *args, **kwargs):
 				pass
@@ -310,9 +310,9 @@ class OaiListTest(OaiTestCase):
 					self.fail(partName + ' is unexpected')
 			
 			def isAvailable(sself, id, partName):
-				if partName == '__tombstone__':
-					return True, False
-				return True, True
+				if partName == 'oai_dc':
+					return True, True
+				return True, False
 			
 			def undo(sself, *args, **kwargs):
 				pass
@@ -350,3 +350,40 @@ class OaiListTest(OaiTestCase):
 		self.observable.changed(self.request)
 		
 		self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)
+
+	def testSets(self):
+		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
+		
+		class Observer:
+			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None):
+				self.assertEquals('oai_dc', partName)
+				self.assertEquals('0', continueAt)
+				return ['id_0&0', 'id_1&1']
+					
+			def write(sself, sink, id, partName):
+				if partName == 'oai_dc':
+					sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
+				elif partName == '__stamp__':
+					sink.write("""<__stamp__>
+			<datestamp>DATESTAMP_FOR_TEST</datestamp>
+		</__stamp__>""")
+				elif partName == '__sets__':
+					sink.write("""<__sets__><set><setSpec>one:two:three</setSpec><setName>Three Piggies</setName></set><set><setSpec>one:two:four</setSpec><setName>Four Chickies</setName></set></__sets__>""")
+				else:
+					self.fail(partName + ' is unexpected')
+			
+			def isAvailable(sself, id, partName):
+				if partName == 'oai_dc' or partName == '__sets__':
+					return True, True
+				return True, False
+			
+			def undo(sself, *args, **kwargs):
+				pass
+			def notify(sself, *args, **kwargs):
+				pass
+		
+		self.subject.addObserver(Observer())
+		self.observable.changed(self.request)
+		
+		self.assertTrue("<setSpec>one:two:three</setSpec>" in self.stream.getvalue())
+		self.assertTrue("<setSpec>one:two:four</setSpec>" in self.stream.getvalue())	
