@@ -48,7 +48,9 @@ class SRURecordUpdatePlugin(Observable):
 				packing = updateRequest.record.recordPacking
 				recordData = updateRequest.record.recordData
 				if hasattr(updateRequest.record, "extraRecordData"):
-					result.extraRecordData = self._flattenXml(updateRequest.record.extraRecordData)
+					extraRecordData = updateRequest.record.extraRecordData
+					result.extraRecordData = self._flattenXml(extraRecordData)
+					self.interpretExtraRecordData(result, extraRecordData)
 				if packing == 'text/plain':
 					result.payload = str(recordData)
 				elif packing == 'text/xml':
@@ -70,18 +72,22 @@ class SRURecordUpdatePlugin(Observable):
 			return "delete"
 		raise Exception("Unknown action: " + action)
 	
+	def interpretExtraRecordData(self, notification, extraRecordData):
+		if hasattr(extraRecordData, "sets"):
+			notification.sets = map(str, extraRecordData.sets.set)
+	
 	def writeSucces(self, httpRequest):
-		response = RESPONSE_XML % {"operationStatus": "succes", "bla": ""}
+		response = RESPONSE_XML % {"operationStatus": "succes", "hook": ""}
 		httpRequest.write(response)
 		
 	def writeError(self, httpRequest, message):
-		response = RESPONSE_XML % {"operationStatus": "fail", "bla": DIAGNOSTIC_XML % message}
+		response = RESPONSE_XML % {"operationStatus": "fail", "hook": DIAGNOSTIC_XML % message}
 		httpRequest.write(response)
 	
 RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <updateRequest xmlns:srw="info:srw/namespace/1/srw-schema" xmlns:ucp="info:srw/namespace/1/update">
 	<srw:version>1.0</srw:version>
-	<ucp:operationStatus>%(operationStatus)s</ucp:operationStatus>%(bla)s
+	<ucp:operationStatus>%(operationStatus)s</ucp:operationStatus>%(hook)s
 </updateRequest>"""
 
 DIAGNOSTIC_XML = """<srw:diagnostics>%s</srw:diagnostics>"""
