@@ -39,6 +39,21 @@ class SetsComponentTest(TestCase):
 		
 		self.assertEquals([(setsNotification, )], self.notifications)
 
+	def testSetsDatabase(self):
+		notification = Notification("add", "id_1")
+		notification.sets = [("one:two:three", "Three Piggies"), ( "one:two:four", "Four Chickies")]
+		setsComponent = SetsComponent(None, self)
+		setsComponent.notify(notification)
+		
+		self.assertEquals(2, len(self.notifications))
+		
+		one = Notification("add", "one:two:three", "set", bind_string("""<set><setSpec>one:two:three</setSpec><setName>Three Piggies</setName></set>""").set)
+		
+		two = Notification("add", "one:two:four", "set", bind_string("""<set><setSpec>one:two:four</setSpec><setName>Four Chickies</setName></set>""").set)
+		
+		self.assertEquals((one, ), self.notifications[0])
+		self.assertEquals((two, ), self.notifications[1])
+
 	def notify(self, *args):
 		self.notifications.append(args)
 	

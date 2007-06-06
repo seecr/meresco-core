@@ -34,9 +34,10 @@ SET = 'set'
 
 class SetsComponent(Observable):
 	
-	def __init__(self, flattenedHierarchyListener = None):
+	def __init__(self, flattenedHierarchyListener = None, setsDatabase = None):
 		Observable.__init__(self)
 		self._flattenedHierarchyListener = flattenedHierarchyListener
+		self._setsDatabase = setsDatabase
 	
 	def notify(self, notification):
 		if hasattr(notification, 'sets'):
@@ -46,6 +47,11 @@ class SetsComponent(Observable):
 			if self._flattenedHierarchyListener:
 				flattenedNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(self.flattenHierarchy(notification.sets))).__sets__)
 				self._flattenedHierarchyListener.notify(flattenedNotification)
+				
+			if self._setsDatabase:
+				for set in notification.sets:
+					setsDatabaseNotification = Notification("add", set[0], 'set', bind_string("<set><setSpec>%s</setSpec><setName>%s</setName></set>" % set).set)
+					self._setsDatabase.notify(setsDatabaseNotification)
 	
 	def xml(self, sets):
 		return """<%s xmlns:teddy="http://www.cq2.nl/teddy">%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set teddy:tokenize="false">%s</set>""" % x, sets)), SETS_PART)
