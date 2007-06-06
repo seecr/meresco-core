@@ -34,8 +34,9 @@ SETS_PART = "__sets__"
 class SetsComponent(Observable):
 	
 	def notify(self, notification):
-		setsNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(notification.sets)))
-		self.changed(setsNotification)
+		if hasattr(notification, 'sets'):
+			setsNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(notification.sets)))
+			self.changed(setsNotification)
 	
 	def xml(self, sets):
 		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % x, sets)), SETS_PART)

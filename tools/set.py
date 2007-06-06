@@ -42,7 +42,7 @@ SRU_UPDATE_REQUEST = """<?xml version="1.0" encoding="UTF-8"?>
 		<srw:recordPacking>%(recordPacking)s</srw:recordPacking>
 		<srw:recordSchema>%(recordSchema)s</srw:recordSchema>
 		<srw:recordData>%(recordData)s</srw:recordData>
-		<srw:extraRecordData>%(extraRecordData)</srw:extraRecordData>
+		<srw:extraRecordData>%(extraRecordData)s</srw:extraRecordData>
 	</srw:record>	
 </updateRequest>"""
 
@@ -73,6 +73,6 @@ if __name__ == "__main__":
 			"recordPacking": "text/xml",
 			"recordSchema": "rating",
 			"recordData": XML_DOCUMENT,
-			"extraRecordData" % sets([
+			"extraRecordData": sets([
 				("aap:noot:mies", "Mies is vies"),
 				("aap:noot:vuur", "Vuur is duur")])}, 'localhost', 8000, '/darenet/sruRecordUpdate')

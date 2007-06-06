@@ -20,6 +20,15 @@ class SetsComponentTest(TestCase):
 		
 		self.assertEquals([(setsNotification, )], self.notifications)
 		
+	def testNoSets(self):
+		notification = Notification("add", "id_1")
+		
+		setsComponent = SetsComponent()
+		setsComponent.addObserver(self)
+		setsComponent.notify(notification)
+
+		self.assertEquals([], self.notifications)
+		
 	def notify(self, *args):
 		self.notifications.append(args)
 	
