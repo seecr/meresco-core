@@ -68,6 +68,7 @@ class OaiTestCase(CQ2TestCase):
 		
 		self.request.args = arguments
 		self.observable.changed(self.request)
+		self.assertTrue(len(self.request.calledMethods) >= 1)
 		self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
 		result = self.stream.getvalue()
 		self.assertTrue(result.find("""<error code="badArgument">""") > -1)

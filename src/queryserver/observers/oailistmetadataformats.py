@@ -56,6 +56,9 @@ Error and Exception Conditions
 		if webRequest.args.get('verb', None) != ['ListMetadataFormats']:
 			return
 		
+		if self.isArgumentRepeated(webRequest):
+			return self.writeError(webRequest, 'badArgument', 'Argument "%s" may not be repeated.' % self.isArgumentRepeated(webRequest))
+		
 		if set(webRequest.args.keys()) == set(['verb', 'identifier']):
 			self.identifier = webRequest.args['identifier'][0]
 			if self.all.isAvailable(self.identifier, PARTS_PART) != (True, True):

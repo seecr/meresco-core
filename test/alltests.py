@@ -75,6 +75,7 @@ from undertakertest import UnderTakerTest
 from oailistmetadataformatstest import OaiListMetadataFormatsTest
 from partscomponenttest import PartsComponentTest
 from setscomponenttest import SetsComponentTest
+from oailistsetstest import OaiListSetsTest
 
 if __name__ == '__main__':
         unittest.main()
