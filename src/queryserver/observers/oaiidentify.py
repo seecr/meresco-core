@@ -62,16 +62,10 @@ The response may include multiple instances of the following optional elements:
     * description : an extensible mechanism for communities to describe their repositories. For example, the description container could be used to include collection-level metadata in the response to the Identify request. Implementation Guidelines are available to give directions with this respect. Each description container must be accompanied by the URL of an XML schema describing the structure of the description container.
 
 	"""
-	def notify(self, webRequest):
-		if webRequest.args.get('verb', None) != ['Identify']:
-			return
-		
-		error = self._validateArguments(webRequest, {})
-		if error:
-			return self.writeError(webRequest, 'badArgument', error)
-
-		self.writeHeader(webRequest)
-		self.writeRequestArgs(webRequest)
+	def __init__(self):
+		OaiVerb.__init__(self, ['Identify'], {})
+	
+	def process(self, webRequest):	
 		values = {
 			'repositoryName': 'The Repository Name',
 			'baseURL': self.getRequestUrl(webRequest),
@@ -80,8 +74,6 @@ The response may include multiple instances of the following optional elements:
 		}
 		values.update(hardcoded_values)
 		webRequest.write(IDENTIFY % values)
-		self.writeFooter(webRequest)
-		return DONE
 		
 	def undo(self, *args, **kwargs):
 		"""Ignored"""

@@ -29,6 +29,9 @@ from oai.oaitool import OaiVerb
 
 class OaiSink(OaiVerb):
 	
+	def __init__(self):
+		OaiVerb.__init__(self, [], {})
+	
 	def notify(self, webRequest):
 		if webRequest.args.get('verb', []) == []:
 			self.writeError(webRequest, 'badArgument', 'No "verb" argument found.')

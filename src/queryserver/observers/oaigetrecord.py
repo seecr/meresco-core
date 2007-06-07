@@ -47,43 +47,28 @@ Error and Exception Conditions
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
 """
 	def __init__(self, partNames):
-		OaiRecordVerb.__init__(self)
+		OaiRecordVerb.__init__(self, ['GetRecord'], {
+			'identifier': 'required',
+			'metadataPrefix': 'required'})
 		Observable.__init__(self)
 		self.partNames = partNames
 	
-	def notify(self, webRequest):
-		if webRequest.args.get('verb', None) != ['GetRecord']:
-			return
-		
-		error = self._validateArguments(webRequest, {
-			'identifier': 'required',
-			'metadataPrefix': 'required'})
-		if error:
-			return self.writeError(webRequest, 'badArgument', error)
-
+	def preProcess(self, webRequest):
 		if not self._metadataPrefix in self.partNames:
 			return self.writeError(webRequest, 'cannotDisseminateFormat')
 		
 		hasId, hasPartName = self.any.isAvailable(self._identifier, self._metadataPrefix)
 		
 		if not hasId:
-			self.writeError(webRequest, 'idDoesNotExist')
-			return DONE
+			return self.writeError(webRequest, 'idDoesNotExist')
 		
 		if not hasPartName:
-			self.writeError(webRequest, 'cannotDisseminateFormat')
-			return DONE
+			return self.writeError(webRequest, 'cannotDisseminateFormat')
 		
-		self.writeHeader(webRequest)
-		self.writeRequestArgs(webRequest)
-		
+	def process(self, webRequest):
 		webRequest.write('<GetRecord>')
 		self.writeRecord(webRequest, self._identifier)
 		webRequest.write('</GetRecord>')
-		
-		self.writeFooter(webRequest)
-		return DONE
-		
 	
 	def undo(self, *args, **kwargs):
 		"""ignored"""

@@ -48,34 +48,25 @@ Error and Exception Conditions
 	"""
 	
 	def __init__(self, metadataFormats = [OAI_DC]):
-		OaiVerb.__init__(self, None)
+		OaiVerb.__init__(self, ['ListMetadataFormats'], {'identifier': 'optional'})
 		Observable.__init__(self)
-		self.metadataFormats = metadataFormats
+		self.supportedMetadataFormats = metadataFormats
 	
-	def notify(self, webRequest):
-		if webRequest.args.get('verb', None) != ['ListMetadataFormats']:
-			return
-		
-		error = self._validateArguments(webRequest, {'identifier': 'optional'})
-		if error:
-			return self.writeError(webRequest, 'badArgument', error)
-		
+	def preProcess(self, webRequest):
 		if self._identifier:
 			if self.all.isAvailable(self._identifier, PARTS_PART) != (True, True):
 				return self.writeError(webRequest, 'idDoesNotExist')
 			
 			names = self.xmlSteal(self._identifier, PARTS_PART)
 			names = map(str, names.part)
-			metadataFormats = filter(lambda (name, y, z): name in names, self.metadataFormats)
+			self.displayedMetadataFormats = filter(lambda (name, y, z): name in names, self.supportedMetadataFormats)
 		else:
-			metadataFormats = self.metadataFormats
+			self.displayedMetadataFormats = self.supportedMetadataFormats
 		
-		self.writeHeader(webRequest)
-		self.writeRequestArgs(webRequest)
-		
+	def process(self, webRequest):	
 		webRequest.write("""<ListMetadataFormats>""")
 		
-		for metadataPrefix, schema, metadataNamespace in metadataFormats:
+		for metadataPrefix, schema, metadataNamespace in self.displayedMetadataFormats:
 			webRequest.write("""<metadataFormat>
 				<metadataPrefix>%s</metadataPrefix>
 				<schema>%s</schema>
@@ -83,9 +74,6 @@ Error and Exception Conditions
 			</metadataFormat>""" % (metadataPrefix, schema, metadataNamespace))
 		
 		webRequest.write("""</ListMetadataFormats>""")
-		
-		self.writeFooter(webRequest)
-		return DONE
 		
 	def undo(self, *args, **kwargs):
 		"""Ignored"""

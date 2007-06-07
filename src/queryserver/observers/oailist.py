@@ -77,26 +77,19 @@ Error and Exception Conditions
     * noSetHierarchy - The repository does not support sets.
 """
 	def __init__(self, partNames):
-		OaiRecordVerb.__init__(self)
-		Observable.__init__(self)
-		self.partNames = partNames
-	
-	def notify(self, webRequest):
 		#TODO in het algemeen moet er nog wat gebeuren met fouten die uit 'ons' binnenste komen. Specifiek wordt er nog slecht omgegegaan met
 		#verrotte resumptionTokens
-				
-		self.verb = webRequest.args.get('verb', [None])[0]
-		if not self.verb in ['ListIdentifiers', 'ListRecords']:
-			return
 		
-		error = self._validateArguments(webRequest, {
+		OaiRecordVerb.__init__(self, ['ListIdentifiers', 'ListRecords'], {
 			'from': 'optional',
 			'until': 'optional',
 			'set': 'optional',
 			'resumptionToken': 'exclusive',
 			'metadataPrefix': 'required'})
-		if error:
-			return self.writeError(webRequest, 'badArgument', error)
+		Observable.__init__(self)
+		self.partNames = partNames
+	
+	def preProcess(self, webRequest):
 		
 		if self._resumptionToken:
 			token = resumptionTokenFromString(self._resumptionToken)
@@ -120,38 +113,34 @@ Error and Exception Conditions
 			except ISO8601Exception, e:
 				return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
 		
-		queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
+		self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
 		
-		if len(queryResult) == 0:
+		if len(self._queryResult) == 0:
 			return self.writeError(webRequest, 'noRecordsMatch')
 		
-		return self.writeMessage(webRequest, queryResult, self._resumptionToken)
+		self._writeCloseToken = self._resumptionToken
 		
-	def writeMessage(self, webRequest, queryResult, writeCloseToken = False):
 		if not self._metadataPrefix in self.partNames:
 			return self.writeError(webRequest, 'cannotDisseminateFormat')
 
-		self.writeHeader(webRequest)
-		self.writeRequestArgs(webRequest)
-		webRequest.write('<%s>' % self.verb)
+	def process(self, webRequest):
+		webRequest.write('<%s>' % self._verb)
 		j = -1
-		for i, id in enumerate(queryResult):
+		for i, id in enumerate(self._queryResult):
 			if i == BATCH_SIZE:
 				continueAt = str(getattr(self.xmlSteal(prevId, STAMP_PART), UNIQUE))
 				resumptionToken = ResumptionToken(self._metadataPrefix, continueAt, self._from, self._until, self._set)
 				webRequest.write('<resumptionToken>%s</resumptionToken>' % str(resumptionToken))
-				writeCloseToken = False
+				self._writeCloseToken = False
 				break
 			
-			self.writeRecord(webRequest, id, self.verb == "ListRecords")
+			self.writeRecord(webRequest, id, self._verb == "ListRecords")
 			
 			prevId = id
 			j = i
-		if writeCloseToken and j <= BATCH_SIZE:
+		if self._writeCloseToken and j <= BATCH_SIZE:
 			webRequest.write('<resumptionToken/>')
-		webRequest.write('</%s>' % self.verb)
-		self.writeFooter(webRequest)
-		return DONE
+		webRequest.write('</%s>' % self._verb)
 
 	def undo(self, *args, **kwargs):
 		"""ignored"""

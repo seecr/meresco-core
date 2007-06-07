@@ -33,6 +33,39 @@ DONE = 1
 
 class OaiVerb(object):
 	
+	def __init__(self, supportedVerbs, argsDef):
+		self._supportedVerbs = supportedVerbs
+		self._argsDef = argsDef
+	
+	def notify(self, webRequest):
+		self._verb = webRequest.args.get('verb', [None])[0]
+		if not self._verb in self._supportedVerbs:
+			return
+		
+		error = self._doElementaryArgumentsValidation(webRequest)
+		if error:
+			return self.writeError(webRequest, 'badArgument', error)
+		
+		error = self.preProcess(webRequest)
+		if error:
+			return error
+		
+		self.writeHeader(webRequest)
+		self.writeRequestArgs(webRequest)
+		
+		self.process(webRequest)
+		
+		self.writeFooter(webRequest)
+		return DONE
+	
+	def preProcess(self, webRequest):
+		"""Hook"""
+		pass
+	
+	def process(self, webRequest):
+		"""Hook"""
+		pass
+			
 	def getTime(self):
 		return strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
 	
@@ -76,9 +109,9 @@ class OaiVerb(object):
 				return k
 		return False
 		
-	def _select(self, argsDef, neededNess):
+	def _select(self, neededNess):
 		result = []
-		for arg, definition in argsDef.items():
+		for arg, definition in self._argsDef.items():
 			if definition == neededNess:
 				result.append(arg)
 		return result
@@ -86,11 +119,11 @@ class OaiVerb(object):
 	def ___set(self, key, value):
 		setattr(self, "_" + key, value[0])
 	
-	def _validateArguments(self, webRequest, argsDef):
+	def _doElementaryArgumentsValidation(self, webRequest):
 		if self._isArgumentRepeated(webRequest):
 			return 'Argument "%s" may not be repeated.' % self._isArgumentRepeated(webRequest)
 		
-		exclusiveArguments = self._select(argsDef, 'exclusive')
+		exclusiveArguments = self._select('exclusive')
 		for exclusiveArgument in exclusiveArguments:
 			if exclusiveArgument in webRequest.args.keys():
 				if set(webRequest.args.keys()) != set(['verb', exclusiveArgument]):
@@ -101,7 +134,7 @@ class OaiVerb(object):
 				self.___set(exclusiveArgument, [None])
 			
 		missing = []
-		for requiredArgument in self._select(argsDef, 'required'):
+		for requiredArgument in self._select('required'):
 			if not requiredArgument in webRequest.args.keys():
 				missing.append(requiredArgument)
 			self.___set(requiredArgument, webRequest.args.get(requiredArgument, [None]))
@@ -111,12 +144,13 @@ class OaiVerb(object):
 				" or ".join(quote(exclusiveArguments) + \
 				[" and ".join(quote(missing))]) + "."
 			
-		for optionalArgument in self._select(argsDef, 'optional'):
+		for optionalArgument in self._select('optional'):
 			self.___set(optionalArgument, webRequest.args.get(optionalArgument, [None]))
 		
-		tooMuch = set(webRequest.args.keys()).difference(argsDef.keys() + ['verb'])
+		tooMuch = set(webRequest.args.keys()).difference(self._argsDef.keys() + ['verb'])
 		if tooMuch:
 			return 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch))
+		
 
 def resumptionTokenFromString(s):
 	result = ResumptionToken()

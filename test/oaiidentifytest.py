@@ -31,6 +31,7 @@ from meresco.queryserver.observers.oaiidentify import OaiIdentify
 from meresco.queryserver.observers.oai.oaivalidator import assertValidString
 
 class OaiIdentifyTest(OaiTestCase):
+	
 	def getSubject(self):
 		return OaiIdentify()
 	
