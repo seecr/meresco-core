@@ -48,8 +48,20 @@ Error and Exception Conditions
 		Observable.__init__(self)
 	
 	def notify(self, webRequest):
-		pass
+		if webRequest.args.get('verb', None) != ['ListSets']:
+			return
 		
+		error = self._validateArguments(webRequest, {'resumptionToken': 'exclusive'})
+		if error:
+			return self.writeError(webRequest, 'badArgument', error)
+
+		self.writeHeader(webRequest)
+		self.writeRequestArgs(webRequest)
+		webRequest.write("Mannetje van de radio")
+		
+		self.writeFooter(webRequest)
+		return DONE
+	
 	def undo(self, *args, **kwargs):
 		"""ignored"""
 		pass

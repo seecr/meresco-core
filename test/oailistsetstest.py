@@ -32,5 +32,5 @@ class OaiListSetsTest(OaiTestCase):
 	def getSubject(self):
 		return OaiListSets()
 	
-	def xxxxxtestNonsenseArguments(self):
+	def testNonsenseArguments(self):
 		self.assertBadArgument({'verb': ['ListSets'], 'nonsense': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
