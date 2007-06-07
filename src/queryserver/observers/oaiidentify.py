@@ -66,9 +66,10 @@ The response may include multiple instances of the following optional elements:
 		if webRequest.args.get('verb', None) != ['Identify']:
 			return
 		
-		if set(webRequest.args.keys()) != set(['verb']):
-			self.writeError(webRequest, 'badArgument', 'Identify verb must be single argument.')
-			return DONE
+		error = self._validateArguments(webRequest, {})
+		if error:
+			return self.writeError(webRequest, 'badArgument', error)
+
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
 		values = {

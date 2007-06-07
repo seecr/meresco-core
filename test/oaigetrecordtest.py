@@ -36,7 +36,7 @@ class OaiGetRecordTest(OaiTestCase):
 		return OaiGetRecord(['oai_dc'])	
 		
 	def testGetRecordNoArguments(self):
-		self.assertBadArgument({'verb': ['GetRecord']}, 'Missing argument(s) "identifier", "metadataPrefix".')
+		self.assertBadArgument({'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
 		
 	def testGetNoMetadataPrefix(self):
 		self.assertBadArgument({'verb': ['GetRecord'], 'identifier': ['oai:ident']}, 'Missing argument(s) "metadataPrefix".')

@@ -54,4 +54,4 @@ class OaiIdentifyTest(OaiTestCase):
 		assertValidString(self.stream.getvalue())
 		
 	def testIllegalArguments(self):
-		self.assertBadArgument({'verb': ['Identify'], 'metadataPrefix': ['oai_dc']}, 'Identify verb must be single argument.')		
+		self.assertBadArgument({'verb': ['Identify'], 'metadataPrefix': ['oai_dc']}, 'Argument(s) "metadataPrefix" is/are illegal.')		

@@ -70,11 +70,53 @@ class OaiVerb(object):
 	def writeFooter(self, webRequest):
 		webRequest.write(OAIFOOTER)
 		
-	def isArgumentRepeated(self, webRequest):
+	def _isArgumentRepeated(self, webRequest):
 		for k, v in webRequest.args.items():
 			if len(v) > 1:
 				return k
 		return False
+		
+	def _select(self, argsDef, neededNess):
+		result = []
+		for arg, definition in argsDef.items():
+			if definition == neededNess:
+				result.append(arg)
+		return result
+	
+	def ___set(self, key, value):
+		setattr(self, "_" + key, value[0])
+	
+	def _validateArguments(self, webRequest, argsDef):
+		if self._isArgumentRepeated(webRequest):
+			return 'Argument "%s" may not be repeated.' % self._isArgumentRepeated(webRequest)
+		
+		exclusiveArguments = self._select(argsDef, 'exclusive')
+		for exclusiveArgument in exclusiveArguments:
+			if exclusiveArgument in webRequest.args.keys():
+				if set(webRequest.args.keys()) != set(['verb', exclusiveArgument]):
+					return '"%s" argument may only be used exclusively.' % exclusiveArgument
+				self.___set(exclusiveArgument, webRequest.args[exclusiveArgument])
+				return
+			else:
+				self.___set(exclusiveArgument, [None])
+			
+		missing = []
+		for requiredArgument in self._select(argsDef, 'required'):
+			if not requiredArgument in webRequest.args.keys():
+				missing.append(requiredArgument)
+			self.___set(requiredArgument, webRequest.args.get(requiredArgument, [None]))
+		quote = lambda l: (map(lambda s: '"%s"' % s, l))
+		if missing:
+			return 'Missing argument(s) ' + \
+				" or ".join(quote(exclusiveArguments) + \
+				[" and ".join(quote(missing))]) + "."
+			
+		for optionalArgument in self._select(argsDef, 'optional'):
+			self.___set(optionalArgument, webRequest.args.get(optionalArgument, [None]))
+		
+		tooMuch = set(webRequest.args.keys()).difference(argsDef.keys() + ['verb'])
+		if tooMuch:
+			return 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch))
 
 def resumptionTokenFromString(s):
 	result = ResumptionToken()

@@ -38,13 +38,13 @@ class OaiListTest(OaiTestCase):
 		return OaiList(['oai_dc'])
 	
 	def testNoArguments(self):
-		self.assertBadArgument({'verb': ['ListRecords']}, 'Missing argument "resumptionToken" or "metadataPrefix"')
+		self.assertBadArgument({'verb': ['ListRecords']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')
 		
 	def testTokenNotUsedExclusively(self):
 		self.assertBadArgument({'verb': ['ListRecords'], 'resumptionToken': ['aToken'], 'from': ['aDate']}, '"resumptionToken" argument may only be used exclusively.')
 
 	def testNeitherTokenNorMetadataPrefix(self):
-		self.assertBadArgument({'verb': ['ListRecords'], 'from': ['aDate']}, 'Missing argument "resumptionToken" or "metadataPrefix"')
+		self.assertBadArgument({'verb': ['ListRecords'], 'from': ['aDate']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')
 
 	def testNonsenseArguments(self):
 		self.assertBadArgument({'verb': ['ListRecords'], 'metadataPrefix': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
@@ -170,7 +170,7 @@ class OaiListTest(OaiTestCase):
 		
 		self.observable.changed(self.request)
 		
-		self.assertTrue(self.stream.getvalue().find("resumptionToken") > -1)
+		self.assertTrue(self.stream.getvalue().find("<resumptionToken") > -1)
 		self.assertEquals('', str(bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken))
 	
 	def testDeteledTombstones(self):

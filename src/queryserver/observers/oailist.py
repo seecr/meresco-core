@@ -84,58 +84,51 @@ Error and Exception Conditions
 	def notify(self, webRequest):
 		#TODO in het algemeen moet er nog wat gebeuren met fouten die uit 'ons' binnenste komen. Specifiek wordt er nog slecht omgegegaan met
 		#verrotte resumptionTokens
-		#metadataPrefixen die niet voorkomen
-		
+				
 		self.verb = webRequest.args.get('verb', [None])[0]
 		if not self.verb in ['ListIdentifiers', 'ListRecords']:
 			return
 		
-		if self.isArgumentRepeated(webRequest):
-			return self.writeError(webRequest, 'badArgument', 'Argument "%s" may not be repeated.' % self.isArgumentRepeated(webRequest))
+		error = self._validateArguments(webRequest, {
+			'from': 'optional',
+			'until': 'optional',
+			'set': 'optional',
+			'resumptionToken': 'exclusive',
+			'metadataPrefix': 'required'})
+		if error:
+			return self.writeError(webRequest, 'badArgument', error)
 		
-		if set(webRequest.args.keys()) == set(['verb', 'resumptionToken']):
-			token = resumptionTokenFromString(webRequest.args['resumptionToken'][0])
-			self.partName = token._metadataPrefix
-			self.oaiFrom = token._from
-			self.oaiUntil = token._until
-			self.oaiSet = token._set
-			queryResult = self.any.listRecords(self.partName, token._continueAt, token._from, token._until, token._set)
-			return self.writeMessage(webRequest, queryResult, True)
+		if self._resumptionToken:
+			token = resumptionTokenFromString(self._resumptionToken)
+			self._continueAt = token._continueAt
+			self._metadataPrefix = token._metadataPrefix
+			self._from = token._from
+			self._until = token._until
+			self._set = token._set
+		else:
+			self._continueAt = '0'
+			try:
+				self._from = self._from and ISO8601(self._from)
+				self._until  = self._until and ISO8601(self._until)
+				if self._from and self._until:
+					if self._from.isShort() != self._until.isShort():
+						return self.writeError(webRequest, 'badArgument', 'from and/or until arguments must match in length')
+					if str(self._from) > str(self._until):
+						return self.writeError(webRequest, 'badArgument', 'from argument must be smaller than until argument')
+				self._from = self._from and self._from.floor()
+				self._until = self._until and self._until.ceil()
+			except ISO8601Exception, e:
+				return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
 		
-		if webRequest.args.get('resumptionToken', None):
-			return self.writeError(webRequest, 'badArgument', '"resumptionToken" argument may only be used exclusively.')
+		queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
 		
-		if not webRequest.args.get('metadataPrefix', None):
-			return self.writeError(webRequest, 'badArgument', 'Missing argument "resumptionToken" or "metadataPrefix"')
-		
-		tooMuch = set(webRequest.args.keys()).difference(['verb', 'metadataPrefix', 'from', 'until', 'set'])
-		if tooMuch:
-			return self.writeError(webRequest, 'badArgument', 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch)))
-		
-		self.oaiSet = webRequest.args.get('set', [''])[0]
-		
-		self.partName = webRequest.args['metadataPrefix'][0]
-		try:
-			oaiFrom = webRequest.args.get('from', [None])[0]
-			oaiFrom = oaiFrom and ISO8601(oaiFrom)
-			oaiUntil = webRequest.args.get('until', [None])[0]
-			oaiUntil = oaiUntil and ISO8601(oaiUntil)
-			if oaiFrom and oaiUntil:
-				if oaiFrom.isShort() != oaiUntil.isShort():
-					return self.writeError(webRequest, 'badArgument', 'from and/or until arguments must match in length')
-				if str(oaiFrom) > str(oaiUntil):
-					return self.writeError(webRequest, 'badArgument', 'from argument must be smaller than until argument')
-			self.oaiFrom = oaiFrom and oaiFrom.floor()
-			self.oaiUntil = oaiUntil and oaiUntil.ceil()
-		except ISO8601Exception, e:
-			return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
-		queryResult = self.any.listRecords(self.partName, oaiFrom = self.oaiFrom, oaiUntil = self.oaiUntil, oaiSet = self.oaiSet)
 		if len(queryResult) == 0:
 			return self.writeError(webRequest, 'noRecordsMatch')
-		return self.writeMessage(webRequest, queryResult)
+		
+		return self.writeMessage(webRequest, queryResult, self._resumptionToken)
 		
 	def writeMessage(self, webRequest, queryResult, writeCloseToken = False):
-		if not self.partName in self.partNames:
+		if not self._metadataPrefix in self.partNames:
 			return self.writeError(webRequest, 'cannotDisseminateFormat')
 
 		self.writeHeader(webRequest)
@@ -145,7 +138,7 @@ Error and Exception Conditions
 		for i, id in enumerate(queryResult):
 			if i == BATCH_SIZE:
 				continueAt = str(getattr(self.xmlSteal(prevId, STAMP_PART), UNIQUE))
-				resumptionToken = ResumptionToken(self.partName, continueAt, self.oaiFrom, self.oaiUntil, self.oaiSet)
+				resumptionToken = ResumptionToken(self._metadataPrefix, continueAt, self._from, self._until, self._set)
 				webRequest.write('<resumptionToken>%s</resumptionToken>' % str(resumptionToken))
 				writeCloseToken = False
 				break

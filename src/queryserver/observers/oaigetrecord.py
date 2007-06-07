@@ -55,30 +55,16 @@ Error and Exception Conditions
 		if webRequest.args.get('verb', None) != ['GetRecord']:
 			return
 		
-		if self.isArgumentRepeated(webRequest):
-			self.writeError(webRequest, 'badArgument', 'Argument "%s" may not be repeated.' % self.isArgumentRepeated(webRequest))
-			return DONE
+		error = self._validateArguments(webRequest, {
+			'identifier': 'required',
+			'metadataPrefix': 'required'})
+		if error:
+			return self.writeError(webRequest, 'badArgument', error)
 
-		actualArgs = set(webRequest.args.keys())
-		expectedArgs = set(['verb', 'identifier', 'metadataPrefix'])
-		tooMany = actualArgs.difference(expectedArgs)
-		notEnough = expectedArgs.difference(actualArgs)
-		
-		if tooMany:
-			self.writeError(webRequest, 'badArgument', 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMany)))
-			return DONE
-		
-		if notEnough:
-			self.writeError(webRequest, 'badArgument', 'Missing argument(s) %s.' % ", ".join(map(lambda s: '"%s"' %s, notEnough)))
-			return DONE
-		
-		id = webRequest.args['identifier'][0]
-		self.partName = webRequest.args['metadataPrefix'][0]
-		
-		if not self.partName in self.partNames:
+		if not self._metadataPrefix in self.partNames:
 			return self.writeError(webRequest, 'cannotDisseminateFormat')
 		
-		hasId, hasPartName = self.any.isAvailable(id, self.partName)
+		hasId, hasPartName = self.any.isAvailable(self._identifier, self._metadataPrefix)
 		
 		if not hasId:
 			self.writeError(webRequest, 'idDoesNotExist')
@@ -92,7 +78,7 @@ Error and Exception Conditions
 		self.writeRequestArgs(webRequest)
 		
 		webRequest.write('<GetRecord>')
-		self.writeRecord(webRequest, id)
+		self.writeRecord(webRequest, self._identifier)
 		webRequest.write('</GetRecord>')
 		
 		self.writeFooter(webRequest)

@@ -56,21 +56,18 @@ Error and Exception Conditions
 		if webRequest.args.get('verb', None) != ['ListMetadataFormats']:
 			return
 		
-		if self.isArgumentRepeated(webRequest):
-			return self.writeError(webRequest, 'badArgument', 'Argument "%s" may not be repeated.' % self.isArgumentRepeated(webRequest))
+		error = self._validateArguments(webRequest, {'identifier': 'optional'})
+		if error:
+			return self.writeError(webRequest, 'badArgument', error)
 		
-		if set(webRequest.args.keys()) == set(['verb', 'identifier']):
-			self.identifier = webRequest.args['identifier'][0]
-			if self.all.isAvailable(self.identifier, PARTS_PART) != (True, True):
+		if self._identifier:
+			if self.all.isAvailable(self._identifier, PARTS_PART) != (True, True):
 				return self.writeError(webRequest, 'idDoesNotExist')
 			
-			names = self.xmlSteal(self.identifier, PARTS_PART)
+			names = self.xmlSteal(self._identifier, PARTS_PART)
 			names = map(str, names.part)
 			metadataFormats = filter(lambda (name, y, z): name in names, self.metadataFormats)
 		else:
-			if set(webRequest.args.keys()) != set(['verb']):
-				return self.writeError(webRequest, 'badArgument', 'The only legal argument for the verb "ListMetadataFormats" is the optional argument "identifier".')
-			self.identifier = None
 			metadataFormats = self.metadataFormats
 		
 		self.writeHeader(webRequest)
@@ -93,4 +90,3 @@ Error and Exception Conditions
 	def undo(self, *args, **kwargs):
 		"""Ignored"""
 		pass
-
