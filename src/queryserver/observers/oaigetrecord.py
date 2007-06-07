@@ -47,8 +47,9 @@ Error and Exception Conditions
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
 """
 	def __init__(self, partNames):
-		OaiRecordVerb.__init__(self, partNames)
+		OaiRecordVerb.__init__(self)
 		Observable.__init__(self)
+		self.partNames = partNames
 	
 	def notify(self, webRequest):
 		if webRequest.args.get('verb', None) != ['GetRecord']:

@@ -62,9 +62,6 @@ The response may include multiple instances of the following optional elements:
     * description : an extensible mechanism for communities to describe their repositories. For example, the description container could be used to include collection-level metadata in the response to the Identify request. Implementation Guidelines are available to give directions with this respect. Each description container must be accompanied by the URL of an XML schema describing the structure of the description container.
 
 	"""
-	def __init__(self):
-		pass
-	
 	def notify(self, webRequest):
 		if webRequest.args.get('verb', None) != ['Identify']:
 			return

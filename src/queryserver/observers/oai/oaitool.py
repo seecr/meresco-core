@@ -33,9 +33,6 @@ DONE = 1
 
 class OaiVerb(object):
 	
-	def __init__(self, partNames):
-		self.partNames = partNames
-	
 	def getTime(self):
 		return strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
 	

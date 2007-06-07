@@ -77,8 +77,9 @@ Error and Exception Conditions
     * noSetHierarchy - The repository does not support sets.
 """
 	def __init__(self, partNames):
-		OaiRecordVerb.__init__(self, partNames)
+		OaiRecordVerb.__init__(self)
 		Observable.__init__(self)
+		self.partNames = partNames
 	
 	def notify(self, webRequest):
 		#TODO in het algemeen moet er nog wat gebeuren met fouten die uit 'ons' binnenste komen. Specifiek wordt er nog slecht omgegegaan met
