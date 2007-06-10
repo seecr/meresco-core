@@ -61,7 +61,7 @@ class OaiTestCase(CQ2TestCase):
 		self.observable.changed(self.request)
 		self.assertEquals('', self.stream.getvalue())
 		
-	def assertBadArgument(self, arguments, additionalMessage = ''):
+	def assertBadArgument(self, arguments, additionalMessage = '', errorCode = "badArgument"):
 		if hasattr(self, 'ranAssertBadArgument'):
 			self.fail("""NOTE: this method can be used only once per test (not very pretty, but not priority now (20/04/2007 - KVS)""")
 		self.ranAssertBadArgument = True
@@ -71,8 +71,8 @@ class OaiTestCase(CQ2TestCase):
 		self.assertTrue(len(self.request.calledMethods) >= 1)
 		self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
 		result = self.stream.getvalue()
-		self.assertTrue(result.find("""<error code="badArgument">""") > -1)
-		self.assertTrue(result.find(additionalMessage) > -1, 'Expected "%s" in "%s"' %(additionalMessage, result))
+		self.assertTrue('<error code="%s">' % errorCode in result)
+		self.assertTrue(additionalMessage in result, 'Expected "%s" in "%s"' %(additionalMessage, result))
 		
 		try:
 			assertValidString(result)

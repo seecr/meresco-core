@@ -49,12 +49,9 @@ Error and Exception Conditions
 		
 	def preProcess(self, webRequest):
 		if self._resumptionToken:
-			token = resumptionTokenFromString(self._resumptionToken)
-			self._continueAt = token._continueAt
-		else:
-			self._continueAt = '0'
+			return self.writeError(webRequest, 'badResumptionToken')
 		
-		self._queryResult = self.any.listRecords('set', self._continueAt)
+		self._queryResult = self.any.listRecords('set', '0') or []
 		if len(self._queryResult) == 0:
 			return self.writeError(webRequest, 'noSetHierarchy')
 	
