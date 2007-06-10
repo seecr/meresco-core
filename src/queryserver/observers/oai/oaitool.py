@@ -84,13 +84,17 @@ class OaiVerb(object):
 		args = ' '.join(['%s="%s"' % (xmlEscape(k), xmlEscape(v[0])) for k,v in sorted(webRequest.args.items())])
 		webRequest.write(REQUEST % locals())
 	
-	def writeError(self, webRequest, statusCode, addionalMessage = ''):
+	def writeError(self, webRequest, statusCode, addionalMessage = '', echoArgs = True):
 		space = addionalMessage and ' ' or '' 
 		message = ERROR_CODES[statusCode] + space + addionalMessage
 		self.writeHeader(webRequest)
 		url = self.getRequestUrl(webRequest)
-		args = ''
-		webRequest.write(REQUEST % locals())
+		if statusCode in ["badArgument", "badResumptionToken", "badVerb"]:
+			"""in these cases it is illegal to echo the arguments back; since the arguments are not valid in the first place the responce will not validate either"""
+			args = ''
+			webRequest.write(REQUEST % locals())
+		else:
+			self.writeRequestArgs(webRequest)
 		webRequest.write(ERROR % locals())
 		self.writeFooter(webRequest)
 		return DONE

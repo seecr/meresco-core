@@ -64,7 +64,7 @@ class OaiGetRecordTest(OaiTestCase):
 		self.observable.changed(self.request)
 		
 		self.assertEqualsWS(self.OAIPMH % """
-<request>http://server:9000/path/to/oai</request>
+<request identifier="oai:ident" metadataPrefix="oai_dc" verb="GetRecord">http://server:9000/path/to/oai</request>
 <error code="idDoesNotExist">The value of the identifier argument is unknown or illegal in this repository.</error>""", self.stream.getvalue())
 		assertValidString(self.stream.getvalue())
 		
