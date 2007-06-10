@@ -68,7 +68,8 @@ class Document:
 			
 		self._addIndexedField(aKey, aValue, tokenize)
 		self._fields.append(aKey)
-		self._contentField.append(aValue)
+		if not aKey.startswith("__"):
+			self._contentField.append(aValue)
 		
 	def _addIndexedField(self, aKey, aValue, tokenize = True):
 		self._document.add(PyLucene.Field(aKey, aValue, PyLucene.Field.Store.NO, tokenize and PyLucene.Field.Index.TOKENIZED or PyLucene.Field.Index.UN_TOKENIZED))

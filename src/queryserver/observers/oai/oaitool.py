@@ -156,12 +156,17 @@ class OaiVerb(object):
 		tooMuch = set(webRequest.args.keys()).difference(self._argsDef.keys() + ['verb'])
 		if tooMuch:
 			return 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch))
-		
 
 def resumptionTokenFromString(s):
-	result = ResumptionToken()
-	result.loadString(s)
-	return result
+	try:
+		result = ResumptionToken()
+		result.loadString(s)
+		return result
+	except ResumptionTokenException, e:
+		return None
+
+class ResumptionTokenException(Exception):
+	pass
 
 class ResumptionToken:
 	
@@ -206,6 +211,10 @@ class ResumptionToken:
 				if k in ResumptionToken.SHORT:
 					#this is a possible location for validity check of v
 					setattr(self, ResumptionToken.SHORT[k], v)
+				else:
+					raise ResumptionTokenException()
+			else:
+				raise ResumptionTokenException()
 					
 class ISO8601Exception(Exception):
 	pass

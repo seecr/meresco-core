@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb, DONE, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
+from oai.oaitool import OaiVerb, DONE, ResumptionTokenException, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
 from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
 from meresco.queryserver.observers.stampcomponent import UNIQUE, STAMP_PART
 from cq2utils.observable import Observable
@@ -77,9 +77,6 @@ Error and Exception Conditions
     * noSetHierarchy - The repository does not support sets.
 """
 	def __init__(self, partNames):
-		#TODO in het algemeen moet er nog wat gebeuren met fouten die uit 'ons' binnenste komen. Specifiek wordt er nog slecht omgegegaan met
-		#verrotte resumptionTokens
-		
 		OaiRecordVerb.__init__(self, ['ListIdentifiers', 'ListRecords'], {
 			'from': 'optional',
 			'until': 'optional',
@@ -92,6 +89,8 @@ Error and Exception Conditions
 	def preProcess(self, webRequest):
 		if self._resumptionToken:
 			token = resumptionTokenFromString(self._resumptionToken)
+			if not token:
+				return self.writeError(webRequest, "badResumptionToken")
 			self._continueAt = token._continueAt
 			self._metadataPrefix = token._metadataPrefix
 			self._from = token._from

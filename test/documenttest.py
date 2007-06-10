@@ -83,9 +83,17 @@ class DocumentTest(unittest.TestCase):
 		
 	def testContentField(self):
 		d = Document('1234')
-		d.addIndexedField('x', 'y')
-		d.addIndexedField('y', 'x')
-		self.assertEquals('y x', d.contentField())
+		d.addIndexedField('x', 'a')
+		d.addIndexedField('y', 'b')
+		self.assertEquals('a b', d.contentField())
+		
+	def testContentFieldDoesNotContainHiddenFields(self):
+		d = Document('1234')
+		d.addIndexedField('x', 'a')
+		d.addIndexedField('__hidden__stuff', 'should remain hidden')
+		d.addIndexedField('y', 'b')
+		self.assertEquals('a b', d.contentField())
+		
 		
 	def testAddToIndex(self):
 		d = Document('1234')

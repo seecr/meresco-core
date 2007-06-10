@@ -125,6 +125,9 @@ class OaiListTest(OaiTestCase):
 		self.subject.addObserver(observer)
 		self.observable.changed(self.request)
 		
+	def testRottenToken(self):
+		self.assertBadArgument({'verb': ['ListRecords'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")
+		
 	def testResumptionTokensAreProduced(self):
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z'], 'set': ['SET']}
 		observer = CallTrace('RecordAnswering')
@@ -390,19 +393,4 @@ class OaiListTest(OaiTestCase):
 		self.assertTrue("<setSpec>one:two:three</setSpec>" in self.stream.getvalue())
 		self.assertTrue("<setSpec>one:two:four</setSpec>" in self.stream.getvalue())	
 		
-	def testListRecordsUsingMetadataPrefix(self):
-		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'set': ['SET']}
-		
-		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
-				self.assertEquals('SET', oaiSet)
-				return []
-					
-			def undo(sself, *args, **kwargs):
-				pass
-			def notify(sself, *args, **kwargs):
-				pass
-		
-		self.subject.addObserver(Observer())
-		self.observable.changed(self.request)
-		
+
