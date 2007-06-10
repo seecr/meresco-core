@@ -46,9 +46,24 @@ Error and Exception Conditions
 	def __init__(self):
 		OaiRecordVerb.__init__(self, ['ListSets'], {'resumptionToken': 'exclusive'})
 		Observable.__init__(self)
+		
+	def preProcess(self, webRequest):
+		if self._resumptionToken:
+			token = resumptionTokenFromString(self._resumptionToken)
+			self._continueAt = token._continueAt
+		else:
+			self._continueAt = '0'
+		
+		self._queryResult = self.any.listRecords('set', self._continueAt)
+		if len(self._queryResult) == 0:
+			return self.writeError(webRequest, 'noSetHierarchy')
 	
 	def process(self, webRequest):
-		webRequest.write("Mannetje van de radio")
+		for id in self._queryResult:
+			self.all.write(webRequest, id, 'set')
+
+		if self._resumptionToken:
+			webRequest.write('<resumptionToken/>')
 	
 	def undo(self, *args, **kwargs):
 		"""ignored"""

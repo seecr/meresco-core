@@ -90,7 +90,6 @@ Error and Exception Conditions
 		self.partNames = partNames
 	
 	def preProcess(self, webRequest):
-		
 		if self._resumptionToken:
 			token = resumptionTokenFromString(self._resumptionToken)
 			self._continueAt = token._continueAt
@@ -113,34 +112,32 @@ Error and Exception Conditions
 			except ISO8601Exception, e:
 				return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
 		
-		self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
-		
-		if len(self._queryResult) == 0:
-			return self.writeError(webRequest, 'noRecordsMatch')
-		
-		self._writeCloseToken = self._resumptionToken
-		
 		if not self._metadataPrefix in self.partNames:
 			return self.writeError(webRequest, 'cannotDisseminateFormat')
-
+		
+		self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
+		if len(self._queryResult) == 0:
+			return self.writeError(webRequest, 'noRecordsMatch')
+	
 	def process(self, webRequest):
-		webRequest.write('<%s>' % self._verb)
-		j = -1
 		for i, id in enumerate(self._queryResult):
 			if i == BATCH_SIZE:
-				continueAt = str(getattr(self.xmlSteal(prevId, STAMP_PART), UNIQUE))
-				resumptionToken = ResumptionToken(self._metadataPrefix, continueAt, self._from, self._until, self._set)
-				webRequest.write('<resumptionToken>%s</resumptionToken>' % str(resumptionToken))
-				self._writeCloseToken = False
-				break
+				webRequest.write('<resumptionToken>%s</resumptionToken>' % ResumptionToken(
+					self._metadataPrefix,
+					self.getUnique(prevId),
+					self._from,
+					self._until,
+					self._set))
+				return
 			
 			self.writeRecord(webRequest, id, self._verb == "ListRecords")
-			
 			prevId = id
-			j = i
-		if self._writeCloseToken and j <= BATCH_SIZE:
+
+		if self._resumptionToken:
 			webRequest.write('<resumptionToken/>')
-		webRequest.write('</%s>' % self._verb)
+			
+	def getUnique(self, id):
+		return str(getattr(self.xmlSteal(id, STAMP_PART), UNIQUE))
 
 	def undo(self, *args, **kwargs):
 		"""ignored"""

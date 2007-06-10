@@ -91,13 +91,11 @@ REQUEST = """<request verb="Identify">%s</request>"""
 
 ADMIN_EMAIL = """<adminEmail>%s</adminEmail>"""
 
-IDENTIFY = """<Identify>
-    <repositoryName>%(repositoryName)s</repositoryName>
-    <baseURL>%(baseURL)s</baseURL>
-    <protocolVersion>%(protocolVersion)s</protocolVersion>
-		%(adminEmails)s
-    <earliestDatestamp>%(earliestDatestamp)s</earliestDatestamp>
-    <deletedRecord>%(deletedRecord)s</deletedRecord>
-    <granularity>%(granularity)s</granularity>
-  </Identify>
+IDENTIFY = """<repositoryName>%(repositoryName)s</repositoryName>
+<baseURL>%(baseURL)s</baseURL>
+<protocolVersion>%(protocolVersion)s</protocolVersion>
+	%(adminEmails)s
+<earliestDatestamp>%(earliestDatestamp)s</earliestDatestamp>
+<deletedRecord>%(deletedRecord)s</deletedRecord>
+<granularity>%(granularity)s</granularity>
 """

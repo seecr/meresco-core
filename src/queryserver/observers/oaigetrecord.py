@@ -66,9 +66,7 @@ Error and Exception Conditions
 			return self.writeError(webRequest, 'cannotDisseminateFormat')
 		
 	def process(self, webRequest):
-		webRequest.write('<GetRecord>')
 		self.writeRecord(webRequest, self._identifier)
-		webRequest.write('</GetRecord>')
 	
 	def undo(self, *args, **kwargs):
 		"""ignored"""

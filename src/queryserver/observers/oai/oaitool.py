@@ -53,7 +53,9 @@ class OaiVerb(object):
 		self.writeHeader(webRequest)
 		self.writeRequestArgs(webRequest)
 		
+		webRequest.write('<%s>' % self._verb)
 		self.process(webRequest)
+		webRequest.write('</%s>' % self._verb)
 		
 		self.writeFooter(webRequest)
 		return DONE

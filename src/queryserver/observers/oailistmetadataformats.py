@@ -64,16 +64,12 @@ Error and Exception Conditions
 			self.displayedMetadataFormats = self.supportedMetadataFormats
 		
 	def process(self, webRequest):	
-		webRequest.write("""<ListMetadataFormats>""")
-		
 		for metadataPrefix, schema, metadataNamespace in self.displayedMetadataFormats:
 			webRequest.write("""<metadataFormat>
 				<metadataPrefix>%s</metadataPrefix>
 				<schema>%s</schema>
 				<metadataNamespace>%s</metadataNamespace>
 			</metadataFormat>""" % (metadataPrefix, schema, metadataNamespace))
-		
-		webRequest.write("""</ListMetadataFormats>""")
 		
 	def undo(self, *args, **kwargs):
 		"""Ignored"""
