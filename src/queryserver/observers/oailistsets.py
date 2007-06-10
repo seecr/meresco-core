@@ -51,7 +51,7 @@ Error and Exception Conditions
 		if self._resumptionToken:
 			return self.writeError(webRequest, 'badResumptionToken')
 		
-		self._queryResult = self.any.listRecords('set', '0') or []
+		self._queryResult = self.any.listAll()
 		if len(self._queryResult) == 0:
 			return self.writeError(webRequest, 'noSetHierarchy')
 	

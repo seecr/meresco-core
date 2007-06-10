@@ -39,11 +39,7 @@ class OaiListSetsTest(OaiTestCase):
 		self.request.args = {'verb':['ListSets']}
 		
 		class Observer:
-			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
-				self.assertEquals('set', partName)
-				self.assertEquals('0', continueAt)
-				self.assertEquals(None, oaiFrom)
-				self.assertEquals(None, oaiUntil)
+			def listAll(sself):
 				return ['id_0', 'id_1']
 					
 			def write(sself, sink, id, partName):

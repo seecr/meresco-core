@@ -29,7 +29,7 @@ from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
 from meresco.core.index.querywrapper import QueryWrapper
-from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term, TermQuery
+from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term, TermQuery, MatchAllDocsQuery
 from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
 from meresco.queryserver.observers.setscomponent import SETS_PART, SET
@@ -57,7 +57,7 @@ class IndexComponent(Component):
 		self._index.addToIndex(notification.document)
 		self._latestId = notification.id
 			
-	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None):
+	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True):
 		def addRange(root, field, lo, hi, inclusive):
 			range = RangeQuery(Term(field, lo), Term(field, hi), inclusive)
 			root.add(range, BooleanClause.Occur.MUST)
@@ -66,7 +66,8 @@ class IndexComponent(Component):
 		
 		query = BooleanQuery()
 		query.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), partName)), BooleanClause.Occur.MUST)
-		addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, HI, False)
+		if continueAt != '0':	
+			addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, HI, False)
 		if oaiFrom or oaiUntil:
 			oaiFrom = oaiFrom or LO
 			oaiUntil = oaiUntil or HI
@@ -74,5 +75,9 @@ class IndexComponent(Component):
 		if oaiSet:
 			query.add(TermQuery(Term('%s.%s' % (SETS_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
 
-		return self._index.executeQuery(QueryWrapper(query, '%s.%s' % (STAMP_PART, UNIQUE)))
+		sortBy = sorted and '%s.%s' % (STAMP_PART, UNIQUE)
 		
+		return self._index.executeQuery(QueryWrapper(query, sortBy))
+
+	def listAll(self):
+		return self._index.executeQuery(QueryWrapper(MatchAllDocsQuery(), None))

@@ -28,6 +28,7 @@
 from oai.oaitool import OaiVerb
 from oaiidentify import OaiIdentify
 from oaigetrecord import OaiGetRecord
+from oailistsets import OaiListSets
 from oailist import OaiList
 from oailistmetadataformats import OaiListMetadataFormats
 from oaisink import OaiSink
@@ -36,11 +37,16 @@ from cq2utils.observable import Observable
 
 class OaiComponent(Observable):
 	
-	def __init__(self, metadataFormats):
+	def __init__(self, metadataFormats, listSetsObservers = []):
 		names = map(lambda (name, x, y): name, metadataFormats)
-		
 		Observable.__init__(self)
 		self._privateTree = Observable()
+		
+		oaiListSets = OaiListSets()
+		for observer in listSetsObservers:
+			oaiListSets.addObserver(observer)
+		self._privateTree.addObserver(oaiListSets)
+
 		for branch in [
 				OaiIdentify(),
 				OaiGetRecord(names),
@@ -51,7 +57,7 @@ class OaiComponent(Observable):
 			branch.any = self.any
 			branch.all = self.all
 			self._privateTree.addObserver(branch)
-	
+				
 	def notify(self, webRequest):
 		return self._privateTree.process(webRequest)
 		
