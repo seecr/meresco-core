@@ -90,7 +90,3 @@ class TeddyGrowlServerTest(unittest.TestCase):
 	def notify(self, notification):
 		"""self shunt"""
 		self.notifications.append(notification)
-		
-	def undo(self, *args, **kwargs):
-		"""self shunt"""
-		pass

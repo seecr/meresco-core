@@ -56,6 +56,3 @@ class StorageComponent(Component):
 			sink.write(stream.read())
 		finally:
 			stream.close()
-			
-	def undo(self, *args, **kwargs):
-		pass

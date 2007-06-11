@@ -75,10 +75,6 @@ The response may include multiple instances of the following optional elements:
 		values.update(hardcoded_values)
 		webRequest.write(IDENTIFY % values)
 		
-	def undo(self, *args, **kwargs):
-		"""Ignored"""
-		pass
-
 
 hardcoded_values = {
 	'protocolVersion': '2.0',

@@ -47,12 +47,3 @@ class LogComponent:
 	def notify(self, *args):
 		self._write("notify: " + ', '.join(map(str, args)))
 		
-	def undo(self, *args, **kwargs):
-		info = exc_info()
-		lines = map(str.strip, format_exception(*info))
-		for line in lines:
-			for subline in line.split('\n'):
-				self._write(subline)
-
-		self._write("undo")
-	

@@ -75,8 +75,5 @@ class Portal(object):
 	def _generateHtmlRow(self, key, value):
 		return ROW_TEMPLATE % locals()
 
-	def undo(self, *args, **kwargs):
-		pass
-	
 	def getRequestUrl(self, webRequest):
 		return 'http://%s:%s' % (webRequest.getRequestHostname(), webRequest.getHost().port) + webRequest.path

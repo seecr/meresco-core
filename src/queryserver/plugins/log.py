@@ -39,7 +39,3 @@ class Log(object):
 			aRequest.client.host,
 			aRequest.method,
 			aRequest.uri]))
-		
-	def undo(self, *args, **kwargs):
-		"""ignored"""
-		pass

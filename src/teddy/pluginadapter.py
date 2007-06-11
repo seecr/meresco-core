@@ -50,10 +50,6 @@ class PluginAdapter(object):
 	def getenv(self, key):
 		return self.configuration.get(key,  None)
 	
-	def undo(self, *args, **kwargs):
-		pass
-	
-
 	def notify(self, aRequest):
 		ignored, database, command, tail = (aRequest.path + '//').split('/',3)
 		if database not in self.searchInterfaces.keys():

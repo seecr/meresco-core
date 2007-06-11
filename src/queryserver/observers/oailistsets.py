@@ -62,6 +62,3 @@ Error and Exception Conditions
 		if self._resumptionToken:
 			webRequest.write('<resumptionToken/>')
 	
-	def undo(self, *args, **kwargs):
-		"""ignored"""
-		pass

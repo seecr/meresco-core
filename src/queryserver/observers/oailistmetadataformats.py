@@ -71,6 +71,3 @@ Error and Exception Conditions
 				<metadataNamespace>%s</metadataNamespace>
 			</metadataFormat>""" % (metadataPrefix, schema, metadataNamespace))
 		
-	def undo(self, *args, **kwargs):
-		"""Ignored"""
-		pass

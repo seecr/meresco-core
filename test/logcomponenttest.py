@@ -48,25 +48,3 @@ class LogComponentTest(CQ2TestCase):
 		self.assertEquals("notify: %s" % str(notification), message)
 		self.assertTrue(float(time))
 		
-	def testLogException(self):
-		faultyObserver = CallTrace('Faulty Observer')
-		faultyObserver.exceptions['notify'] = Exception('Something bad happened')
-		
-		notification = Notification("method", "anId", "partName", 'payload')
-		
-		observable = Observable()
-		component = LogComponent(self.tempfile)
-		observable.addObserver(component)
-		observable.addObserver(faultyObserver)
-		
-		try:
-			observable.changed(notification)
-			self.fail()
-		except Exception, e:
-			self.assertEquals('Something bad happened', str(e))
-		
-		lines = map(str.strip, open(self.tempfile).readlines())
-		self.assertTrue(len(lines) > 2)
-		time, message = lines[-1].split('\t')
-		self.assertEquals("undo" , message)
-		self.assertTrue(float(time))

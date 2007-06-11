@@ -60,8 +60,4 @@ class OaiComponent(Observable):
 				
 	def notify(self, webRequest):
 		return self._privateTree.process(webRequest)
-		
-	def undo(self, *args, **kwargs):
-		"""Ignored"""
-		pass
-	
+

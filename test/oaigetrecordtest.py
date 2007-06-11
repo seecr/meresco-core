@@ -88,8 +88,6 @@ class OaiGetRecordTest(OaiTestCase):
 			<unique>UNIQUE_NOT_USED_YET</unique>
 		</__stamp__>""")
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 			
@@ -129,8 +127,6 @@ class OaiGetRecordTest(OaiTestCase):
 			<unique>UNIQUE_NOT_USED_YET</unique>
 		</__stamp__>""")
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 			

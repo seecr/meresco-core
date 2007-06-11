@@ -68,5 +68,3 @@ class SetsComponent(Observable):
 				result.add(':'.join(parts[:i]))
 		return result
 
-	def undo(self, *args, **kwargs):
-		pass

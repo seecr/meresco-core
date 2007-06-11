@@ -40,22 +40,13 @@ HI = 'A' #sorts higher than all numbers (as strings)
 class IndexComponent(Component):
 	def __init__(self, anIndex):
 		self._index = anIndex
-		self._latestId = None
 		
 	def delete(self, notification):
 		self._index.deleteID(notification.id)
-		self._latestId = None
 		
-	def undo(self, *args, **kwargs):
-		if self._latestId:
-			self._index.deleteID(self._latestId)
-		self._latestId = None
-	
 	def add(self, notification):
-		self._latestId = None
 		self._index.deleteID(notification.id)
 		self._index.addToIndex(notification.document)
-		self._latestId = notification.id
 			
 	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True):
 		def addRange(root, field, lo, hi, inclusive):

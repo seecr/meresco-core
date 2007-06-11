@@ -40,5 +40,3 @@ class Undertaker(Observable):
 		if notification.method == "add":
 			self.all.deletePart(notification.id, TOMBSTONE_PART)
 	
-	def undo(self, *args, **kwargs):
-		pass

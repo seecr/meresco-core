@@ -67,6 +67,3 @@ class PartsComponentTest(TestCase):
 	
 	def notify(self, *args):
 		self.notifications.append(args)
-		
-	def undo(self, *args):
-		pass

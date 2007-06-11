@@ -65,24 +65,6 @@ class IndexComponentTest(CQ2TestCase):
 		self.assertEquals(1,len(self.index.calledMethods))
 		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
 		
-	def testUndo(self):
-		class MyObserver:
-			def notify(self, *args):
-				raise Exception('uhoh')
-			def undo(self, *args, **kwargs):
-				pass
-		self.observable.addObserver(MyObserver())
-		
-		try:
-			self.observable.changed(self.notification)
-			self.fail()
-		except Exception, e:
-			self.assertEquals('uhoh', str(e))
-		self.assertEquals(3,len(self.index.calledMethods))
-		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
-		self.assertEquals('addToIndex(<meresco.teddy.document.Document>)', str(self.index.calledMethods[1]))
-		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[2]))
-
 	def testListRecords(self):
 		self.subject.listRecords(partName = 'PART', sorted = None)
 		executeQueryMethod = self.index.calledMethods[0]

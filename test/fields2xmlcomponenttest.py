@@ -52,9 +52,6 @@ class Fields2XmlComponentTest(CQ2TestCase):
 	def notify(self, aNotification):
 		self.notifications.append(aNotification)
 	
-	def undo(self, *args, **kwargs):
-		pass
-	
 	def testNotify(self):
 		record = Notification('add', 'id', 'fields')
 		record.payload = FIELDS

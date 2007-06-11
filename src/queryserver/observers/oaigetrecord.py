@@ -68,6 +68,3 @@ Error and Exception Conditions
 	def process(self, webRequest):
 		self.writeRecord(webRequest, self._identifier)
 	
-	def undo(self, *args, **kwargs):
-		"""ignored"""
-		pass

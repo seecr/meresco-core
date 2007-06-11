@@ -103,6 +103,3 @@ class OaiListMetadataFormatsTest(OaiTestCase):
 	
 	def notify(self, *args):
 		pass
-	
-	def undo(self, *args):
-		pass

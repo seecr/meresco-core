@@ -40,6 +40,3 @@ class OaiSink(OaiVerb):
 		else:
 			 self.writeError(webRequest, 'badArgument', 'Argument value "%s" for verb illegal.' % webRequest.args['verb'][0])
 		
-	def undo(self, *args, **kwargs):
-		"""Ignored"""
-		pass

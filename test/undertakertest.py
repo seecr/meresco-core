@@ -56,8 +56,5 @@ class UnderTakerTest(TestCase):
 		"""self shunt"""
 		self.notifyCalls.append(args)
 		
-	def undo(self, *args):
-		pass
-	
 	def deletePart(self, id, partName):
 		self.deletedParts.append((id, partName))

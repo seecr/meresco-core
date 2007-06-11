@@ -138,6 +138,3 @@ Error and Exception Conditions
 	def getUnique(self, id):
 		return str(getattr(self.xmlSteal(id, STAMP_PART), UNIQUE))
 
-	def undo(self, *args, **kwargs):
-		"""ignored"""
-		pass

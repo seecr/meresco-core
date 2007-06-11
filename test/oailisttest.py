@@ -76,8 +76,6 @@ class OaiListTest(OaiTestCase):
 					return True, True
 				return True, False
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 		
@@ -199,8 +197,6 @@ class OaiListTest(OaiTestCase):
 					return True, True
 				return True, False
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 		
@@ -256,8 +252,6 @@ class OaiListTest(OaiTestCase):
 					return True, True
 				return True, False
 			
-			def undo(self, *args):
-				pass
 			def notify(self, *args):
 				pass
 				
@@ -319,8 +313,6 @@ class OaiListTest(OaiTestCase):
 					return True, True
 				return True, False
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 		
@@ -346,8 +338,6 @@ class OaiListTest(OaiTestCase):
 			def listRecords(sself, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet=''):
 				return []
 					
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 		
@@ -382,8 +372,6 @@ class OaiListTest(OaiTestCase):
 					return True, True
 				return True, False
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 		

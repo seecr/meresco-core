@@ -48,8 +48,6 @@ class OaiListSetsTest(OaiTestCase):
 				else:
 					self.fail(partName + ' is unexpected')
 			
-			def undo(sself, *args, **kwargs):
-				pass
 			def notify(sself, *args, **kwargs):
 				pass
 		
