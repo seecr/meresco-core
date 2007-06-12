@@ -38,7 +38,9 @@ source $basedir/functions.sh
 
 test -d $cq2_dep_dir || mkdir $cq2_dep_dir
 $basedir/install_dist.sh $cq2_dep_dir cq2utils 4.1
-$basedir/install_dist.sh $cq2_dep_dir storage 2.2
+$basedir/install_dist.sh $cq2_dep_dir storage 3.2
+$basedir/install_dist.sh $cq2_dep_dir cqlparser 1.2
+
 
 
 echo "* 
