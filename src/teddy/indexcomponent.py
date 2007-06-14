@@ -32,7 +32,7 @@ from meresco.core.index.querywrapper import QueryWrapper
 from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term, TermQuery, MatchAllDocsQuery
 from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
-from meresco.queryserver.observers.setscomponent import SETS_PART, SET
+from meresco.queryserver.observers.setscomponent import MEMBERSHIP_PART, SET
 
 LO = '0' #sorts lower/eq than all numbers (as strings)
 HI = 'A' #sorts higher than all numbers (as strings)
@@ -64,7 +64,7 @@ class IndexComponent(Component):
 			oaiUntil = oaiUntil or HI
 			addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
 		if oaiSet:
-			query.add(TermQuery(Term('%s.%s' % (SETS_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
+			query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
 
 		sortBy = sorted and '%s.%s' % (STAMP_PART, UNIQUE)
 		

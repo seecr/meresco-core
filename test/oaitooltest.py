@@ -38,6 +38,8 @@ class OaiToolTest(CQ2TestCase):
 	def testResumptionToken(self):
 		self.assertResumptionToken(ResumptionToken())
 		self.assertResumptionToken(ResumptionToken('oai:dc', '100', '2002-06-01T19:20:30Z', '2002-06-01T19:20:39Z', 'some:set:name'))
+		self.assertResumptionToken(ResumptionToken(_set=None))
+		
 		
 	def testISO8601(self):
 		"""http://www.w3.org/TR/NOTE-datetime

@@ -30,6 +30,7 @@ from cq2utils.component import Notification
 from amara.binderytools import bind_string
 
 SETS_PART = "__sets__"
+MEMBERSHIP_PART = '__set_membership__'
 SET = 'set'
 
 class SetsComponent(Observable):
@@ -45,7 +46,7 @@ class SetsComponent(Observable):
 			self.changed(setsNotification)
 			
 			if self._flattenedHierarchyListener:
-				flattenedNotification = Notification("add", notification.id, SETS_PART, bind_string(self.xml(self.flattenHierarchy(notification.sets))).__sets__)
+				flattenedNotification = Notification("add", notification.id, MEMBERSHIP_PART, bind_string(self.memberShipXml(self.flattenHierarchy(notification.sets))).childNodes[0])
 				self._flattenedHierarchyListener.notify(flattenedNotification)
 				
 			if self._setsDatabase:
@@ -53,8 +54,10 @@ class SetsComponent(Observable):
 					setsDatabaseNotification = Notification("add", set[0], 'set', bind_string("<set><setSpec>%s</setSpec><setName>%s</setName></set>" % set).set)
 					self._setsDatabase.notify(setsDatabaseNotification)
 	
-	def xml(self, sets):
-		return """<%s xmlns:teddy="http://www.cq2.nl/teddy">%s</%s>""" % (SETS_PART, "".join(map(lambda x: """<set teddy:tokenize="false">%s</set>""" % x, sets)), SETS_PART)
+	def memberShipXml(self, sets):
+		tagName = MEMBERSHIP_PART
+		setData = "".join(map(lambda x: """<set teddy:tokenize="false">%s</set>""" % x, sets)) 
+		return """<%(tagName)s xmlns:teddy="http://www.cq2.nl/teddy">%(setData)s</%(tagName)s>""" % locals()
 	
 	def tupleXml(self, sets):
 		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda (x, y): """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % (x, y), sets)), SETS_PART)
@@ -67,4 +70,3 @@ class SetsComponent(Observable):
 			for i in range(1, len(parts) + 1):
 				result.add(':'.join(parts[:i]))
 		return result
-

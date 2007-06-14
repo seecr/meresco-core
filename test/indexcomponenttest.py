@@ -83,5 +83,5 @@ class IndexComponentTest(CQ2TestCase):
 		self.subject.listRecords(partName = 'PART', continueAt = '0010', oaiFrom = '2000-01-01T00:00:00Z', oaiUntil = '2000-31-12T00:00:00Z', oaiSet = 'ONE:TWO:THREE', sorted = True)
 		executeQueryMethod = self.index.calledMethods[0]
 		queryWrapper = executeQueryMethod.arguments[0]
-		self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0010 TO A} +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z] +__sets__.set:ONE:TWO:THREE', str(queryWrapper.getPyLuceneQuery()))
+		self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0010 TO A} +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z] +__set_membership__.set:ONE:TWO:THREE', str(queryWrapper.getPyLuceneQuery()))
 		self.assertEquals('__stamp__.unique', str(queryWrapper._sortBy))

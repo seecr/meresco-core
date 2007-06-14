@@ -174,7 +174,7 @@ class OaiListTest(OaiTestCase):
 		self.assertTrue(self.stream.getvalue().find("<resumptionToken") > -1)
 		self.assertEquals('', str(bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken))
 	
-	def testDeteledTombstones(self):
+	def testDeletedTombstones(self):
 		self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 		
 		class Observer:

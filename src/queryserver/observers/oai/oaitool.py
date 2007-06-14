@@ -187,11 +187,14 @@ class ResumptionToken:
 		self._continueAt = _continueAt
 		self._from = _from or '' #blank out "None"
 		self._until = _until or ''
-		self._set = _set
+		self._set = _set or ''
 	
 	def __str__(self):
 		short = ResumptionToken.SHORT
 		return ';'.join(map(lambda k: "%s=%s" %(k, self.__dict__[short[k]]), short.keys()))
+	
+	def __repr__(self):
+		return repr(str(self))
 	
 	def __eq__(self, other):
 		return \
