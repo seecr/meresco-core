@@ -59,7 +59,7 @@ class PartsComponent(Observable):
 				parts.remove(notification.partName)
 			
 			thexml = "<__parts__>%s</__parts__>"  % "".join(map(
-				lambda s: "<part>%s</part>" % s,
+				lambda s: '<part xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">%s</part>' % s,
 				parts))
 			
 			newNotification = Notification("add", notification.id, PARTS_PART, bind_string(thexml).__parts__)

@@ -51,10 +51,10 @@ class PartsComponentTest(TestCase):
 		notification = Notification("add", "id_1", "partB", "payload")
 		self.subject.notify(notification)
 		
-		partNotification = Notification("add", "id_1", "__parts__", bind_string("<__parts__><part>partA</part><part>partB</part></__parts__>").__parts__)
-		self.assertEquals([
-			(notification, ),
-			(partNotification, )], self.notifications)
+		partNotification = Notification("add", "id_1", "__parts__", bind_string('<__parts__ xmlns:teddy="http://www.cq2.nl/teddy"><part  teddy:tokenize="false">partA</part><part teddy:tokenize="false">partB</part></__parts__>').__parts__)
+		self.assertEquals(2, len(self.notifications))
+		self.assertEquals((notification, ), self.notifications[0])
+		self.assertEquals((partNotification, ), self.notifications[1], self.notifications[1][0].payload.xml())
 	
 	def testDelete(self):
 		notification = Notification("delete", "id_1", "partA", "payload")
