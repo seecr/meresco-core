@@ -81,7 +81,7 @@ class OaiVerb(object):
 		
 	def writeRequestArgs(self, webRequest):
 		url = self.getRequestUrl(webRequest)
-		args = ' '.join(['%s="%s"' % (xmlEscape(k), xmlEscape(v[0])) for k,v in sorted(webRequest.args.items())])
+		args = ' '.join(['%s="%s"' % (xmlEscape(k), xmlEscape(v[0]).replace('"', '&quot;')) for k,v in sorted(webRequest.args.items())])
 		webRequest.write(REQUEST % locals())
 	
 	def writeError(self, webRequest, statusCode, addionalMessage = '', echoArgs = True):

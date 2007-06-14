@@ -25,10 +25,27 @@
 #
 ## end license ##
 
-from meresco.queryserver.observers.oai.oaitool import ResumptionToken, resumptionTokenFromString, ISO8601Exception, ISO8601
+from meresco.queryserver.observers.oai.oaitool import ResumptionToken, resumptionTokenFromString, ISO8601Exception, ISO8601, OaiVerb
 from cq2utils.cq2testcase import CQ2TestCase
+from cq2utils.calltrace import CallTrace
 
 class OaiToolTest(CQ2TestCase):
+	
+	def testWriteRequestArgs(self):
+		getHost = CallTrace("getHost")
+		getHost.port = 8000
+		request = CallTrace("Request")
+		request.returnValues['getHost'] = getHost
+		request.returnValues['getRequestHostname'] = 'localhost'
+		request.path = '/oai'
+	
+		verb = OaiVerb(None, None)
+		request.args = {'identifier': ['with a "']}
+		verb.writeRequestArgs(request)
+		
+		writeCall = request.calledMethods[-1]
+		self.assertEquals('write', writeCall.name)
+		self.assertEquals('<request identifier="with a &quot;">http://localhost:8000/oai</request>', writeCall.arguments[0])
 	
 	def assertResumptionToken(self, token):
 		aTokenString = str(token)

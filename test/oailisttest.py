@@ -323,12 +323,10 @@ class OaiListTest(OaiTestCase):
 <request metadataPrefix="oai_dc"
  verb="ListIdentifiers">http://server:9000/path/to/oai</request>
  <ListIdentifiers>
-   <record> 
     <header>
       <identifier>id_0</identifier> 
       <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </header>
-   </record>
  </ListIdentifiers>""", self.stream.getvalue())
 
 	def testNoRecordsMatch(self):

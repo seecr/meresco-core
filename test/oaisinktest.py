@@ -40,4 +40,4 @@ class OaiSinkTest(OaiTestCase):
 		self.assertBadArgument({'verb': ['ListRecords', 'Indentify']}, 'More than one "verb" argument found.')
 		
 	def testWrongVerb(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Argument value "Nonsense" for verb illegal.')
+		self.assertBadArgument({'verb': ['Nonsense']}, 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.', errorCode='badVerb')

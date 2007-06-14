@@ -40,7 +40,7 @@ class OaiComponentTest(OaiTestCase):
 		self.assertTrue(self.stream.getvalue().find('<Identify>') >-1)
 	
 	def testChainingEndsUpInSink(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Argument value "Nonsense" for verb illegal.')
+		self.assertBadArgument({'verb': ['Nonsense']}, 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.', errorCode='badVerb')
 		
 	def testComponentSeemsOne(self):
 		pass #KVS:!! dit testen is voor mij 10x zo veel werk als de code. Ik houd me aanbevolen voor een goed actieplan!
