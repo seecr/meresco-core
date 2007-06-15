@@ -191,7 +191,7 @@ class ResumptionToken:
 	
 	def __str__(self):
 		short = ResumptionToken.SHORT
-		return ';'.join(map(lambda k: "%s=%s" %(k, self.__dict__[short[k]]), short.keys()))
+		return '|'.join(map(lambda k: "%s%s" %(k, self.__dict__[short[k]]), short.keys()))
 	
 	def __repr__(self):
 		return repr(str(self))
@@ -206,18 +206,11 @@ class ResumptionToken:
 			self._set == other._set
 			
 	def loadString(self, s):
-		lines = s.split(';')
-		lines = map(lambda s: s.split('='), lines)
-		for elem in lines:
-			if len(elem) == 2:
-				k, v = elem
-				if k in ResumptionToken.SHORT:
-					#this is a possible location for validity check of v
-					setattr(self, ResumptionToken.SHORT[k], v)
-				else:
-					raise ResumptionTokenException()
-			else:
-				raise ResumptionTokenException()
+		resumptDict = dict(((part[0], part[1:]) for part in s.split('|') if part))
+		if set(ResumptionToken.SHORT.keys()) != set(resumptDict.keys()):
+			raise ResumptionTokenException()
+		for k,v in resumptDict.items():
+			setattr(self, ResumptionToken.SHORT[k], v)
 					
 class ISO8601Exception(Exception):
 	pass
