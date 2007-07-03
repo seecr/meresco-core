@@ -26,7 +26,7 @@
 ## end license ##
 from core.index import hits
 import unittest
-from teddy import document
+from meresco.teddy import document
 from cq2utils.calltrace import CallTrace
 
 class HitsTest(unittest.TestCase):
