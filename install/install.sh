@@ -29,7 +29,7 @@
 set -e
 
 if [ ! isDebian ] ; then
-	echo Unsupported Linux Distribution.
+	echo Unsupported Linux Distribution. Only Debian is supported.
 	exit
 fi
 
@@ -48,7 +48,7 @@ $basedir/install_dist.sh $cq2_dep_dir storage 3.2
 $basedir/install_dist.sh $cq2_dep_dir cqlparser 1.2
 
 echo "* 
-* Now installing the Meresco Search Component
+* Now installing the Meresco Core
 [Press Enter to continue]"
 read
 
@@ -70,18 +70,25 @@ sys.setdefaultencoding('utf-8')
 " > /usr/lib/python2.4/site-packages/sitecustomize.py
 
 echo "*
-* Installing PyLucene for Teddy
-*
 * Installing prepackaged version of PyLucene.
 [Press Enter to continue]"
 read
 
 aptitude install libc6 libgcc1 zlib1g libstdc++5
-aptitude_install "http://debian.cq2.org", stable, main, pylucene
+aptitude_install "http://debian.cq2.org" stable main pylucene
 
-echo "* 
+PYLUCENEVERSION=`python -c "import PyLucene; print PyLucene.VERSION"`
+if [ "$PYLUCENEVERSION" == "2.0.0" ] ; then
+	echo "* 
 * Installation of MERESCO finished.
 *
 * See the manual for further configuration steps.
 "
+else
+	echo "*
+* Installation of MERESO Core FAILED.
+* Tried 'import PyLucene; print PyLucene.VERSION == 2.0.0', but result was
+* $PYLUCENEVERSION
+"
+fi
 
