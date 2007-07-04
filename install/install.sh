@@ -72,15 +72,16 @@ sys.setdefaultencoding('utf-8')
 echo "*
 * Installing PyLucene for Teddy
 *
-* Installing prepackaged version of PyLucene, available only to i386 processor.
+* Installing prepackaged version of PyLucene.
 [Press Enter to continue]"
 read
+
 aptitude install libc6 libgcc1 zlib1g libstdc++5
 aptitude_install "http://debian.cq2.org", stable, main, pylucene
-#dpkg -i $distdir/libgcj-common_1%3a4.1.1-21_$architecture.deb
-#dpkg -i $distdir/libgcj5_3.4.3-13sarge1_$architecture.deb
-#dpkg -i $distdir/python2.4-pylucene_1.9.1-1_i386.deb
 
-message "Installation of MERESCO finished.
-See the manual for further configuration steps."
+echo "* 
+* Installation of MERESCO finished.
+*
+* See the manual for further configuration steps.
+"
 
