@@ -29,7 +29,11 @@
 import os, sys
 os.system('find .. -name "*.pyc" | xargs rm -f')
 
-sys.path.append("../src")
+from glob import glob
+for path in glob('../develop.d/*'):
+	sys.path.insert(0, path)
+sys.path.insert(0, "..")
+print sys.path
 
 import unittest
 
