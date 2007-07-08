@@ -203,7 +203,6 @@ class SRUPluginTest(CQ2TestCase):
 		self.plugin._writeExtraResponseData(MockSearchResult())
 		self.assertEquals(1, len(notifications))
 		
-		
 class MockSearchInterface:
 	def __init__(self):
 		self.called = False
