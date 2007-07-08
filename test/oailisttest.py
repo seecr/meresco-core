@@ -27,9 +27,9 @@
 
 from oaitestcase import OaiTestCase
 
-from queryserver.observers.oailist import OaiList, BATCH_SIZE
+from meresco.queryserver.observers.oailist import OaiList, BATCH_SIZE
 from cq2utils.calltrace import CallTrace
-from queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
+from meresco.queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
 from amara.binderytools import bind_string
 from StringIO import StringIO
 

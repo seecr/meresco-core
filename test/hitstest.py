@@ -24,7 +24,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from core.index import hits
+from meresco.core.index import hits
 import unittest
 from meresco.teddy import document
 from cq2utils.calltrace import CallTrace

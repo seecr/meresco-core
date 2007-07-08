@@ -75,10 +75,12 @@ echo "*
 read
 
 aptitude install libc6 libgcc1 zlib1g libstdc++5
-aptitude_install "http://debian.cq2.org" stable main pylucene
+aptitude_install "http://debian.cq2.org" stable main pylucene python2.4-cq2utils python2.4-storage
 
-PYLUCENEVERSION=`python -c "import PyLucene; print PyLucene.VERSION"`
-if [ "$PYLUCENEVERSION" == "2.0.0" ] ; then
+cd ../test
+./alltests.py
+
+if [ $? == "0" ] ; then
 	echo "* 
 * Installation of MERESCO finished.
 *

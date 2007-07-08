@@ -33,7 +33,6 @@ from glob import glob
 for path in glob('../develop.d/*'):
 	sys.path.insert(0, path)
 sys.path.insert(0, "..")
-print sys.path
 
 import unittest
 
@@ -83,4 +82,4 @@ from oailistsetstest import OaiListSetsTest
 
 if __name__ == '__main__':
         unittest.main()
-
+        os.system('find .. -name "*.pyc" | xargs rm -f')
