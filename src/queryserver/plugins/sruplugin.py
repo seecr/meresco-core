@@ -25,10 +25,12 @@
 #
 ## end license ##
 
-import queryplugin
 import os
 from xml.sax.saxutils import escape as xmlEscape
 from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
+
+from cq2utils.observable import Observable
+import queryplugin
 
 VERSION = '1.1'
 
@@ -78,6 +80,7 @@ class SRUDiagnostic(Exception):
 class SRUPlugin(queryplugin.QueryPlugin):
 	
 	def initialize(self):
+		self.extraResponseDataHandler = Observable()
 		self.xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>'
 		self.responseHeader = RESPONSE_HEADER
 		self.contentType = 'text/xml; charset=utf-8'
@@ -173,6 +176,7 @@ class SRUPlugin(queryplugin.QueryPlugin):
 	def _writeExtraResponseData(self, aSearchResult):
 		self.write('<srw:extraResponseData>')
 		aSearchResult.writeExtraResponseDataOn(self)
+		self.extraResponseDataHandler.changed(self)
 		self.write('</srw:extraResponseData>')
 
 	def doSearchRetrieve(self):
@@ -266,6 +270,7 @@ class SRUPlugin(queryplugin.QueryPlugin):
 	
 	def supportedParameter(self, parameterName, operation):
 		return parameterName in OFFICIAL_REQUEST_PARAMETERS[operation]
+
 
 
 def registerOn(aRegistry):

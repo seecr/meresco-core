@@ -193,6 +193,17 @@ class SRUPluginTest(CQ2TestCase):
 		self.assertTrue(interface.called, resultStream.getvalue())
 		self.assertEqualsWS(RESULT_WITH_EMPTY_RECORD, resultStream.getvalue())
 		
+	def testExtraResponseDataHandler(self):
+		notifications = []
+		class Handler:
+			def notify(self, *args):
+				notifications.append(args)
+		
+		self.plugin.extraResponseDataHandler.addObserver(Handler())
+		self.plugin._writeExtraResponseData(MockSearchResult())
+		self.assertEquals(1, len(notifications))
+		
+		
 class MockSearchInterface:
 	def __init__(self):
 		self.called = False
