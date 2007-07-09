@@ -29,46 +29,42 @@ from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
 from meresco.core.index.querywrapper import QueryWrapper
-from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, RangeQuery, Term, TermQuery, MatchAllDocsQuery
+from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
 from meresco.queryserver.observers.setscomponent import MEMBERSHIP_PART, SET
 
-LO = '0' #sorts lower/eq than all numbers (as strings)
-HI = 'A' #sorts higher than all numbers (as strings)
-
 class IndexComponent(Component):
-	def __init__(self, anIndex):
-		self._index = anIndex
-		
-	def delete(self, notification):
-		self._index.deleteID(notification.id)
-		
-	def add(self, notification):
-		self._index.deleteID(notification.id)
-		self._index.addToIndex(notification.document)
-			
-	def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True):
-		def addRange(root, field, lo, hi, inclusive):
-			range = RangeQuery(Term(field, lo), Term(field, hi), inclusive)
-			root.add(range, BooleanClause.Occur.MUST)
-		
-		#It is necessery here to work with the elematal objects, because the query parser transforms everything into lowercase
-		
-		query = BooleanQuery()
-		query.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), partName)), BooleanClause.Occur.MUST)
-		if continueAt != '0':	
-			addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, HI, False)
-		if oaiFrom or oaiUntil:
-			oaiFrom = oaiFrom or LO
-			oaiUntil = oaiUntil or HI
-			addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
-		if oaiSet:
-			query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
+    def __init__(self, anIndex):
+        self._index = anIndex
+        
+    def delete(self, notification):
+        self._index.deleteID(notification.id)
+        
+    def add(self, notification):
+        self._index.deleteID(notification.id)
+        self._index.addToIndex(notification.document)
+            
+    def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True):
+        def addRange(root, field, lo, hi, inclusive):
+            range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
+            root.add(range, BooleanClause.Occur.MUST)
+        
+        #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase
+        
+        query = BooleanQuery()
+        query.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), partName)), BooleanClause.Occur.MUST)
+        if continueAt != '0':	
+            addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, None, False)
+        if oaiFrom or oaiUntil:
+            oaiFrom = oaiFrom or None
+            oaiUntil = oaiUntil or None
+            addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
+        if oaiSet:
+            query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
+        
+        sortBy = sorted and '%s.%s' % (STAMP_PART, UNIQUE)
+        return self._index.executeQuery(QueryWrapper(query, sortBy))
 
-		sortBy = sorted and '%s.%s' % (STAMP_PART, UNIQUE)
-		
-		return self._index.executeQuery(QueryWrapper(query, sortBy))
-
-	def listAll(self):
-		return self._index.executeQuery(QueryWrapper(MatchAllDocsQuery(), None))
+    def listAll(self):
+        return self._index.executeQuery(QueryWrapper(MatchAllDocsQuery(), '%s.%s' % (STAMP_PART, UNIQUE)))

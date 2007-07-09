@@ -67,6 +67,7 @@ from teddygrowlservertest import TeddyGrowlServerTest
 from xml2documenttest import Xml2DocumentTest
 from storagecomponenttest import StorageComponentTest
 from indexcomponenttest import IndexComponentTest
+from indexcomponenttest import IndexComponentWithLuceneTest
 from fields2xmlcomponenttest import Fields2XmlComponentTest
 from logcomponenttest import LogComponentTest
 from venturitest import VenturiTest
