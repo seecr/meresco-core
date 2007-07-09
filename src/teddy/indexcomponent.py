@@ -67,4 +67,4 @@ class IndexComponent(Component):
         return self._index.executeQuery(QueryWrapper(query, sortBy))
 
     def listAll(self):
-        return self._index.executeQuery(QueryWrapper(MatchAllDocsQuery(), '%s.%s' % (STAMP_PART, UNIQUE)))
+        return self._index.executeQuery(QueryWrapper(MatchAllDocsQuery(), None))
