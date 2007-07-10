@@ -67,6 +67,8 @@ class PluginAdapter(object):
 
 			
 			plugin = self.pluginRegistry.create(command, aRequest, self.searchInterfaces[database])
+			plugin.any = self.any
+			plugin.all = self.all
 			plugin.process()
 		except Exception, e:
 			self.logException()

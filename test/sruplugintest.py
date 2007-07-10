@@ -195,13 +195,13 @@ class SRUPluginTest(CQ2TestCase):
 		
 	def testExtraResponseDataHandler(self):
 		notifications = []
-		class Handler:
+		class TestHandler:
 			def notify(self, *args):
 				notifications.append(args)
 		
-		self.plugin.extraResponseDataHandler.addObserver(Handler())
+		self.plugin.extraResponseDataHandler.addObserver(TestHandler())
 		self.plugin._writeExtraResponseData(MockSearchResult())
-		self.assertEquals(1, len(notifications))
+		self.assertEquals([(self.plugin, )], notifications)
 		
 class MockSearchInterface:
 	def __init__(self):

@@ -177,6 +177,7 @@ class SRUPlugin(queryplugin.QueryPlugin):
 		self.write('<srw:extraResponseData>')
 		aSearchResult.writeExtraResponseDataOn(self)
 		self.extraResponseDataHandler.changed(self)
+		#self.all.writeExtraResponseData()
 		self.write('</srw:extraResponseData>')
 
 	def doSearchRetrieve(self):
