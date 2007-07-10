@@ -80,6 +80,7 @@ from oailistmetadataformatstest import OaiListMetadataFormatsTest
 from partscomponenttest import PartsComponentTest
 from setscomponenttest import SetsComponentTest
 from oailistsetstest import OaiListSetsTest
+from drilldownxmltest import DrillDownXmlTest
 
 if __name__ == '__main__':
         unittest.main()
