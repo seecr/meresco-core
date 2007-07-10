@@ -77,10 +77,15 @@ class SRUDiagnostic(Exception):
 		Exception.__init__(self, str(diagnostic))
 		self.diagnostic = diagnostic
 
-class SRUPlugin(queryplugin.QueryPlugin):
+class SRUPlugin(queryplugin.QueryPlugin, Observable):
+	#current status: not supporting pure plugin behavior - is really an observable
+	#refactor direction: remove queryplugin.QueryPlugin
+	
+	def __init__(self, aRequest, searchInterface):
+		queryplugin.QueryPlugin.__init__(self, aRequest, searchInterface)
+		Observable.__init__(self)
 	
 	def initialize(self):
-		self.extraResponseDataHandler = Observable()
 		self.xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>'
 		self.responseHeader = RESPONSE_HEADER
 		self.contentType = 'text/xml; charset=utf-8'
@@ -91,9 +96,6 @@ class SRUPlugin(queryplugin.QueryPlugin):
 		return {'version':['1.1'], 'operation':['explain']}
 	
 	def validate(self):
-		return self._validate()
-	
-	def _validate(self):
 		operation = self.getOperation()
 		if operation == None:
 			return MANDATORY_PARAMETER_NOT_SUPPLIED + ['operation']
@@ -175,9 +177,8 @@ class SRUPlugin(queryplugin.QueryPlugin):
 
 	def _writeExtraResponseData(self, aSearchResult):
 		self.write('<srw:extraResponseData>')
-		aSearchResult.writeExtraResponseDataOn(self)
-		self.extraResponseDataHandler.changed(self)
-		#self.all.writeExtraResponseData()
+		aSearchResult.writeExtraResponseDataOn(self) #refactor direction: push down to observers
+		self.all.writeExtraResponseData(self)
 		self.write('</srw:extraResponseData>')
 
 	def doSearchRetrieve(self):

@@ -38,7 +38,7 @@ def log(aString):
 		pass
 
 
-class PluginAdapter(object):
+class PluginAdapter(object): ###!!! No test for this backwards compatibilty component
 	def __init__(self, configuration):
 		self.configuration = configuration
 	
@@ -67,8 +67,12 @@ class PluginAdapter(object):
 
 			
 			plugin = self.pluginRegistry.create(command, aRequest, self.searchInterfaces[database])
+			
 			plugin.any = self.any
 			plugin.all = self.all
+			plugin.changed = self.changed
+			plugin.process = self.process
+			
 			plugin.process()
 		except Exception, e:
 			self.logException()

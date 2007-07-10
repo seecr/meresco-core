@@ -121,7 +121,7 @@ class SRUPluginTest(CQ2TestCase):
 	def validate(self, code, aDict):
 		NO_DETAILS = 2
 		self.plugin._arguments = aDict
-		self.assertEquals(code, self.plugin._validate()[:NO_DETAILS])
+		self.assertEquals(code, self.plugin.validate()[:NO_DETAILS])
 				
 	def testEchoedSearchRetrieveRequest(self):
 		request = CallTrace('Request')
@@ -196,10 +196,10 @@ class SRUPluginTest(CQ2TestCase):
 	def testExtraResponseDataHandler(self):
 		notifications = []
 		class TestHandler:
-			def notify(self, *args):
+			def writeExtraResponseData(self, *args):
 				notifications.append(args)
 		
-		self.plugin.extraResponseDataHandler.addObserver(TestHandler())
+		self.plugin.addObserver(TestHandler())
 		self.plugin._writeExtraResponseData(MockSearchResult())
 		self.assertEquals([(self.plugin, )], notifications)
 		
