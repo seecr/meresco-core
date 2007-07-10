@@ -56,6 +56,3 @@ class DrillDownXml:
 		
 		webRequest.write("</drilldown>")
 		
-	def next(self):
-		pass # I think a first step towards generators can be made here
-
