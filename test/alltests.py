@@ -82,6 +82,8 @@ from setscomponenttest import SetsComponentTest
 from oailistsetstest import OaiListSetsTest
 from drilldownxmltest import DrillDownXmlTest
 from observabletest import ObservableTest
+from logobservertest import LogObserverTest
+from filtertest import FilterTest
 
 if __name__ == '__main__':
         unittest.main()

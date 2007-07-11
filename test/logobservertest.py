@@ -20,43 +20,39 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from unittest import TestCase
 
+from meresco.components.logobserver import LogObserver
+from cStringIO import StringIO
+from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
-from twisted.web import http
-from twisted.internet import reactor
-from sys import stdout, stderr
-import traceback
 
-class ObservableServer(Observable):
-	def __init__(self, port):
-		Observable.__init__(self)
-		self.port = port
-		
-	def log(self, something):
-		print >> stdout, something
-		stdout.flush()
-		
-	def logError(self):
-		print >> stderr, traceback.format_exc()
-		stderr.flush()
+class LogObserverTest(TestCase):
 	
-	def run(self):
-		class WebRequest(http.Request):
-			def log(inner, something):
-				self.log(something)
-			def __str__(inner):
-				return '\t'.join([inner.client.host, inner.method, inner.uri])
-			def process(inner):
-				try:
-					self.changed(inner)
-				except:
-					self.logError()
-				inner.finish()
-		class WebHTTPChannel(http.HTTPChannel):
-			requestFactory = WebRequest
-		class Factory(http.HTTPFactory):
-			protocol = WebHTTPChannel
-		factory = Factory()
-		reactor.listenTCP(self.port, factory)
-		self.log("Ready to rumble at %d\n" % self.port)
-		reactor.run()
+	def testLogging(self):
+		stream = StringIO()
+		log = LogObserver(stream)
+		
+		class AnArgument:
+			def __str__(self):
+				return 'Looking for an argument.'
+		argument = AnArgument()		
+		log.notify('one', argument, 'three')
+		
+		time, line = stream.getvalue().split('\t',1)
+		self.assertEquals('one\tLooking for an argument.\tthree\n', line)
+		
+	def testLoggingBySubclassing(self):
+		stream = StringIO()
+		arguments = []
+		class MyLogObserver(LogObserver):
+			def toString(self, *args):
+				arguments.append(args)
+				return 'toString'
+		log = MyLogObserver(stream)
+		
+		log.notify('one', 'two')
+		
+		time, line = stream.getvalue().split('\t',1)
+		self.assertEquals('toString\n', line)
+		self.assertEquals([('one','two')], arguments)
