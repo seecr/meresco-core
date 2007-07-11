@@ -21,8 +21,8 @@
 #
 ## end license ##
 
-from observable import Observable, Function, FunctionObservable
-from calltrace import CallTrace
+from meresco.framework.observable import Observable, Function, FunctionObservable
+from cq2utils.calltrace import CallTrace
 import unittest
 
 class ObservableTest(unittest.TestCase):
