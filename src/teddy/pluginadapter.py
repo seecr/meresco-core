@@ -28,7 +28,6 @@ import sys
 import traceback
 import time
 from meresco.queryserver.pluginregistry import PluginRegistry
-from meresco.teddy.teddyinterfaceconstructor import construct as constructSearchInterfaces
 
 def log(aString):
 	try:
@@ -39,13 +38,13 @@ def log(aString):
 
 
 class PluginAdapter(object): ###!!! No test for this backwards compatibilty component
-	def __init__(self, configuration):
+	def __init__(self, configuration, searchInterfaces):
 		self.configuration = configuration
 	
 		self.pluginRegistry = PluginRegistry(configuration)
 		self.pluginRegistry.loadPlugins()
 	
-		self.searchInterfaces = constructSearchInterfaces(configuration)
+		self.searchInterfaces = searchInterfaces
 
 	def getenv(self, key):
 		return self.configuration.get(key,  None)
