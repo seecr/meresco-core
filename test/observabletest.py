@@ -174,6 +174,46 @@ class ObservableTest(unittest.TestCase):
 			pass
 		self.assertEquals([], safe.notifications)
 		
+	def testAddObserversEmptyList(self):
+		observable = Observable()
+		observable.addObservers([])
+		self.assertEquals([], observable._observers)
+		
+	def testAddObserversOne(self):
+		observable = Observable()
+		child = Observable()
+		observable.addObservers([child])
+		self.assertEquals([child], observable._observers)
+		
+	def testAddObserversTwo(self):
+		observable = Observable()
+		child0 = Observable()
+		observable.addObservers([child0])
+		child1 = Observable()
+		observable.addObservers([child1])
+		self.assertEquals([child0, child1], observable._observers)
+		
+	def testAddObserversTree(self):
+		observable = Observable()
+		child0 = Observable(name='child0')
+		child1 = Observable(name='child1')
+		tree = [(child0, [child1])]
+		observable.addObservers(tree)
+		self.assertEquals([child0], observable._observers)
+		self.assertEquals([child1], child0._observers)
+		
+	def testAddOberversTreeToExplainTheIdeaWhithoutTestingSomethingNew(self):
+		observable = Observable()
+		child0 = Observable(name='child0')
+		child1 = Observable(name='child1')
+		child2 = Observable(name='child2')
+		tree = [(child0, [(child1, [child2])])]
+		observable.addObservers(tree)
+		self.assertEquals([child0], observable._observers)
+		self.assertEquals([child1], child0._observers)
+		self.assertEquals([child2], child1._observers)
+		
+		
 class TestException(Exception):
 	pass
 
