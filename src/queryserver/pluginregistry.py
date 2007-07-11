@@ -58,12 +58,14 @@ class PluginRegistry:
 	
 	def loadPlugins(self):
 		directory = self._configuration['server.pluginpath']
+		print "PluginRegistry - loading plugins from ", directory
 		sys.path.append(directory)
 		for pyfile in glob('%s/*.py' % directory):
 			if not pyfile.endswith('__init__.py'):
 				filename = basename(pyfile[:-3])
 				module = self._loadModule(filename)
 				if hasattr(module, 'registerOn'):
+					print "PluginRegistry adding:", str(module)
 					module.registerOn(self)
 					
 	def getenv(self, key):
