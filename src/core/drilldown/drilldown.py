@@ -25,40 +25,47 @@
 #
 ## end license ##
 
-class DrillDown:
+DENSE_SPARSE_BREAKING_POINT = 32
 
-	#FROM: luceneindex.py (teddy 2.x)
-	#READ DRILLDOWN
-	def drillDown(self, hitsWrapper, drillDownFieldnamesAndMaximumResults):
-		drillDownResults = {}
-		bitArray = self._bitArrayForQueryResult(hitsWrapper)
+class DocSet:
+	
+	def __init__(self, docs, length):
+		cardinality = len(docs)
+		if cardinality * DENSE_SPARSE_BREAKING_POINT > length:
+			result = DenseBitArray(length)
+		result = SparseBitArray(cardinality)
+		for doc in docs:
+			result.set(doc)
+		return result
+	
+class DrillDown:
+	
+	def __init__(self, index, drillDownFieldNames):
+		self._index = index
+		self._drillDownFieldnames = drillDownFieldNames
+
+	def _totalDocsInIndex(self):
+		return self._getReader().numDocs()
+	
+	def process(self, hits, drillDownFieldnamesAndMaximumResults):
+		drillDownResults = []
+		queryDocSet = self._docSetForQueryResult(hits)
 		for (fieldName, maximumResults) in drillDownFieldnamesAndMaximumResults:
-			drillDownResults[fieldName] = self.countField(fieldName, bitArray, maximumResults)
+			drillDownResults.append((fieldName,
+					self._countField(fieldName, queryDocSet, maximumResults)))
 		return drillDownResults
 	
-	def _bitArrayForQueryResult(self, someHits):
-		cardinality = len(someHits)
-		bitArray = self._createBitArray(self._getReader().numDocs(), cardinality)
-		bitArrayTmp = someHits.getLuceneDocIds()
-		bitArrayTmp.sort()
-		for doc in bitArrayTmp: #Possible point for optimization, although this happens only once per query
-			bitArray.set(doc)
-		return bitArray
+	def _docSetForQueryResult(self, hits):
+		sortedDocs = hits.getLuceneDocIds()
+		sortedDocs.sort()
+		return DocSet(hits, self._totalDocsInIndex())
 	
-	# READ
-	def reloadBitArrays(self):
-		self._bitArrays = {}
+	def _reloadDocSets(self):
+		self._docSets = {}
 		for fieldName in self._drillDownFieldnames:
-			self._bitArrays[fieldName] = self._bitArraysForField(fieldName + "__untokenized__")
+			self._docSets[fieldName] = self._docSetsForField(fieldName + "__untokenized__")
 
-	# READ
-	def _createBitArray(self, length, cardinality):
-		if cardinality * 32 > length:
-			return DenseBitArray(length)
-		return SparseBitArray(cardinality)
-
-	# READ
-	def _bitArraysForField(self, fieldName):
+	def _docSetsForField(self, fieldName):
 		reader = self._getReader()
 		
 		result = []
@@ -83,29 +90,23 @@ class DrillDown:
 			
 			termDocs.seek(term)
 			
-			length = reader.numDocs()
-			bitArrayTmp = []
+			docs = []
 			while termDocs.next():
-				bitArrayTmp.append(termDocs.doc())
-			cardinality = len(bitArrayTmp)
+				docs.append(termDocs.doc())
+			docSet = DocSet(docs, self._totalDocsInIndex())
 			
-			bitArray =  self._createBitArray(length, cardinality)
-			
-			for doc in bitArrayTmp:
-				bitArray.set(doc)
-			result.append((term.text(), bitArray))
+			result.append((term.text(), docSet))
 			
 			if not termEnum.next():
 				break
-			
-		result.sort(lambda (x1, y1), (x2, y2): y2.cardinality() - y1.cardinality())
-			
+		
+		def cmpDescCardinaltiy((term1, docSet1), (term2, docSet2)):
+			return docSet2.cardinality() - docSet1.cardinality()
+		
+		result.sort(cmpDescCardinaltiy)
 		return result
 			
-			
-	
-	# READ
-	def countField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
+	def _countField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
 		
 		#sort on cardinality, truncate with maximumResults and return smallest cardinality
 		#if no limit is present return 0
