@@ -28,7 +28,7 @@
 from oai.oaitool import OaiVerb, DONE, ResumptionTokenException, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
 from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
 from meresco.queryserver.observers.stampcomponent import UNIQUE, STAMP_PART
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'
 

@@ -33,7 +33,7 @@ from oailist import OaiList
 from oailistmetadataformats import OaiListMetadataFormats
 from oaisink import OaiSink
 
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 class OaiComponent(Observable):
 	

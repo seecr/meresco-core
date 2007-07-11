@@ -30,7 +30,7 @@ from cq2utils.calltrace import CallTrace
 from cq2utils.component import Notification
 from meresco.teddy.indexcomponent import IndexComponent
 from meresco.teddy.xml2document import TEDDY_NS, Xml2Document
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from amara import binderytools
 from PyLucene import BooleanQuery
 

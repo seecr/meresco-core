@@ -31,7 +31,7 @@ from cq2utils.cq2testcase import CQ2TestCase
 from meresco.teddy.xml2document import Xml2Document, TEDDY_NS
 from meresco.teddy.document import Document, IDFIELD
 from amara import binderytools 
-from cq2utils.observable import Function
+from meresco.framework.observable import Function
 from cq2utils.component import Notification
 
 class Xml2DocumentTest(CQ2TestCase):

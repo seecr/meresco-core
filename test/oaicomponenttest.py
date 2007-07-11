@@ -27,7 +27,7 @@
 
 from oaitestcase import OaiTestCase
 from meresco.queryserver.observers.oaicomponent import OaiComponent
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 class OaiComponentTest(OaiTestCase):
 	

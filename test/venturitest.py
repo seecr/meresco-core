@@ -28,7 +28,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from cq2utils.component import Notification
 from cStringIO import StringIO
 from amara import binderytools

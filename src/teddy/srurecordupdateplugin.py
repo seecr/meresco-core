@@ -29,7 +29,7 @@ from amara.bindery import is_element
 from cStringIO import StringIO
 import xml.dom
 from cq2utils.component import Notification
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 class SRURecordUpdatePlugin(Observable):
 

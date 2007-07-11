@@ -28,7 +28,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 
 from cq2utils.calltrace import CallTrace
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from cStringIO import StringIO
 
 class ObservableTestCase(CQ2TestCase):

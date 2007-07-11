@@ -26,7 +26,7 @@
 ## end license ##
 
 from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 class OaiListSets(OaiRecordVerb, Observable):
 	"""4.6 ListSets

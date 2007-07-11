@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from cq2utils.component import Notification
 from amara.binderytools import bind_string
 

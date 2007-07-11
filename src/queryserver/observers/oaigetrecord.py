@@ -26,7 +26,7 @@
 ## end license ##
 
 from oai.oaitool import DONE
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
 
 class OaiGetRecord(OaiRecordVerb, Observable):

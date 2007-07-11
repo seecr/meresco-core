@@ -30,7 +30,7 @@ from cq2utils.cq2testcase import CQ2TestCase
 from meresco.teddy.storagecomponent import StorageComponent
 from cq2utils.component import Notification
 from cStringIO import StringIO
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
  
 class StorageComponentTest(CQ2TestCase):
 			

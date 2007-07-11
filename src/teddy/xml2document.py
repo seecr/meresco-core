@@ -28,7 +28,7 @@
 from document import Document
 from amara import binderytools
 from amara.bindery import is_element
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 class Notification:
 	pass

@@ -24,7 +24,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 from cq2utils.component import Notification
 from amara.binderytools import bind_string
 

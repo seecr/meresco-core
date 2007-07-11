@@ -29,7 +29,7 @@ import os
 from xml.sax.saxutils import escape as xmlEscape
 from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 import queryplugin
 
 VERSION = '1.1'

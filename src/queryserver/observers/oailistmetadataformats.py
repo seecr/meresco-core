@@ -27,7 +27,7 @@
 
 from oai.oaitool import OaiVerb, DONE
 from meresco.queryserver.observers.partscomponent import PARTS_PART
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
 

@@ -29,7 +29,7 @@ from cq2utils.networking.growlserver import GrowlServer
 from cq2utils.component import Notification
 from cStringIO import StringIO
 from amara.bindery import is_element
-from cq2utils.observable import Observable
+from meresco.framework.observable import Observable
 
 class TeddyGrowlServer(GrowlServer, Observable):
 	def __init__(self, aReadWriteStream, *args):
