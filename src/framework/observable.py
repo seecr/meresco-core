@@ -55,14 +55,23 @@ class AnyFunction(DeferredFunction):
 		return result
 
 class Observable:
-	def __init__(self):
+	def __init__(self, name = None):
 		self._observers = []
 		self.all = Defer(self, AllFunction)
 		self.any = Defer(self, AnyFunction)
+		if name:
+			self.__repr__ = lambda: name
 
 	def addObserver(self, observer):
 		self._observers.append(observer)
 
+	def addObservers(self, tree):
+		for node in tree:
+			if isinstance(node, tuple):
+				node, branch = node
+				node.addObservers(branch)
+			self.addObserver(node)
+			
 	def _notifyObservers(self, __returnResult__, *args, **kwargs):
 		i = 0
 		while i < len(self._observers):
