@@ -54,7 +54,7 @@ class AnyFunction(DeferredFunction):
 					return result
 		return result
 
-class Observable:
+class Observable(object):
 	def __init__(self, name = None):
 		self._observers = []
 		self.all = Defer(self, AllFunction)

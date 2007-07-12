@@ -28,6 +28,7 @@ import sys
 import traceback
 import time
 from meresco.queryserver.pluginregistry import PluginRegistry
+from meresco.framework.observable import Observable
 
 def log(aString):
 	try:
@@ -37,8 +38,10 @@ def log(aString):
 		pass
 
 
-class PluginAdapter(object): ###!!! No test for this backwards compatibilty component
+class PluginAdapter(Observable): ###!!! No test for this backwards compatibilty component
+	
 	def __init__(self, configuration, searchInterfaces):
+		Observable.__init__(self)
 		self.configuration = configuration
 	
 		self.pluginRegistry = PluginRegistry(configuration)
@@ -70,7 +73,6 @@ class PluginAdapter(object): ###!!! No test for this backwards compatibilty comp
 			plugin.any = self.any
 			plugin.all = self.all
 			plugin.changed = self.changed
-			plugin.process = self.process
 			
 			plugin.process()
 		except Exception, e:
