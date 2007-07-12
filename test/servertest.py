@@ -26,10 +26,10 @@
 ## end license ##
 
 import unittest
-import meresco.queryserver.server
-from meresco.queryserver.server import WebRequest
-from meresco.queryserver.plugins.queryplugin import PluginException, QueryPlugin
-from meresco.queryserver.pluginregistry import PluginRegistry
+import meresco.legacy.deathrow.server
+from meresco.legacy.deathrow.server import WebRequest
+from meresco.legacy.plugins.queryplugin import PluginException, QueryPlugin
+from meresco.legacy.pluginregistry import PluginRegistry
 
 class ServerTest(unittest.TestCase):
 	def setUp(self):
@@ -46,7 +46,7 @@ class ServerTest(unittest.TestCase):
 		self.request.args = {}
 		self.request.path = '/database/command'
 		self.process_exception = None
-		meresco.queryserver.server.log = lambda *args: None
+		meresco.legacy.deathrow.server.log = lambda *args: None
 		
 	def testHandleBasicDefault(self):
 		"""Test handle without a Plugin"""

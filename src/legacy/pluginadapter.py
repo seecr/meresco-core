@@ -27,7 +27,7 @@
 import sys
 import traceback
 import time
-from meresco.queryserver.pluginregistry import PluginRegistry
+from meresco.legacy.pluginregistry import PluginRegistry
 from meresco.framework.observable import Observable
 
 def log(aString):

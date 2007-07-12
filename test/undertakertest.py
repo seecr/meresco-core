@@ -26,7 +26,7 @@
 ## end license ##
 
 from unittest import TestCase
-from meresco.queryserver.observers.undertaker import Undertaker
+from meresco.components.undertaker import Undertaker
 from cq2utils.component import Notification
 from amara.binderytools import bind_string
 

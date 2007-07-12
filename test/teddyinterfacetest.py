@@ -28,8 +28,8 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.queryserver.plugins.sruquery import SRUQuery
-from meresco.teddy.teddyinterface import TeddyInterface, TeddyRecord, TeddyResult
+from meresco.legacy.plugins.sruquery import SRUQuery
+from meresco.legacy.teddyinterface import TeddyInterface, TeddyRecord, TeddyResult
 from cStringIO import StringIO
 
 class TeddyInterfaceTest(CQ2TestCase):

@@ -27,8 +27,8 @@
 
 from oaitestcase import OaiTestCase
 
-from meresco.queryserver.observers.oaiidentify import OaiIdentify
-from meresco.queryserver.observers.oai.oaivalidator import assertValidString
+from meresco.components.http.oai.oaiidentify import OaiIdentify
+from meresco.components.http.oai.oaivalidator import assertValidString
 
 class OaiIdentifyTest(OaiTestCase):
 	

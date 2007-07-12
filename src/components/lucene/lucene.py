@@ -32,7 +32,7 @@ import os
 import PyLucene
 import xml.sax.saxutils
 from document import IDFIELD, CONTENTFIELD
-from meresco.core.index.hits import Hits
+from meresco.components.lucene.hits import Hits
 
 DEFAULT_OFFSET = 0
 DEFAULT_COUNT = 10

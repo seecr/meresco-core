@@ -28,11 +28,11 @@
 from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
-from meresco.core.index.querywrapper import QueryWrapper
+from meresco.components.lucene.querywrapper import QueryWrapper
 from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
-from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
-from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
-from meresco.queryserver.observers.setscomponent import MEMBERSHIP_PART, SET
+from meresco.components.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
+from meresco.components.partscomponent import PARTS_PART, PART
+from meresco.components.setscomponent import MEMBERSHIP_PART, SET
 
 class IndexComponent(Component):
     def __init__(self, anIndex):

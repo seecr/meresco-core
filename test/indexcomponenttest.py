@@ -28,8 +28,8 @@ from cq2utils.cq2testcase import CQ2TestCase
 from unittest import TestCase
 from cq2utils.calltrace import CallTrace
 from cq2utils.component import Notification
-from meresco.teddy.indexcomponent import IndexComponent
-from meresco.teddy.xml2document import TEDDY_NS, Xml2Document
+from meresco.components.lucene.indexcomponent import IndexComponent
+from meresco.components.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
 from amara import binderytools
 from PyLucene import BooleanQuery
@@ -37,10 +37,10 @@ from PyLucene import BooleanQuery
 from tempfile import mkdtemp, gettempdir
 import os
 from shutil import rmtree
-from meresco.teddy.lucene import LuceneIndex
-from meresco.queryserver.observers.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
-from meresco.teddy.document import Document
-from meresco.queryserver.observers.partscomponent import PARTS_PART, PART
+from meresco.components.lucene.lucene import LuceneIndex
+from meresco.components.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
+from meresco.components.lucene.document import Document
+from meresco.components.partscomponent import PARTS_PART, PART
 
 FIELDS = binderytools.bind_string("""<xmlfields xmlns:teddy="%s">
 	<field1>this is field1</field1>
@@ -66,7 +66,7 @@ class IndexComponentTest(CQ2TestCase):
 		self.observable.changed(self.notification)
 		self.assertEquals(2,len(self.index.calledMethods))
 		self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
-		self.assertEquals('addToIndex(<meresco.teddy.document.Document>)', str(self.index.calledMethods[1]))
+		self.assertEquals('addToIndex(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
 		
 	def testDelete(self):
 		self.notification.method = "delete"

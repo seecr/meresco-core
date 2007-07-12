@@ -27,9 +27,9 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.teddy.fields2xmlcomponent import Fields2XmlComponent
+from meresco.components.fields2xmlcomponent import Fields2XmlComponent
 from cq2utils.component import Notification
-from meresco.teddy.xml2document import TEDDY_NS
+from meresco.components.xml2document import TEDDY_NS
 from amara import binderytools
 
 FIELDS = """<fields>

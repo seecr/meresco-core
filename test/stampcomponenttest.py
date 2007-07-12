@@ -26,7 +26,7 @@
 ## end license ##
 
 from unittest import TestCase
-from meresco.queryserver.observers.stampcomponent import StampComponent
+from meresco.components.stampcomponent import StampComponent
 
 class StampComponentTest(TestCase):
 	

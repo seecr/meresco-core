@@ -25,8 +25,8 @@
 #
 ## end license ##
 from unittest import TestCase
-from meresco.queryserver.plugins.xmlfileplugin import XMLFilePlugin, FILE_PATH, registerOn
-from meresco.queryserver.pluginregistry import PluginRegistry
+from meresco.legacy.plugins.xmlfileplugin import XMLFilePlugin, FILE_PATH, registerOn
+from meresco.legacy.pluginregistry import PluginRegistry
 from cq2utils.calltrace import CallTrace
 from tempfile import mkdtemp
 from shutil import rmtree

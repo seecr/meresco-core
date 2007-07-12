@@ -27,7 +27,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.teddy.teddyinterfaceconstructor import construct
+from meresco.legacy.teddyinterfaceconstructor import construct
 import os
 
 def writeFile(filename, content):

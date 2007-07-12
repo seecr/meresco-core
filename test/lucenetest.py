@@ -34,10 +34,10 @@ from tempfile import mkdtemp, gettempdir
 import os
 from shutil import rmtree
 import PyLucene
-from meresco.teddy.document import Document
+from meresco.components.lucene.document import Document
 
-from meresco.teddy.lucene import LuceneIndex
-from meresco.teddy.document import IDFIELD
+from meresco.components.lucene.lucene import LuceneIndex
+from meresco.components.lucene.document import IDFIELD
 
 from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, StandardAnalyzer, Term
 

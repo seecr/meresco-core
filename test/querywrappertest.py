@@ -25,7 +25,7 @@
 #
 ## end license ##
 import unittest
-from meresco.core.index.querywrapper import AdvancedQueryWrapper
+from meresco.components.lucene.querywrapper import AdvancedQueryWrapper
 
 class QueryWrapperTest(unittest.TestCase):
 	

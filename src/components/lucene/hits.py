@@ -25,7 +25,7 @@
 #
 ## end license ##
 from meresco.teddy import document
-from meresco.core.index.xslice import XSlice
+from meresco.components.lucene.xslice import XSlice
 
 DEFAULT_FETCHED_DOCS_COUNT = 10
 

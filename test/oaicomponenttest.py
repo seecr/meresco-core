@@ -26,7 +26,7 @@
 ## end license ##
 
 from oaitestcase import OaiTestCase
-from meresco.queryserver.observers.oaicomponent import OaiComponent
+from meresco.components.http.oai.oaicomponent import OaiComponent
 from meresco.framework.observable import Observable
 
 class OaiComponentTest(OaiTestCase):

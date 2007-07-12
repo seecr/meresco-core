@@ -30,10 +30,10 @@ from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
 from cStringIO import StringIO
-from meresco.queryserver.observers.oai.oaivalidator import assertValidString
+from meresco.components.http.oai.oaivalidator import assertValidString
 
-from meresco.queryserver.observers.oaicomponent import OaiComponent
-from meresco.queryserver.observers.oaisink import OaiSink
+from meresco.components.http.oai.oaicomponent import OaiComponent
+from meresco.components.http.oai.oaisink import OaiSink
 
 class OaiTestCase(CQ2TestCase):
 	

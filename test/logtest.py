@@ -26,7 +26,7 @@
 ## end license ##
 from unittest import TestCase
 
-from meresco.queryserver.plugins.log import Log
+from meresco.legacy.plugins.log import Log
 from cStringIO import StringIO
 from cq2utils.calltrace import CallTrace
 

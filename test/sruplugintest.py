@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-from meresco.queryserver.plugins.sruplugin import SUCCESS, SRUPlugin, SRUDiagnostic, MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, registerOn
+from meresco.legacy.plugins.sruplugin import SUCCESS, SRUPlugin, SRUDiagnostic, MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, registerOn
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
@@ -46,7 +46,7 @@ class SRUPluginTest(CQ2TestCase):
 		registry = CallTrace('PluginRegistry')
 		registerOn(registry)
 		self.assertEquals(1, len(registry.calledMethods))
-		self.assertEquals("registerByCommand('sru', <class meresco.queryserver.plugins.sruplugin.SRUPlugin>)", str(registry.calledMethods[0]))
+		self.assertEquals("registerByCommand('sru', <class meresco.legacy.plugins.sruplugin.SRUPlugin>)", str(registry.calledMethods[0]))
 		
 	def logException(self):
 		print traceback.format_exc()

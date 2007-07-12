@@ -26,10 +26,10 @@
 ## end license ##
 
 from cq2utils.cq2testcase import CQ2TestCase
-from meresco.queryserver.plugins.rssplugin import RSSPlugin, registerOn
+from meresco.legacy.plugins.rssplugin import RSSPlugin, registerOn
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
-from meresco.queryserver.plugins.rssprofile import RSSTestProfile, readProfilesInDirectory
+from meresco.legacy.plugins.rssprofile import RSSTestProfile, readProfilesInDirectory
 from tempfile import mkdtemp
 from shutil import rmtree
 

@@ -28,10 +28,10 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
-from meresco.queryserver.plugins.queryplugin import PluginException
+from meresco.legacy.plugins.queryplugin import PluginException
 from cStringIO import StringIO
-from meresco.queryserver.plugins.sruplugin import SRUPlugin, GENERAL_SYSTEM_ERROR
-from meresco.queryserver.plugins.srwplugin import SRWPlugin, SOAP_VERSIONMISMATCH
+from meresco.legacy.plugins.sruplugin import SRUPlugin, GENERAL_SYSTEM_ERROR
+from meresco.legacy.plugins.srwplugin import SRWPlugin, SOAP_VERSIONMISMATCH
 
 soapEnvelope = '<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>'
 

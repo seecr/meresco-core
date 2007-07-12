@@ -27,7 +27,7 @@
 
 from oai.oaitool import DONE
 from meresco.framework.observable import Observable
-from meresco.queryserver.observers.oai.oairecordverb import OaiRecordVerb
+from meresco.components.http.oai.oairecordverb import OaiRecordVerb
 
 class OaiGetRecord(OaiRecordVerb, Observable):
 	"""4.1 GetRecord

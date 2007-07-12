@@ -26,7 +26,7 @@
 ## end license ##
 
 from oaitestcase import OaiTestCase
-from meresco.queryserver.observers.oaisink import OaiSink
+from meresco.components.http.oai.oaisink import OaiSink
 
 class OaiSinkTest(OaiTestCase):
 	

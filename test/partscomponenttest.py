@@ -26,7 +26,7 @@
 ## end license ##
 
 from unittest import TestCase
-from meresco.queryserver.observers.partscomponent import PartsComponent
+from meresco.components.partscomponent import PartsComponent
 from cq2utils.calltrace import CallTrace
 from cq2utils.component import Notification
 from amara.binderytools import bind_string

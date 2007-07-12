@@ -25,7 +25,7 @@
 #
 ## end license ##
 import unittest
-from meresco.teddy.srurecordupdateplugin import SRURecordUpdatePlugin
+from meresco.components.http.srurecordupdateplugin import SRURecordUpdatePlugin
 from StringIO import StringIO
 
 XML = """<?xml version="1.0" encoding="UTF-8"?>
