@@ -26,7 +26,7 @@
 ## end license ##
 from meresco.components.lucene.xslice import XSlice
 import unittest
-from meresco.teddy import document
+from meresco.components.lucene import document
 from cq2utils.calltrace import CallTrace
 
 class XSliceTest(unittest.TestCase):

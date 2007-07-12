@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb
+from meresco.components.http.oai.oaitool import OaiVerb
 
 class OaiSink(OaiVerb):
 	

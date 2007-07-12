@@ -29,7 +29,7 @@ from StringIO import StringIO
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.components.http.drilldownxml import DrillDownXml
+from meresco.components.http.sru.drilldownxml import DrillDownXml
 
 class DrillDownXmlTest(CQ2TestCase):
 	

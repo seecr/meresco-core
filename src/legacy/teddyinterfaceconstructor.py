@@ -27,8 +27,8 @@
 
 
 from configuration import Configuration
-from lucene import LuceneIndex
-from storage import Storage
+from meresco.components.lucene.lucene import LuceneIndex
+from storage.storage import Storage
 from teddyinterface import TeddyInterface
 from os.path import join, basename
 from glob import glob

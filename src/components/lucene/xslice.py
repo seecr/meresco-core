@@ -24,7 +24,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.teddy import document
+from meresco.components.lucene import document
 
 class XSlice:
 	"""XSlice wraps around a list-like object (supporting __getitem__) to enable taking slices of this list that are generators (no copying until needed)."""

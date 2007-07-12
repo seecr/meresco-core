@@ -29,7 +29,7 @@ from oaitestcase import OaiTestCase
 
 from meresco.components.http.oai.oailist import OaiList, BATCH_SIZE
 from cq2utils.calltrace import CallTrace
-from meresco.queryserver.observers.oai.	oaitool import resumptionTokenFromString, ResumptionToken
+from meresco.components.http.oai.oaitool import resumptionTokenFromString, ResumptionToken
 from amara.binderytools import bind_string
 from StringIO import StringIO
 

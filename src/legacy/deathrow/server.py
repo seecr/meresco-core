@@ -32,8 +32,8 @@ from twisted.web import http
 import sys
 import traceback
 import time
-from plugins.queryplugin import PluginException
-from pluginregistry import PluginRegistry
+from meresco.legacy.plugins.queryplugin import PluginException
+from meresco.legacy.pluginregistry import PluginRegistry
 from os import getpid
 from cq2utils import config
 

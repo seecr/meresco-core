@@ -25,7 +25,7 @@
 #
 ## end license ##
 import PyLucene
-from meresco.teddy import document
+from meresco.components.lucene import document
 
 class QueryWrapper:
 	

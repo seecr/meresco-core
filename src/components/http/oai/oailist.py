@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb, DONE, ResumptionTokenException, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
+from meresco.components.http.oai.oaitool import OaiVerb, DONE, ResumptionTokenException, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
 from meresco.components.http.oai.oairecordverb import OaiRecordVerb
 from meresco.components.stampcomponent import UNIQUE, STAMP_PART
 from meresco.framework.observable import Observable

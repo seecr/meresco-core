@@ -46,7 +46,7 @@ class SRUPluginTest(CQ2TestCase):
 		registry = CallTrace('PluginRegistry')
 		registerOn(registry)
 		self.assertEquals(1, len(registry.calledMethods))
-		self.assertEquals("registerByCommand('sru', <class meresco.legacy.plugins.sruplugin.SRUPlugin>)", str(registry.calledMethods[0]))
+		self.assertEquals("registerByCommand('sru', <class 'meresco.legacy.plugins.sruplugin.SRUPlugin'>)", str(registry.calledMethods[0]))
 		
 	def logException(self):
 		print traceback.format_exc()

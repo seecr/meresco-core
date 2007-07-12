@@ -25,13 +25,13 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb
-from oaiidentify import OaiIdentify
-from oaigetrecord import OaiGetRecord
-from oailistsets import OaiListSets
-from oailist import OaiList
-from oailistmetadataformats import OaiListMetadataFormats
-from oaisink import OaiSink
+from meresco.components.http.oai.oaitool import OaiVerb
+from meresco.components.http.oai.oaiidentify import OaiIdentify
+from meresco.components.http.oai.oaigetrecord import OaiGetRecord
+from meresco.components.http.oai.oailistsets import OaiListSets
+from meresco.components.http.oai.oailist import OaiList
+from meresco.components.http.oai.oailistmetadataformats import OaiListMetadataFormats
+from meresco.components.http.oai.oaisink import OaiSink
 
 from meresco.framework.observable import Observable
 

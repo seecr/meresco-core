@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from oai.oaitool import OaiVerb, DONE
+from meresco.components.http.oai.oaitool import OaiVerb, DONE
 from meresco.components.partscomponent import PARTS_PART
 from meresco.framework.observable import Observable
 
