@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ## begin license ##
 #
 #    Meresco Core is part of Meresco.
