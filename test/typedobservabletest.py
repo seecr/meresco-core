@@ -22,10 +22,13 @@
 ## end license ##
 
 from meresco.framework.observable import Observable
-from meresco.framework.typedobservable import TypedObservable
+from meresco.framework.typedobservable import TypedObservable, registerConverter, clearConverters, getConverter, ConvertingObservable
 import unittest
 
-class ObservableTest(unittest.TestCase):
+class TypedObservableTest(unittest.TestCase):
+	
+	def setUp(self):
+		clearConverters()
 	
 	def testRegularAdd(self):
 		one = TypedObservable()
@@ -34,14 +37,75 @@ class ObservableTest(unittest.TestCase):
 		self.assertEquals([two], one._observers)
 		
 	def testAddOldObservable(self):
+		class RequiresOne(TypedObservable):
+			
+			def __requires__(self):
+				return {
+					"methodOne": ("typeA", "typeB", "*")
+				}
+		requires = RequiresOne()
+		two = Observable()
+		requires.addObserver(two)
+		self.assertEquals([two], requires._observers)
+		
+	def testFittingLink(self):
+		class RequiresOne(TypedObservable):
+			
+			def __requires__(self):
+				return {
+					"methodOne": ("typeA", "typeB", "*")
+				}
 		class ImplementsOne(TypedObservable):
 			
 			def __import__(self):
-				return [
-					("methodOne", "typeA", "typeB", "*")
-				]
+				return {
+					"methodOne": ("typeA", "typeB", "*")
+				}
+
+		requires = RequiresOne()
+		implements = ImplementsOne()
+		requires.addObserver(implements)
+		self.assertEquals([implements], requires._observers)
+		
+	def testRegisterConverter(self):
+		id = lambda x: x
+		registerConverter("a", "b", id)
+		self.assertEquals(id, getConverter("a", "b"))
+	
+	def testConvertingObservable(self):
+		observations = []
+		class CmObserver:
+			def methodOne(self, one, two):
+				observations.append((one, two))
+		observer = CmObserver()
 				
-		one = ImplementsOne()
-		two = TypedObservable()
-		one.addObserver(two)
-		self.assertEquals([two], one._observers)
+		cmToInch = lambda inch: inch * 2.54
+		observable = ConvertingObservable("methodOne", (cmToInch, cmToInch))
+		observable.addObserver(observer)
+		observable.methodOne(1.0, 2.0)
+		self.assertEquals([(2.54, 5.08)], observations)
+	
+	def testConversionLink(self):
+		inchToCm = lambda inch: inch / 2.54
+		registerConverter("inch", "cm", inchToCm)
+		
+		class RequiresSomethingInInch(TypedObservable):
+			
+			def __requires__(self):
+				return {
+					"something": ("inch",)
+				}
+		class ImplementsSomethingInCm(TypedObservable):
+			
+			def __import__(self):
+				return {
+					"methodOne": ("cm")
+				}
+
+		requires = RequiresSomethingInInch()
+		implements = ImplementsSomethingInCm()
+		requires.addObserver(implements)
+		self.assertEquals(1, len(requires._observers))
+		convertingObservable = requires._observers[0]
+		#self.assertNotEquals(implements, convertingObservable)
+		

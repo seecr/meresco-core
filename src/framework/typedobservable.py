@@ -29,10 +29,52 @@ class TypedObservable(Observable):
 		Observable.__init__(self)
 		
 	def __implements__(self):
-		return []
+		return {}
 	
 	def __requires__(self):
-		return []
+		return {}
 	
 	def addObserver(self, observer):
-		Observable.addObserver(self, observer)
+		#if isinstance(observer, TypedObservable):
+			#requiredMethods = self.__requires__()
+			#implementedMethods = self.__implements__()
+			#for requiredMethod in requiredMethods.keys():
+				#if requiredMethods in implementedMethods:
+					#pass
+					##converter = ConvertingObservable(
+		#else:
+			Observable.addObserver(self, observer)
+			
+
+class ConvertingObservableFunction:
+	
+	def __init__(self, realSelf, methodName, converters):
+		self._realSelf = realSelf
+		self._methodName = methodName
+		self._converters = converters
+		
+	def __call__(self, *args):
+		if len(args) != len(self._converters):
+			raise Exception("len - point 1")
+		args2 = [converter(args[i]) for i, converter in enumerate(self._converters)]
+		method = self._realSelf.all.__getattr__(self._methodName)
+		method(*args2)
+
+class ConvertingObservable(Observable):
+	
+	def __init__(self, methodName, converters):
+		Observable.__init__(self)
+		self.__dict__[methodName] = ConvertingObservableFunction(self, methodName, converters)
+			
+converters = {}
+
+def registerConverter(fromType, toType, converter):
+	if not converters.has_key(fromType):
+		converters[fromType] = {}
+	converters[fromType][toType] = converter
+
+def clearConverters():
+	converters.clear()
+	
+def getConverter(fromType, toType):
+	return converters[fromType][toType]
