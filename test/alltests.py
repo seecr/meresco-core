@@ -84,6 +84,7 @@ from drilldownxmltest import DrillDownXmlTest
 from observabletest import ObservableTest
 from logobservertest import LogObserverTest
 from filtertest import FilterTest
+from typedobservabletest import TypedObservable
 
 if __name__ == '__main__':
         unittest.main()
