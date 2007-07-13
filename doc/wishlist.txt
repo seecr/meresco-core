@@ -17,4 +17,15 @@ Wishlist:
 - Stopword support
 - Fulltext indexing
 - Service statics over SNMP
+
+Framework/Core:
+- Typing & Coercie
+- Receiver makes right
+- Unittests
+(- Composibility)
+- tree.find/select(signature)
+- runtime coercie
+- Obligatory named args:
+def add(object=XmlNode): pass
+retval = self.any.add(object='blah')
 - 
