@@ -35,46 +35,56 @@ class TypedObservable(Observable):
 		return {}
 	
 	def addObserver(self, observer):
-		#if isinstance(observer, TypedObservable):
-			#requiredMethods = self.__requires__()
-			#implementedMethods = self.__implements__()
-			#for requiredMethod in requiredMethods.keys():
-				#if requiredMethods in implementedMethods:
-					#pass
-					##converter = ConvertingObservable(
-		#else:
+		if isinstance(observer, TypedObservable):
+			requiredMethods = self.__requires__()
+			implementedMethods = observer.__implements__()
+			for name, requiredSignature in requiredMethods.items():
+				if name in implementedMethods:
+					implentedSignature = implementedMethods[name]
+					if implentedSignature == requiredSignature:
+						Observable.addObserver(self, observer)
+					else:
+						converter = getConverter(name, requiredSignature, implentedSignature)
+						convertingObservable = ConvertingObservable(name, converter)
+						Observable.addObserver(self, convertingObservable)
+						convertingObservable.addObserver(observer)
+				else:
+					return
+					Observable.addObserver(self, observer) #what to do for unknown conversion?!
+		else:
 			Observable.addObserver(self, observer)
 			
 
 class ConvertingObservableFunction:
 	
-	def __init__(self, realSelf, methodName, converters):
+	def __init__(self, realSelf, methodName, converter):
 		self._realSelf = realSelf
 		self._methodName = methodName
-		self._converters = converters
+		self._converter = converter
 		
 	def __call__(self, *args):
-		if len(args) != len(self._converters):
-			raise Exception("len - point 1")
-		args2 = [converter(args[i]) for i, converter in enumerate(self._converters)]
-		method = self._realSelf.all.__getattr__(self._methodName)
-		method(*args2)
+		method = self._realSelf.all.__getattr__(self._methodName)(*(self._converter(*args)))
 
 class ConvertingObservable(Observable):
 	
-	def __init__(self, methodName, converters):
+	def __init__(self, methodName, converter):
 		Observable.__init__(self)
-		self.__dict__[methodName] = ConvertingObservableFunction(self, methodName, converters)
+		self.__dict__[methodName] = ConvertingObservableFunction(self, methodName, converter)
 			
 converters = {}
 
-def registerConverter(fromType, toType, converter):
-	if not converters.has_key(fromType):
-		converters[fromType] = {}
-	converters[fromType][toType] = converter
+def registerConverter(methodName, fromSignature, toSignature, converter):
+	if not converters.has_key(methodName):
+		converters[methodName] = {}
+	if not converters[methodName].has_key(fromSignature):
+		converters[methodName][fromSignature] = {}
+	converters[methodName][fromSignature][toSignature] = converter
 
 def clearConverters():
 	converters.clear()
 	
-def getConverter(fromType, toType):
-	return converters[fromType][toType]
+def getConverter(methodName, fromSignature, toSignature):
+	try:
+		return converters[methodName][fromSignature][toSignature]
+	except:
+		raise Exception("No converter found for method %s from type %s to %s") % (methodName, fromSignature, toSignature)

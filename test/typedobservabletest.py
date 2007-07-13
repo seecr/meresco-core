@@ -30,12 +30,6 @@ class TypedObservableTest(unittest.TestCase):
 	def setUp(self):
 		clearConverters()
 	
-	def testRegularAdd(self):
-		one = TypedObservable()
-		two = TypedObservable()
-		one.addObserver(two)
-		self.assertEquals([two], one._observers)
-		
 	def testAddOldObservable(self):
 		class RequiresOne(TypedObservable):
 			
@@ -57,7 +51,7 @@ class TypedObservableTest(unittest.TestCase):
 				}
 		class ImplementsOne(TypedObservable):
 			
-			def __import__(self):
+			def __implements__(self):
 				return {
 					"methodOne": ("typeA", "typeB", "*")
 				}
@@ -68,9 +62,10 @@ class TypedObservableTest(unittest.TestCase):
 		self.assertEquals([implements], requires._observers)
 		
 	def testRegisterConverter(self):
-		id = lambda x: x
-		registerConverter("a", "b", id)
-		self.assertEquals(id, getConverter("a", "b"))
+		converter = lambda x: x, 1
+		
+		registerConverter("methodOne", ("typeA"),  ("typeB", "typeC"), converter )
+		self.assertEquals(converter, getConverter("methodOne", ("typeA"),  ("typeB", "typeC")))
 	
 	def testConvertingObservable(self):
 		observations = []
@@ -79,15 +74,15 @@ class TypedObservableTest(unittest.TestCase):
 				observations.append((one, two))
 		observer = CmObserver()
 				
-		cmToInch = lambda inch: inch * 2.54
-		observable = ConvertingObservable("methodOne", (cmToInch, cmToInch))
+		cmsToInches = lambda cm1, cm2: (cm1 * 2.54, cm2 * 2.54)
+		observable = ConvertingObservable("methodOne", cmsToInches)
 		observable.addObserver(observer)
 		observable.methodOne(1.0, 2.0)
 		self.assertEquals([(2.54, 5.08)], observations)
 	
 	def testConversionLink(self):
 		inchToCm = lambda inch: inch / 2.54
-		registerConverter("inch", "cm", inchToCm)
+		registerConverter("something", ("inch",), ("cm",), inchToCm)
 		
 		class RequiresSomethingInInch(TypedObservable):
 			
@@ -97,9 +92,9 @@ class TypedObservableTest(unittest.TestCase):
 				}
 		class ImplementsSomethingInCm(TypedObservable):
 			
-			def __import__(self):
+			def __implements__(self):
 				return {
-					"methodOne": ("cm")
+					"something": ("cm",)
 				}
 
 		requires = RequiresSomethingInInch()
@@ -107,5 +102,9 @@ class TypedObservableTest(unittest.TestCase):
 		requires.addObserver(implements)
 		self.assertEquals(1, len(requires._observers))
 		convertingObservable = requires._observers[0]
-		#self.assertNotEquals(implements, convertingObservable)
+		self.assertNotEquals(implements, convertingObservable)
+		self.assertEquals(ConvertingObservable, convertingObservable.__class__)
+		self.assertEquals(1, len(convertingObservable._observers))
+		self.assertEquals(implements, convertingObservable._observers[0])
+		self.assertEquals(inchToCm, convertingObservable.something._converter)
 		
