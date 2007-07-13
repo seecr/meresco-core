@@ -39,7 +39,9 @@ teddy.pluginadapter                             legacy.pluginadapter
 teddy.document                                  components.lucene.document
 teddy.venturi                                   components.venturi
 teddy.srurecordupdateplugin                     components.http.srurecordupdateplugin
-httpserver.sru                                  components.http" | \
+httpserver.sru                                  components.http
+cq2utils.observable                             meresco.framework.observable
+cq2utils.filter                                 meresco.components.filter" | \
 while read line
 do
     set -- $line
