@@ -25,19 +25,16 @@ from meresco.framework.observable import Observable
 
 class TypedObservable(Observable):
 	
+	__implements__ = {}
+	__requires__ = {}
+	
 	def __init__(self):
 		Observable.__init__(self)
-		
-	def __implements__(self):
-		return {}
-	
-	def __requires__(self):
-		return {}
 	
 	def addObserver(self, observer):
 		if isinstance(observer, TypedObservable):
-			requiredMethods = self.__requires__()
-			implementedMethods = observer.__implements__()
+			requiredMethods = self.__requires__
+			implementedMethods = observer.__implements__
 			for name, requiredSignature in requiredMethods.items():
 				if name in implementedMethods:
 					implentedSignature = implementedMethods[name]

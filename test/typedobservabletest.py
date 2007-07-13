@@ -32,11 +32,10 @@ class TypedObservableTest(unittest.TestCase):
 	
 	def testAddOldObservable(self):
 		class RequiresOne(TypedObservable):
-			
-			def __requires__(self):
-				return {
-					"methodOne": ("typeA", "typeB", "*")
-				}
+			__implements__ = {}
+			__requires__ = {}
+			__requires__["methodOne"] = ("typeA", "typeB", "*")
+		
 		requires = RequiresOne()
 		two = Observable()
 		requires.addObserver(two)
@@ -44,17 +43,14 @@ class TypedObservableTest(unittest.TestCase):
 		
 	def testFittingLink(self):
 		class RequiresOne(TypedObservable):
-			
-			def __requires__(self):
-				return {
-					"methodOne": ("typeA", "typeB", "*")
-				}
+			__implements__ = {}
+			__requires__ = {}
+			__requires__["methodOne"] = ("typeA", "typeB", "*")
+		
 		class ImplementsOne(TypedObservable):
-			
-			def __implements__(self):
-				return {
-					"methodOne": ("typeA", "typeB", "*")
-				}
+			__implements__ = {}
+			__requires__ = {}
+			__implements__["methodOne"] = ("typeA", "typeB", "*")
 
 		requires = RequiresOne()
 		implements = ImplementsOne()
@@ -85,17 +81,14 @@ class TypedObservableTest(unittest.TestCase):
 		registerConverter("something", ("inch",), ("cm",), inchToCm)
 		
 		class RequiresSomethingInInch(TypedObservable):
-			
-			def __requires__(self):
-				return {
-					"something": ("inch",)
-				}
+			__implements__ = {}
+			__requires__ = {}
+			__requires__["something"] = ("inch",)
+		
 		class ImplementsSomethingInCm(TypedObservable):
-			
-			def __implements__(self):
-				return {
-					"something": ("cm",)
-				}
+			__implements__ = {}
+			__requires__ = {}
+			__implements__["something"] = ("cm",)
 
 		requires = RequiresSomethingInInch()
 		implements = ImplementsSomethingInCm()
