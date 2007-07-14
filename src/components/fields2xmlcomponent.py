@@ -35,26 +35,27 @@ class Fields2XmlComponent(Component, Observable):
 	def __init__(self):
 		Observable.__init__(self)
 		
-	def add(self, aNotification):
-		if aNotification.partName != 'fields':
+	def add(self, xmlBufferNotification):
+		if xmlBufferNotification.partName != 'fields':
 			return
-		newNotification = Notification(aNotification.method, aNotification.id)
+		newNotification = Notification(xmlBufferNotification.method, xmlBufferNotification.id)
 		newNotification.partName = 'xmlfields'
 		
-		originalXml = binderytools.bind_string(aNotification.payload)
+		originalXml = binderytools.bind_string(xmlBufferNotification.payload)
 		
 		root = self._fields2Xml(originalXml)
 		
 		newNotification.payload = root.xmlfields
 		self.changed(newNotification)
 	
-	def delete(self, aNotification):
-		if aNotification.partName != 'fields':
+	#this just changes the partName
+	def delete(self, xmlBufferNotification):
+		if xmlBufferNotification.partName != 'fields':
 			return
 			
-		newNotification = Notification(aNotification.method, aNotification.id)
+		newNotification = Notification(xmlBufferNotification.method, xmlBufferNotification.id)
 		newNotification.partName = 'xmlfields'
-		newNotification.payload = aNotification.payload
+		newNotification.payload = xmlBufferNotification.payload
 		self.changed(newNotification)
 		
 	def _fields2Xml(self, originalXml):

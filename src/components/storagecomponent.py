@@ -30,11 +30,11 @@ class StorageComponent(Component):
 	def __init__(self, aStorage):
 		self._storage = aStorage
 
-	def add(self, notification):
-		unit = self._storage.getUnit(notification.id)
-		stream = unit.openBox(notification.partName, 'w')
+	def add(self, bufferNotification):
+		unit = self._storage.getUnit(bufferNotification.id)
+		stream = unit.openBox(bufferNotification.partName, 'w')
 		try:
-			stream.write(notification.payload)
+			stream.write(bufferNotification.payload)
 		finally:
 			stream.close()
 			

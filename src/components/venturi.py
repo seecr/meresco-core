@@ -39,9 +39,9 @@ class Venturi(Component, Observable):
 		self._storage = storage
 		self._venturiName = venturiName
 		
-	def add(self, notification):
-		unit = self._storage.getUnit(notification.id)
-		newNode = notification.payload
+	def add(self, amaraNodeNotification):
+		unit = self._storage.getUnit(amaraNodeNotification.id)
+		newNode = amaraNodeNotification.payload
 		if unit.hasBox(self._venturiName):
 			box = unit.openBox(self._venturiName)
 			try:
@@ -55,5 +55,5 @@ class Venturi(Component, Observable):
 			venturiObject = binderytools.bind_string('<%s/>' % self._venturiName).rootNode.childNodes[0]
 		venturiObject.xml_append(newNode)
 		
-		newNotification = Notification('add', notification.id, self._venturiName, venturiObject)
+		newNotification = Notification('add', amaraNodeNotification.id, self._venturiName, venturiObject)
 		self.changed(newNotification)
