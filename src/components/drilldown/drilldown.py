@@ -25,56 +25,58 @@
 #
 ## end license ##
 
+import PyLucene
+from meresco.components.drilldown.cpp.bitarray import DenseBitArray, SparseBitArray
+
 DENSE_SPARSE_BREAKING_POINT = 32
 
-class DocSet:
-	
-	def __init__(self, docs, length):
-		cardinality = len(docs)
-		if cardinality * DENSE_SPARSE_BREAKING_POINT > length:
-			result = DenseBitArray(length)
-		result = SparseBitArray(cardinality)
-		for doc in docs:
-			result.set(doc)
-		return result
+def createDocSet(docs, length):
+	cardinality = len(docs)
+	if cardinality * DENSE_SPARSE_BREAKING_POINT > length:
+		result = DenseBitArray(length)
+	result = SparseBitArray(cardinality)
+	for doc in docs:
+		result.set(doc)
+	return result
 	
 class DrillDown:
 	
-	def __init__(self, index, drillDownFieldNames):
-		self._index = index
+	def __init__(self, luceneIndexReader, drillDownFieldNames):
+		self._reader = luceneIndexReader
+		
 		self._drillDownFieldnames = drillDownFieldNames
 
-	def _totalDocsInIndex(self):
-		return self._getReader().numDocs()
+	def _numDocsInIndex(self):
+		return self._reader.numDocs()
 	
-	def process(self, hits, drillDownFieldnamesAndMaximumResults):
+	def process(self, docIds, drillDownFieldnamesAndMaximumResults):
 		drillDownResults = []
-		queryDocSet = self._docSetForQueryResult(hits)
+		queryDocSet = self._docSetForQueryResult(docIds)
 		for (fieldName, maximumResults) in drillDownFieldnamesAndMaximumResults:
 			drillDownResults.append((fieldName,
-					self._countField(fieldName, queryDocSet, maximumResults)))
+					self._processField(fieldName, queryDocSet, maximumResults)))
 		return drillDownResults
 	
-	def _docSetForQueryResult(self, hits):
-		sortedDocs = hits.getLuceneDocIds()
+	def _docSetForQueryResult(self, docIds):
+		sortedDocs = docIds
 		sortedDocs.sort()
-		return DocSet(hits, self._totalDocsInIndex())
+		return createDocSet(docIds, self._numDocsInIndex())
 	
-	def _reloadDocSets(self):
+	def reloadDocSets(self):
 		self._docSets = {}
 		for fieldName in self._drillDownFieldnames:
 			self._docSets[fieldName] = self._docSetsForField(fieldName + "__untokenized__")
 
-	def _docSetsForField(self, fieldName):
-		reader = self._getReader()
+	def _docSetsForFieldLucene(self, fieldName):
+		print "Warrrrring"
 		
 		result = []
-		termDocs = reader.termDocs()
-		termEnum = reader.terms(PyLucene.Term(fieldName, ''))
-		#reader.terms returns something of the following form, if fieldname == fieldname3
+		termDocs = self._reader.termDocs()
+		termEnum = self._reader.terms(PyLucene.Term(fieldName, ''))
+		#IndexReader.terms returns something of the following form, if fieldname == fieldname3
 		#fieldname3 'abla'
 		#fieldname3 'bb'
-		#fieldname3 'zz'
+		#fielname3 'zz'
 		#fieldname4 'aa'
 		
 		#The enum has the following (weird) behaviour: the internal pointer references
@@ -87,26 +89,28 @@ class DrillDown:
 			term = termEnum.term()
 			if not term or term.field() != fieldName:
 				break
-			
 			termDocs.seek(term)
 			
 			docs = []
 			while termDocs.next():
 				docs.append(termDocs.doc())
-			docSet = DocSet(docs, self._totalDocsInIndex())
+			docSet = createDocSet(docs, self._numDocsInIndex())
 			
 			result.append((term.text(), docSet))
-			
 			if not termEnum.next():
 				break
+			
+		return result
 		
+	def _docSetsForField(self, fieldName):
+		result = self._docSetsForFieldLucene(fieldName)
 		def cmpDescCardinaltiy((term1, docSet1), (term2, docSet2)):
 			return docSet2.cardinality() - docSet1.cardinality()
 		
 		result.sort(cmpDescCardinaltiy)
 		return result
 			
-	def _countField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
+	def _processField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
 		
 		#sort on cardinality, truncate with maximumResults and return smallest cardinality
 		#if no limit is present return 0
@@ -118,34 +122,22 @@ class DrillDown:
 					return resultList[-1][1] #Cardinality of last element
 			return 0
 
-		if not self._bitArrays.has_key(fieldName):
-			raise LuceneException("No BitArray for field " + fieldName)
+		if not self._docSets.has_key(fieldName):
+			raise LuceneException("No Docset For Field " + fieldName)
 		result = []
-		
+		johan = gek
 		if not drillDownBitArray:
-			for term, bitarray in self._bitArrays[fieldName]:
-				result.append((term, bitarray.cardinality()))
+			for term, docSet in self._docSets[fieldName]:
+				result.append((term, docSet.cardinality()))
 		else: #Use drillDownBitArray
 			minValueInResult = 0
-			for term, bitarray in self._bitArrays[fieldName]:
-				if bitarray.cardinality() < minValueInResult:
+			for term, docSet in self._docSets[fieldName]:
+				if docSet.cardinality() < minValueInResult:
 					break
 
-				cardinality = bitarray.combinedCardinality(drillDownBitArray)
+				cardinality = docSet.combinedCardinality(drillDownBitArray)
 								
 				if cardinality > minValueInResult:
 					result.append((term, cardinality))
 					minValueInResult = sortAndTruncateAndGetMinValueInResult(result)
-		return result
-				
-	#FROM teddyquery.py (Teddy 2.x) - probably not required.
-	def drillDown(self, callback):
-		if not self._hitsWrapper:
-			raise Exception("TeddyQuery.drillDown called before query")
-		result = 0
-		if self._drillDownFields:
-			result = self.duration(self._drillDownCore)
-			self._logging and self._logline.set('drilldownDuration', result)
-			for fieldname, tuples in self._drillDownResults.items():
-				callback(fieldname, tuples)
 		return result

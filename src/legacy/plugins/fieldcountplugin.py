@@ -32,6 +32,8 @@ ERROR_MESSAGE="""<?xml version="1.0" encoding="utf-8"?>
 <error>Mandatory argument '%s' not specified.</error>"""
 
 class FieldCountPlugin(QueryPlugin):
+	#Refactordirection: this should start to use the drilldown countfield functionality.
+	
 	def initialize(self):
 		self.contentType = XML_CONTENT_TYPE
 
