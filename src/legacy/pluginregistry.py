@@ -28,7 +28,7 @@
 import sys
 from glob import glob
 from plugins.queryplugin import PluginException
-from os.path import basename
+from os.path import basename, isdir
 
 class NoSuchPluginException(PluginException):
 	def __init__(self, command):
@@ -60,6 +60,8 @@ class PluginRegistry:
 		directory = self._configuration['server.pluginpath']
 		print "PluginRegistry - loading plugins from ", directory
 		sys.path.append(directory)
+		if not isdir(directory):
+			raise Exception("%s is not a directory" % directory)
 		for pyfile in glob('%s/*.py' % directory):
 			if not pyfile.endswith('__init__.py'):
 				filename = basename(pyfile[:-3])
