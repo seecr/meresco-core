@@ -78,28 +78,29 @@ class TeddyInterfaceTest(CQ2TestCase):
 		def openBox(boxName, mode='r'):
 			openBoxCalls.append(boxName)
 			if boxName in ['test', 'fields']:
-				return StringIO()
+				return StringIO("<someXml/>")
 			else:
 				raise Exception(boxName)
-		print "Waring, JJ, KVS hier nog iets fixen (teddyinterfacetest), nl. test op someRecordPacking_1"
+
 		storageUnit.openBox = openBox
 		
 		record = TeddyRecord(1, storage)
 		
-		stream = CallTrace('Stream')
-				
-		record.writeDataOn('test', 'someRecordPacking_1', stream)
+		stream = StringIO()
+		record.writeDataOn('test', 'xml', stream)
 		self.assertEquals(1, len(storage.calledMethods))
 		self.assertEquals('getUnit(1)', str(storage.calledMethods[0]))
+		self.assertEquals('<someXml/>', stream.getvalue())
 		
 		self.assertEquals(1, len(openBoxCalls))
 		self.assertEquals('test', openBoxCalls[0])
 		
-		record.writeDataOn('fields', 'someRecordPacking_2', stream)
+		stream = StringIO()
+		record.writeDataOn('fields', 'string', stream)
 		self.assertEquals(2, len(storage.calledMethods))
-		
 		self.assertEquals(2, len(openBoxCalls))
 		self.assertEquals('fields', openBoxCalls[1])
+		self.assertEquals('&lt;someXml/&gt;', stream.getvalue())
 		
 
 	def assertNextRecordPosition(self, expected, (count, offset, hitcount)):

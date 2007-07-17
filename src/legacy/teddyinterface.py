@@ -28,6 +28,7 @@ from meresco.legacy.plugins.searchinterface import SearchInterface, SearchResult
 from cqlparser.lucenecomposer import fromString as cqlToLucene
 from storage.storage import StorageException
 from cStringIO import StringIO
+from xml.sax.saxutils import escape as xmlEscape
 
 SRU_IS_ONE_BASED = 1
 		
@@ -115,12 +116,14 @@ class TeddyRecord(SearchRecord):
 		
 		JJ: Evil code! If there is an inconsistency between the index and the storage, then it is possible for the storage being asked to retrieve a document that does not exist. This leads to an StorageException which currently floats up to the SRU interface generating an Diagnostics. This messes up the SRU response. Therefor it now writes an empty record to indicate something went wrong. There will need to be a better solution implemented for this, but currently that is not within the scope of this task.
 		"""
-		#hierVerder
-		
 		box = self.readData(recordSchema)
 		try:
-			for stuff in box:
-				aStream.write(stuff)
+			if recordPacking == 'xml':
+				for stuff in box:
+					aStream.write(stuff)
+			elif recordPacking == 'string':
+				for stuff in box:
+					aStream.write(xmlEscape(stuff))
 		finally:
 			box.close()
 				
