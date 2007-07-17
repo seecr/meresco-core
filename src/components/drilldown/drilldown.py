@@ -68,8 +68,7 @@ class DrillDown:
 			self._docSets[fieldName] = self._docSetsForField(fieldName + "__untokenized__")
 
 	def _docSetsForFieldLucene(self, fieldName):
-		print "Warrrrring"
-		
+		print "Warrrrring" # - de controlflow is hier wat te refactoren, zodat echt alleen de lucene stukjes hieronder vallen"
 		result = []
 		termDocs = self._reader.termDocs()
 		termEnum = self._reader.terms(PyLucene.Term(fieldName, ''))
@@ -104,10 +103,10 @@ class DrillDown:
 		
 	def _docSetsForField(self, fieldName):
 		result = self._docSetsForFieldLucene(fieldName)
-		def cmpDescCardinaltiy((term1, docSet1), (term2, docSet2)):
+		def cmpDescCardinality((term1, docSet1), (term2, docSet2)):
 			return docSet2.cardinality() - docSet1.cardinality()
 		
-		result.sort(cmpDescCardinaltiy)
+		result.sort(cmpDescCardinality)
 		return result
 			
 	def _processField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
@@ -125,7 +124,7 @@ class DrillDown:
 		if not self._docSets.has_key(fieldName):
 			raise LuceneException("No Docset For Field " + fieldName)
 		result = []
-		johan = gek
+		
 		if not drillDownBitArray:
 			for term, docSet in self._docSets[fieldName]:
 				result.append((term, docSet.cardinality()))

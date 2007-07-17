@@ -27,6 +27,7 @@
 import os.path
 from unittest import TestCase
 from tempfile import gettempdir
+from shutil import rmtree
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.drilldown import DrillDown
@@ -38,22 +39,28 @@ class DrillDownTest(TestCase):
 		self._tempdir = gettempdir() + '/testing'
 		self._directoryName = os.path.join(self._tempdir, 'lucene-index')
 		self._luceneIndex = LuceneIndex(self._directoryName)
+	
+	def tearDown(self):
+		self._luceneIndex = None
+		rmtree(self._tempdir)
 		
 	def testReloadDocSets(self):
-		drillDown = DrillDown(self._luceneIndex._getReader(), ['field_0', 'field_1'])
+
 		self.add([
-			('1', {'field_0': 'term_0 term_1', 'field_1': 'term_0'}),
-			('2', {'field_0': 'term_0 term_2', 'field_1': 'term_0'}),
-			('3', {'field_0': 'term_0 term_3', 'field_1': 'term_1'}),
-			('4', {'field_0': 'term_4 term_5', 'field_1': 'term_1'})])
+			('1', {'field_0': 'this is term_0', 'field_1': 'term_0'}),
+			('2', {'field_0': 'this is term_0', 'field_1': 'term_0'}),
+			('3', {'field_0': 'this is term_1', 'field_1': 'term_1'}),
+			('4', {'field_0': 'this is term_2', 'field_1': 'term_1'})])
+		drillDown = DrillDown(self._luceneIndex._getReader(), ['field_0', 'field_1'])
 		drillDown.reloadDocSets()
-		self.assertEquals(6, len(drillDown._docsSets['field_0']))
-		self.assertEquals(2, len(drillDown._docsSets['field_1']))
-		self.assertEquals(["term_%s" % i for i in range(6)], drillDown._docsSets['field_0'].keys())
-		self.assertEquals(["term_%s" % i for i in range(2)], drillDown._docsSets['field_1'].keys())
-		self.assertEquals(3, drillDown._docsSets['field_0']['term_0'].cardinality())
-		self.assertEquals(1, drillDown._docsSets['field_0']['term_1'].cardinality())
-		self.assertEquals(2, drillDown._docsSets['field_1']['term_0'].cardinality())
+		
+		self.assertEquals(3, len(drillDown._docSets['field_0']))
+		self.assertEquals(2, len(drillDown._docSets['field_1']))
+		self.assertEquals(["this is term_%s" % i for i in range(3)], drillDown._docSets['field_0'].keys())
+		self.assertEquals(["term_%s" % i for i in range(2)], drillDown._docSets['field_1'].keys())
+		self.assertEquals(2, drillDown._docSets['field_0']['this is term_0'].cardinality())
+		self.assertEquals(1, drillDown._docSets['field_0']['this is term_1'].cardinality())
+		self.assertEquals(2, drillDown._docSets['field_1']['term_0'].cardinality())
 		
 	#Helper functions:
 	def add(self, documents):
