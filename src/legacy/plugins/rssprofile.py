@@ -47,6 +47,8 @@ class RSSProfile:
 		self._rss = Setters()
 		self._rss.sortKeys = None
 		self._rss.maximumRecords = DEFAULT_MAXIMUMRECORDS
+		self._rss.boxName = ''
+		
 		self._channel = Setters()
 		local = {'rss':self._rss, 'channel': self._channel}
 		try:
@@ -61,6 +63,9 @@ class RSSProfile:
 	
 	def sortKeys(self):
 		return self._rss.sortKeys
+	
+	def boxName(self):
+		return self._rss.boxName
 	
 	def item(self, document):
 		return self._item(document)

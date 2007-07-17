@@ -97,14 +97,19 @@ class RSSPlugin(QueryPlugin):
 		return self._profiles.get(profileName, self._profiles.get(DEFAULT_PROFILE_NAME))
 	
 	def _writeResult(self, aRecord):
+		profile = self.profile()
+		boxName = profile.boxName()
+		if boxName == '':
+			raise Exception("No rss.boxName specified in rss profile")
+		
 		try:
-			document = wrapp(binderytools.bind_stream(aRecord.readData('document'))).document
+			rootNode = wrapp(binderytools.bind_stream(aRecord.readData(boxName))).childNodes[0]
 		except SAXParseException:
 			self._request.logException()
 			return
 		
 		self.write('<item>')
-		for rssname, value in self.profile().item(document):
+		for rssname, value in self.profile().item(rootNode):
 			value = xmlEscape(str(value))
 			self.write('<%(rssname)s>%(value)s</%(rssname)s>' % locals())
 		self.write('</item>')
