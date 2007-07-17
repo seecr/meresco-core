@@ -162,7 +162,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 	
 	def _writeRecordData(self, aRecord):
 		self.write('<srw:recordData>')
-		aRecord.writeDataOn(self.sruquery.recordSchema, self)
+		aRecord.writeDataOn(self.sruquery.recordSchema, self.sruquery.recordPacking, self)
 		self.write('</srw:recordData>')
 
 	def _writeExtraRecordData(self, aRecord):
@@ -171,7 +171,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 		self.write('<srw:extraRecordData>')
 		for schema in self.sruquery.x_recordSchema:
 			self.write('<recordData recordSchema="%s">' % xmlEscape(schema))
-			aRecord.writeDataOn(schema, self)
+			aRecord.writeDataOn(schema, self.sruquery.recordPacking, self)
 			self.write('</recordData>')
 		self.write('</srw:extraRecordData>')
 

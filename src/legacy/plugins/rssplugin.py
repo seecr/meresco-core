@@ -103,7 +103,7 @@ class RSSPlugin(QueryPlugin):
 			raise Exception("No rss.boxName specified in rss profile")
 		
 		try:
-			rootNode = wrapp(binderytools.bind_stream(aRecord.readData(boxName))).childNodes[0]
+			rootNode = wrapp(binderytools.bind_stream(aRecord.readData(boxName)).childNodes[0])
 		except SAXParseException:
 			self._request.logException()
 			return

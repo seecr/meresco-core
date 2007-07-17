@@ -100,7 +100,6 @@ class SRUQueryTest(TestCase):
 		query = SRUQuery('database', {})
 		self.assertEquals('xml', query.recordPacking)
 
-		query = SRUQuery('database', {'recordPacking': ['string']})
-		#ignored
-		self.assertEquals('xml', query.recordPacking)
+		query = SRUQuery('database', {'recordPacking': ['someRecordPacking']})
+		self.assertEquals('someRecordPacking', query.recordPacking)
 

@@ -73,7 +73,7 @@ class SearchResult:
 		raise NotImplementedError()
 	
 class SearchRecord:
-	def writeDataOn(self, recordSchema, aStream):
+	def writeDataOn(self, recordSchema, recordPacking, aStream):
 		"""
 		Write the recordData with the given schema onto the given stream
 		"""

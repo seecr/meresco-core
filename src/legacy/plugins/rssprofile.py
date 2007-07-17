@@ -73,21 +73,6 @@ class RSSProfile:
 	def channel(self):
 		return self._channel
 	
-class RSSTestProfile(RSSProfile):
-	def __init__(self):
-		self._item = lambda document: [ 
-			('title', document.xmlfields.dctitle),
-			('link', document.xmlfields.identifier),
-			('description', document.xmlfields.dcdescription)
-		]
-		self._rss = Setters()
-		self._channel = Setters()
-		self._rss.maximumRecords = DEFAULT_MAXIMUMRECORDS
-		self._rss.sortKeys = 'generic4,,1'
-		self._channel.title = 'Test title'
-		self._channel.link = 'http://www.example.org'
-		self._channel.description = 'Test description'
-	
 class RSSProfileException(Exception):
 	pass
 

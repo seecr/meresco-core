@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-from meresco.legacy.plugins.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory, RSSTestProfile
+from meresco.legacy.plugins.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory
 from cStringIO import StringIO
 from tempfile import mkdtemp
 from shutil import rmtree
@@ -111,10 +111,6 @@ class RSSProfileTest(unittest.TestCase):
 	def testReadEmptyDirectory(self):
 		profiles = readProfilesInDirectory(self._directoryname)
 		self.assertEquals({}, profiles)
-		
-	def testRSSTestProfile(self):
-		profile = RSSTestProfile()
-		self.assertEquals('The title', dict(profile.item(XMLDOCUMENT))['title'])
 		
 	def _writeFile(self, filename, contents):
 		f=open(join(self._directoryname, filename), 'w')

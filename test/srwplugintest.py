@@ -62,7 +62,7 @@ class SRWPluginTest(CQ2TestCase):
 		
 	def setSearchResult(self, numberOfRecords, recordData):
 		searchRecord = CallTrace('SearchRecord')
-		searchRecord.writeDataOn = lambda recordSchema, stream: stream.write(recordData)
+		searchRecord.writeDataOn = lambda recordSchema, recordPacking, stream: stream.write(recordData)
 		searchResult = CallTrace('SearchResult')
 		searchResult.returnValues['getNumberOfRecords'] = numberOfRecords
 		searchResult.returnValues['getRecords'] = [searchRecord]

@@ -245,7 +245,7 @@ class MockEmptySearchRecord:
 	def __init__(self, aNumber):
 		self.aNumber = aNumber
 			
-	def writeDataOn(self, recordSchema, aStream):
+	def writeDataOn(self, recordSchema, recordPacking, aStream):
 		pass	
 
 class MockSearchRecord:
@@ -253,7 +253,7 @@ class MockSearchRecord:
 		self.aNumber = aNumber
 		
 
-	def writeDataOn(self, recordSchema, aStream):
+	def writeDataOn(self, recordSchema, recordPacking, aStream):
 		if recordSchema == 'dc':
 			aStream.write('<line>')
 			aStream.write('<number>%d</number>' % self.aNumber)

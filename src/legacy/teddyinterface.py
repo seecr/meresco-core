@@ -109,13 +109,15 @@ class TeddyRecord(SearchRecord):
 	def _getStorageUnit(self):
 		return self._storage.getUnit(self._documentId)
 
-	def writeDataOn(self, dataName, aStream):
+	def writeDataOn(self, recordSchema, recordPacking, aStream):
 		"""
 		Write data with name to aStream
 		
 		JJ: Evil code! If there is an inconsistency between the index and the storage, then it is possible for the storage being asked to retrieve a document that does not exist. This leads to an StorageException which currently floats up to the SRU interface generating an Diagnostics. This messes up the SRU response. Therefor it now writes an empty record to indicate something went wrong. There will need to be a better solution implemented for this, but currently that is not within the scope of this task.
 		"""
-		box = self.readData(dataName)
+		#hierVerder
+		
+		box = self.readData(recordSchema)
 		try:
 			for stuff in box:
 				aStream.write(stuff)

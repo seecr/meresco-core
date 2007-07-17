@@ -29,7 +29,7 @@ from cq2utils.cq2testcase import CQ2TestCase
 from meresco.legacy.plugins.rssplugin import RSSPlugin, registerOn
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
-from meresco.legacy.plugins.rssprofile import RSSTestProfile, readProfilesInDirectory
+from meresco.legacy.plugins.rssprofile import readProfilesInDirectory, RSSProfile, Setters
 from tempfile import mkdtemp
 from shutil import rmtree
 
@@ -46,6 +46,7 @@ RSS = """<?xml version="1.0" encoding="UTF-8"?>
 
 RSSPROFILE = """rss.maximumRecords = 15
 rss.sortKeys = 'sortField,,1'
+rss.boxName = 'document'
 channel.description = 'Test description'
 channel.link = 'http://www.example.org'
 channel.title = 'Test title'
@@ -174,7 +175,23 @@ class RSSPluginTest(CQ2TestCase):
 		
 		
 	def testSelectOtherProfile(self):
-		profile = RSSTestProfile()
+		class OtherProfile(RSSProfile):	
+			def __init__(self):
+				self._item = lambda document: [ 
+					('title', document.xmlfields.dctitle),
+					('link', document.xmlfields.identifier),
+					('description', document.xmlfields.dcdescription)
+				]
+				self._rss = Setters()
+				self._channel = Setters()
+				self._rss.maximumRecords = 15
+				self._rss.sortKeys = 'generic4,,1'
+				self._rss.boxName = 'document'
+				self._channel.title = 'Test title'
+				self._channel.link = 'http://www.example.org'
+				self._channel.description = 'Test description'
+		
+		profile = OtherProfile()
 		profile._channel.extraTitle = 'Other'
 		profile._item = lambda x: [('title', 'othertitle')]
 		self.plugin._profiles['otherprofile'] = profile

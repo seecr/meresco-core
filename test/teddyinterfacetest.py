@@ -77,26 +77,25 @@ class TeddyInterfaceTest(CQ2TestCase):
 		openBoxCalls=[]
 		def openBox(boxName, mode='r'):
 			openBoxCalls.append(boxName)
-			if boxName == 'test':
-				return StringIO()
-			elif boxName == 'fields':
+			if boxName in ['test', 'fields']:
 				return StringIO()
 			else:
 				raise Exception(boxName)
+		print "Waring, JJ, KVS hier nog iets fixen (teddyinterfacetest), nl. test op someRecordPacking_1"
 		storageUnit.openBox = openBox
 		
 		record = TeddyRecord(1, storage)
 		
 		stream = CallTrace('Stream')
 				
-		record.writeDataOn('test', stream)
+		record.writeDataOn('test', 'someRecordPacking_1', stream)
 		self.assertEquals(1, len(storage.calledMethods))
 		self.assertEquals('getUnit(1)', str(storage.calledMethods[0]))
 		
 		self.assertEquals(1, len(openBoxCalls))
 		self.assertEquals('test', openBoxCalls[0])
 		
-		record.writeDataOn('fields', stream)
+		record.writeDataOn('fields', 'someRecordPacking_2', stream)
 		self.assertEquals(2, len(storage.calledMethods))
 		
 		self.assertEquals(2, len(openBoxCalls))
@@ -164,7 +163,7 @@ class TeddyInterfaceTest(CQ2TestCase):
 		self.assertEquals([], result)
 		
 		stream = StringIO()
-		record.writeDataOn('someschema', stream)
+		record.writeDataOn('someschema', 'xml', stream)
 		self.assertEquals('', stream.getvalue())
 		
 	def testReset(self):

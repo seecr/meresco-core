@@ -37,6 +37,7 @@ class SRUQueryParseException(SRUQueryException):
 	pass
 
 DEFAULT_RECORDSCHEMA = 'dc'
+DEFAULT_RECORDPACKING = 'xml'
 
 class SRUQuery:
 	def __init__(self, database, arguments):
@@ -70,7 +71,9 @@ class SRUQuery:
 			
 		self.x_recordSchema = filter(str.strip, arguments.get('x-recordSchema', []))
 		
-		self.recordPacking = 'xml'
+		self.recordPacking = arguments.get('recordPacking', [DEFAULT_RECORDPACKING])[0]
+		if self.recordPacking == '':
+			self.recordPacking = DEFAULT_RECORDPACKING
 		
 	def _parseSort(self, sortKeys):
 		try:
