@@ -27,6 +27,8 @@
 ## end license ##
 
 set -e
+basedir=$(cd $(dirname $0); pwd)
+merescodir=$(cd $basedir/..; pwd)
 source $basedir/functions.sh
 
 if [ ! isDebian ] ; then
@@ -39,10 +41,6 @@ INSTALL_DAEMONTOOLS="YES"
 if [ ! -z "$INSTALL_OPTIONS_FILE" ]; then
     source $INSTALL_OPTIONS_FILE
 fi
-
-basedir=$(cd $(dirname $0); pwd)
-merescodir=$(cd $basedir/..; pwd)
-distdir=$merescodir/dist
 
 messageWithEnter "Now installing the Meresco Core"
 
@@ -69,16 +67,23 @@ messageWithEnter "Installing prepackaged version of PyLucene."
 aptitude install libc6 libgcc1 zlib1g libstdc++5
 aptitude_install "http://debian.cq2.org" stable main pylucene python2.4-cq2utils python2.4-storage
 
-cd ../test
-./alltests.py
 
-if [ $? == "0" ] ; then
+testresult=/tmp/meresco.testresult
+(
+cd $merescodir/test
+./alltests.py > $testresult 2>&1
+)
+
+if [ $? -eq 0 ] ; then
 	message "Installation of MERESCO finished.
 
 See the manual for further configuration steps.
 "
+    
 else
 	message "Installation of MERESO Core FAILED.
-"
+    
+Result of the tests was:"
+    cat $testresult
 fi
-
+rm $testresult
