@@ -52,7 +52,7 @@ class DrillDown:
 	def process(self, docIds, drillDownFieldnamesAndMaximumResults):
 		drillDownResults = []
 		queryDocSet = self._docSetForQueryResult(docIds)
-		for (fieldName, maximumResults) in drillDownFieldnamesAndMaximumResults:
+		for fieldName, maximumResults in drillDownFieldnamesAndMaximumResults:
 			drillDownResults.append((fieldName,
 					self._processField(fieldName, queryDocSet, maximumResults)))
 		return drillDownResults
@@ -65,7 +65,7 @@ class DrillDown:
 	def reloadDocSets(self):
 		self._docSets = {}
 		for fieldName in self._drillDownFieldnames:
-			self._docSets[fieldName] = self._docSetsForField(fieldName + "__untokenized__")
+			self._docSets[fieldName] = self._docSetsForField(fieldName)
 
 	def _docSetsForFieldLucene(self, fieldName):
 		print "Warrrrring" # - de controlflow is hier wat te refactoren, zodat echt alleen de lucene stukjes hieronder vallen"
@@ -110,7 +110,6 @@ class DrillDown:
 		return result
 			
 	def _processField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
-		
 		#sort on cardinality, truncate with maximumResults and return smallest cardinality
 		#if no limit is present return 0
 		def sortAndTruncateAndGetMinValueInResult(resultList):

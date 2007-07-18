@@ -32,6 +32,7 @@ from shutil import rmtree
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.drilldown import DrillDown
 from meresco.components.lucene.document import Document
+from meresco.components.lucene.querywrapper import AdvancedQueryWrapper
 
 class DrillDownTest(TestCase):
 	
@@ -64,6 +65,25 @@ class DrillDownTest(TestCase):
 		self.assertEquals(1, dict(drillDown._docSets['field_0'])['this is term_1'].cardinality())
 		self.assertEquals(2, dict(drillDown._docSets['field_1'])['term_0'].cardinality())
 		
+	def testDrillDown(self):
+		self.addUntokenized([
+			('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+			('2', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+			('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
+			('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
+		drillDown = DrillDown(self._luceneIndex._getReader(), ['field_0', 'field_1'])
+		drillDown.reloadDocSets()
+		queryResults = self._luceneIndex.executeQuery(AdvancedQueryWrapper("inquery"))
+		self.assertEquals(3, len(queryResults))
+		
+		drilldownResult = drillDown.process(queryResults.getLuceneDocIds(), [('field_0', 0), ('field_1', 0)])
+		
+		self.assertEquals(2, len(drilldownResult))
+		result = dict(drilldownResult)
+		self.assertEquals(['field_0', 'field_1'], result.keys())
+		self.assertEquals([("this is term_0", 2), ("this is term_1", 1)], result['field_0'])
+		self.assertEquals([("inquery", 3)], result['field_1'])
+				
 	#Helper functions:
 	def addUntokenized(self, documents):
 		for docId, fields in documents:

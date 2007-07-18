@@ -109,6 +109,7 @@ class LuceneIndex:
 		self._searcher = PyLucene.IndexSearcher(self._directoryName)
 	
 	def createQuery(self, aString, anOffset = DEFAULT_OFFSET, aCount = DEFAULT_COUNT, sortBy = None, sortDescending = False):
+		"""Stop using this (deprecated) or use queryWrapper here in stead of LuceneQuery"""
 		return LuceneQuery(self, aString, anOffset, aCount, sortBy, sortDescending)
 	
 	def executeQuery(self, aQueryWrapper):
@@ -137,10 +138,6 @@ class LuceneIndex:
 			writer.optimize()
 		finally:
 			writer.close()
-			
-	def __del__(self):
-		if self._indexChanged:
-			self.optimize()
 		
 	def _getWriter(self, createIndex = False):
 		self._closeReader()
