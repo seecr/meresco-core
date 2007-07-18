@@ -30,7 +30,7 @@ import os, sys
 os.system('find .. -name "*.pyc" | xargs rm -f')
 
 from glob import glob
-for path in glob('../develop.d/*'):
+for path in glob('../deps.d/*'):
 	sys.path.insert(0, path)
 sys.path.insert(0, "..")
 
