@@ -46,7 +46,7 @@ class DrillDownTest(TestCase):
 		
 	def testReloadDocSets(self):
 
-		self.add([
+		self.addUntokenized([
 			('1', {'field_0': 'this is term_0', 'field_1': 'term_0'}),
 			('2', {'field_0': 'this is term_0', 'field_1': 'term_0'}),
 			('3', {'field_0': 'this is term_1', 'field_1': 'term_1'}),
@@ -56,18 +56,20 @@ class DrillDownTest(TestCase):
 		
 		self.assertEquals(3, len(drillDown._docSets['field_0']))
 		self.assertEquals(2, len(drillDown._docSets['field_1']))
-		self.assertEquals(["this is term_%s" % i for i in range(3)], drillDown._docSets['field_0'].keys())
-		self.assertEquals(["term_%s" % i for i in range(2)], drillDown._docSets['field_1'].keys())
-		self.assertEquals(2, drillDown._docSets['field_0']['this is term_0'].cardinality())
-		self.assertEquals(1, drillDown._docSets['field_0']['this is term_1'].cardinality())
-		self.assertEquals(2, drillDown._docSets['field_1']['term_0'].cardinality())
+		self.assertEquals(set(["this is term_%s" % i for i in range(3)]), \
+			set(dict(drillDown._docSets['field_0']).keys()))
+		self.assertEquals(set(["term_%s" % i for i in range(2)]), \
+			set(dict(drillDown._docSets['field_1']).keys()))
+		self.assertEquals(2, dict(drillDown._docSets['field_0'])['this is term_0'].cardinality())
+		self.assertEquals(1, dict(drillDown._docSets['field_0'])['this is term_1'].cardinality())
+		self.assertEquals(2, dict(drillDown._docSets['field_1'])['term_0'].cardinality())
 		
 	#Helper functions:
-	def add(self, documents):
+	def addUntokenized(self, documents):
 		for docId, fields in documents:
 			myDocument = Document(docId)
 			for field, value in fields.items():
-				myDocument.addIndexedField(field, value)
+				myDocument.addIndexedField(field, value, tokenize = False)
 			self._luceneIndex.addToIndex(myDocument)
 		self._luceneIndex.reOpen()
 		
