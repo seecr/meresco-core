@@ -68,8 +68,13 @@ IPTABLES=/sbin/iptables" > $firewall_file
 }
 
 function message {
-	echo "*
-* $1"
+    echo "
+$@" | sed 's/^/* /'
+}
+
+function messageWithEnter {
+    message "$@"
+    read -p "Press [ENTER] to continue"
 }
 
 function aptitude_install {

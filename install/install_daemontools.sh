@@ -32,17 +32,14 @@ basedir=$(dirname $0)
 
 source $basedir/functions.sh
 
-echo "*
-* Checking installation of daemontools."
+message "Checking installation of daemontools."
 
 if isDebian ; then
 	if [ ! -f /usr/bin/svc ]; then
-		echo "* Installing daemaontools."
+		message "Installing daemaontools."
 		aptitude install daemontools-installer
-echo "* You will be asked a couple of questions.
-* The default answer should be good enough.
-[Press Enter to continue]"
-		read
+        messageWithEnter "You will be asked a couple of questions.
+The default answer should be good enough."
 		build-daemontools
 	fi
 else
@@ -50,7 +47,7 @@ else
   # the official package and patch it. Then compile and install it as
   # instructed on http://cr.yp.to
 	if [ ! -f /command/svc ]; then
-		echo "* Downloading and compiling deamontools"
+		message "Downloading and compiling deamontools"
 		mkdir --parents /package
 		chmod 1755 /package
 		cd /package

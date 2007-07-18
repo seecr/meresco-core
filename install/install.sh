@@ -27,33 +27,26 @@
 ## end license ##
 
 set -e
+source $basedir/functions.sh
 
 if [ ! isDebian ] ; then
 	echo Unsupported Linux Distribution. Only Debian is supported.
 	exit
 fi
 
+INSTALL_DAEMONTOOLS="YES"
+# Read options file if present
+if [ ! -z "$INSTALL_OPTIONS_FILE" ]; then
+    source $INSTALL_OPTIONS_FILE
+fi
 
 basedir=$(cd $(dirname $0); pwd)
 merescodir=$(cd $basedir/..; pwd)
-teddydir=$merescodir/teddy
 distdir=$merescodir/dist
-cq2_dep_dir=$merescodir/lib
 
-source $basedir/functions.sh
+messageWithEnter "Now installing the Meresco Core"
 
-test -d $cq2_dep_dir || mkdir $cq2_dep_dir
-$basedir/install_dist.sh $cq2_dep_dir cq2utils 4.2
-$basedir/install_dist.sh $cq2_dep_dir storage 3.2
-$basedir/install_dist.sh $cq2_dep_dir cqlparser 1.2
-
-echo "* 
-* Now installing the Meresco Core
-[Press Enter to continue]"
-read
-
-echo "*
-* Installing required packages."
+message "Installing required packages."
 
 PACKAGES="python2.4 python-profiler python-xml python-twisted-web rsync wget"
 
@@ -63,16 +56,15 @@ if [ -e /usr/bin/python2.4 ]; then
 	ln -s /usr/bin/python2.4 /usr/bin/python
 fi
 
-$basedir/install_daemontools.sh
+if [ "$INSTALL_DAEMONTOOLS" == "YES" ]; then
+    $basedir/install_daemontools.sh
+fi
 
 echo "import sys
 sys.setdefaultencoding('utf-8')
 " > /usr/lib/python2.4/site-packages/sitecustomize.py
 
-echo "*
-* Installing prepackaged version of PyLucene.
-[Press Enter to continue]"
-read
+messageWithEnter "Installing prepackaged version of PyLucene."
 
 aptitude install libc6 libgcc1 zlib1g libstdc++5
 aptitude_install "http://debian.cq2.org" stable main pylucene python2.4-cq2utils python2.4-storage
@@ -81,16 +73,12 @@ cd ../test
 ./alltests.py
 
 if [ $? == "0" ] ; then
-	echo "* 
-* Installation of MERESCO finished.
-*
-* See the manual for further configuration steps.
+	message "Installation of MERESCO finished.
+
+See the manual for further configuration steps.
 "
 else
-	echo "*
-* Installation of MERESO Core FAILED.
-* Tried 'import PyLucene; print PyLucene.VERSION == 2.0.0', but result was
-* $PYLUCENEVERSION
+	message "Installation of MERESO Core FAILED.
 "
 fi
 
