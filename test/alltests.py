@@ -5,7 +5,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -87,6 +87,7 @@ from filtertest import FilterTest
 from typedobservabletest import TypedObservableTest
 from drilldowntest import DrillDownTest
 from convertertest import ConverterTest
+from drilldownfieldcomponenttest import DrilldownFieldComponentTest
 
 if __name__ == '__main__':
         unittest.main()

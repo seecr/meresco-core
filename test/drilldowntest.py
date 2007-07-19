@@ -79,18 +79,16 @@ class DrillDownTest(TestCase):
         self.assertEquals([("this is term_0", 2), ("this is term_1", 1)], result['field_0'])
         self.assertEquals([("inquery", 3)], result['field_1'])
 
-
-    def performQuery(self, queryString, sortBy = None, sortDescending = False):
-        queryWrapper = QueryWrapper(queryString, sortBy, sortDescending)
-        hitsWrapper = self._luceneIndex.executeQuery(queryWrapper)
-        return hitsWrapper
-
-
 class OldStuffForReference:
     def setUp(self):
         self._tempdir = gettempdir() + '/testing'
         self._directoryName = os.path.join(self._tempdir, 'lucene-index')
         self._luceneIndex = LuceneIndex(self._directoryName)
+
+    def performQuery(self, queryString, sortBy = None, sortDescending = False):
+        queryWrapper = QueryWrapper(queryString, sortBy, sortDescending)
+        hitsWrapper = self._luceneIndex.executeQuery(queryWrapper)
+        return hitsWrapper
 
     def testDrillDown(self):
         #self._luceneIndex._untokenizedTwinFieldnames = ['author', 'title']

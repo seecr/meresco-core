@@ -40,7 +40,7 @@ def createDocSet(docs, length):
         result.set(doc)
     return result
 
-class DrillDown:
+class DrillDown(object):
 
     def __init__(self, drillDownFieldNames):
         self._drillDownFieldnames = drillDownFieldNames
