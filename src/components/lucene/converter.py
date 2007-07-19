@@ -6,10 +6,8 @@ class Converter(object):
         self._fieldNames = fieldNames
 
     def getDocSets(self):
-        docSets = []
         for fieldName in self._fieldNames:
-            docSets.append((fieldName, self._docSetsForFieldLucene(fieldName)))
-        return docSets
+            yield (fieldName, self._docSetsForFieldLucene(fieldName))
 
     def docCount(self):
         return self._reader.numDocs()
