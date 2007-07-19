@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,111 +31,77 @@ from meresco.components.drilldown.cpp.bitarray import DenseBitArray, SparseBitAr
 DENSE_SPARSE_BREAKING_POINT = 32
 
 def createDocSet(docs, length):
-	cardinality = len(docs)
-	if cardinality * DENSE_SPARSE_BREAKING_POINT > length:
-		result = DenseBitArray(length)
-	result = SparseBitArray(cardinality)
-	for doc in docs:
-		result.set(doc)
-	return result
-	
+    cardinality = len(docs)
+    if cardinality * DENSE_SPARSE_BREAKING_POINT > length:
+        result = DenseBitArray(length)
+    result = SparseBitArray(cardinality)
+    for doc in docs:
+        result.set(doc)
+    return result
+
 class DrillDown:
-	
-	def __init__(self, luceneIndexReader, drillDownFieldNames):
-		self._reader = luceneIndexReader
-		
-		self._drillDownFieldnames = drillDownFieldNames
 
-	def _numDocsInIndex(self):
-		return self._reader.numDocs()
-	
-	def process(self, docIds, drillDownFieldnamesAndMaximumResults):
-		drillDownResults = []
-		queryDocSet = self._docSetForQueryResult(docIds)
-		for fieldName, maximumResults in drillDownFieldnamesAndMaximumResults:
-			drillDownResults.append((fieldName,
-					self._processField(fieldName, queryDocSet, maximumResults)))
-		return drillDownResults
-	
-	def _docSetForQueryResult(self, docIds):
-		sortedDocs = docIds
-		sortedDocs.sort()
-		return createDocSet(docIds, self._numDocsInIndex())
-	
-	def reloadDocSets(self):
-		self._docSets = {}
-		for fieldName in self._drillDownFieldnames:
-			self._docSets[fieldName] = self._docSetsForField(fieldName)
+    def __init__(self, drillDownFieldNames):
+        self._drillDownFieldnames = drillDownFieldNames
 
-	def _docSetsForFieldLucene(self, fieldName):
-		print "Warrrrring" # - de controlflow is hier wat te refactoren, zodat echt alleen de lucene stukjes hieronder vallen"
-		result = []
-		termDocs = self._reader.termDocs()
-		termEnum = self._reader.terms(PyLucene.Term(fieldName, ''))
-		#IndexReader.terms returns something of the following form, if fieldname == fieldname3
-		#fieldname3 'abla'
-		#fieldname3 'bb'
-		#fielname3 'zz'
-		#fieldname4 'aa'
-		
-		#The enum has the following (weird) behaviour: the internal pointer references
-		#the first element by default, but when there are no elements it references a
-		#None element. Therefor we have to check "if not term".
-		#We use a "do ... while" idiom because calling next would advance the internal
-		#pointer, resulting in a missed first element
-		
-		while True:
-			term = termEnum.term()
-			if not term or term.field() != fieldName:
-				break
-			termDocs.seek(term)
-			
-			docs = []
-			while termDocs.next():
-				docs.append(termDocs.doc())
-			docSet = createDocSet(docs, self._numDocsInIndex())
-			
-			result.append((term.text(), docSet))
-			if not termEnum.next():
-				break
-			
-		return result
-		
-	def _docSetsForField(self, fieldName):
-		result = self._docSetsForFieldLucene(fieldName)
-		def cmpDescCardinality((term1, docSet1), (term2, docSet2)):
-			return docSet2.cardinality() - docSet1.cardinality()
-		
-		result.sort(cmpDescCardinality)
-		return result
-			
-	def _processField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
-		#sort on cardinality, truncate with maximumResults and return smallest cardinality
-		#if no limit is present return 0
-		def sortAndTruncateAndGetMinValueInResult(resultList):
-			if maximumResults:
-				resultList.sort(lambda (termL, countL), (termR, countR): cmp(countR, countL))
-				del resultList[maximumResults:]
-				if len(resultList) == maximumResults:
-					return resultList[-1][1] #Cardinality of last element
-			return 0
+    def process(self, docIds, drillDownFieldnamesAndMaximumResults):
+        drillDownResults = []
+        queryDocSet = self._docSetForQueryResult(docIds)
+        for fieldName, maximumResults in drillDownFieldnamesAndMaximumResults:
+            drillDownResults.append((fieldName,
+                    self._processField(fieldName, queryDocSet, maximumResults)))
+        return drillDownResults
 
-		if not self._docSets.has_key(fieldName):
-			raise LuceneException("No Docset For Field " + fieldName)
-		result = []
-		
-		if not drillDownBitArray:
-			for term, docSet in self._docSets[fieldName]:
-				result.append((term, docSet.cardinality()))
-		else: #Use drillDownBitArray
-			minValueInResult = 0
-			for term, docSet in self._docSets[fieldName]:
-				if docSet.cardinality() < minValueInResult:
-					break
+    def loadDocSets(self, rawDocSets, docCount):
+        self._numDocsInIndex = docCount
 
-				cardinality = docSet.combinedCardinality(drillDownBitArray)
-								
-				if cardinality > minValueInResult:
-					result.append((term, cardinality))
-					minValueInResult = sortAndTruncateAndGetMinValueInResult(result)
-		return result
+        self._docSets = {}
+        for fieldname, terms in rawDocSets:
+            for term, docIds in terms:
+                if not fieldname in self._docSets:
+                    self._docSets[fieldname] = []
+                self._docSets[fieldname].append((term, createDocSet(docIds, self._numDocsInIndex)))
+
+    def _docSetForQueryResult(self, docIds):
+        sortedDocs = docIds
+        sortedDocs.sort()
+        return createDocSet(docIds, self._numDocsInIndex)
+
+    def _docSetsForField(self, fieldName):
+        result = self._docSetsForFieldLucene(fieldName)
+        def cmpDescCardinality((term1, docSet1), (term2, docSet2)):
+            return docSet2.cardinality() - docSet1.cardinality()
+
+        result.sort(cmpDescCardinality)
+        return result
+
+    def _processField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
+        #sort on cardinality, truncate with maximumResults and return smallest cardinality
+        #if no limit is present return 0
+        def sortAndTruncateAndGetMinValueInResult(resultList):
+            if maximumResults:
+                resultList.sort(lambda (termL, countL), (termR, countR): cmp(countR, countL))
+                del resultList[maximumResults:]
+                if len(resultList) == maximumResults:
+                    return resultList[-1][1] #Cardinality of last element
+            return 0
+
+        if not self._docSets.has_key(fieldName):
+            raise LuceneException("No Docset For Field " + fieldName)
+        result = []
+
+        if not drillDownBitArray:
+            for term, docSet in self._docSets[fieldName]:
+                result.append((term, docSet.cardinality()))
+        else: #Use drillDownBitArray
+            minValueInResult = 0
+            for term, docSet in self._docSets[fieldName]:
+                if docSet.cardinality() < minValueInResult:
+                    break
+
+                cardinality = docSet.combinedCardinality(drillDownBitArray)
+
+                if cardinality > minValueInResult:
+                    result.append((term, cardinality))
+                    minValueInResult = sortAndTruncateAndGetMinValueInResult(result)
+        return result

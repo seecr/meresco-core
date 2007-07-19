@@ -86,6 +86,7 @@ from logobservertest import LogObserverTest
 from filtertest import FilterTest
 from typedobservabletest import TypedObservableTest
 from drilldowntest import DrillDownTest
+from convertertest import ConverterTest
 
 if __name__ == '__main__':
         unittest.main()
