@@ -34,6 +34,6 @@ class ConverterTest(TestCase):
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
         converter = Converter(self._luceneIndex._getReader(), ['field_0', 'field_1'])
-        docsets = converter.getDocSets()
+        docsets = list(converter.getDocSets())
         self.assertEquals(2, len(docsets))
         self.assertEquals([('field_0', [(u'this is term_0', [0, 1]), (u'this is term_1', [2]), (u'this is term_2', [3])]), ('field_1', [(u'cannotbefound', [3]), (u'inquery', [0, 1, 2])])], docsets)
