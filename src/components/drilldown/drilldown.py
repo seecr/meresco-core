@@ -31,11 +31,12 @@ from meresco.components.drilldown.cpp.bitarray import DenseBitArray, SparseBitAr
 DENSE_SPARSE_BREAKING_POINT = 32
 
 def createDocSet(docs, length):
-    cardinality = len(docs)
+    docList = list(docs)
+    cardinality = len(docList)
     if cardinality * DENSE_SPARSE_BREAKING_POINT > length:
         result = DenseBitArray(length)
     result = SparseBitArray(cardinality)
-    for doc in docs:
+    for doc in docList:
         result.set(doc)
     return result
 

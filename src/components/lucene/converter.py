@@ -13,7 +13,6 @@ class Converter(object):
         return self._reader.numDocs()
 
     def _docSetsForFieldLucene(self, fieldName):
-        result = []
         termDocs = self._reader.termDocs()
         termEnum = self._reader.terms(PyLucene.Term(fieldName, ''))
         #IndexReader.terms returns something of the following form, if fieldname == fieldname3
@@ -34,13 +33,12 @@ class Converter(object):
                 break
             termDocs.seek(term)
 
-            docs = []
-            while termDocs.next():
-                docs.append(termDocs.doc())
+            docs = self._generateDocIds(termDocs)
 
-            result.append((term.text(), docs))
+            yield (term.text(), docs)
             if not termEnum.next():
                 break
 
-        return result
-
+    def _generateDocIds(self, termDocs):
+        while termDocs.next():
+            yield termDocs.doc()
