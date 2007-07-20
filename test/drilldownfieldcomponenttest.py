@@ -25,14 +25,11 @@ class DrilldownFieldComponentTest(TestCase):
         observable.addObserver(drilldownFieldComponent)
         drilldownFieldComponent.addObserver(observer)
 
-        notification = Notification()
-        notification.method = "add"
-        notification.payload = data.xmlfields
-        observable.changed(notification)
+        observable.all.add(data.xmlfields)
 
         self.assertEquals(1, len(observer.calledMethods))
 
-        resultXml = observer.calledMethods[0].arguments[0].payload
+        resultXml = observer.calledMethods[0].arguments[0]
         self.assertEquals(1, len(resultXml.xml_xpath('field_0')))
         self.assertEquals(1, len(resultXml.xml_xpath('field_0__untokenized__')))
         self.assertEquals(1, len(resultXml.xml_xpath('field_1')))
@@ -42,7 +39,7 @@ class DrilldownFieldComponentTest(TestCase):
 
         node = resultXml.xml_xpath("//field_0__untokenized__")[0]
         self.assertEquals(1, len(node.attributes))
-        self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="true">term_0</field_0__untokenized__>', node.xml())
+        self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</field_0__untokenized__>', node.xml())
 
 
 #<xmlfields>

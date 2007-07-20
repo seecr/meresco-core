@@ -49,13 +49,14 @@ class DrillDownTest(TestCase):
         rmtree(self._tempdir)
 
     def testReloadDocSets(self):
-        data = [('field_0', [('term_0',[1,2,3])])]
+        data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
         drillDown = DrillDown(['field_0'])
-        drillDown.loadDocSets(data, 3)
+        drillDown.loadDocSets(data, 5)
 
-        self.assertEquals(1, len(drillDown._docSets['field_0']))
+        self.assertEquals(2, len(drillDown._docSets['field_0']))
         self.assertEquals(3, dict(drillDown._docSets['field_0'])['term_0'].cardinality())
+        self.assertEquals(1, dict(drillDown._docSets['field_0'])['term_1'].cardinality())
 
     def testDrillDown(self):
         addUntokenized(self._luceneIndex, [

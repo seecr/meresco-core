@@ -8,14 +8,19 @@ class DrilldownFieldComponent(Component, Observable):
         Observable.__init__(self)
         self._drilldownFields = listOfFields
 
-    def add(self, aNotification):
-        xml = aNotification.payload
+    def add(self, amaraXmlNode):
         for field in self._drilldownFields:
-            nodes = xml.xml_xpath("//%s" % field)
+            nodes = amaraXmlNode.xml_xpath("//%s" % field)
             if nodes:
                 node = nodes[0]
-                newfield = xml.xml_create_element('%s__untokenized__' % node.nodeName,
+                newfield = amaraXmlNode.xml_create_element('%s__untokenized__' % node.nodeName,
                     content=unicode(node),
-                    attributes={(u'teddy:tokenize', unicode(TEDDY_NS)): u'true'})
-                xml.xml_append(newfield)
-        self.changed(aNotification)
+                    attributes={(u'teddy:tokenize', unicode(TEDDY_NS)): u'false'})
+                amaraXmlNode.xml_append(newfield)
+        return self.all.add(amaraXmlNode)
+
+    def delete(self, amaraXmlNode):
+        return self.all.delete(amaraXmlNode)
+
+    def unknown(self, **kwargs):
+        return self.all.unknown(**kwargs)

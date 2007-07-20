@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -48,17 +48,17 @@ class PluginRegistry:
 		self._factories.append(typeFactory)
 		self._registeredCommands.append(command)
 		return typeFactory
-	
+
 	def create(self, command, *args):
 		for factory in self._factories:
 			component = factory(command, *args)
 			if component:
 				return component
 		raise NoSuchPluginException(command)
-	
+
 	def loadPlugins(self):
 		directory = self._configuration['server.pluginpath']
-		print "PluginRegistry - loading plugins from ", directory
+		#print "PluginRegistry - loading plugins from ", directory
 		sys.path.append(directory)
 		if not isdir(directory):
 			raise Exception("%s is not a directory" % directory)
@@ -67,15 +67,15 @@ class PluginRegistry:
 				filename = basename(pyfile[:-3])
 				module = self._loadModule(filename)
 				if hasattr(module, 'registerOn'):
-					print "PluginRegistry adding:", str(module)
+					#print "PluginRegistry adding:", str(module)
 					module.registerOn(self)
-					
+
 	def getenv(self, key):
 		return self._configuration.get(key, None)
 
 	def size(self):
 		return len(self._factories)
-	
+
 	def supportedCommand(self, command):
 		return command in self._registeredCommands
 
