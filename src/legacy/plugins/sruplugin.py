@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -35,13 +35,13 @@ import queryplugin
 VERSION = '1.1'
 
 OFFICIAL_REQUEST_PARAMETERS = {
-	'explain': ['operation', 'version', 'stylesheet', 'extraRequestData', 'recordPacking'],
-	'searchRetrieve': ['version','query','startRecord','maximumRecords','recordPacking','recordSchema',
+    'explain': ['operation', 'version', 'stylesheet', 'extraRequestData', 'recordPacking'],
+    'searchRetrieve': ['version','query','startRecord','maximumRecords','recordPacking','recordSchema',
 'recordXPath','resultSetTTL','sortKeys','stylesheet','extraRequestData','operation']}
 
 MANDATORY_PARAMETERS = {
-	'explain':['version', 'operation'],
-	'searchRetrieve':['version', 'operation', 'query']}
+    'explain':['version', 'operation'],
+    'searchRetrieve':['version', 'operation', 'query']}
 
 SUPPORTED_OPERATIONS = ['explain', 'searchRetrieve']
 
@@ -52,10 +52,10 @@ RESPONSE_FOOTER = """</srw:searchRetrieveResponse>"""
 
 DIAGNOSTICS = """<diagnostics>
   <diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/">
-		<uri>info://srw/diagnostics/1/%s</uri>
-		<details>%s</details>
-		<message>%s</message>
-	</diagnostic>
+        <uri>info://srw/diagnostics/1/%s</uri>
+        <details>%s</details>
+        <message>%s</message>
+    </diagnostic>
 </diagnostics>
 """
 
@@ -73,207 +73,208 @@ QUERY_FEATURE_UNSUPPORTED = [48, "Query Feature Unsupported"]
 
 
 class SRUDiagnostic(Exception):
-	def __init__(self, diagnostic):
-		Exception.__init__(self, str(diagnostic))
-		self.diagnostic = diagnostic
+    def __init__(self, diagnostic):
+        Exception.__init__(self, str(diagnostic))
+        self.diagnostic = diagnostic
 
 class SRUPlugin(queryplugin.QueryPlugin, Observable):
-	#current status: not supporting pure plugin behavior - is really an observable
-	#refactor direction: remove queryplugin.QueryPlugin
-	
-	def __init__(self, aRequest, searchInterface):
-		queryplugin.QueryPlugin.__init__(self, aRequest, searchInterface)
-		Observable.__init__(self)
-	
-	def initialize(self):
-		self.xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>'
-		self.responseHeader = RESPONSE_HEADER
-		self.contentType = 'text/xml; charset=utf-8'
-		if self._arguments == {}:
-			self._arguments = self.default_arguments()
-	
-	def default_arguments(self):
-		return {'version':['1.1'], 'operation':['explain']}
-	
-	def validate(self):
-		operation = self.getOperation()
-		if operation == None:
-			return MANDATORY_PARAMETER_NOT_SUPPLIED + ['operation']
-	
-		if not self.supportedOperation(operation):
-			return UNSUPPORTED_OPERATION + [operation]
-		
-		for key in self._arguments:
-			if not (self.supportedParameter(key, operation) or key.startswith('x-')):
-				return UNSUPPORTED_PARAMETER + [key]
+    #current status: not supporting pure plugin behavior - is really an observable
+    #refactor direction: remove queryplugin.QueryPlugin
 
-		for key in MANDATORY_PARAMETERS[operation]:
-			if not key in self._arguments:
-				return MANDATORY_PARAMETER_NOT_SUPPLIED + [key]
+    def __init__(self, aRequest, searchInterface):
+        queryplugin.QueryPlugin.__init__(self, aRequest, searchInterface)
+        Observable.__init__(self)
 
-		if not self._arguments['version'][0] == VERSION:
-			return UNSUPPORTED_VERSION + [self._arguments['version'][0]]
-		
-		if operation == 'searchRetrieve':
-			return self._validateSearchRetrieve()
-		
-		return SUCCESS
-		
-	def _validateSearchRetrieve(self):
-		try:
-			self.sruquery = SRUQuery(self._database, self._arguments)
-		except SRUQueryParameterException, e:
-			return UNSUPPORTED_PARAMETER_VALUE + [str(e)]
-		except SRUQueryParseException, e:
-			return QUERY_FEATURE_UNSUPPORTED + [str(e)]
-		return SUCCESS
+    def initialize(self):
+        self.xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>'
+        self.responseHeader = RESPONSE_HEADER
+        self.contentType = 'text/xml; charset=utf-8'
+        if self._arguments == {}:
+            self._arguments = self.default_arguments()
 
-	def getOperation(self):
-		return self._arguments.get('operation', [None])[0]
-			
-	def _startResults(self, numberOfRecords):
-		self.write(self.responseHeader)
-		self.write('<srw:version>%s</srw:version>' % VERSION)
-		self.write('<srw:numberOfRecords>%s</srw:numberOfRecords>' % numberOfRecords)
-	
-	def _endResults(self):
-		self.write(RESPONSE_FOOTER)
-		
-	def _writeResult(self, aRecord):
-		self.write('<srw:record>')
-		self.write('<srw:recordSchema>%s</srw:recordSchema>' % self.sruquery.recordSchema)
-		self.write('<srw:recordPacking>%s</srw:recordPacking>' % self.sruquery.recordPacking)
-		self._writeRecordData(aRecord)
-		self._writeExtraRecordData(aRecord)
-		self.write('</srw:record>')
+    def default_arguments(self):
+        return {'version':['1.1'], 'operation':['explain']}
 
-	def writeErrorDiagnosticsResponse(self, aList):
-		self.write(self.responseHeader)
-		self.write('<srw:version>%s</srw:version>' % VERSION)
-		self.write('<srw:numberOfRecords>0</srw:numberOfRecords>')
-		self.writeErrorDiagnostics(aList)
-		self.write(RESPONSE_FOOTER)
+    def validate(self):
+        operation = self.getOperation()
+        if operation == None:
+            return MANDATORY_PARAMETER_NOT_SUPPLIED + ['operation']
 
-	def writeErrorDiagnostics(self, aList):
-		number = aList[0]
-		message = aList[1]
-		details = len(aList) >= 3 and aList[2] or "No details available"
-		self.write(DIAGNOSTICS % (number, xmlEscape(details), message))
-	
-	def _writeRecordData(self, aRecord):
-		self.write('<srw:recordData>')
-		aRecord.writeDataOn(self.sruquery.recordSchema, self.sruquery.recordPacking, self)
-		self.write('</srw:recordData>')
+        if not self.supportedOperation(operation):
+            return UNSUPPORTED_OPERATION + [operation]
 
-	def _writeExtraRecordData(self, aRecord):
-		if not self.sruquery.x_recordSchema:
-			return
-		self.write('<srw:extraRecordData>')
-		for schema in self.sruquery.x_recordSchema:
-			self.write('<recordData recordSchema="%s">' % xmlEscape(schema))
-			aRecord.writeDataOn(schema, self.sruquery.recordPacking, self)
-			self.write('</recordData>')
-		self.write('</srw:extraRecordData>')
+        for key in self._arguments:
+            if not (self.supportedParameter(key, operation) or key.startswith('x-')):
+                return UNSUPPORTED_PARAMETER + [key]
 
-	def _writeExtraResponseData(self, aSearchResult):
-		self.write('<srw:extraResponseData>')
-		aSearchResult.writeExtraResponseDataOn(self) #refactor direction: push down to observers
-		self.all.writeExtraResponseData(self)
-		self.write('</srw:extraResponseData>')
+        for key in MANDATORY_PARAMETERS[operation]:
+            if not key in self._arguments:
+                return MANDATORY_PARAMETER_NOT_SUPPLIED + [key]
 
-	def doSearchRetrieve(self):
-		searchResult = self.searchInterface.search(self.sruquery)
-		
-		self._startResults(searchResult.getNumberOfRecords())
-		
-		recordstag = '<srw:records>'
-		for record in searchResult.getRecords():
-			self.write(recordstag)
-			self._writeResult(record)
-			recordstag = ''
-			
-		if recordstag == '':
-			self.write('</srw:records>')
-			nextRecordPosition = searchResult.getNextRecordPosition()
-			if nextRecordPosition:
-				self.write('<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % nextRecordPosition)
-		
-		self._writeEchoedSearchRetrieveRequest()
-		self._writeExtraResponseData(searchResult)
+        if not self._arguments['version'][0] == VERSION:
+            return UNSUPPORTED_VERSION + [self._arguments['version'][0]]
 
-		self._endResults()
-	
-	def _writeEchoedSearchRetrieveRequest(self):
-		self.write('<srw:echoedSearchRetrieveRequest>')
-		for parameterName in ECHOED_PARAMETER_NAMES:
-			for value in map(xmlEscape, self._arguments.get(parameterName, [])):
-				self.write('<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals())
-		self._writeEchoedExtraRequestData()
-		self.write('</srw:echoedSearchRetrieveRequest>')
-		
-	def _writeEchoedExtraRequestData(self):
-		"""Write extra request data like drilldown parameters. Not used yet."""
-		pass
-	
-	def doExplain(self):
-		version = VERSION
-		host = self.getenv('server.host')
-		port = self.getenv('server.port')
-		database = self._database
-		description = self.getenv('server.description')
-		modifiedDate = self.getenv('server.modifieddate')
-		self.write("""
+        if operation == 'searchRetrieve':
+            return self._validateSearchRetrieve()
+
+        return SUCCESS
+
+    def _validateSearchRetrieve(self):
+        try:
+            self.sruquery = SRUQuery(self._arguments)
+        except SRUQueryParameterException, e:
+            return UNSUPPORTED_PARAMETER_VALUE + [str(e)]
+        except SRUQueryParseException, e:
+            return QUERY_FEATURE_UNSUPPORTED + [str(e)]
+        return SUCCESS
+
+    def getOperation(self):
+        return self._arguments.get('operation', [None])[0]
+
+    def _startResults(self, numberOfRecords):
+        self.write(self.responseHeader)
+        self.write('<srw:version>%s</srw:version>' % VERSION)
+        self.write('<srw:numberOfRecords>%s</srw:numberOfRecords>' % numberOfRecords)
+
+    def _endResults(self):
+        self.write(RESPONSE_FOOTER)
+
+    def _writeResult(self, aRecord):
+        self.write('<srw:record>')
+        self.write('<srw:recordSchema>%s</srw:recordSchema>' % self.sruquery.recordSchema)
+        self.write('<srw:recordPacking>%s</srw:recordPacking>' % self.sruquery.recordPacking)
+        self._writeRecordData(aRecord)
+        self._writeExtraRecordData(aRecord)
+        self.write('</srw:record>')
+
+    def writeErrorDiagnosticsResponse(self, aList):
+        self.write(self.responseHeader)
+        self.write('<srw:version>%s</srw:version>' % VERSION)
+        self.write('<srw:numberOfRecords>0</srw:numberOfRecords>')
+        self.writeErrorDiagnostics(aList)
+        self.write(RESPONSE_FOOTER)
+
+    def writeErrorDiagnostics(self, aList):
+        number = aList[0]
+        message = aList[1]
+        details = len(aList) >= 3 and aList[2] or "No details available"
+        self.write(DIAGNOSTICS % (number, xmlEscape(details), message))
+
+    def _writeRecordData(self, aRecord):
+        self.write('<srw:recordData>')
+        aRecord.writeDataOn(self.sruquery.recordSchema, self.sruquery.recordPacking, self)
+        self.write('</srw:recordData>')
+
+    def _writeExtraRecordData(self, aRecord):
+        if not self.sruquery.x_recordSchema:
+            return
+        self.write('<srw:extraRecordData>')
+        for schema in self.sruquery.x_recordSchema:
+            self.write('<recordData recordSchema="%s">' % xmlEscape(schema))
+            aRecord.writeDataOn(schema, self.sruquery.recordPacking, self)
+            self.write('</recordData>')
+        self.write('</srw:extraRecordData>')
+
+    def _writeExtraResponseData(self, aSearchResult):
+        self.write('<srw:extraResponseData>')
+        self.any.writeExtraResponseData(self, aSearchResult)
+        self.write('</srw:extraResponseData>')
+
+    def doSearchRetrieve(self):
+        #searchResult = self.searchInterface.search(self.sruquery)
+        hits = self.any.executeQuery(self.sruquery.query)
+
+        self._startResults(searchResult.getNumberOfRecords())
+
+        recordWritten = False
+        for record in searchResult.getRecords():
+            if not recordWritten:
+                self.write('<srw:records>')
+            self._writeResult(record)
+            recordWritten = True
+
+        if recordWritten:
+            self.write('</srw:records>')
+            nextRecordPosition = searchResult.getNextRecordPosition()
+            if nextRecordPosition:
+                self.write('<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % nextRecordPosition)
+
+        self._writeEchoedSearchRetrieveRequest()
+        self._writeExtraResponseData(searchResult)
+
+        self._endResults()
+
+    def _writeEchoedSearchRetrieveRequest(self):
+        self.write('<srw:echoedSearchRetrieveRequest>')
+        for parameterName in ECHOED_PARAMETER_NAMES:
+            for value in map(xmlEscape, self._arguments.get(parameterName, [])):
+                self.write('<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals())
+        self._writeEchoedExtraRequestData()
+        self.write('</srw:echoedSearchRetrieveRequest>')
+
+    def _writeEchoedExtraRequestData(self):
+        """Write extra request data like drilldown parameters. Not used yet."""
+        pass
+
+    def doExplain(self):
+        version = VERSION
+        host = self.getenv('server.host')
+        port = self.getenv('server.port')
+        database = self._request.database
+        description = self.getenv('server.description')
+        modifiedDate = self.getenv('server.modifieddate')
+        self.write("""
 <srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
    xmlns:zr="http://explain.z3950.org/dtd/2.0/">
-	<srw:version>%(version)s</srw:version>
-	<srw:record>
-		<srw:recordPacking>XML</srw:recordPacking>  
-		<srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
-		<srw:recordData>
-			<zr:explain>
-				<zr:serverInfo wsdl="http://%(host)s:%(port)s/%(database)s" protocol="SRU" version="%(version)s">
-					<host>%(host)s</host>
-					<port>%(port)s</port>
-					<database>%(database)s</database>
-				</zr:serverInfo>
-				<zr:databaseInfo>
-					<title lang="en" primary="true">SRU Database</title>
-					<description lang="en" primary="true">%(description)s</description>
-				</zr:databaseInfo>
-				<zr:metaInfo>
-					<dateModified>%(modifiedDate)s</dateModified>
-				</zr:metaInfo>
-			</zr:explain>
-		</srw:recordData>
-	</srw:record>
+    <srw:version>%(version)s</srw:version>
+    <srw:record>
+        <srw:recordPacking>xml</srw:recordPacking>
+        <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
+        <srw:recordData>
+            <zr:explain>
+                <zr:serverInfo wsdl="http://%(host)s:%(port)s/%(database)s" protocol="SRU" version="%(version)s">
+                    <host>%(host)s</host>
+                    <port>%(port)s</port>
+                    <database>%(database)s</database>
+                </zr:serverInfo>
+                <zr:databaseInfo>
+                    <title lang="en" primary="true">SRU Database</title>
+                    <description lang="en" primary="true">%(description)s</description>
+                </zr:databaseInfo>
+                <zr:metaInfo>
+                    <dateModified>%(modifiedDate)s</dateModified>
+                </zr:metaInfo>
+            </zr:explain>
+        </srw:recordData>
+    </srw:record>
 </srw:explainResponse>""" % locals())
-		
-	def process(self):
-		self.write(self.xmlHeader)
-		errorMethod = self.writeErrorDiagnostics
-		try:
-			code = self.validate()
-			if code == SUCCESS:
-				operation = self.getOperation()
-				if operation == 'explain':
-					return self.doExplain()
-				errorMethod = self.writeErrorDiagnosticsResponse
-				self.doSearchRetrieve()
-			else:
-				errorMethod(code)
-		except KeyboardInterrupt:
-			errorMethod(SYSTEM_TEMPORARILY_UNAVAILABLE)
-		except Exception, e:
-			self.logException()
-			errorMethod(GENERAL_SYSTEM_ERROR + [str(e)])
-	
-	def supportedOperation(self, operation):
-		return operation in SUPPORTED_OPERATIONS
-	
-	def supportedParameter(self, parameterName, operation):
-		return parameterName in OFFICIAL_REQUEST_PARAMETERS[operation]
+
+    def process(self):
+        self.write(self.xmlHeader)
+        errorMethod = self.writeErrorDiagnostics
+        try:
+            code = self.validate()
+            if code == SUCCESS:
+                operation = self.getOperation()
+                if operation == 'explain':
+                    return self.doExplain()
+                errorMethod = self.writeErrorDiagnosticsResponse
+                self.doSearchRetrieve()
+            else:
+                errorMethod(code)
+        except KeyboardInterrupt:
+            errorMethod(SYSTEM_TEMPORARILY_UNAVAILABLE)
+        except Exception, e:
+            self.logException()
+            errorMethod(GENERAL_SYSTEM_ERROR + [str(e)])
+
+    def supportedOperation(self, operation):
+        return operation in SUPPORTED_OPERATIONS
+
+    def supportedParameter(self, parameterName, operation):
+        return parameterName in OFFICIAL_REQUEST_PARAMETERS[operation]
 
 
 
 def registerOn(aRegistry):
-	aRegistry.registerByCommand('sru', SRUPlugin)
+    aRegistry.registerByCommand('sru', SRUPlugin)

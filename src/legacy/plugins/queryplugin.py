@@ -40,7 +40,6 @@ class QueryPlugin:
 	def __init__(self, aRequest, searchInterface):
 		self._request = aRequest
 		self._arguments = self._request.args
-		self._database = self._request.database
 		self.contentType = 'text/plain'
 		self.searchInterface = searchInterface
 		self.initialize()

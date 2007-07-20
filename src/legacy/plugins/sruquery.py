@@ -40,8 +40,7 @@ DEFAULT_RECORDSCHEMA = 'dc'
 DEFAULT_RECORDPACKING = 'xml'
 
 class SRUQuery:
-	def __init__(self, database, arguments):
-		self.database = database
+	def __init__(self, arguments):
 		self._setupQuery(arguments)
 
 	def _setupQuery(self, arguments):
