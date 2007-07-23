@@ -67,7 +67,7 @@ class SRUPluginTest(CQ2TestCase):
 xmlns:zr="http://explain.z3950.org/dtd/2.0/">
 <srw:version>1.1</srw:version>
 <srw:record>
-    <srw:recordPacking>XML</srw:recordPacking>
+    <srw:recordPacking>xml</srw:recordPacking>
     <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
     <srw:recordData>
         <zr:explain>
@@ -156,7 +156,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         request.write = b.write
         mock = CallTrace('ExtraRequestData')
         
-        plugin = SRUPlugin(request, self.searchInterface)
+        plugin = SRUPlugin(request)
         plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
         
         plugin._writeEchoedSearchRetrieveRequest()
