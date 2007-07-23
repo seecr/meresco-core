@@ -31,24 +31,24 @@ from meresco.legacy.pluginregistry import PluginRegistry
 from cq2utils.calltrace import CallTrace
 
 class PluginRegistryTest(TestCase):
-	def setUp(self):
-		self.registry = PluginRegistry({})
-			
-	def testRegister(self):
-		
-		class MyPlugin:
-			pass
-		self.registry.registerByCommand('myCommand', MyPlugin)
-		self.assertEquals(1, self.registry.size())
+    def setUp(self):
+        self.registry = PluginRegistry({})
+            
+    def testRegister(self):
+        
+        class MyPlugin:
+            pass
+        self.registry.registerByCommand('myCommand', MyPlugin)
+        self.assertEquals(1, self.registry.size())
 
-	def testCreate(self):
-		class MyPlugin(QueryPlugin):
-			def initialize(self):
-				pass
-		self.registry.registerByCommand('myCommand', MyPlugin)
-		aRequest = CallTrace('WebRequest')
-		plugin = self.registry.create('myCommand', aRequest, None)
-		self.assertTrue(plugin != None)
-		
-		
+    def testCreate(self):
+        class MyPlugin(QueryPlugin):
+            def initialize(self):
+                pass
+        self.registry.registerByCommand('myCommand', MyPlugin)
+        aRequest = CallTrace('WebRequest')
+        plugin = self.registry.create('myCommand', aRequest, None)
+        self.assertTrue(plugin != None)
+        
+        
 

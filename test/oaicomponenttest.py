@@ -30,17 +30,17 @@ from meresco.components.http.oai.oaicomponent import OaiComponent
 from meresco.framework.observable import Observable
 
 class OaiComponentTest(OaiTestCase):
-	
-	def getSubject(self):
-		return OaiComponent([("Not relevant", "even less so", "even less so")])
-	
-	def testChaining(self):
-		self.request.args = {'verb': ['Identify']}
-		self.observable.changed(self.request)
-		self.assertTrue(self.stream.getvalue().find('<Identify>') >-1)
-	
-	def testChainingEndsUpInSink(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.', errorCode='badVerb')
-		
-	def testComponentSeemsOne(self):
-		pass #KVS:!! dit testen is voor mij 10x zo veel werk als de code. Ik houd me aanbevolen voor een goed actieplan!
+    
+    def getSubject(self):
+        return OaiComponent([("Not relevant", "even less so", "even less so")])
+    
+    def testChaining(self):
+        self.request.args = {'verb': ['Identify']}
+        self.observable.changed(self.request)
+        self.assertTrue(self.stream.getvalue().find('<Identify>') >-1)
+    
+    def testChainingEndsUpInSink(self):
+        self.assertBadArgument({'verb': ['Nonsense']}, 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.', errorCode='badVerb')
+        
+    def testComponentSeemsOne(self):
+        pass #KVS:!! dit testen is voor mij 10x zo veel werk als de code. Ik houd me aanbevolen voor een goed actieplan!

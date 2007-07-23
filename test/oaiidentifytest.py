@@ -31,18 +31,18 @@ from meresco.components.http.oai.oaiidentify import OaiIdentify
 from meresco.components.http.oai.oaivalidator import assertValidString
 
 class OaiIdentifyTest(OaiTestCase):
-	
-	def getSubject(self):
-		return OaiIdentify()
-	
-	def testIdentify(self):
-		self.request.args = {'verb': ['Identify']}
-		
-		self.observable.changed(self.request)
-		
-		self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
-		self.assertEqualsWS(self.OAIPMH % """
-		<request verb="Identify">http://server:9000/path/to/oai</request>
+    
+    def getSubject(self):
+        return OaiIdentify()
+    
+    def testIdentify(self):
+        self.request.args = {'verb': ['Identify']}
+        
+        self.observable.changed(self.request)
+        
+        self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
+        self.assertEqualsWS(self.OAIPMH % """
+        <request verb="Identify">http://server:9000/path/to/oai</request>
 <Identify>
     <repositoryName>The Repository Name</repositoryName>
     <baseURL>http://server:9000/path/to/oai</baseURL>
@@ -52,7 +52,7 @@ class OaiIdentifyTest(OaiTestCase):
     <deletedRecord>persistent</deletedRecord>
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>""", self.stream.getvalue())
-		assertValidString(self.stream.getvalue())
-		
-	def testIllegalArguments(self):
-		self.assertBadArgument({'verb': ['Identify'], 'metadataPrefix': ['oai_dc']}, 'Argument(s) "metadataPrefix" is/are illegal.')		
+        assertValidString(self.stream.getvalue())
+        
+    def testIllegalArguments(self):
+        self.assertBadArgument({'verb': ['Identify'], 'metadataPrefix': ['oai_dc']}, 'Argument(s) "metadataPrefix" is/are illegal.')        

@@ -34,39 +34,39 @@ MEMBERSHIP_PART = '__set_membership__'
 SET = 'set'
 
 class SetsComponent(Observable):
-	
-	def __init__(self, flattenedHierarchyListener = None, setsDatabase = None):
-		Observable.__init__(self)
-		self._flattenedHierarchyListener = flattenedHierarchyListener
-		self._setsDatabase = setsDatabase
-	
-	def notify(self, notification):
-		if hasattr(notification, 'sets'):
-			setsNotification = Notification("add", notification.id, SETS_PART, bind_string(self.tupleXml(notification.sets)))
-			self.changed(setsNotification)
-			
-			if self._flattenedHierarchyListener:
-				flattenedNotification = Notification("add", notification.id, MEMBERSHIP_PART, bind_string(self.memberShipXml(self.flattenHierarchy(notification.sets))).childNodes[0])
-				self._flattenedHierarchyListener.notify(flattenedNotification)
-				
-			if self._setsDatabase:
-				for set in notification.sets:
-					setsDatabaseNotification = Notification("add", set[0], 'set', bind_string("<set><setSpec>%s</setSpec><setName>%s</setName></set>" % set).set)
-					self._setsDatabase.notify(setsDatabaseNotification)
-	
-	def memberShipXml(self, sets):
-		tagName = MEMBERSHIP_PART
-		setData = "".join(map(lambda x: """<set teddy:tokenize="false">%s</set>""" % x, sets)) 
-		return """<%(tagName)s xmlns:teddy="http://www.cq2.nl/teddy">%(setData)s</%(tagName)s>""" % locals()
-	
-	def tupleXml(self, sets):
-		return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda (x, y): """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % (x, y), sets)), SETS_PART)
-	
-	def flattenHierarchy(self, sets):
-		""""[1:2:3, 1:2:4] => [1, 1:2, 1:2:3, 1:2:4]"""
-		result = set()
-		for setSpec, setName in sets:
-			parts = setSpec.split(':')
-			for i in range(1, len(parts) + 1):
-				result.add(':'.join(parts[:i]))
-		return result
+    
+    def __init__(self, flattenedHierarchyListener = None, setsDatabase = None):
+        Observable.__init__(self)
+        self._flattenedHierarchyListener = flattenedHierarchyListener
+        self._setsDatabase = setsDatabase
+    
+    def notify(self, notification):
+        if hasattr(notification, 'sets'):
+            setsNotification = Notification("add", notification.id, SETS_PART, bind_string(self.tupleXml(notification.sets)))
+            self.changed(setsNotification)
+            
+            if self._flattenedHierarchyListener:
+                flattenedNotification = Notification("add", notification.id, MEMBERSHIP_PART, bind_string(self.memberShipXml(self.flattenHierarchy(notification.sets))).childNodes[0])
+                self._flattenedHierarchyListener.notify(flattenedNotification)
+                
+            if self._setsDatabase:
+                for set in notification.sets:
+                    setsDatabaseNotification = Notification("add", set[0], 'set', bind_string("<set><setSpec>%s</setSpec><setName>%s</setName></set>" % set).set)
+                    self._setsDatabase.notify(setsDatabaseNotification)
+    
+    def memberShipXml(self, sets):
+        tagName = MEMBERSHIP_PART
+        setData = "".join(map(lambda x: """<set teddy:tokenize="false">%s</set>""" % x, sets)) 
+        return """<%(tagName)s xmlns:teddy="http://www.cq2.nl/teddy">%(setData)s</%(tagName)s>""" % locals()
+    
+    def tupleXml(self, sets):
+        return """<%s>%s</%s>""" % (SETS_PART, "".join(map(lambda (x, y): """<set><setSpec>%s</setSpec><setName>%s</setName></set>""" % (x, y), sets)), SETS_PART)
+    
+    def flattenHierarchy(self, sets):
+        """"[1:2:3, 1:2:4] => [1, 1:2, 1:2:3, 1:2:4]"""
+        result = set()
+        for setSpec, setName in sets:
+            parts = setSpec.split(':')
+            for i in range(1, len(parts) + 1):
+                result.add(':'.join(parts[:i]))
+        return result

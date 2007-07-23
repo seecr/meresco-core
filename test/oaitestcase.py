@@ -36,50 +36,50 @@ from meresco.components.http.oai.oaicomponent import OaiComponent
 from meresco.components.http.oai.oaisink import OaiSink
 
 class OaiTestCase(CQ2TestCase):
-	
-	def setUp(self):
-		CQ2TestCase.setUp(self)
-		self.observable = Observable()
-		self.subject = self.getSubject()
-		self.subject.getTime = lambda : '2007-02-07T00:00:00Z'
-		self.observable.addObserver(self.subject)
-		self.request = CallTrace('Request')
-		self.request.path = '/path/to/oai'
-		self.request.getRequestHostname = lambda: 'server'
-		class Host:
-			def __init__(self):
-				self.port = '9000'
-		self.request.getHost = lambda: Host()
-		self.stream = StringIO()
-		self.request.write = self.stream.write
-		
-	def testNotMyVerb(self):
-		"""All verbs are observers and should only react to their own verb. This is not true for the sink and the umbrella OaiComponent"""
-		if self.subject.__class__ in [OaiComponent, OaiSink]:
-			return
-		self.request.args = {'verb': ['NotMyVerb']}
-		self.observable.changed(self.request)
-		self.assertEquals('', self.stream.getvalue())
-		
-	def assertBadArgument(self, arguments, additionalMessage = '', errorCode = "badArgument"):
-		if hasattr(self, 'ranAssertBadArgument'):
-			self.fail("""NOTE: this method can be used only once per test (not very pretty, but not priority now (20/04/2007 - KVS)""")
-		self.ranAssertBadArgument = True
-		
-		self.request.args = arguments
-		self.observable.changed(self.request)
-		self.assertTrue(len(self.request.calledMethods) >= 1)
-		self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
-		result = self.stream.getvalue()
-		self.assertTrue('<error code="%s">' % errorCode in result)
-		self.assertTrue(additionalMessage in result, 'Expected "%s" in "%s"' %(additionalMessage, result))
-		
-		try:
-			assertValidString(result)
-		except Exception, e:
-			self.fail("Not a valid string:\n" + result + "\n" + str(e))
-		
-	OAIPMH = """<?xml version="1.0" encoding="UTF-8"?>
+    
+    def setUp(self):
+        CQ2TestCase.setUp(self)
+        self.observable = Observable()
+        self.subject = self.getSubject()
+        self.subject.getTime = lambda : '2007-02-07T00:00:00Z'
+        self.observable.addObserver(self.subject)
+        self.request = CallTrace('Request')
+        self.request.path = '/path/to/oai'
+        self.request.getRequestHostname = lambda: 'server'
+        class Host:
+            def __init__(self):
+                self.port = '9000'
+        self.request.getHost = lambda: Host()
+        self.stream = StringIO()
+        self.request.write = self.stream.write
+        
+    def testNotMyVerb(self):
+        """All verbs are observers and should only react to their own verb. This is not true for the sink and the umbrella OaiComponent"""
+        if self.subject.__class__ in [OaiComponent, OaiSink]:
+            return
+        self.request.args = {'verb': ['NotMyVerb']}
+        self.observable.changed(self.request)
+        self.assertEquals('', self.stream.getvalue())
+        
+    def assertBadArgument(self, arguments, additionalMessage = '', errorCode = "badArgument"):
+        if hasattr(self, 'ranAssertBadArgument'):
+            self.fail("""NOTE: this method can be used only once per test (not very pretty, but not priority now (20/04/2007 - KVS)""")
+        self.ranAssertBadArgument = True
+        
+        self.request.args = arguments
+        self.observable.changed(self.request)
+        self.assertTrue(len(self.request.calledMethods) >= 1)
+        self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
+        result = self.stream.getvalue()
+        self.assertTrue('<error code="%s">' % errorCode in result)
+        self.assertTrue(additionalMessage in result, 'Expected "%s" in "%s"' %(additionalMessage, result))
+        
+        try:
+            assertValidString(result)
+        except Exception, e:
+            self.fail("Not a valid string:\n" + result + "\n" + str(e))
+        
+    OAIPMH = """<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
@@ -87,4 +87,4 @@ class OaiTestCase(CQ2TestCase):
 <responseDate>2007-02-07T00:00:00Z</responseDate>
 %s
 </OAI-PMH>"""
-	
+    

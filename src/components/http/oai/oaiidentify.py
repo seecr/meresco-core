@@ -28,7 +28,7 @@
 from meresco.components.http.oai.oaitool import OaiVerb, DONE
 
 class OaiIdentify(OaiVerb):
-	"""
+    """
 http://www.openarchives.org/OAI/openarchivesprotocol.html#Identify
 4.2 Identify
 Summary and Usage Notes
@@ -61,25 +61,25 @@ The response may include multiple instances of the following optional elements:
     * compression : a compression encoding supported by the repository. The recommended values are those defined for the Content-Encoding header in Section 14.11 of RFC 2616 describing HTTP 1.1. A compression element should not be included for the identity encoding, which is implied.
     * description : an extensible mechanism for communities to describe their repositories. For example, the description container could be used to include collection-level metadata in the response to the Identify request. Implementation Guidelines are available to give directions with this respect. Each description container must be accompanied by the URL of an XML schema describing the structure of the description container.
 
-	"""
-	def __init__(self):
-		OaiVerb.__init__(self, ['Identify'], {})
-	
-	def process(self, webRequest):	
-		values = {
-			'repositoryName': 'The Repository Name',
-			'baseURL': self.getRequestUrl(webRequest),
-			'adminEmails': ''.join([ADMIN_EMAIL % email for email in ['info@cq2.nl']]),
-			'deletedRecord': 'persistent'
-		}
-		values.update(hardcoded_values)
-		webRequest.write(IDENTIFY % values)
-		
+    """
+    def __init__(self):
+        OaiVerb.__init__(self, ['Identify'], {})
+    
+    def process(self, webRequest):    
+        values = {
+            'repositoryName': 'The Repository Name',
+            'baseURL': self.getRequestUrl(webRequest),
+            'adminEmails': ''.join([ADMIN_EMAIL % email for email in ['info@cq2.nl']]),
+            'deletedRecord': 'persistent'
+        }
+        values.update(hardcoded_values)
+        webRequest.write(IDENTIFY % values)
+        
 
 hardcoded_values = {
-	'protocolVersion': '2.0',
-	'earliestDatestamp': '1970-01-01T00:00:00Z',
-	'granularity': 'YYYY-MM-DDThh:mm:ssZ'
+    'protocolVersion': '2.0',
+    'earliestDatestamp': '1970-01-01T00:00:00Z',
+    'granularity': 'YYYY-MM-DDThh:mm:ssZ'
 }
 
 
@@ -90,7 +90,7 @@ ADMIN_EMAIL = """<adminEmail>%s</adminEmail>"""
 IDENTIFY = """<repositoryName>%(repositoryName)s</repositoryName>
 <baseURL>%(baseURL)s</baseURL>
 <protocolVersion>%(protocolVersion)s</protocolVersion>
-	%(adminEmails)s
+    %(adminEmails)s
 <earliestDatestamp>%(earliestDatestamp)s</earliestDatestamp>
 <deletedRecord>%(deletedRecord)s</deletedRecord>
 <granularity>%(granularity)s</granularity>

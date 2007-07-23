@@ -32,35 +32,35 @@ from sys import stdout, stderr
 import traceback
 
 class ObservableServer(Observable):
-	def __init__(self, port):
-		Observable.__init__(self)
-		self.port = port
-		
-	def log(self, something):
-		print >> stdout, something
-		stdout.flush()
-		
-	def logError(self):
-		print >> stderr, traceback.format_exc()
-		stderr.flush()
-	
-	def run(self):
-		class WebRequest(http.Request):
-			def log(inner, something):
-				self.log(something)
-			def __str__(inner):
-				return '\t'.join([inner.client.host, inner.method, inner.uri])
-			def process(inner):
-				try:
-					self.changed(inner)
-				except:
-					self.logError()
-				inner.finish()
-		class WebHTTPChannel(http.HTTPChannel):
-			requestFactory = WebRequest
-		class Factory(http.HTTPFactory):
-			protocol = WebHTTPChannel
-		factory = Factory()
-		reactor.listenTCP(self.port, factory)
-		self.log("Ready to rumble at %d\n" % self.port)
-		reactor.run()
+    def __init__(self, port):
+        Observable.__init__(self)
+        self.port = port
+        
+    def log(self, something):
+        print >> stdout, something
+        stdout.flush()
+        
+    def logError(self):
+        print >> stderr, traceback.format_exc()
+        stderr.flush()
+    
+    def run(self):
+        class WebRequest(http.Request):
+            def log(inner, something):
+                self.log(something)
+            def __str__(inner):
+                return '\t'.join([inner.client.host, inner.method, inner.uri])
+            def process(inner):
+                try:
+                    self.changed(inner)
+                except:
+                    self.logError()
+                inner.finish()
+        class WebHTTPChannel(http.HTTPChannel):
+            requestFactory = WebRequest
+        class Factory(http.HTTPFactory):
+            protocol = WebHTTPChannel
+        factory = Factory()
+        reactor.listenTCP(self.port, factory)
+        self.log("Ready to rumble at %d\n" % self.port)
+        reactor.run()

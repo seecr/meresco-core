@@ -32,31 +32,31 @@ from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
 
 class LogObserverTest(TestCase):
-	
-	def testLogging(self):
-		stream = StringIO()
-		log = LogObserver(stream)
-		
-		class AnArgument:
-			def __str__(self):
-				return 'Looking for an argument.'
-		argument = AnArgument()		
-		log.notify('one', argument, 'three')
-		
-		time, line = stream.getvalue().split('\t',1)
-		self.assertEquals('one\tLooking for an argument.\tthree\n', line)
-		
-	def testLoggingBySubclassing(self):
-		stream = StringIO()
-		arguments = []
-		class MyLogObserver(LogObserver):
-			def toString(self, *args):
-				arguments.append(args)
-				return 'toString'
-		log = MyLogObserver(stream)
-		
-		log.notify('one', 'two')
-		
-		time, line = stream.getvalue().split('\t',1)
-		self.assertEquals('toString\n', line)
-		self.assertEquals([('one','two')], arguments)
+    
+    def testLogging(self):
+        stream = StringIO()
+        log = LogObserver(stream)
+        
+        class AnArgument:
+            def __str__(self):
+                return 'Looking for an argument.'
+        argument = AnArgument()        
+        log.notify('one', argument, 'three')
+        
+        time, line = stream.getvalue().split('\t',1)
+        self.assertEquals('one\tLooking for an argument.\tthree\n', line)
+        
+    def testLoggingBySubclassing(self):
+        stream = StringIO()
+        arguments = []
+        class MyLogObserver(LogObserver):
+            def toString(self, *args):
+                arguments.append(args)
+                return 'toString'
+        log = MyLogObserver(stream)
+        
+        log.notify('one', 'two')
+        
+        time, line = stream.getvalue().split('\t',1)
+        self.assertEquals('toString\n', line)
+        self.assertEquals([('one','two')], arguments)

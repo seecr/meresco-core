@@ -31,20 +31,20 @@ from meresco.legacy.teddyinterfaceconstructor import construct
 import os
 
 def writeFile(filename, content):
-	f = open(filename, 'w')
-	try:
-		f.write(content)
-	finally:
-		f.close()
+    f = open(filename, 'w')
+    try:
+        f.write(content)
+    finally:
+        f.close()
 
 CONTENTS = """<configuration><storage>%s</storage><lucene>%s</lucene></configuration>"""
 
 class TeddyInterfaceConstructorTest(CQ2TestCase):
-	def testConstruct(self):
-		for db in ['a', 'b']:
-			writeFile(self.tempdir + '/%s.database' % db, CONTENTS % (self.tempdir + '/index/storage_%s' % db, self.tempdir + '/index/lucene_%s' % db ))
-		config = {'teddy.config.dir': self.tempdir}
-		self.assertTrue(not os.path.isdir(self.tempdir + '/index'))
-		interfaces = construct(config)
-		self.assertEquals(set(['a','b']), set(interfaces.keys()))
-		self.assertEquals(set(['storage_a', 'storage_b', 'lucene_a', 'lucene_b']), set(os.listdir(self.tempdir + '/index')))
+    def testConstruct(self):
+        for db in ['a', 'b']:
+            writeFile(self.tempdir + '/%s.database' % db, CONTENTS % (self.tempdir + '/index/storage_%s' % db, self.tempdir + '/index/lucene_%s' % db ))
+        config = {'teddy.config.dir': self.tempdir}
+        self.assertTrue(not os.path.isdir(self.tempdir + '/index'))
+        interfaces = construct(config)
+        self.assertEquals(set(['a','b']), set(interfaces.keys()))
+        self.assertEquals(set(['storage_a', 'storage_b', 'lucene_a', 'lucene_b']), set(os.listdir(self.tempdir + '/index')))

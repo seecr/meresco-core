@@ -54,7 +54,7 @@ class IndexComponent(Component):
         
         query = BooleanQuery()
         query.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), partName)), BooleanClause.Occur.MUST)
-        if continueAt != '0':	
+        if continueAt != '0':    
             addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, None, False)
         if oaiFrom or oaiUntil:
             oaiFrom = oaiFrom or None

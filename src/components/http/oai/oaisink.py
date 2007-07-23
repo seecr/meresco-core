@@ -28,15 +28,15 @@
 from meresco.components.http.oai.oaitool import OaiVerb
 
 class OaiSink(OaiVerb):
-	
-	def __init__(self):
-		OaiVerb.__init__(self, [], {})
-	
-	def notify(self, webRequest):
-		if webRequest.args.get('verb', []) == []:
-			self.writeError(webRequest, 'badArgument', 'No "verb" argument found.')
-		elif len(webRequest.args['verb']) > 1:
-			self.writeError(webRequest, 'badArgument', 'More than one "verb" argument found.')
-		else:
-			 self.writeError(webRequest, 'badVerb', 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.')
-		
+    
+    def __init__(self):
+        OaiVerb.__init__(self, [], {})
+    
+    def notify(self, webRequest):
+        if webRequest.args.get('verb', []) == []:
+            self.writeError(webRequest, 'badArgument', 'No "verb" argument found.')
+        elif len(webRequest.args['verb']) > 1:
+            self.writeError(webRequest, 'badArgument', 'More than one "verb" argument found.')
+        else:
+             self.writeError(webRequest, 'badVerb', 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.')
+        

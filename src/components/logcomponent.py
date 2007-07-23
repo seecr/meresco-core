@@ -31,19 +31,19 @@ from sys import exc_info
 from traceback import format_exception
 
 class LogComponent:
-	def __init__(self, logfile):
-		self._logfile = logfile
-		
-	def _write(self, line):
-		f = open(self._logfile, 'a')
-		try:
-			f.write(str(time()))
-			f.write('\t')
-			f.write(line)
-			f.write('\n')
-		finally:
-			f.close()
-		
-	def notify(self, *args):
-		self._write("notify: " + ', '.join(map(str, args)))
-		
+    def __init__(self, logfile):
+        self._logfile = logfile
+        
+    def _write(self, line):
+        f = open(self._logfile, 'a')
+        try:
+            f.write(str(time()))
+            f.write('\t')
+            f.write(line)
+            f.write('\n')
+        finally:
+            f.close()
+        
+    def notify(self, *args):
+        self._write("notify: " + ', '.join(map(str, args)))
+        

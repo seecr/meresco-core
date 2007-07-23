@@ -32,35 +32,35 @@ PARTS_PART = '__parts__' # __ because purpose is internal use only!
 PART = 'part'
 
 class PartsComponent(Observable):
-	
-	def __init__(self, storage, maintainedParts):
-		Observable.__init__(self)
-		self.maintainedParts = maintainedParts
-		self._storage = storage
-	
-	def notify(self, notification):
-		self.changed(notification)
-		
-		if notification.partName in self.maintainedParts:
-			unit = self._storage.getUnit(notification.id)
-			newNode = notification.payload
-			parts = set()
-			if unit.hasBox(PARTS_PART):
-				box = unit.openBox(PARTS_PART)
-				try:
-					parts_xml = bind_stream(box).__parts__
-					for part in parts_xml:
-						parts.add(str(part))
-				finally:
-					box.close()
-			if notification.method == "add":
-				parts.add(notification.partName)
-			elif notification.method == "delete":
-				parts.remove(notification.partName)
-			
-			thexml = "<__parts__>%s</__parts__>"  % "".join(map(
-				lambda s: '<part xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">%s</part>' % s,
-				parts))
-			
-			newNotification = Notification("add", notification.id, PARTS_PART, bind_string(thexml).__parts__)
-			self.changed(newNotification)
+    
+    def __init__(self, storage, maintainedParts):
+        Observable.__init__(self)
+        self.maintainedParts = maintainedParts
+        self._storage = storage
+    
+    def notify(self, notification):
+        self.changed(notification)
+        
+        if notification.partName in self.maintainedParts:
+            unit = self._storage.getUnit(notification.id)
+            newNode = notification.payload
+            parts = set()
+            if unit.hasBox(PARTS_PART):
+                box = unit.openBox(PARTS_PART)
+                try:
+                    parts_xml = bind_stream(box).__parts__
+                    for part in parts_xml:
+                        parts.add(str(part))
+                finally:
+                    box.close()
+            if notification.method == "add":
+                parts.add(notification.partName)
+            elif notification.method == "delete":
+                parts.remove(notification.partName)
+            
+            thexml = "<__parts__>%s</__parts__>"  % "".join(map(
+                lambda s: '<part xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">%s</part>' % s,
+                parts))
+            
+            newNotification = Notification("add", notification.id, PARTS_PART, bind_string(thexml).__parts__)
+            self.changed(newNotification)

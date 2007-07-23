@@ -30,20 +30,20 @@ from sys import stdout, exc_info
 from traceback import format_exception
 
 class LogObserver(object):
-	def __init__(self, stream = stdout, printtime = True):
-		self._stream = stream
-		self.write = self._stream.write
-		self.flush = self._stream.flush
-		self._printtime = printtime
-		
-	def _write(self, aString):
-		if self._printtime:
-			self.write( '%s\t' % strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()))
-		self.write('%s\n' % aString)
-		self.flush()
-		
-	def notify(self, *args):
-		self._write(self.toString(*args))
-		
-	def toString(self, *args):
-		return '\t'.join(map(str, args))
+    def __init__(self, stream = stdout, printtime = True):
+        self._stream = stream
+        self.write = self._stream.write
+        self.flush = self._stream.flush
+        self._printtime = printtime
+        
+    def _write(self, aString):
+        if self._printtime:
+            self.write( '%s\t' % strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()))
+        self.write('%s\n' % aString)
+        self.flush()
+        
+    def notify(self, *args):
+        self._write(self.toString(*args))
+        
+    def toString(self, *args):
+        return '\t'.join(map(str, args))

@@ -32,68 +32,68 @@ from meresco.components.http.oai.oaivalidator import assertValidString
 from cq2utils.calltrace import CallTrace
 
 class OaiGetRecordTest(OaiTestCase):
-	def getSubject(self):
-		return OaiGetRecord(['oai_dc'])	
-		
-	def testGetRecordNoArguments(self):
-		self.assertBadArgument({'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
-		
-	def testGetNoMetadataPrefix(self):
-		self.assertBadArgument({'verb': ['GetRecord'], 'identifier': ['oai:ident']}, 'Missing argument(s) "metadataPrefix".')
+    def getSubject(self):
+        return OaiGetRecord(['oai_dc'])    
+        
+    def testGetRecordNoArguments(self):
+        self.assertBadArgument({'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
+        
+    def testGetNoMetadataPrefix(self):
+        self.assertBadArgument({'verb': ['GetRecord'], 'identifier': ['oai:ident']}, 'Missing argument(s) "metadataPrefix".')
 
-	def testGetNoIdentifierArgument(self):
-		self.assertBadArgument({'verb': ['GetRecord'], 'metadataPrefix': ['oai_dc']}, 'Missing argument(s) "identifier".')
+    def testGetNoIdentifierArgument(self):
+        self.assertBadArgument({'verb': ['GetRecord'], 'metadataPrefix': ['oai_dc']}, 'Missing argument(s) "identifier".')
 
-	def testNonsenseArgument(self):
-		self.assertBadArgument({'verb': ['GetRecord'], 'metadataPrefix': ['aPrefix'], 'identifier': ['anIdentifier'], 'nonsense': ['bla']}, 'Argument(s) "nonsense" is/are illegal.')
+    def testNonsenseArgument(self):
+        self.assertBadArgument({'verb': ['GetRecord'], 'metadataPrefix': ['aPrefix'], 'identifier': ['anIdentifier'], 'nonsense': ['bla']}, 'Argument(s) "nonsense" is/are illegal.')
 
-	def testDoubleArguments(self):
-		self.assertBadArgument({'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident', '2']}, 'Argument "identifier" may not be repeated.')
-	
-	def testGetRecordNotAvailable(self):
-		self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
-		
-		observer = CallTrace('RecordAnswering')
-		notifications = []
-		def isAvailable(id, partName):
-			notifications.append((id, partName))
-			return False, False
-		observer.isAvailable = isAvailable
-		self.subject.addObserver(observer)
-		
-		self.observable.changed(self.request)
-		
-		self.assertEqualsWS(self.OAIPMH % """
+    def testDoubleArguments(self):
+        self.assertBadArgument({'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident', '2']}, 'Argument "identifier" may not be repeated.')
+    
+    def testGetRecordNotAvailable(self):
+        self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
+        
+        observer = CallTrace('RecordAnswering')
+        notifications = []
+        def isAvailable(id, partName):
+            notifications.append((id, partName))
+            return False, False
+        observer.isAvailable = isAvailable
+        self.subject.addObserver(observer)
+        
+        self.observable.changed(self.request)
+        
+        self.assertEqualsWS(self.OAIPMH % """
 <request identifier="oai:ident" metadataPrefix="oai_dc" verb="GetRecord">http://server:9000/path/to/oai</request>
 <error code="idDoesNotExist">The value of the identifier argument is unknown or illegal in this repository.</error>""", self.stream.getvalue())
-		assertValidString(self.stream.getvalue())
-		
-		self.assertEquals([('oai:ident', 'oai_dc')], notifications)
-		
-	def testGetRecord(self):
-		self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
-		
-		class Observable:
-			def isAvailable(sself, id, partName):
-				if partName == "oai_dc":
-					return True, True
-				return True, False
-			
-			def write(sself, sink, id, partName):
-				if partName == 'oai_dc':
-					sink.write('<some:recorddata xmlns:some="http://some.example.org"/>')
-				elif partName == '__stamp__':
-					sink.write("""<__stamp__>
-			<datestamp>DATESTAMP_FOR_TEST</datestamp>
-			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__stamp__>""")
-			
-			def notify(sself, *args, **kwargs):
-				pass
-			
-		self.subject.addObserver(Observable())
-		self.observable.changed(self.request)
-		self.assertEqualsWS(self.OAIPMH % """
+        assertValidString(self.stream.getvalue())
+        
+        self.assertEquals([('oai:ident', 'oai_dc')], notifications)
+        
+    def testGetRecord(self):
+        self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
+        
+        class Observable:
+            def isAvailable(sself, id, partName):
+                if partName == "oai_dc":
+                    return True, True
+                return True, False
+            
+            def write(sself, sink, id, partName):
+                if partName == 'oai_dc':
+                    sink.write('<some:recorddata xmlns:some="http://some.example.org"/>')
+                elif partName == '__stamp__':
+                    sink.write("""<__stamp__>
+            <datestamp>DATESTAMP_FOR_TEST</datestamp>
+            <unique>UNIQUE_NOT_USED_YET</unique>
+        </__stamp__>""")
+            
+            def notify(sself, *args, **kwargs):
+                pass
+            
+        self.subject.addObserver(Observable())
+        self.observable.changed(self.request)
+        self.assertEqualsWS(self.OAIPMH % """
 <request identifier="oai:ident"
  metadataPrefix="oai_dc"
  verb="GetRecord">http://server:9000/path/to/oai</request>
@@ -109,27 +109,27 @@ class OaiGetRecordTest(OaiTestCase):
   </record>
  </GetRecord>""", self.stream.getvalue())
 
-	def testDeletedRecord(self):
-		self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
-		
-		class Observable:
-			def isAvailable(sself, id, partName):
-				if partName == 'oai_dc' or partName == '__tombstone__':
-					return True, True
-				return True, False
-						
-			def write(sself, sink, id, partName):
-				if partName == 'oai_dc':
-					self.fail()
-				if partName == '__stamp__':
-					sink.write("""<__stamp__>
-			<datestamp>DATESTAMP_FOR_TEST</datestamp>
-			<unique>UNIQUE_NOT_USED_YET</unique>
-		</__stamp__>""")
-			
-			def notify(sself, *args, **kwargs):
-				pass
-			
-		self.subject.addObserver(Observable())
-		self.observable.changed(self.request)
-		self.assertTrue("deleted" in self.stream.getvalue())
+    def testDeletedRecord(self):
+        self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
+        
+        class Observable:
+            def isAvailable(sself, id, partName):
+                if partName == 'oai_dc' or partName == '__tombstone__':
+                    return True, True
+                return True, False
+                        
+            def write(sself, sink, id, partName):
+                if partName == 'oai_dc':
+                    self.fail()
+                if partName == '__stamp__':
+                    sink.write("""<__stamp__>
+            <datestamp>DATESTAMP_FOR_TEST</datestamp>
+            <unique>UNIQUE_NOT_USED_YET</unique>
+        </__stamp__>""")
+            
+            def notify(sself, *args, **kwargs):
+                pass
+            
+        self.subject.addObserver(Observable())
+        self.observable.changed(self.request)
+        self.assertTrue("deleted" in self.stream.getvalue())

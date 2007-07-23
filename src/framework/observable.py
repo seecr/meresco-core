@@ -28,94 +28,94 @@ from traceback import format_exception
 from sys import exc_info
 
 class Defer:
-	def __init__(self, observable, defereeType):
-		self._observable = observable
-		self._defereeType = defereeType
+    def __init__(self, observable, defereeType):
+        self._observable = observable
+        self._defereeType = defereeType
 
-	def __getattr__(self, attr):
-		return self._defereeType(self._observable._observers, attr)
+    def __getattr__(self, attr):
+        return self._defereeType(self._observable._observers, attr)
 
 class DeferredFunction:
-	def __init__(self, delegates, attr):
-		self._delegates = delegates
-		self._attr = attr
+    def __init__(self, delegates, attr):
+        self._delegates = delegates
+        self._attr = attr
 
 class AllFunction(DeferredFunction):
-	def __call__(self, *args, **kwargs):
-		result = None
-		for delegate in self._delegates:
-			if hasattr(delegate, self._attr):
-				result = getattr(delegate, self._attr)(*args, **kwargs) or result
-			elif hasattr(delegate, 'unknown'):
-				result = getattr(delegate, 'unknown')(self._attr, *args, **kwargs) or result
-		return result
+    def __call__(self, *args, **kwargs):
+        result = None
+        for delegate in self._delegates:
+            if hasattr(delegate, self._attr):
+                result = getattr(delegate, self._attr)(*args, **kwargs) or result
+            elif hasattr(delegate, 'unknown'):
+                result = getattr(delegate, 'unknown')(self._attr, *args, **kwargs) or result
+        return result
 
 class AnyFunction(DeferredFunction):
-	def __call__(self, *args, **kwargs):
-		result = None
-		for delegate in self._delegates:
-			if hasattr(delegate, self._attr):
-				result = getattr(delegate, self._attr)(*args, **kwargs)
-				if result:
-					return result
-		return result
+    def __call__(self, *args, **kwargs):
+        result = None
+        for delegate in self._delegates:
+            if hasattr(delegate, self._attr):
+                result = getattr(delegate, self._attr)(*args, **kwargs)
+                if result:
+                    return result
+        return result
 
 class Observable(object):
-	def __init__(self, name = None):
-		self._observers = []
-		self.all = Defer(self, AllFunction)
-		self.any = Defer(self, AnyFunction)
-		if name:
-			self.__repr__ = lambda: name
+    def __init__(self, name = None):
+        self._observers = []
+        self.all = Defer(self, AllFunction)
+        self.any = Defer(self, AnyFunction)
+        if name:
+            self.__repr__ = lambda: name
 
-	def addObserver(self, observer):
-		self._observers.append(observer)
+    def addObserver(self, observer):
+        self._observers.append(observer)
 
-	def addObservers(self, tree):
-		for node in tree:
-			if isinstance(node, tuple):
-				node, branch = node
-				node.addObservers(branch)
-			self.addObserver(node)
+    def addObservers(self, tree):
+        for node in tree:
+            if isinstance(node, tuple):
+                node, branch = node
+                node.addObservers(branch)
+            self.addObserver(node)
 
-	def _notifyObservers(self, __returnResult__, *args, **kwargs):
-		i = 0
-		while i < len(self._observers):
-			result = self._observers[i].notify(*args, **kwargs)
-			if __returnResult__ and result != None:
-				return result
-			i += 1
+    def _notifyObservers(self, __returnResult__, *args, **kwargs):
+        i = 0
+        while i < len(self._observers):
+            result = self._observers[i].notify(*args, **kwargs)
+            if __returnResult__ and result != None:
+                return result
+            i += 1
 
-	def changed(self, *args, **kwargs):
-		return self._notifyObservers(False, *args, **kwargs)
+    def changed(self, *args, **kwargs):
+        return self._notifyObservers(False, *args, **kwargs)
 
-	def process(self, *args, **kwargs):
-		return self._notifyObservers(True, *args, **kwargs)
+    def process(self, *args, **kwargs):
+        return self._notifyObservers(True, *args, **kwargs)
 
 class Function:
 
-	def __init__(self, observable):
-		self._observable = observable
-		self._observable.addObserver(self)
+    def __init__(self, observable):
+        self._observable = observable
+        self._observable.addObserver(self)
 
-	def notify(self, *args, **kwargs):
-		self._result = args #kwargs is nog een vraagteken voor mij (KVS)
-		if len(self._result) == 0:
-			self._result = None
-		elif len(self._result) == 1:
-			self._result = self._result[0]
+    def notify(self, *args, **kwargs):
+        self._result = args #kwargs is nog een vraagteken voor mij (KVS)
+        if len(self._result) == 0:
+            self._result = None
+        elif len(self._result) == 1:
+            self._result = self._result[0]
 
-	def __call__(self, *args, **kwargs):
-		self._observable.notify(*args, **kwargs) # hier is **kwargs triviaal
-		return self._result
+    def __call__(self, *args, **kwargs):
+        self._observable.notify(*args, **kwargs) # hier is **kwargs triviaal
+        return self._result
 
 class FunctionObservable(Observable):
-	#ik weet het, YAGNI, maar het is zooooo mooi symmetrisch - wilde toch even laten zien dat dit het soort dingen is wat we kunnen doen en denk dat we het nut vrij snel tegenkomen. Zo niet dan mag hij in het vuilnisvat
+    #ik weet het, YAGNI, maar het is zooooo mooi symmetrisch - wilde toch even laten zien dat dit het soort dingen is wat we kunnen doen en denk dat we het nut vrij snel tegenkomen. Zo niet dan mag hij in het vuilnisvat
 
-	def __init__(self, function):
-		Observable.__init__(self)
-		self._function = function
+    def __init__(self, function):
+        Observable.__init__(self)
+        self._function = function
 
-	def notify(self, *args, **kwargs):
-		results = self._function(*args, **kwargs)
-		self.changed(*results)
+    def notify(self, *args, **kwargs):
+        results = self._function(*args, **kwargs)
+        self.changed(*results)

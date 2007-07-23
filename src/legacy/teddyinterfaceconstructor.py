@@ -35,13 +35,13 @@ from glob import glob
 
 
 def construct(configuration):
-	teddyconfigdir = configuration.get('teddy.config.dir')
-	searchInterfaces = {}
-	for databaseFile in glob(join(teddyconfigdir, '*.database')):
-		database = basename(databaseFile)[:-len('.database')]
-		configuration = Configuration()
-		configuration.readFromFile(databaseFile)
-		lucene = LuceneIndex(configuration.getLucene())
-		storage = Storage(configuration.getStorage())
-		searchInterfaces[database] = TeddyInterface(lucene, storage)
-	return searchInterfaces
+    teddyconfigdir = configuration.get('teddy.config.dir')
+    searchInterfaces = {}
+    for databaseFile in glob(join(teddyconfigdir, '*.database')):
+        database = basename(databaseFile)[:-len('.database')]
+        configuration = Configuration()
+        configuration.readFromFile(databaseFile)
+        lucene = LuceneIndex(configuration.getLucene())
+        storage = Storage(configuration.getStorage())
+        searchInterfaces[database] = TeddyInterface(lucene, storage)
+    return searchInterfaces

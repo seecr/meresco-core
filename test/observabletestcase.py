@@ -32,16 +32,16 @@ from meresco.framework.observable import Observable
 from cStringIO import StringIO
 
 class ObservableTestCase(CQ2TestCase):
-	
-	def setUp(self):
-		CQ2TestCase.setUp(self)
-		self.observable = Observable()
-		self.subject = self.getSubject()
-		self.observable.addObserver(self.subject)
-		self.request = CallTrace('Request')
-		host = CallTrace('Host')
-		host.port = 8000
-		self.request.returnValues['getRequestHostname'] = 'localhost'
-		self.request.returnValues['getHost'] = host
-		self.stream = StringIO()
-		self.request.write = self.stream.write
+    
+    def setUp(self):
+        CQ2TestCase.setUp(self)
+        self.observable = Observable()
+        self.subject = self.getSubject()
+        self.observable.addObserver(self.subject)
+        self.request = CallTrace('Request')
+        host = CallTrace('Host')
+        host.port = 8000
+        self.request.returnValues['getRequestHostname'] = 'localhost'
+        self.request.returnValues['getHost'] = host
+        self.stream = StringIO()
+        self.request.write = self.stream.write

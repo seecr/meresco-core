@@ -36,28 +36,28 @@ from meresco.components.http.oai.oaisink import OaiSink
 from meresco.framework.observable import Observable
 
 class OaiComponent(Observable):
-	
-	def __init__(self, metadataFormats, listSetsObservers = []):
-		names = map(lambda (name, x, y): name, metadataFormats)
-		Observable.__init__(self)
-		self._privateTree = Observable()
-		
-		oaiListSets = OaiListSets()
-		for observer in listSetsObservers:
-			oaiListSets.addObserver(observer)
-		self._privateTree.addObserver(oaiListSets)
+    
+    def __init__(self, metadataFormats, listSetsObservers = []):
+        names = map(lambda (name, x, y): name, metadataFormats)
+        Observable.__init__(self)
+        self._privateTree = Observable()
+        
+        oaiListSets = OaiListSets()
+        for observer in listSetsObservers:
+            oaiListSets.addObserver(observer)
+        self._privateTree.addObserver(oaiListSets)
 
-		for branch in [
-				OaiIdentify(),
-				OaiGetRecord(names),
-				OaiList(names),
-				OaiListMetadataFormats(metadataFormats),
-				OaiSink()]:
-			branch.changed = self.changed
-			branch.any = self.any
-			branch.all = self.all
-			self._privateTree.addObserver(branch)
-				
-	def notify(self, webRequest):
-		return self._privateTree.process(webRequest)
+        for branch in [
+                OaiIdentify(),
+                OaiGetRecord(names),
+                OaiList(names),
+                OaiListMetadataFormats(metadataFormats),
+                OaiSink()]:
+            branch.changed = self.changed
+            branch.any = self.any
+            branch.all = self.all
+            self._privateTree.addObserver(branch)
+                
+    def notify(self, webRequest):
+        return self._privateTree.process(webRequest)
 

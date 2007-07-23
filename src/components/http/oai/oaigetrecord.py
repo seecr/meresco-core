@@ -30,7 +30,7 @@ from meresco.framework.observable import Observable
 from meresco.components.http.oai.oairecordverb import OaiRecordVerb
 
 class OaiGetRecord(OaiRecordVerb, Observable):
-	"""4.1 GetRecord
+    """4.1 GetRecord
 Summary and Usage Notes
 
 This verb is used to retrieve an individual metadata record from a repository. Required arguments specify the identifier of the item from which the record is requested and the format of the metadata that should be included in the record. Depending on the level at which a repository tracks deletions, a header with a "deleted" value for the status attribute may be returned, in case the metadata format specified by the metadataPrefix is no longer available from the repository or from the specified item.
@@ -46,25 +46,25 @@ Error and Exception Conditions
     * cannotDisseminateFormat - The value of the metadataPrefix argument is not supported by the item identified by the value of the identifier argument.
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
 """
-	def __init__(self, partNames):
-		OaiRecordVerb.__init__(self, ['GetRecord'], {
-			'identifier': 'required',
-			'metadataPrefix': 'required'})
-		Observable.__init__(self)
-		self.partNames = partNames
-	
-	def preProcess(self, webRequest):
-		if not self._metadataPrefix in self.partNames:
-			return self.writeError(webRequest, 'cannotDisseminateFormat')
-		
-		hasId, hasPartName = self.any.isAvailable(self._identifier, self._metadataPrefix)
-		
-		if not hasId:
-			return self.writeError(webRequest, 'idDoesNotExist')
-		
-		if not hasPartName:
-			return self.writeError(webRequest, 'cannotDisseminateFormat')
-		
-	def process(self, webRequest):
-		self.writeRecord(webRequest, self._identifier)
-	
+    def __init__(self, partNames):
+        OaiRecordVerb.__init__(self, ['GetRecord'], {
+            'identifier': 'required',
+            'metadataPrefix': 'required'})
+        Observable.__init__(self)
+        self.partNames = partNames
+    
+    def preProcess(self, webRequest):
+        if not self._metadataPrefix in self.partNames:
+            return self.writeError(webRequest, 'cannotDisseminateFormat')
+        
+        hasId, hasPartName = self.any.isAvailable(self._identifier, self._metadataPrefix)
+        
+        if not hasId:
+            return self.writeError(webRequest, 'idDoesNotExist')
+        
+        if not hasPartName:
+            return self.writeError(webRequest, 'cannotDisseminateFormat')
+        
+    def process(self, webRequest):
+        self.writeRecord(webRequest, self._identifier)
+    

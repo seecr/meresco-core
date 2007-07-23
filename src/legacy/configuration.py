@@ -31,27 +31,27 @@ import amara.binderytools
 
 class Configuration:
 
-	def __init__(self):
-		self._storage = ''
-		self._lucene = ''
+    def __init__(self):
+        self._storage = ''
+        self._lucene = ''
 
-	def getStorage(self):
-		return self._storage
-	
-	def getLucene(self):
-		return self._lucene
+    def getStorage(self):
+        return self._storage
+    
+    def getLucene(self):
+        return self._lucene
 
-	def readFromFile(self, aString):
-		f = open(aString)
-		try:
-			self.readFrom(f)
-		finally:
-			f.close()
+    def readFromFile(self, aString):
+        f = open(aString)
+        try:
+            self.readFrom(f)
+        finally:
+            f.close()
 
-	def readFrom(self, aStream):
-		xml = amara.binderytools.bind_stream(aStream)
-		self._storage = str(xml.configuration.storage)
-		self._lucene = str(xml.configuration.lucene)
-		
+    def readFrom(self, aStream):
+        xml = amara.binderytools.bind_stream(aStream)
+        self._storage = str(xml.configuration.storage)
+        self._lucene = str(xml.configuration.lucene)
+        
 class ConfigurationError(Exception):
-	pass
+    pass

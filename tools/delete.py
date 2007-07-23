@@ -31,28 +31,28 @@ import sys
 
 SRU_UPDATE_REQUEST = """<?xml version="1.0" encoding="UTF-8"?>
 <updateRequest xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="http://www.loc.gov/KVS_IHAVENOIDEA/">
-	<srw:version>1.0</srw:version>
-	<ucp:action>info:srw/action/1/%(action)s</ucp:action>
-	<ucp:recordIdentifier>%(recordIdentifier)s</ucp:recordIdentifier>
+    <srw:version>1.0</srw:version>
+    <ucp:action>info:srw/action/1/%(action)s</ucp:action>
+    <ucp:recordIdentifier>%(recordIdentifier)s</ucp:recordIdentifier>
 </updateRequest>"""
 
 def send(data, baseurl, port, path):
-	connection = httplib.HTTPConnection(baseurl, port)
-	connection.putrequest("POST", path)
-	connection.putheader("Host", baseurl)
-	connection.putheader("Content-Type", "text/xml; charset=\"utf-8\"")
-	connection.putheader("Content-Length", str(len(data)))
-	connection.endheaders()
-	connection.send(data)
-	
-	response = connection.getresponse()
-	print "STATUS:", response.status
-	print "HEADERS:", response.getheaders()
-	print "MESSAGE:", response.read()
+    connection = httplib.HTTPConnection(baseurl, port)
+    connection.putrequest("POST", path)
+    connection.putheader("Host", baseurl)
+    connection.putheader("Content-Type", "text/xml; charset=\"utf-8\"")
+    connection.putheader("Content-Length", str(len(data)))
+    connection.endheaders()
+    connection.send(data)
+    
+    response = connection.getresponse()
+    print "STATUS:", response.status
+    print "HEADERS:", response.getheaders()
+    print "MESSAGE:", response.read()
 
 if __name__ == "__main__":
-	nrs = input("range of records (python code)> ")
-	for i in nrs:
-		send(SRU_UPDATE_REQUEST % {
-			"action": "delete",
-			"recordIdentifier": "id_" + str(i)}, 'localhost', 8000, '/darenet/sruRecordUpdate')
+    nrs = input("range of records (python code)> ")
+    for i in nrs:
+        send(SRU_UPDATE_REQUEST % {
+            "action": "delete",
+            "recordIdentifier": "id_" + str(i)}, 'localhost', 8000, '/darenet/sruRecordUpdate')

@@ -31,12 +31,12 @@ from amara.binderytools import bind_string
 TOMBSTONE_PART = '__tombstone__'
 
 class Undertaker(Observable):
-	
-	def notify(self, notification):
-		self.changed(notification)
-		if notification.method == "delete":
-			tombStone = Notification("add", notification.id, TOMBSTONE_PART, bind_string("<%s/>" % TOMBSTONE_PART).childNodes[0])
-			self.changed(tombStone)
-		if notification.method == "add":
-			self.all.deletePart(notification.id, TOMBSTONE_PART)
-	
+    
+    def notify(self, notification):
+        self.changed(notification)
+        if notification.method == "delete":
+            tombStone = Notification("add", notification.id, TOMBSTONE_PART, bind_string("<%s/>" % TOMBSTONE_PART).childNodes[0])
+            self.changed(tombStone)
+        if notification.method == "add":
+            self.all.deletePart(notification.id, TOMBSTONE_PART)
+    

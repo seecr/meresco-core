@@ -32,31 +32,31 @@ from cq2utils.cq2testcase import CQ2TestCase
 from meresco.components.http.sru.drilldownxml import DrillDownXml
 
 class DrillDownXmlTest(CQ2TestCase):
-	
-	def testOne(self):
-		self._arguments = {"x-meresco-drilldown": ["field0:1,field1:2,field2:3"]}
-		result = StringIO()
-		self.write = result.write
-		drillDownXml = DrillDownXml(self)
-		drillDownXml.writeExtraResponseData(self)
-		self.assertEquals([('field0', '1'), ('field1', '2'), ('field2', '3')], self.tuples)
-		self.assertEqualsWS("""<drilldown>
+    
+    def testOne(self):
+        self._arguments = {"x-meresco-drilldown": ["field0:1,field1:2,field2:3"]}
+        result = StringIO()
+        self.write = result.write
+        drillDownXml = DrillDownXml(self)
+        drillDownXml.writeExtraResponseData(self)
+        self.assertEquals([('field0', '1'), ('field1', '2'), ('field2', '3')], self.tuples)
+        self.assertEqualsWS("""<drilldown>
 <field name="field0">
-	<value count="14">value0_0</value>
+    <value count="14">value0_0</value>
 </field>
 <field name="field1">
-	<value count="13">value1_0</value>
-	<value count="11">value1_1</value>
+    <value count="13">value1_0</value>
+    <value count="11">value1_1</value>
 </field>
 <field name="field2">
-	<value count="3">value2_0</value>
-	<value count="2">value2_1</value>
-	<value count="1">value2_2</value>
+    <value count="3">value2_0</value>
+    <value count="2">value2_1</value>
+    <value count="1">value2_2</value>
 </field></drilldown>""", result.getvalue())
-		
-	def process(self, tuples):
-		self.tuples = tuples
-		return [
-			('field0', [('value0_0', 14)]),
-			('field1', [('value1_0', 13), ('value1_1', 11)]),
-			('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+        
+    def process(self, tuples):
+        self.tuples = tuples
+        return [
+            ('field0', [('value0_0', 14)]),
+            ('field1', [('value1_0', 13), ('value1_1', 11)]),
+            ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]

@@ -29,15 +29,15 @@ from oaitestcase import OaiTestCase
 from meresco.components.http.oai.oaisink import OaiSink
 
 class OaiSinkTest(OaiTestCase):
-	
-	def getSubject(self):
-		return OaiSink()
-	
-	def testNoVerb(self):
-		self.assertBadArgument({}, 'No "verb" argument found.')
-	
-	def testNVerbs(self):
-		self.assertBadArgument({'verb': ['ListRecords', 'Indentify']}, 'More than one "verb" argument found.')
-		
-	def testWrongVerb(self):
-		self.assertBadArgument({'verb': ['Nonsense']}, 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.', errorCode='badVerb')
+    
+    def getSubject(self):
+        return OaiSink()
+    
+    def testNoVerb(self):
+        self.assertBadArgument({}, 'No "verb" argument found.')
+    
+    def testNVerbs(self):
+        self.assertBadArgument({'verb': ['ListRecords', 'Indentify']}, 'More than one "verb" argument found.')
+        
+    def testWrongVerb(self):
+        self.assertBadArgument({'verb': ['Nonsense']}, 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.', errorCode='badVerb')

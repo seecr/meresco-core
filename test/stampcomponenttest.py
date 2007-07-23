@@ -29,6 +29,6 @@ from unittest import TestCase
 from meresco.components.stampcomponent import StampComponent
 
 class StampComponentTest(TestCase):
-	
-	def testOne(self):
-		pass
+    
+    def testOne(self):
+        pass

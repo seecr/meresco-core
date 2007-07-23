@@ -39,53 +39,53 @@ SOAP_VERSIONMISMATCH = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/
 SOAP_JUNKMESSAGE="""<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body><SOAP:Fault><faultcode>SOAP:Server.userException</faultcode><faultstring>%s</faultstring></SOAP:Fault></SOAP:Body></SOAP:Envelope>"""
 
 def registerOn(aRegistry):
-	constructionMethod = lambda request,searchinterface: SRWPlugin(request, SRUPlugin(request, searchinterface))
-	aRegistry.registerByCommand('srw', constructionMethod)
+    constructionMethod = lambda request,searchinterface: SRWPlugin(request, SRUPlugin(request, searchinterface))
+    aRegistry.registerByCommand('srw', constructionMethod)
 
 class SRWPlugin:
-	
-	def __init__(self, aRequest, aSRUPlugin):
-		self._request = aRequest
-		self._sruplugin = aSRUPlugin
-		self._sruplugin.xmlHeader = ""
-		self.contentType = 'text/xml; charset=utf-8'
-		self._sruplugin._arguments = self.parseArguments(self._request.content.read())
-		
-		self._sruplugin.supportedOperation = self.supportedOperation
-		self.sruSupportedParameter = self._sruplugin.supportedParameter
-		self._sruplugin.supportedParameter = self.supportedParameter
-	
-	def __getattr__(self, attr):
-		return getattr(self._sruplugin, attr)
-	
-	def __hasattr__(self, attr):
-		return hasattr(self._sruplugin, attr)
-	
-	def parseArguments(self, data):
-		arguments = {}
-		try:
-			envelope = binderytools.bind_string(data).Envelope
-		except Exception, e:
-			self.raiseException(SOAP_JUNKMESSAGE % xmlEscape(str(e)))
-		if str(envelope.xmlnsUri) != SOAP_XML_URI:
-			self.raiseException(SOAP_VERSIONMISMATCH)
-		request = envelope.Body.searchRetrieveRequest
-		for elem in getElements(request):
-			value = arguments.get(str(elem.localName), [])
-			value.append(str(elem))
-			arguments[str(elem.localName)] = value
-		arguments['operation'] = arguments.get('operation', ['searchRetrieve'])
-		return arguments
-	
-	def process(self):
-		self.write("""<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>""")
-		self._sruplugin.process()
-		self.write("</SOAP:Body></SOAP:Envelope>")
-		
-	def supportedOperation(self, operation):
-		return operation == 'searchRetrieve'
+    
+    def __init__(self, aRequest, aSRUPlugin):
+        self._request = aRequest
+        self._sruplugin = aSRUPlugin
+        self._sruplugin.xmlHeader = ""
+        self.contentType = 'text/xml; charset=utf-8'
+        self._sruplugin._arguments = self.parseArguments(self._request.content.read())
+        
+        self._sruplugin.supportedOperation = self.supportedOperation
+        self.sruSupportedParameter = self._sruplugin.supportedParameter
+        self._sruplugin.supportedParameter = self.supportedParameter
+    
+    def __getattr__(self, attr):
+        return getattr(self._sruplugin, attr)
+    
+    def __hasattr__(self, attr):
+        return hasattr(self._sruplugin, attr)
+    
+    def parseArguments(self, data):
+        arguments = {}
+        try:
+            envelope = binderytools.bind_string(data).Envelope
+        except Exception, e:
+            self.raiseException(SOAP_JUNKMESSAGE % xmlEscape(str(e)))
+        if str(envelope.xmlnsUri) != SOAP_XML_URI:
+            self.raiseException(SOAP_VERSIONMISMATCH)
+        request = envelope.Body.searchRetrieveRequest
+        for elem in getElements(request):
+            value = arguments.get(str(elem.localName), [])
+            value.append(str(elem))
+            arguments[str(elem.localName)] = value
+        arguments['operation'] = arguments.get('operation', ['searchRetrieve'])
+        return arguments
+    
+    def process(self):
+        self.write("""<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>""")
+        self._sruplugin.process()
+        self.write("</SOAP:Body></SOAP:Envelope>")
+        
+    def supportedOperation(self, operation):
+        return operation == 'searchRetrieve'
 
- 	def supportedParameter(self, parameter, operation):
- 		supported = self.sruSupportedParameter(parameter, operation)
- 		return supported and not parameter in UNSUPPORTED_PARAMETERS
-		
+     def supportedParameter(self, parameter, operation):
+         supported = self.sruSupportedParameter(parameter, operation)
+         return supported and not parameter in UNSUPPORTED_PARAMETERS
+        

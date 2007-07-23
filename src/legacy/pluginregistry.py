@@ -31,53 +31,53 @@ from plugins.queryplugin import PluginException
 from os.path import basename, isdir
 
 class NoSuchPluginException(PluginException):
-	def __init__(self, command):
-		PluginException.__init__(self, '<?xml version="1.0"?><error>Command "%(command)s" not found.</error>' % locals())
+    def __init__(self, command):
+        PluginException.__init__(self, '<?xml version="1.0"?><error>Command "%(command)s" not found.</error>' % locals())
 
 class PluginRegistry:
-	def __init__(self, configuration):
-		self._configuration = configuration
-		self._factories = []
-		self._registeredCommands = []
+    def __init__(self, configuration):
+        self._configuration = configuration
+        self._factories = []
+        self._registeredCommands = []
 
-	def registerByCommand(self, command, factoryProduct):
-		def typeFactory(commandInner, *args):
-			if commandInner == command:
-				return factoryProduct(*args)
-			return None
-		self._factories.append(typeFactory)
-		self._registeredCommands.append(command)
-		return typeFactory
+    def registerByCommand(self, command, factoryProduct):
+        def typeFactory(commandInner, *args):
+            if commandInner == command:
+                return factoryProduct(*args)
+            return None
+        self._factories.append(typeFactory)
+        self._registeredCommands.append(command)
+        return typeFactory
 
-	def create(self, command, *args):
-		for factory in self._factories:
-			component = factory(command, *args)
-			if component:
-				return component
-		raise NoSuchPluginException(command)
+    def create(self, command, *args):
+        for factory in self._factories:
+            component = factory(command, *args)
+            if component:
+                return component
+        raise NoSuchPluginException(command)
 
-	def loadPlugins(self):
-		directory = self._configuration['server.pluginpath']
-		#print "PluginRegistry - loading plugins from ", directory
-		sys.path.append(directory)
-		if not isdir(directory):
-			raise Exception("%s is not a directory" % directory)
-		for pyfile in glob('%s/*.py' % directory):
-			if not pyfile.endswith('__init__.py'):
-				filename = basename(pyfile[:-3])
-				module = self._loadModule(filename)
-				if hasattr(module, 'registerOn'):
-					#print "PluginRegistry adding:", str(module)
-					module.registerOn(self)
+    def loadPlugins(self):
+        directory = self._configuration['server.pluginpath']
+        #print "PluginRegistry - loading plugins from ", directory
+        sys.path.append(directory)
+        if not isdir(directory):
+            raise Exception("%s is not a directory" % directory)
+        for pyfile in glob('%s/*.py' % directory):
+            if not pyfile.endswith('__init__.py'):
+                filename = basename(pyfile[:-3])
+                module = self._loadModule(filename)
+                if hasattr(module, 'registerOn'):
+                    #print "PluginRegistry adding:", str(module)
+                    module.registerOn(self)
 
-	def getenv(self, key):
-		return self._configuration.get(key, None)
+    def getenv(self, key):
+        return self._configuration.get(key, None)
 
-	def size(self):
-		return len(self._factories)
+    def size(self):
+        return len(self._factories)
 
-	def supportedCommand(self, command):
-		return command in self._registeredCommands
+    def supportedCommand(self, command):
+        return command in self._registeredCommands
 
-	def _loadModule(self, filename):
-		return __import__(filename)
+    def _loadModule(self, filename):
+        return __import__(filename)

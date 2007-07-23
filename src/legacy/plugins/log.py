@@ -29,13 +29,13 @@ import sys
 from time import strftime, gmtime
 
 class Log(object):
-	def __init__(self, stream = sys.stdout):
-		self._stream = stream
-		self.write = self._stream.write
-		
-	def notify(self, aRequest):
-		self.write("%s\n" % '\t'.join([
-			strftime("%Y-%m-%d %H:%M:%S", gmtime()),
-			aRequest.client.host,
-			aRequest.method,
-			aRequest.uri]))
+    def __init__(self, stream = sys.stdout):
+        self._stream = stream
+        self.write = self._stream.write
+        
+    def notify(self, aRequest):
+        self.write("%s\n" % '\t'.join([
+            strftime("%Y-%m-%d %H:%M:%S", gmtime()),
+            aRequest.client.host,
+            aRequest.method,
+            aRequest.uri]))

@@ -31,21 +31,21 @@ from cStringIO import StringIO
 from cq2utils.calltrace import CallTrace
 
 class LogTest(TestCase):
-	
-	def testLogging(self):
-		stream = StringIO()
-		log = Log(stream)
-		
-		webRequest = CallTrace('WebRequest')
-		webRequest.method = 'GET'
-		webRequest.uri = '/path/to/server?key=value'
-		client = CallTrace('IPv4Address')
-		client.host = "192.168.1.2"
-		webRequest.client = client
-		log.notify(webRequest)
-		
-		date, ipaddress, method, uri = stream.getvalue().strip().split('\t')
-		self.assertEquals("192.168.1.2", ipaddress)
-		self.assertEquals('GET', method)
-		self.assertEquals('/path/to/server?key=value', uri)
-		
+    
+    def testLogging(self):
+        stream = StringIO()
+        log = Log(stream)
+        
+        webRequest = CallTrace('WebRequest')
+        webRequest.method = 'GET'
+        webRequest.uri = '/path/to/server?key=value'
+        client = CallTrace('IPv4Address')
+        client.host = "192.168.1.2"
+        webRequest.client = client
+        log.notify(webRequest)
+        
+        date, ipaddress, method, uri = stream.getvalue().strip().split('\t')
+        self.assertEquals("192.168.1.2", ipaddress)
+        self.assertEquals('GET', method)
+        self.assertEquals('/path/to/server?key=value', uri)
+        

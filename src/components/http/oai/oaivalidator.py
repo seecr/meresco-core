@@ -44,31 +44,31 @@ oai = parse(join(schemaLocation, 'OAI-PMH.xsd'))
 oaixsd = XMLSchema(oai)
 
 def validate(oaiResponse):
-	# Parse the XML and validate it
-	oaixsd.validate(parse(oaiResponse))
-	if oaixsd.error_log:
-		return False, oaixsd.error_log.last_error
-	else:
-		return True, ''
-	
+    # Parse the XML and validate it
+    oaixsd.validate(parse(oaiResponse))
+    if oaixsd.error_log:
+        return False, oaixsd.error_log.last_error
+    else:
+        return True, ''
+    
 def assertValid(oaiResponse):
-	success, message = validate(oaiResponse)
-	if not success:
-		raise AssertionError(message)
+    success, message = validate(oaiResponse)
+    if not success:
+        raise AssertionError(message)
 
 def assertValidString(oaiResponseString):
-	assertValid(StringIO(oaiResponseString))
-	
+    assertValid(StringIO(oaiResponseString))
+    
 if __name__ == '__main__':
-	from sys import argv, exit
-	args = argv[1:]
-	if len(args) != 1:
-		print "Validate a OAI response. "
-		print "Usage: %s <response>" % argv[0]
-		exit(1)
-	success, message = validate(args[0])
-	if success:
-		print "Validation: OK"
-	else:
-		print "Validation: FAILED"
-		print message
+    from sys import argv, exit
+    args = argv[1:]
+    if len(args) != 1:
+        print "Validate a OAI response. "
+        print "Usage: %s <response>" % argv[0]
+        exit(1)
+    success, message = validate(args[0])
+    if success:
+        print "Validation: OK"
+    else:
+        print "Validation: FAILED"
+        print message

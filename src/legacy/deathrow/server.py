@@ -41,142 +41,142 @@ startTime = time.time()
 queries = 0
 
 def increaseQueries():
-	global queries
-	
-	queries = queries + 1
+    global queries
+    
+    queries = queries + 1
 
 def getQueryCount():
-	global queries
-	
-	return queries
+    global queries
+    
+    return queries
 
 def getStartTime():
-	global startTime
-	
-	return startTime
+    global startTime
+    
+    return startTime
 
 def log(aString):
-	try:
-		sys.stdout.write(str(aString)+"\n")
-		sys.stdout.flush()
-	except:
-		pass
+    try:
+        sys.stdout.write(str(aString)+"\n")
+        sys.stdout.flush()
+    except:
+        pass
 
 class WebRequest(http.Request):
 
-	def __init__(self, configuration, pluginRegistry, searchInterfaces, *args):
-		http.Request.__init__(self, *args)
-		self.configuration = configuration
-		self.pluginRegistry = pluginRegistry
-		self.searchInterfaces = searchInterfaces
+    def __init__(self, configuration, pluginRegistry, searchInterfaces, *args):
+        http.Request.__init__(self, *args)
+        self.configuration = configuration
+        self.pluginRegistry = pluginRegistry
+        self.searchInterfaces = searchInterfaces
 
-	def getenv(self, key):
-		return self.configuration.get(key,  None)
-		
-	def getHandler(self):
-		return self.handlers().get(self.path, self.handleDefault)
-	
-	def handlers(self):
-		return {'/status': self.handleStatus, '/favicon.ico': self.handleFavicon}
+    def getenv(self, key):
+        return self.configuration.get(key,  None)
+        
+    def getHandler(self):
+        return self.handlers().get(self.path, self.handleDefault)
+    
+    def handlers(self):
+        return {'/status': self.handleStatus, '/favicon.ico': self.handleFavicon}
 
-	def handleStatus(self):
-		self.setResponseCode(200)
-		self.setHeader('content-type', 'text/plain')
-		self.write("Queries: %s\n" % getQueryCount())
-		self.write("StartTime: %s\n" % time.ctime(getStartTime()))
-		self.write("CurrentTime: %s\n" % time.asctime(time.localtime()))
-				
-	def handleFavicon(self):
-		self.setResponseCode(404)
-		self.setHeader('content-type', 'text/plain')
-		self.write('404: file not found')
+    def handleStatus(self):
+        self.setResponseCode(200)
+        self.setHeader('content-type', 'text/plain')
+        self.write("Queries: %s\n" % getQueryCount())
+        self.write("StartTime: %s\n" % time.ctime(getStartTime()))
+        self.write("CurrentTime: %s\n" % time.asctime(time.localtime()))
+                
+    def handleFavicon(self):
+        self.setResponseCode(404)
+        self.setHeader('content-type', 'text/plain')
+        self.write('404: file not found')
 
-	def handleDatabaseNotFound(self):
-		self.setResponseCode(400)
-		self.setHeader('content-type', 'text/plain')
-		self.write('400 Bad Request: database "%s" not found.' % self.database)
-	
-	def handleDefault(self):
-		try:
-			if self.database not in self.searchInterfaces.keys():
-				self.handleDatabaseNotFound()
-				return
-			plugin = self.pluginRegistry.create(self.command, self, self.searchInterfaces[self.database])
-			plugin.process()
-		except PluginException, e:
-			self.logException()
-			self.setResponseCode(e.errorCode)
-			self.setHeader('content-type', e.contentType)
-			self.write(str(e))
-						
-	def logException(self):
-		self.log(traceback.format_exc())
-		
-	def log(self, something):
-		log(str(something))
-	
-	def _initializeRequestSettings(self):
-		ignored, self.database, self.command, tail = (self.path + '//').split('/',3)
-		self.serverurl = 'http://%s:%s' % (self.getenv('server.host'), self.getenv('server.port'))
+    def handleDatabaseNotFound(self):
+        self.setResponseCode(400)
+        self.setHeader('content-type', 'text/plain')
+        self.write('400 Bad Request: database "%s" not found.' % self.database)
+    
+    def handleDefault(self):
+        try:
+            if self.database not in self.searchInterfaces.keys():
+                self.handleDatabaseNotFound()
+                return
+            plugin = self.pluginRegistry.create(self.command, self, self.searchInterfaces[self.database])
+            plugin.process()
+        except PluginException, e:
+            self.logException()
+            self.setResponseCode(e.errorCode)
+            self.setHeader('content-type', e.contentType)
+            self.write(str(e))
+                        
+    def logException(self):
+        self.log(traceback.format_exc())
+        
+    def log(self, something):
+        log(str(something))
+    
+    def _initializeRequestSettings(self):
+        ignored, self.database, self.command, tail = (self.path + '//').split('/',3)
+        self.serverurl = 'http://%s:%s' % (self.getenv('server.host'), self.getenv('server.port'))
 
-	def process(self):
-		self._initializeRequestSettings()
-		try:
-			self.getHandler()()
-		except:
-			self.logException()
-		self.finish()
-		
+    def process(self):
+        self._initializeRequestSettings()
+        try:
+            self.getHandler()()
+        except:
+            self.logException()
+        self.finish()
+        
 class WebHTTPChannel(http.HTTPChannel):
-	def __init__(self, configuration, pluginRegistry, searchInterfaces, *args):
-		self.configuration = configuration
-		self.pluginRegistry = pluginRegistry
-		self.searchInterfaces = searchInterfaces
-		http.HTTPChannel.__init__(self, *args)
-		
-	def requestFactory(self, *args):
-		return WebRequest(self.configuration, self.pluginRegistry, self.searchInterfaces, *args)
-	
+    def __init__(self, configuration, pluginRegistry, searchInterfaces, *args):
+        self.configuration = configuration
+        self.pluginRegistry = pluginRegistry
+        self.searchInterfaces = searchInterfaces
+        http.HTTPChannel.__init__(self, *args)
+        
+    def requestFactory(self, *args):
+        return WebRequest(self.configuration, self.pluginRegistry, self.searchInterfaces, *args)
+    
 class QueryServerFactory(http.HTTPFactory):
-	def __init__(self, configuration, pluginRegistry, searchInterfaces):
-		self.configuration = configuration
-		self.pluginRegistry = pluginRegistry
-		self.searchInterfaces = searchInterfaces
-		http.HTTPFactory.__init__(self)
-		
-	def protocol(self, *args):
-		return WebHTTPChannel(self.configuration, self.pluginRegistry, self.searchInterfaces, *args)
+    def __init__(self, configuration, pluginRegistry, searchInterfaces):
+        self.configuration = configuration
+        self.pluginRegistry = pluginRegistry
+        self.searchInterfaces = searchInterfaces
+        http.HTTPFactory.__init__(self)
+        
+    def protocol(self, *args):
+        return WebHTTPChannel(self.configuration, self.pluginRegistry, self.searchInterfaces, *args)
 
 def validateConfig(configuration):
-	pass
+    pass
 
 def writepid(pidfile):
-	f = open(pidfile, 'w')
-	try:
-		f.write(str(getpid()))
-	finally:
-		f.close()
+    f = open(pidfile, 'w')
+    try:
+        f.write(str(getpid()))
+    finally:
+        f.close()
 
 def main(configfile):
-	#TODO: add optparse
-	configuration = config.read(configfile)
-	validateConfig(configuration)
-	
-	pidfile = configuration.get('server.pidfile', None)
-	if pidfile:
-		writepid(pidfile)
-	pluginRegistry = PluginRegistry(configuration)
-	pluginRegistry.loadPlugins()
-	
-	constructorModule = configuration.get('search.interface.constructor')
-	constructor = __import__(constructorModule)
-	interfaceDictionary = constructor.construct(configuration)
-	
-	factory = QueryServerFactory(configuration, pluginRegistry, interfaceDictionary)
-	port = int(configuration['server.port'])
-	reactor.listenTCP(port, factory)
-	log("Ready to rumble at port %s\n" % str(port))
-	reactor.run()
+    #TODO: add optparse
+    configuration = config.read(configfile)
+    validateConfig(configuration)
+    
+    pidfile = configuration.get('server.pidfile', None)
+    if pidfile:
+        writepid(pidfile)
+    pluginRegistry = PluginRegistry(configuration)
+    pluginRegistry.loadPlugins()
+    
+    constructorModule = configuration.get('search.interface.constructor')
+    constructor = __import__(constructorModule)
+    interfaceDictionary = constructor.construct(configuration)
+    
+    factory = QueryServerFactory(configuration, pluginRegistry, interfaceDictionary)
+    port = int(configuration['server.port'])
+    reactor.listenTCP(port, factory)
+    log("Ready to rumble at port %s\n" % str(port))
+    reactor.run()
 
 if __name__ == '__main__':
-	main(sys.argv[1])
+    main(sys.argv[1])

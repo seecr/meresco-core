@@ -28,55 +28,55 @@
 from cqlparser import parseString, CQLParseException
 
 class SRUQueryException(Exception):
-	pass
+    pass
 
 class SRUQueryParameterException(SRUQueryException):
-	pass
+    pass
 
 class SRUQueryParseException(SRUQueryException):
-	pass
+    pass
 
 DEFAULT_RECORDSCHEMA = 'dc'
 DEFAULT_RECORDPACKING = 'xml'
 
 class SRUQuery:
-	def __init__(self, arguments):
-		self._setupQuery(arguments)
+    def __init__(self, arguments):
+        self._setupQuery(arguments)
 
-	def _setupQuery(self, arguments):
-		startRecord = arguments.get('startRecord', ['1'])[0]
-		if not startRecord.isdigit() or int(startRecord) < 1:
-			raise SRUQueryParameterException('startRecord')
-		self.startRecord = int(startRecord)
+    def _setupQuery(self, arguments):
+        startRecord = arguments.get('startRecord', ['1'])[0]
+        if not startRecord.isdigit() or int(startRecord) < 1:
+            raise SRUQueryParameterException('startRecord')
+        self.startRecord = int(startRecord)
 
-		maximumRecords = arguments.get('maximumRecords', ['10'])[0]
-		if not maximumRecords.isdigit() or int(maximumRecords) < 1:
-			raise SRUQueryParameterException('maximumRecords')
-		self.maximumRecords = int(maximumRecords)
+        maximumRecords = arguments.get('maximumRecords', ['10'])[0]
+        if not maximumRecords.isdigit() or int(maximumRecords) < 1:
+            raise SRUQueryParameterException('maximumRecords')
+        self.maximumRecords = int(maximumRecords)
 
-		query = arguments.get('query', [''])[0]
-		try:
-			parseString(query)
-		except CQLParseException, e:
-			raise SRUQueryParseException(e)
-		self.query = query
-		
-		sortKeys = arguments.get('sortKeys', [''])[0]
-		self.sortBy, self.sortDirection = self._parseSort(sortKeys)
-		
-		self.recordSchema = arguments.get('recordSchema', [DEFAULT_RECORDSCHEMA])[0]
-		if self.recordSchema == '':
-			self.recordSchema = DEFAULT_RECORDSCHEMA
-			
-		self.x_recordSchema = filter(str.strip, arguments.get('x-recordSchema', []))
-		
-		self.recordPacking = arguments.get('recordPacking', [DEFAULT_RECORDPACKING])[0]
-		if self.recordPacking == '':
-			self.recordPacking = DEFAULT_RECORDPACKING
-		
-	def _parseSort(self, sortKeys):
-		try:
-			sortBy, ignored, sortDirection = sortKeys.split(',')
-			return sortBy.strip(), bool(int(sortDirection))
-		except ValueError:
-			return None, None
+        query = arguments.get('query', [''])[0]
+        try:
+            parseString(query)
+        except CQLParseException, e:
+            raise SRUQueryParseException(e)
+        self.query = query
+        
+        sortKeys = arguments.get('sortKeys', [''])[0]
+        self.sortBy, self.sortDirection = self._parseSort(sortKeys)
+        
+        self.recordSchema = arguments.get('recordSchema', [DEFAULT_RECORDSCHEMA])[0]
+        if self.recordSchema == '':
+            self.recordSchema = DEFAULT_RECORDSCHEMA
+            
+        self.x_recordSchema = filter(str.strip, arguments.get('x-recordSchema', []))
+        
+        self.recordPacking = arguments.get('recordPacking', [DEFAULT_RECORDPACKING])[0]
+        if self.recordPacking == '':
+            self.recordPacking = DEFAULT_RECORDPACKING
+        
+    def _parseSort(self, sortKeys):
+        try:
+            sortBy, ignored, sortDirection = sortKeys.split(',')
+            return sortBy.strip(), bool(int(sortDirection))
+        except ValueError:
+            return None, None

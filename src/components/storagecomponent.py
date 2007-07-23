@@ -27,32 +27,32 @@
 from cq2utils.component import Component
 
 class StorageComponent(Component):
-	def __init__(self, aStorage):
-		self._storage = aStorage
+    def __init__(self, aStorage):
+        self._storage = aStorage
 
-	def add(self, bufferNotification):
-		unit = self._storage.getUnit(bufferNotification.id)
-		stream = unit.openBox(bufferNotification.partName, 'w')
-		try:
-			stream.write(bufferNotification.payload)
-		finally:
-			stream.close()
-			
-	def deletePart(self, id, partName):
-		unit = self._storage.getUnit(id)
-		unit.removeBox(partName)
-			
-	def isAvailable(self, id, partName):
-		"""returns (hasId, hasPartName)"""
-		if self._storage.hasUnit(id):
-			unit = self._storage.getUnit(id) #caching optional
-			return True, unit.hasBox(partName)
-		return False, False
-	
-	def write(self, sink, id, partName):
-		unit = self._storage.getUnit(id) #caching optional
-		stream = unit.openBox(partName)
-		try:
-			sink.write(stream.read())
-		finally:
-			stream.close()
+    def add(self, bufferNotification):
+        unit = self._storage.getUnit(bufferNotification.id)
+        stream = unit.openBox(bufferNotification.partName, 'w')
+        try:
+            stream.write(bufferNotification.payload)
+        finally:
+            stream.close()
+            
+    def deletePart(self, id, partName):
+        unit = self._storage.getUnit(id)
+        unit.removeBox(partName)
+            
+    def isAvailable(self, id, partName):
+        """returns (hasId, hasPartName)"""
+        if self._storage.hasUnit(id):
+            unit = self._storage.getUnit(id) #caching optional
+            return True, unit.hasBox(partName)
+        return False, False
+    
+    def write(self, sink, id, partName):
+        unit = self._storage.getUnit(id) #caching optional
+        stream = unit.openBox(partName)
+        try:
+            sink.write(stream.read())
+        finally:
+            stream.close()

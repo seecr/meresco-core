@@ -32,49 +32,49 @@ from amara import binderytools, create_document
 from xml2document import TEDDY_NS
 
 class Fields2XmlComponent(Component, Observable):
-	def __init__(self):
-		Observable.__init__(self)
-		
-	def add(self, xmlBufferNotification):
-		if xmlBufferNotification.partName != 'fields':
-			return
-		newNotification = Notification(xmlBufferNotification.method, xmlBufferNotification.id)
-		newNotification.partName = 'xmlfields'
-		
-		originalXml = binderytools.bind_string(xmlBufferNotification.payload)
-		
-		root = self._fields2Xml(originalXml)
-		
-		newNotification.payload = root.xmlfields
-		self.changed(newNotification)
-	
-	#this just changes the partName
-	def delete(self, xmlBufferNotification):
-		if xmlBufferNotification.partName != 'fields':
-			return
-			
-		newNotification = Notification(xmlBufferNotification.method, xmlBufferNotification.id)
-		newNotification.partName = 'xmlfields'
-		newNotification.payload = xmlBufferNotification.payload
-		self.changed(newNotification)
-		
-	def _fields2Xml(self, originalXml):
-		root = create_document(u'xmlfields', attributes={(u'teddy:skip', unicode(TEDDY_NS)): u'true'})
-		
-		for field in originalXml.fields.field:
-			fieldname = None
-			tokenizeAttr = None
-			for attribute in field.xpathAttributes:
-				if attribute.localName == 'name':
-					if ':' in attribute.value:
-						continue
-					fieldname = attribute.value
-				if attribute.localName == 'tokenize':
-					tokenizeAttr = {(u'teddy:tokenize', unicode(TEDDY_NS)): attribute.value}
-			if fieldname:
-				newfield = root.xml_create_element(fieldname, 
-					content=unicode(field), 
-					attributes=tokenizeAttr)
-				root.xmlfields.xml_append(newfield)
-				
-		return root
+    def __init__(self):
+        Observable.__init__(self)
+        
+    def add(self, xmlBufferNotification):
+        if xmlBufferNotification.partName != 'fields':
+            return
+        newNotification = Notification(xmlBufferNotification.method, xmlBufferNotification.id)
+        newNotification.partName = 'xmlfields'
+        
+        originalXml = binderytools.bind_string(xmlBufferNotification.payload)
+        
+        root = self._fields2Xml(originalXml)
+        
+        newNotification.payload = root.xmlfields
+        self.changed(newNotification)
+    
+    #this just changes the partName
+    def delete(self, xmlBufferNotification):
+        if xmlBufferNotification.partName != 'fields':
+            return
+            
+        newNotification = Notification(xmlBufferNotification.method, xmlBufferNotification.id)
+        newNotification.partName = 'xmlfields'
+        newNotification.payload = xmlBufferNotification.payload
+        self.changed(newNotification)
+        
+    def _fields2Xml(self, originalXml):
+        root = create_document(u'xmlfields', attributes={(u'teddy:skip', unicode(TEDDY_NS)): u'true'})
+        
+        for field in originalXml.fields.field:
+            fieldname = None
+            tokenizeAttr = None
+            for attribute in field.xpathAttributes:
+                if attribute.localName == 'name':
+                    if ':' in attribute.value:
+                        continue
+                    fieldname = attribute.value
+                if attribute.localName == 'tokenize':
+                    tokenizeAttr = {(u'teddy:tokenize', unicode(TEDDY_NS)): attribute.value}
+            if fieldname:
+                newfield = root.xml_create_element(fieldname, 
+                    content=unicode(field), 
+                    attributes=tokenizeAttr)
+                root.xmlfields.xml_append(newfield)
+                
+        return root

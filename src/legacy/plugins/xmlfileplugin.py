@@ -30,30 +30,30 @@ from queryplugin import QueryPlugin
 FILE_PATH = 'xmlfile.filepath'
 
 class XMLFilePlugin(QueryPlugin):
-	def initialize(self):
-		self._filePath = self.getenv(FILE_PATH)
-		self.contentType = 'text/xml; charset=utf-8'
+    def initialize(self):
+        self._filePath = self.getenv(FILE_PATH)
+        self.contentType = 'text/xml; charset=utf-8'
 
-	#TODO: refactor to generator / stream like style.
-	def getContents(self, aFilename):
-		absoluteFilename = os.path.join(self._filePath, aFilename)
-		if not os.path.isfile(absoluteFilename):
-			return ''
-		contents = open(absoluteFilename).read() % locals()
-		return contents
-	
-	def _writeFileContents(self, filename):
-		self.write(self.getContents(filename))
-	
-	def process(self):
-		self._writeFileContents(self._request.path.split('/')[-1])
-		
+    #TODO: refactor to generator / stream like style.
+    def getContents(self, aFilename):
+        absoluteFilename = os.path.join(self._filePath, aFilename)
+        if not os.path.isfile(absoluteFilename):
+            return ''
+        contents = open(absoluteFilename).read() % locals()
+        return contents
+    
+    def _writeFileContents(self, filename):
+        self.write(self.getContents(filename))
+    
+    def process(self):
+        self._writeFileContents(self._request.path.split('/')[-1])
+        
 class WSDLPlugin(XMLFilePlugin):
-	def process(self):
-		self._writeFileContents('srw.wsdl')
-		
+    def process(self):
+        self._writeFileContents('srw.wsdl')
+        
 def registerOn(aRegistry):
-	aRegistry.registerByCommand('wsdl', WSDLPlugin)
-	aRegistry.registerByCommand('xsd', XMLFilePlugin)
+    aRegistry.registerByCommand('wsdl', WSDLPlugin)
+    aRegistry.registerByCommand('xsd', XMLFilePlugin)
 
 

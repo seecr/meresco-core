@@ -27,55 +27,55 @@
 
 
 class SearchInterface:
-	"""
-	Interface used by queryserver to query a search engine.
-	"""
-	def search(self, sruQuery):
-		"""
-		Perform a query using the parameters specified in the sru query and return a SearchResult object representing the results of the query.
-		"""
-		raise NotImplementedError()
-	
-	def reset(self):
-		"""
-		Reset the searchInterface, might be necessary after updates.
-		"""
-		raise NotImplementedError()
-	
+    """
+    Interface used by queryserver to query a search engine.
+    """
+    def search(self, sruQuery):
+        """
+        Perform a query using the parameters specified in the sru query and return a SearchResult object representing the results of the query.
+        """
+        raise NotImplementedError()
+    
+    def reset(self):
+        """
+        Reset the searchInterface, might be necessary after updates.
+        """
+        raise NotImplementedError()
+    
 class SearchResult:
-	"""
-	Abstract class that defines methods needed for the queryserver to generate its output
-	"""
-	
-	def getNumberOfRecords(self):
-		"""
-		Return the total number of records in the result
-		"""
-		raise NotImplementedError()
-	
-	def getRecords(self):
-		"""
-		Return a generator that will yield one SearchRecord object at a time
-		"""
-		raise NotImplementedError()
-	
-	def getNextRecordPosition(self):
-		"""
-		Returns the recordPosition for the next batch.
-		Returns None if no more records available.
-		"""
-		raise NotImplementedError()
-	
-	def writeExtraResponseDataOn(self, aStream):
-		"""
-		Write, if any, extra data that is available to the given stream
-		"""
-		raise NotImplementedError()
-	
+    """
+    Abstract class that defines methods needed for the queryserver to generate its output
+    """
+    
+    def getNumberOfRecords(self):
+        """
+        Return the total number of records in the result
+        """
+        raise NotImplementedError()
+    
+    def getRecords(self):
+        """
+        Return a generator that will yield one SearchRecord object at a time
+        """
+        raise NotImplementedError()
+    
+    def getNextRecordPosition(self):
+        """
+        Returns the recordPosition for the next batch.
+        Returns None if no more records available.
+        """
+        raise NotImplementedError()
+    
+    def writeExtraResponseDataOn(self, aStream):
+        """
+        Write, if any, extra data that is available to the given stream
+        """
+        raise NotImplementedError()
+    
 class SearchRecord:
-	def writeDataOn(self, recordSchema, recordPacking, aStream):
-		"""
-		Write the recordData with the given schema onto the given stream
-		"""
-		raise NotImplementedError()
-		
+    def writeDataOn(self, recordSchema, recordPacking, aStream):
+        """
+        Write the recordData with the given schema onto the given stream
+        """
+        raise NotImplementedError()
+        

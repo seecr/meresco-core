@@ -32,7 +32,7 @@ from meresco.framework.observable import Observable
 OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
 
 class OaiListMetadataFormats(OaiVerb, Observable):
-	"""4.4 ListMetadataFormats
+    """4.4 ListMetadataFormats
 Summary and Usage Notes
 
 This verb is used to retrieve the metadata formats available from a repository. An optional argument restricts the request to the formats available for a specific item.
@@ -45,29 +45,29 @@ Error and Exception Conditions
     * badArgument - The request includes illegal arguments or is missing required arguments.
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
     * noMetadataFormats - There are no metadata formats available for the specified item.
-	"""
-	
-	def __init__(self, metadataFormats = [OAI_DC]):
-		OaiVerb.__init__(self, ['ListMetadataFormats'], {'identifier': 'optional'})
-		Observable.__init__(self)
-		self.supportedMetadataFormats = metadataFormats
-	
-	def preProcess(self, webRequest):
-		if self._identifier:
-			if self.all.isAvailable(self._identifier, PARTS_PART) != (True, True):
-				return self.writeError(webRequest, 'idDoesNotExist')
-			
-			names = self.xmlSteal(self._identifier, PARTS_PART)
-			names = map(str, names.part)
-			self.displayedMetadataFormats = filter(lambda (name, y, z): name in names, self.supportedMetadataFormats)
-		else:
-			self.displayedMetadataFormats = self.supportedMetadataFormats
-		
-	def process(self, webRequest):	
-		for metadataPrefix, schema, metadataNamespace in self.displayedMetadataFormats:
-			webRequest.write("""<metadataFormat>
-				<metadataPrefix>%s</metadataPrefix>
-				<schema>%s</schema>
-				<metadataNamespace>%s</metadataNamespace>
-			</metadataFormat>""" % (metadataPrefix, schema, metadataNamespace))
-		
+    """
+    
+    def __init__(self, metadataFormats = [OAI_DC]):
+        OaiVerb.__init__(self, ['ListMetadataFormats'], {'identifier': 'optional'})
+        Observable.__init__(self)
+        self.supportedMetadataFormats = metadataFormats
+    
+    def preProcess(self, webRequest):
+        if self._identifier:
+            if self.all.isAvailable(self._identifier, PARTS_PART) != (True, True):
+                return self.writeError(webRequest, 'idDoesNotExist')
+            
+            names = self.xmlSteal(self._identifier, PARTS_PART)
+            names = map(str, names.part)
+            self.displayedMetadataFormats = filter(lambda (name, y, z): name in names, self.supportedMetadataFormats)
+        else:
+            self.displayedMetadataFormats = self.supportedMetadataFormats
+        
+    def process(self, webRequest):    
+        for metadataPrefix, schema, metadataNamespace in self.displayedMetadataFormats:
+            webRequest.write("""<metadataFormat>
+                <metadataPrefix>%s</metadataPrefix>
+                <schema>%s</schema>
+                <metadataNamespace>%s</metadataNamespace>
+            </metadataFormat>""" % (metadataPrefix, schema, metadataNamespace))
+        

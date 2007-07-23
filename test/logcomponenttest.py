@@ -33,18 +33,18 @@ from meresco.framework.observable import Observable
 from cq2utils.calltrace import CallTrace
 
 class LogComponentTest(CQ2TestCase):
-	
-	def testLog(self):
-		notification = Notification("method", "anId", "partName", 'payload')
-		
-		observable = Observable()
-		component = LogComponent(self.tempfile)
-		observable.addObserver(component)
-		
-		observable.changed(notification)
-		
-		oneline = open(self.tempfile).read().strip()
-		time, message = oneline.split('\t')
-		self.assertEquals("notify: %s" % str(notification), message)
-		self.assertTrue(float(time))
-		
+    
+    def testLog(self):
+        notification = Notification("method", "anId", "partName", 'payload')
+        
+        observable = Observable()
+        component = LogComponent(self.tempfile)
+        observable.addObserver(component)
+        
+        observable.changed(notification)
+        
+        oneline = open(self.tempfile).read().strip()
+        time, message = oneline.split('\t')
+        self.assertEquals("notify: %s" % str(notification), message)
+        self.assertTrue(float(time))
+        

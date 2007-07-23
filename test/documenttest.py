@@ -31,93 +31,93 @@ from meresco.components.lucene.document import IDFIELD, CONTENTFIELD, Document, 
 
 class DocumentTest(unittest.TestCase):
 
-	def setUp(self):
-		self._contentField = False
+    def setUp(self):
+        self._contentField = False
 
-	def testCreation(self):
-		d = Document('1')
-		self.assertEquals(d.fields(), [IDFIELD])
-		
-		try:
-			d.validate()
-			self.fail()
-		except DocumentException,e:
-			self.assertEquals("Empty document", str(e))
+    def testCreation(self):
+        d = Document('1')
+        self.assertEquals(d.fields(), [IDFIELD])
+        
+        try:
+            d.validate()
+            self.fail()
+        except DocumentException,e:
+            self.assertEquals("Empty document", str(e))
 
-		try:
-			d = Document(' ')
-			self.fail()
-		except DocumentException,e:
-			self.assertEquals('Empty ID', str(e))
+        try:
+            d = Document(' ')
+            self.fail()
+        except DocumentException,e:
+            self.assertEquals('Empty ID', str(e))
 
-		try:
-			d = Document(1234)
-			self.fail()
-		except DocumentException,e:
-			self.assertEquals('Empty ID', str(e))
+        try:
+            d = Document(1234)
+            self.fail()
+        except DocumentException,e:
+            self.assertEquals('Empty ID', str(e))
 
-	def testAddInvalidField(self):
-		d = Document('1234')
-		try:
-			d.addIndexedField(None, None)
-			self.fail()
-		except DocumentException,e:
-			self.assertEquals('Invalid fieldname', str(e))
-		self.assertEquals(d.fields(), [IDFIELD])
-		
-	def testIgnoreEmptyField(self):
-		d = Document('1234')
-		d.addIndexedField("x", None)
-		self.assertEquals(d.fields(), [IDFIELD])
+    def testAddInvalidField(self):
+        d = Document('1234')
+        try:
+            d.addIndexedField(None, None)
+            self.fail()
+        except DocumentException,e:
+            self.assertEquals('Invalid fieldname', str(e))
+        self.assertEquals(d.fields(), [IDFIELD])
+        
+    def testIgnoreEmptyField(self):
+        d = Document('1234')
+        d.addIndexedField("x", None)
+        self.assertEquals(d.fields(), [IDFIELD])
 
-	def testAddField(self):
-		d = Document('1234')
-		d.addIndexedField('x', 'y')
-		d.addIndexedField('y', 'x')
-		self.assertEquals(d.fields(), [IDFIELD, 'x', 'y'])
-		
-		try:
-			d.validate()
-		except DocumentException,e:
-			self.fail()
-		
-	def testContentField(self):
-		d = Document('1234')
-		d.addIndexedField('x', 'a')
-		d.addIndexedField('y', 'b')
-		self.assertEquals('a b', d.contentField())
-		
-	def testContentFieldDoesNotContainHiddenFields(self):
-		d = Document('1234')
-		d.addIndexedField('x', 'a')
-		d.addIndexedField('__hidden__stuff', 'should remain hidden')
-		d.addIndexedField('y', 'b')
-		self.assertEquals('a b', d.contentField())
-		
-		
-	def testAddToIndex(self):
-		d = Document('1234')
-		d.addIndexedField('x', 'y')
-		d.addIndexedField('y', 'x')
-		d.addToIndexWith(self)
-		
-		self.assertEquals(self._contentField, 'y x')
+    def testAddField(self):
+        d = Document('1234')
+        d.addIndexedField('x', 'y')
+        d.addIndexedField('y', 'x')
+        self.assertEquals(d.fields(), [IDFIELD, 'x', 'y'])
+        
+        try:
+            d.validate()
+        except DocumentException,e:
+            self.fail()
+        
+    def testContentField(self):
+        d = Document('1234')
+        d.addIndexedField('x', 'a')
+        d.addIndexedField('y', 'b')
+        self.assertEquals('a b', d.contentField())
+        
+    def testContentFieldDoesNotContainHiddenFields(self):
+        d = Document('1234')
+        d.addIndexedField('x', 'a')
+        d.addIndexedField('__hidden__stuff', 'should remain hidden')
+        d.addIndexedField('y', 'b')
+        self.assertEquals('a b', d.contentField())
+        
+        
+    def testAddToIndex(self):
+        d = Document('1234')
+        d.addIndexedField('x', 'y')
+        d.addIndexedField('y', 'x')
+        d.addToIndexWith(self)
+        
+        self.assertEquals(self._contentField, 'y x')
 
-	def testReservedFieldName(self):
-		d = Document('1234')
-		try:
-			d.addIndexedField(CONTENTFIELD, 'not allowed')
-			self.fail()
-		except DocumentException,e:
-			self.assertEquals('Invalid fieldname', str(e))
+    def testReservedFieldName(self):
+        d = Document('1234')
+        try:
+            d.addIndexedField(CONTENTFIELD, 'not allowed')
+            self.fail()
+        except DocumentException,e:
+            self.assertEquals('Invalid fieldname', str(e))
 
-		try:
-			d.addIndexedField(IDFIELD, 'not allowed')
-			self.fail()
-		except DocumentException,e:
-			self.assertEquals('Invalid fieldname', str(e))
+        try:
+            d.addIndexedField(IDFIELD, 'not allowed')
+            self.fail()
+        except DocumentException,e:
+            self.assertEquals('Invalid fieldname', str(e))
 
 
-	""" self-shunt """
-	def addDocument(self, aDocument):
-		self._contentField = aDocument.getField(CONTENTFIELD).stringValue()
+    """ self-shunt """
+    def addDocument(self, aDocument):
+        self._contentField = aDocument.getField(CONTENTFIELD).stringValue()

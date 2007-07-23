@@ -29,7 +29,7 @@ from meresco.components.http.oai.oairecordverb import OaiRecordVerb
 from meresco.framework.observable import Observable
 
 class OaiListSets(OaiRecordVerb, Observable):
-	"""4.6 ListSets
+    """4.6 ListSets
 Summary and Usage Notes
 
 This verb is used to retrieve the set structure of a repository, useful for selective harvesting.
@@ -42,23 +42,23 @@ Error and Exception Conditions
     * badArgument - The request includes illegal arguments or is missing required arguments.
     * badResumptionToken - The value of the resumptionToken argument is invalid or expired.
     * noSetHierarchy - The repository does not support sets."""
-	
-	def __init__(self):
-		OaiRecordVerb.__init__(self, ['ListSets'], {'resumptionToken': 'exclusive'})
-		Observable.__init__(self)
-		
-	def preProcess(self, webRequest):
-		if self._resumptionToken:
-			return self.writeError(webRequest, 'badResumptionToken')
-		
-		self._queryResult = self.any.listAll()
-		if len(self._queryResult) == 0:
-			return self.writeError(webRequest, 'noSetHierarchy')
-	
-	def process(self, webRequest):
-		for id in self._queryResult:
-			self.all.write(webRequest, id, 'set')
+    
+    def __init__(self):
+        OaiRecordVerb.__init__(self, ['ListSets'], {'resumptionToken': 'exclusive'})
+        Observable.__init__(self)
+        
+    def preProcess(self, webRequest):
+        if self._resumptionToken:
+            return self.writeError(webRequest, 'badResumptionToken')
+        
+        self._queryResult = self.any.listAll()
+        if len(self._queryResult) == 0:
+            return self.writeError(webRequest, 'noSetHierarchy')
+    
+    def process(self, webRequest):
+        for id in self._queryResult:
+            self.all.write(webRequest, id, 'set')
 
-		if self._resumptionToken:
-			webRequest.write('<resumptionToken/>')
-	
+        if self._resumptionToken:
+            webRequest.write('<resumptionToken/>')
+    

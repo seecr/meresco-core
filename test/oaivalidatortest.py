@@ -31,8 +31,8 @@ from meresco.components.http.oai.oaivalidator import assertValidString, validate
 from cStringIO import StringIO
 
 class OaiValidatorTest(CQ2TestCase):
-	def testAssertValidString(self):
-		s = """<?xml version="1.0" encoding="UTF-8"?>
+    def testAssertValidString(self):
+        s = """<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
@@ -49,18 +49,18 @@ class OaiValidatorTest(CQ2TestCase):
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>
 </OAI-PMH>"""
-		assertValidString(s)
-		success, message = validate(StringIO(s))
-		self.assertEquals(True, success)
-		self.assertEquals('', message)
-		
-	def testAssertInvalidString(self):
-		raisedError = None
-		try:
-			assertValidString('<OAI-PMH/>')
-			raisedError = False
-		except AssertionError, e:
-			raisedError = True
-			message = str(e)
-		self.assertEquals(True, raisedError)
-		self.assertEqualsWS("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element 'OAI-PMH': No matching global declaration available for the validation root.", message)
+        assertValidString(s)
+        success, message = validate(StringIO(s))
+        self.assertEquals(True, success)
+        self.assertEquals('', message)
+        
+    def testAssertInvalidString(self):
+        raisedError = None
+        try:
+            assertValidString('<OAI-PMH/>')
+            raisedError = False
+        except AssertionError, e:
+            raisedError = True
+            message = str(e)
+        self.assertEquals(True, raisedError)
+        self.assertEqualsWS("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element 'OAI-PMH': No matching global declaration available for the validation root.", message)

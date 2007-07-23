@@ -35,7 +35,7 @@ assert getdefaultencoding() == 'utf-8'
 BATCH_SIZE = 200
 
 class OaiList(OaiRecordVerb, Observable):
-	"""4.3 ListIdentifiers
+    """4.3 ListIdentifiers
 Summary and Usage Notes
 
 This verb is an abbreviated form of ListRecords, retrieving only headers rather than records. Optional arguments permit selective harvesting of headers based on set membership and/or datestamp. Depending on the repository's support for deletions, a returned header may have a status attribute of "deleted" if a record matching the arguments specified in the request has been deleted.
@@ -76,65 +76,65 @@ Error and Exception Conditions
     * noRecordsMatch - The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.
     * noSetHierarchy - The repository does not support sets.
 """
-	def __init__(self, partNames):
-		OaiRecordVerb.__init__(self, ['ListIdentifiers', 'ListRecords'], {
-			'from': 'optional',
-			'until': 'optional',
-			'set': 'optional',
-			'resumptionToken': 'exclusive',
-			'metadataPrefix': 'required'})
-		Observable.__init__(self)
-		self.partNames = partNames
-	
-	def preProcess(self, webRequest):
-		if self._resumptionToken:
-			token = resumptionTokenFromString(self._resumptionToken)
-			if not token:
-				return self.writeError(webRequest, "badResumptionToken")
-			self._continueAt = token._continueAt
-			self._metadataPrefix = token._metadataPrefix
-			self._from = token._from
-			self._until = token._until
-			self._set = token._set
-		else:
-			self._continueAt = '0'
-			try:
-				self._from = self._from and ISO8601(self._from)
-				self._until  = self._until and ISO8601(self._until)
-				if self._from and self._until:
-					if self._from.isShort() != self._until.isShort():
-						return self.writeError(webRequest, 'badArgument', 'from and/or until arguments must match in length')
-					if str(self._from) > str(self._until):
-						return self.writeError(webRequest, 'badArgument', 'from argument must be smaller than until argument')
-				self._from = self._from and self._from.floor()
-				self._until = self._until and self._until.ceil()
-			except ISO8601Exception, e:
-				return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
-		
-		if not self._metadataPrefix in self.partNames:
-			return self.writeError(webRequest, 'cannotDisseminateFormat')
-		
-		self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
-		if len(self._queryResult) == 0:
-			return self.writeError(webRequest, 'noRecordsMatch')
-	
-	def process(self, webRequest):
-		for i, id in enumerate(self._queryResult):
-			if i == BATCH_SIZE:
-				webRequest.write('<resumptionToken>%s</resumptionToken>' % ResumptionToken(
-					self._metadataPrefix,
-					self.getUnique(prevId),
-					self._from,
-					self._until,
-					self._set))
-				return
-			
-			self.writeRecord(webRequest, id, self._verb == "ListRecords")
-			prevId = id
+    def __init__(self, partNames):
+        OaiRecordVerb.__init__(self, ['ListIdentifiers', 'ListRecords'], {
+            'from': 'optional',
+            'until': 'optional',
+            'set': 'optional',
+            'resumptionToken': 'exclusive',
+            'metadataPrefix': 'required'})
+        Observable.__init__(self)
+        self.partNames = partNames
+    
+    def preProcess(self, webRequest):
+        if self._resumptionToken:
+            token = resumptionTokenFromString(self._resumptionToken)
+            if not token:
+                return self.writeError(webRequest, "badResumptionToken")
+            self._continueAt = token._continueAt
+            self._metadataPrefix = token._metadataPrefix
+            self._from = token._from
+            self._until = token._until
+            self._set = token._set
+        else:
+            self._continueAt = '0'
+            try:
+                self._from = self._from and ISO8601(self._from)
+                self._until  = self._until and ISO8601(self._until)
+                if self._from and self._until:
+                    if self._from.isShort() != self._until.isShort():
+                        return self.writeError(webRequest, 'badArgument', 'from and/or until arguments must match in length')
+                    if str(self._from) > str(self._until):
+                        return self.writeError(webRequest, 'badArgument', 'from argument must be smaller than until argument')
+                self._from = self._from and self._from.floor()
+                self._until = self._until and self._until.ceil()
+            except ISO8601Exception, e:
+                return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
+        
+        if not self._metadataPrefix in self.partNames:
+            return self.writeError(webRequest, 'cannotDisseminateFormat')
+        
+        self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
+        if len(self._queryResult) == 0:
+            return self.writeError(webRequest, 'noRecordsMatch')
+    
+    def process(self, webRequest):
+        for i, id in enumerate(self._queryResult):
+            if i == BATCH_SIZE:
+                webRequest.write('<resumptionToken>%s</resumptionToken>' % ResumptionToken(
+                    self._metadataPrefix,
+                    self.getUnique(prevId),
+                    self._from,
+                    self._until,
+                    self._set))
+                return
+            
+            self.writeRecord(webRequest, id, self._verb == "ListRecords")
+            prevId = id
 
-		if self._resumptionToken:
-			webRequest.write('<resumptionToken/>')
-			
-	def getUnique(self, id):
-		return str(getattr(self.xmlSteal(id, STAMP_PART), UNIQUE))
+        if self._resumptionToken:
+            webRequest.write('<resumptionToken/>')
+            
+    def getUnique(self, id):
+        return str(getattr(self.xmlSteal(id, STAMP_PART), UNIQUE))
 

@@ -27,10 +27,10 @@
 from meresco.framework.observable import Observable
 
 class Filter(Observable):
-	def __init__(self, condition):
-		Observable.__init__(self)
-		self._condition = condition
-	
-	def notify(self, *args, **kwargs):
-		if self._condition(*args, **kwargs):
-			self.changed(*args, **kwargs)
+    def __init__(self, condition):
+        Observable.__init__(self)
+        self._condition = condition
+    
+    def notify(self, *args, **kwargs):
+        if self._condition(*args, **kwargs):
+            self.changed(*args, **kwargs)

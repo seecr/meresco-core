@@ -52,69 +52,69 @@ channel.title = 'The RSS Title'
 # Item
 #
 def item(document):
-	return [ 
-		('title', document.xmlfields.dctitle),
-		('url', 'http://example.org?' + urlencode({'id':document.xmlfields.general.identifier}))
-	]
+    return [ 
+        ('title', document.xmlfields.dctitle),
+        ('url', 'http://example.org?' + urlencode({'id':document.xmlfields.general.identifier}))
+    ]
 """
 
 XMLDOCUMENT = wrapp(bind_string("""<document>
 <xmlfields>
   <dctitle>The title</dctitle>
-	<general><identifier>&lt;ID&gt;</identifier></general>
+    <general><identifier>&lt;ID&gt;</identifier></general>
 </xmlfields>
 </document>""")).document
 
 class RSSProfileTest(unittest.TestCase):
-	
-	def setUp(self):
-		self._directoryname = mkdtemp()
-		
-	def tearDown(self):
-		rmtree(self._directoryname)
-	
-	def testReadProfile(self):
-		self._writeFile('test.rssprofile', TESTRSSProfile)
-		profile = RSSProfile(join(self._directoryname, 'test.rssprofile'))
-		self.assertEquals('generic4,,1', profile.sortKeys())
-		self.assertEquals(15, profile.maximumRecords())
-		self.assertEquals({'title':'The RSS Title', 'description':'The Description', 'link':'http://example.org/rss'}, dict(profile.channel().listAttributes()))
-		
-		result = profile.item(XMLDOCUMENT)
-		self.assertEquals({'url':'http://example.org?id=%3CID%3E', 'title':'The title'}, dict(result))
-		
-	def testProfileEmpty(self):
-		self._writeFile("empty", "")
-		profile = RSSProfile(join(self._directoryname, "empty"))
-		self.assertEquals(None, profile.sortKeys())
-		self.assertEquals(15, profile.maximumRecords())
-		self.assertEquals([], profile.channel().listAttributes())
-		self.assertEquals([], profile.item(XMLDOCUMENT))
-			
-	def testProfileErrors(self):
-		for errorline in ["channel = Bla", "item"]:
-			self._writeFile("broken", errorline)
-			try:
-				profile = RSSProfile(join(self._directoryname, "broken"))
-				self.fail()
-			except RSSProfileException:
-				pass
-			
-	def testReadProfilesInDirectory(self):
-		self._writeFile('default.rssprofile', "channel.title='Default'")
-		self._writeFile('test1.rssprofile', "channel.title='Test1'")
-		profiles = readProfilesInDirectory(self._directoryname)
-		self.assertEquals(set(['default','test1']), set(profiles.keys()))
-		self.assertEquals('Default', profiles['default'].channel()['title'])
-		self.assertEquals('Test1', profiles['test1'].channel()['title'])
-		
-	def testReadEmptyDirectory(self):
-		profiles = readProfilesInDirectory(self._directoryname)
-		self.assertEquals({}, profiles)
-		
-	def _writeFile(self, filename, contents):
-		f=open(join(self._directoryname, filename), 'w')
-		try:
-			f.write(contents)
-		finally:
-			f.close()
+    
+    def setUp(self):
+        self._directoryname = mkdtemp()
+        
+    def tearDown(self):
+        rmtree(self._directoryname)
+    
+    def testReadProfile(self):
+        self._writeFile('test.rssprofile', TESTRSSProfile)
+        profile = RSSProfile(join(self._directoryname, 'test.rssprofile'))
+        self.assertEquals('generic4,,1', profile.sortKeys())
+        self.assertEquals(15, profile.maximumRecords())
+        self.assertEquals({'title':'The RSS Title', 'description':'The Description', 'link':'http://example.org/rss'}, dict(profile.channel().listAttributes()))
+        
+        result = profile.item(XMLDOCUMENT)
+        self.assertEquals({'url':'http://example.org?id=%3CID%3E', 'title':'The title'}, dict(result))
+        
+    def testProfileEmpty(self):
+        self._writeFile("empty", "")
+        profile = RSSProfile(join(self._directoryname, "empty"))
+        self.assertEquals(None, profile.sortKeys())
+        self.assertEquals(15, profile.maximumRecords())
+        self.assertEquals([], profile.channel().listAttributes())
+        self.assertEquals([], profile.item(XMLDOCUMENT))
+            
+    def testProfileErrors(self):
+        for errorline in ["channel = Bla", "item"]:
+            self._writeFile("broken", errorline)
+            try:
+                profile = RSSProfile(join(self._directoryname, "broken"))
+                self.fail()
+            except RSSProfileException:
+                pass
+            
+    def testReadProfilesInDirectory(self):
+        self._writeFile('default.rssprofile', "channel.title='Default'")
+        self._writeFile('test1.rssprofile', "channel.title='Test1'")
+        profiles = readProfilesInDirectory(self._directoryname)
+        self.assertEquals(set(['default','test1']), set(profiles.keys()))
+        self.assertEquals('Default', profiles['default'].channel()['title'])
+        self.assertEquals('Test1', profiles['test1'].channel()['title'])
+        
+    def testReadEmptyDirectory(self):
+        profiles = readProfilesInDirectory(self._directoryname)
+        self.assertEquals({}, profiles)
+        
+    def _writeFile(self, filename, contents):
+        f=open(join(self._directoryname, filename), 'w')
+        try:
+            f.write(contents)
+        finally:
+            f.close()

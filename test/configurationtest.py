@@ -33,32 +33,32 @@ import os
 
 config = """<?xml version="1.0"?>
 <configuration>
-	<storage>x</storage>
-	<lucene>y</lucene>
+    <storage>x</storage>
+    <lucene>y</lucene>
 </configuration>
 """
 
 class ConfigurationTest(unittest.TestCase):
 
-	def testReading(self):
-		myConfiguration = Configuration()
-		myConfiguration.readFrom(cStringIO.StringIO(config))
-		
-		self.assertEquals(myConfiguration.getStorage(), 'x')
-		self.assertEquals(myConfiguration.getLucene(), 'y')
+    def testReading(self):
+        myConfiguration = Configuration()
+        myConfiguration.readFrom(cStringIO.StringIO(config))
+        
+        self.assertEquals(myConfiguration.getStorage(), 'x')
+        self.assertEquals(myConfiguration.getLucene(), 'y')
 
-	def testReadFromFile(self):
-		fd,fname = tempfile.mkstemp(text=True)
-		try:
-			fd = open(fname,'w')
-			fd.write(config)
-		finally:
-			fd.close()
-		
-		try:
-			myConfiguration = Configuration()
-			myConfiguration.readFromFile(fname)
-			self.assertEquals(myConfiguration.getStorage(), 'x')
-			self.assertEquals(myConfiguration.getLucene(), 'y')
-		finally:
-			os.remove(fname)
+    def testReadFromFile(self):
+        fd,fname = tempfile.mkstemp(text=True)
+        try:
+            fd = open(fname,'w')
+            fd.write(config)
+        finally:
+            fd.close()
+        
+        try:
+            myConfiguration = Configuration()
+            myConfiguration.readFromFile(fname)
+            self.assertEquals(myConfiguration.getStorage(), 'x')
+            self.assertEquals(myConfiguration.getLucene(), 'y')
+        finally:
+            os.remove(fname)

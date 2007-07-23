@@ -38,27 +38,27 @@ from lucene import LuceneIndex
 from document import Document
 
 class StressTest(CQ2TestCase):
-	def setUp(self):
-		CQ2TestCase.setUp(self)
-		self._luceneIndex = LuceneIndex(self.tempdir)
-		myDocument = Document('0123456789')
-		myDocument.addIndexedField('title', 'een titel')
-		self._luceneIndex.addToIndex(myDocument)
-		self._luceneIndex.reOpen()
-		
-	def tearDown(self):
-		self._luceneIndex = None
-		CQ2TestCase.tearDown(self)
+    def setUp(self):
+        CQ2TestCase.setUp(self)
+        self._luceneIndex = LuceneIndex(self.tempdir)
+        myDocument = Document('0123456789')
+        myDocument.addIndexedField('title', 'een titel')
+        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.reOpen()
+        
+    def tearDown(self):
+        self._luceneIndex = None
+        CQ2TestCase.tearDown(self)
 
-	def testLotsOfQueries(self):
-		query = self._luceneIndex.createQuery('title:titel')
-		result = list(query.perform())
-		self.assertEquals(1,len(result))
-		def f():
-			for i in xrange(10000):
-				list(self._luceneIndex.createQuery('title:titel').perform())
-		from cq2utils.profile import profile
-		profile(f, 'stresstest2', True)
-		
+    def testLotsOfQueries(self):
+        query = self._luceneIndex.createQuery('title:titel')
+        result = list(query.perform())
+        self.assertEquals(1,len(result))
+        def f():
+            for i in xrange(10000):
+                list(self._luceneIndex.createQuery('title:titel').perform())
+        from cq2utils.profile import profile
+        profile(f, 'stresstest2', True)
+        
 if __name__ == "__main__":
-	main()
+    main()

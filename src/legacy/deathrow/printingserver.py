@@ -31,16 +31,16 @@ from os.path import dirname
 
 
 class PrintingServer(GrowlServer):
-	
-	def __init__(self, aReadWriteStream, args):
-		GrowlServer.__init__(self, aReadWriteStream, args)
-		self.file = open(args,'w')
-		self.file.write("<?xml version='1.0' encoding='UTF-8'?><documents>")
-		
-	def _postProcess(self):
-		self.file.write('</documents>')
-		self.file.close()
-		
-	def _processDocument(self, aDocument):
-		self.file.write(aDocument.xml())
-		
+    
+    def __init__(self, aReadWriteStream, args):
+        GrowlServer.__init__(self, aReadWriteStream, args)
+        self.file = open(args,'w')
+        self.file.write("<?xml version='1.0' encoding='UTF-8'?><documents>")
+        
+    def _postProcess(self):
+        self.file.write('</documents>')
+        self.file.close()
+        
+    def _processDocument(self, aDocument):
+        self.file.write(aDocument.xml())
+        
