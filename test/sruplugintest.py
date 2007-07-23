@@ -39,8 +39,7 @@ class SRUPluginTest(CQ2TestCase):
         self.request = CallTrace('Request')
         self.request.args = {}
         self.request.database = 'database'
-        self.searchInterface = None
-        self.plugin = SRUPlugin(self.request, self.searchInterface)
+        self.plugin = SRUPlugin(self.request)
         
     def testRegistry(self):
         registry = CallTrace('PluginRegistry')
@@ -149,26 +148,60 @@ class SRUPluginTest(CQ2TestCase):
         request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
             'query':['field=value'], 'x-recordSchema':['extra']}
         request.database = 'database'
-            
-        interface = MockSearchInterface()
-        interface.search_answer = MockSearchResult()
+        hits = MockHits()
+        observer = MockListeners(hits)
             
         resultStream = StringIO()
         request.write = resultStream.write
 
-        plugin = SRUPlugin(request, interface)
-        
+        plugin = SRUPlugin(request)
+        plugin.addObserver(observer)
         plugin.process()
         
-        self.assertTrue(interface.called, resultStream.getvalue())
-        sruQuery = interface.search_argument
-        self.assertEquals('field=value', sruQuery.query)
-        self.assertEquals(1, sruQuery.startRecord)
-        self.assertEquals(10, sruQuery.maximumRecords)
-        self.assertEquals(None, sruQuery.sortBy)
-        self.assertEquals(None, sruQuery.sortDirection)
-        self.assertEquals('database', sruQuery.database)
-        self.assertEqualsWS(RESULT, resultStream.getvalue())
+        self.assertTrue(observer.executeCQLCalled)
+        self.assertEquals('field=value', observer.cqlQuery)
+        self.assertEquals(0, hits.slice_start)
+        self.assertEquals(10, hits.slice_stop)
+        
+        self.assertEquals(4, len(observer.writtenRecords))
+        self.assertEquals(('0', 'dc', 'xml'), observer.writtenRecords[0])
+        self.assertEquals(('0', 'extra', 'xml'), observer.writtenRecords[1])
+        
+        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<srw:version>1.1</srw:version>
+<srw:numberOfRecords>2</srw:numberOfRecords>
+<srw:records>
+    <srw:record>
+        <srw:recordSchema>dc</srw:recordSchema>
+        <srw:recordPacking>xml</srw:recordPacking>
+        <srw:recordData>
+            <MOCKED_WRITTEN_DATA>0-dc</MOCKED_WRITTEN_DATA>
+        </srw:recordData>
+        <srw:extraRecordData><recordData recordSchema="extra">
+            <MOCKED_WRITTEN_DATA>0-extra</MOCKED_WRITTEN_DATA>
+        </recordData></srw:extraRecordData>
+    </srw:record>
+    <srw:record>
+        <srw:recordSchema>dc</srw:recordSchema>
+        <srw:recordPacking>xml</srw:recordPacking>
+        <srw:recordData>
+            <MOCKED_WRITTEN_DATA>1-dc</MOCKED_WRITTEN_DATA>
+        </srw:recordData>
+        <srw:extraRecordData><recordData recordSchema="extra">
+            <MOCKED_WRITTEN_DATA>1-extra</MOCKED_WRITTEN_DATA>
+        </recordData></srw:extraRecordData>
+    </srw:record>
+</srw:records>
+<srw:echoedSearchRetrieveRequest>
+    <srw:version>1.1</srw:version>
+    <srw:query>field=value</srw:query>
+    <srw:x-recordSchema>extra</srw:x-recordSchema>
+</srw:echoedSearchRetrieveRequest>
+<srw:extraResponseData>
+</srw:extraResponseData>
+</srw:searchRetrieveResponse>
+""", resultStream.getvalue())
         
     def testEmptyRecordWhenInconsistancyExistsBetweenIndexAndStorage(self):
         """
@@ -203,104 +236,42 @@ class SRUPluginTest(CQ2TestCase):
         self.plugin._writeExtraResponseData(MockSearchResult())
         self.assertEquals([(self.plugin, )], notifications)
         
-class MockSearchInterface:
-    def __init__(self):
-        self.called = False
-    def search(self, sruQuery):
-        self.called = True
-        self.search_argument = sruQuery
-        return self.search_answer
+    def testNextRecordPosition(self):
+        self.fail("Klaas")
+        
+    def testIsEmptyExtraResponseDataAllowed(self):
+        self.fail("Johan")
+        
+class MockListeners:
+    def __init__(self, executeCQLResult):
+        self.executeCQLResult = executeCQLResult
+        self.writtenRecords = []
+        
+    def executeCQL(self, cqlQuery):
+        self.executeCQLCalled = True
+        self.cqlQuery = cqlQuery
+        return self.executeCQLResult
     
-class MockSearchResult:
-    def getNumberOfRecords(self):
-        return 0
+    def writeRecord(self, sink, recordId, recordSchema, recordPacking):
+        self.writtenRecords.append((recordId, recordSchema, recordPacking))
+        sink.write("<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema))
     
-    def getRecords(self):
-        return (MockSearchRecord(i) for i in xrange(2))
+class MockHits:
     
-    def getNextRecordPosition(self):
-        return 3
+    #def getRecords(self):
+        #return (MockSearchRecord(i) for i in xrange(2))
+    def __len__(self):
+        return 2
     
-    def writeExtraResponseDataOn(self, aStream):
-        aStream.write("<numberOfRecords>20</numberOfRecords>")
-
-class MockSearchResultWithException:
-    def getNumberOfRecords(self):
-        return 0
-    
-    def getRecords(self):
-        for i in xrange(2):
-            if i == 1:
-                yield MockEmptySearchRecord(i)
-            else:
-                yield MockSearchRecord(i)
-    
-    def getNextRecordPosition(self):
-        return 3
-    
-    def writeExtraResponseDataOn(self, aStream):
-        aStream.write("<numberOfRecords>20</numberOfRecords>")
-
-class MockEmptySearchRecord:
-    def __init__(self, aNumber):
-        self.aNumber = aNumber
+    def __getslice__(self, start, stop):
+        self.slice_start = start
+        self.slice_stop = stop
+        for i in range(2):
+            yield str(i)
             
-    def writeDataOn(self, recordSchema, recordPacking, aStream):
-        pass    
 
-class MockSearchRecord:
-    def __init__(self, aNumber):
-        self.aNumber = aNumber
-        
-
-    def writeDataOn(self, recordSchema, recordPacking, aStream):
-        if recordSchema == 'dc':
-            aStream.write('<line>')
-            aStream.write('<number>%d</number>' % self.aNumber)
-            aStream.write('</line>')
-        elif recordSchema == 'extra':
-            aStream.write('<extraline>')
-            aStream.write('<number>%d</number>' % self.aNumber)
-            aStream.write('</extraline>')
-        
-
-RESULT = """<?xml version="1.0" encoding="UTF-8"?>
-<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
-<srw:version>1.1</srw:version>
-<srw:numberOfRecords>0</srw:numberOfRecords>
-<srw:records>
-    <srw:record>
-        <srw:recordSchema>dc</srw:recordSchema>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordData><line><number>0</number></line></srw:recordData>
-        <srw:extraRecordData>
-            <recordData recordSchema="extra">
-                <extraline><number>0</number></extraline>
-            </recordData>
-        </srw:extraRecordData>
-    </srw:record>
-    <srw:record>
-        <srw:recordSchema>dc</srw:recordSchema>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordData><line><number>1</number></line></srw:recordData>
-        <srw:extraRecordData>
-            <recordData recordSchema="extra">
-                <extraline><number>1</number></extraline>
-            </recordData>
-        </srw:extraRecordData>
-    </srw:record>
-</srw:records>
-<srw:nextRecordPosition>3</srw:nextRecordPosition>
-<srw:echoedSearchRetrieveRequest>
-    <srw:version>1.1</srw:version>
-    <srw:query>field=value</srw:query>
-    <srw:x-recordSchema>extra</srw:x-recordSchema>
-</srw:echoedSearchRetrieveRequest>
-<srw:extraResponseData>
-    <numberOfRecords>20</numberOfRecords>
-</srw:extraResponseData>
-</srw:searchRetrieveResponse>
-"""
+    
+    #20, 3
 
 EXPLAIN_RESULT = """<?xml version="1.0" encoding="UTF-8"?>
 <srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"

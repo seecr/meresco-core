@@ -60,7 +60,7 @@ class OaiListSetsTest(OaiTestCase):
    <set><setSpec>some:name:id_0</setSpec><setName>Some Name</setName></set>
    <set><setSpec>some:name:id_1</setSpec><setName>Some Name</setName></set>
  </ListSets>""", self.stream.getvalue())
-         self.assertFalse('<resumptionToken' in self.stream.getvalue())
+        self.assertFalse('<resumptionToken' in self.stream.getvalue())
 
     def testResumptionTokensNotSupported(self):
         self.assertBadArgument({'verb': ['ListSets'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")

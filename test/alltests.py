@@ -73,7 +73,6 @@ from logcomponenttest import LogComponentTest
 from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
 from hitstest import HitsTest
-from querywrappertest import QueryWrapperTest
 from xslicetest import XSliceTest
 from undertakertest import UnderTakerTest
 from oailistmetadataformatstest import OaiListMetadataFormatsTest

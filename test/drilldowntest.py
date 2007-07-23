@@ -27,6 +27,7 @@
 import os.path
 from tempfile import gettempdir
 from shutil import rmtree
+from PyLucene import Term, TermQuery
 
 from unittest import TestCase
 from convertertest import addUntokenized
@@ -35,7 +36,6 @@ from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.lucene.converter import Converter
 from meresco.components.drilldown.drilldown import DrillDown
 
-from meresco.components.lucene.querywrapper import AdvancedQueryWrapper
 
 class DrillDownTest(TestCase):
 
@@ -69,7 +69,7 @@ class DrillDownTest(TestCase):
         drillDown = DrillDown(['field_0', 'field_1'])
         drillDown.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
-        queryResults = self._luceneIndex.executeQuery(AdvancedQueryWrapper("inquery"))
+        queryResults = self._luceneIndex.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
         drilldownResult = drillDown.process(queryResults.getLuceneDocIds(), [('field_0', 0), ('field_1', 0)])

@@ -27,9 +27,10 @@
 
 import os
 from xml.sax.saxutils import escape as xmlEscape
-from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
+from cStringIO import StringIO
 
 from meresco.framework.observable import Observable
+from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 import queryplugin
 
 VERSION = '1.1'
@@ -81,8 +82,8 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
     #current status: not supporting pure plugin behavior - is really an observable
     #refactor direction: remove queryplugin.QueryPlugin
 
-    def __init__(self, aRequest, searchInterface):
-        queryplugin.QueryPlugin.__init__(self, aRequest, searchInterface)
+    def __init__(self, aRequest):
+        queryplugin.QueryPlugin.__init__(self, aRequest)
         Observable.__init__(self)
 
     def initialize(self):
@@ -121,7 +122,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def _validateSearchRetrieve(self):
         try:
-            self.sruquery = SRUQuery(self._arguments)
+            self.sruQuery = SRUQuery(self._arguments)
         except SRUQueryParameterException, e:
             return UNSUPPORTED_PARAMETER_VALUE + [str(e)]
         except SRUQueryParseException, e:
@@ -141,8 +142,8 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def _writeResult(self, aRecord):
         self.write('<srw:record>')
-        self.write('<srw:recordSchema>%s</srw:recordSchema>' % self.sruquery.recordSchema)
-        self.write('<srw:recordPacking>%s</srw:recordPacking>' % self.sruquery.recordPacking)
+        self.write('<srw:recordSchema>%s</srw:recordSchema>' % self.sruQuery.recordSchema)
+        self.write('<srw:recordPacking>%s</srw:recordPacking>' % self.sruQuery.recordPacking)
         self._writeRecordData(aRecord)
         self._writeExtraRecordData(aRecord)
         self.write('</srw:record>')
@@ -160,47 +161,48 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
         details = len(aList) >= 3 and aList[2] or "No details available"
         self.write(DIAGNOSTICS % (number, xmlEscape(details), message))
 
-    def _writeRecordData(self, aRecord):
+    def _writeRecordData(self, recordId):
         self.write('<srw:recordData>')
-        aRecord.writeDataOn(self.sruquery.recordSchema, self.sruquery.recordPacking, self)
+        self.all.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
         self.write('</srw:recordData>')
 
-    def _writeExtraRecordData(self, aRecord):
-        if not self.sruquery.x_recordSchema:
+    def _writeExtraRecordData(self, recordId):
+        if not self.sruQuery.x_recordSchema:
             return
+        
         self.write('<srw:extraRecordData>')
-        for schema in self.sruquery.x_recordSchema:
+        for schema in self.sruQuery.x_recordSchema:
             self.write('<recordData recordSchema="%s">' % xmlEscape(schema))
-            aRecord.writeDataOn(schema, self.sruquery.recordPacking, self)
+            self.all.writeRecord(self, recordId, schema, self.sruQuery.recordPacking)
             self.write('</recordData>')
         self.write('</srw:extraRecordData>')
 
-    def _writeExtraResponseData(self, aSearchResult):
+    def _writeExtraResponseData(self, hits):
         self.write('<srw:extraResponseData>')
-        self.any.writeExtraResponseData(self, aSearchResult)
+        self.all.writeExtraResponseData(self, hits)
         self.write('</srw:extraResponseData>')
 
     def doSearchRetrieve(self):
-        #searchResult = self.searchInterface.search(self.sruquery)
-        hits = self.any.executeQuery(self.sruquery.query)
+        SRU_IS_ONE_BASED = 1
+        hits = self.any.executeCQL(self.sruQuery.query)
+        self._startResults(len(hits))
 
-        self._startResults(searchResult.getNumberOfRecords())
-
-        recordWritten = False
-        for record in searchResult.getRecords():
-            if not recordWritten:
+        recordsWritten = 0
+        start = self.sruQuery.startRecord - SRU_IS_ONE_BASED
+        for record in hits[start: start + self.sruQuery.maximumRecords]:
+            if not recordsWritten:
                 self.write('<srw:records>')
             self._writeResult(record)
-            recordWritten = True
+            recordsWritten += 1
 
-        if recordWritten:
+        if recordsWritten:
             self.write('</srw:records>')
-            nextRecordPosition = searchResult.getNextRecordPosition()
-            if nextRecordPosition:
+            nextRecordPosition = start + recordsWritten
+            if nextRecordPosition < len(hits):
                 self.write('<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % nextRecordPosition)
 
         self._writeEchoedSearchRetrieveRequest()
-        self._writeExtraResponseData(searchResult)
+        self._writeExtraResponseData(hits)
 
         self._endResults()
 
@@ -274,7 +276,17 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
     def supportedParameter(self, parameterName, operation):
         return parameterName in OFFICIAL_REQUEST_PARAMETERS[operation]
 
+class WriteRecordsForXMLStorage:
 
+    def writeRecord(self, sink, recordId, recordSchema, recordPacking):
+        if recordPacking == 'xml':
+            self.all.write(sink, recordId, recordSchema)
+        elif recordPacking == 'string':
+            buffer = StringIO()
+            self.all.write(buffer, recordId, recordSchema)
+            sink.write(xmlEscape(buffer.getvalue()))
+        else:
+            raise Exception("Unknown Record Packing: %s" % recordPacking)
 
 def registerOn(aRegistry):
     aRegistry.registerByCommand('sru', SRUPlugin)

@@ -41,7 +41,7 @@ class TeddyInterfaceTest(CQ2TestCase):
         
         face = TeddyInterface(luceneIndex, storage)
         
-        query = SRUQuery('database', {})
+        query = SRUQuery({})
         query.query = 'field=value'
         query.maximumRecords = 3
         query.startRecord = 5

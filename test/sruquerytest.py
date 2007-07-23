@@ -41,65 +41,65 @@ class SRUQueryTest(TestCase):
         
 
     def assertSortKey(self, expectedSortBy, expectedSortDirection, sortKeys):
-        query = SRUQuery('database', {'query':[''], 'sortKeys':sortKeys})
+        query = SRUQuery({'query':[''], 'sortKeys':sortKeys})
         self.assertEquals(expectedSortBy, query.sortBy)
         self.assertEquals(expectedSortDirection, query.sortDirection)
         
     def testValidateStartRecord(self):
         try:
-            query = SRUQuery('database', {'startRecord':['-1']})
+            query = SRUQuery({'startRecord':['-1']})
             self.fail()
         except SRUQueryParameterException, e:
             self.assertEquals("startRecord", str(e))
-        query = SRUQuery('database', {'startRecord':['8']})
+        query = SRUQuery({'startRecord':['8']})
         self.assertEqual(8, query.startRecord)
         
     def testValidateMaximumRecords(self):
         try:
-            query = SRUQuery('database', {'maximumRecords':['-1']})
+            query = SRUQuery({'maximumRecords':['-1']})
             self.fail()
         except SRUQueryParameterException, e:
             self.assertEquals("maximumRecords", str(e))
-        query = SRUQuery('database', {'maximumRecords':['80']})
+        query = SRUQuery({'maximumRecords':['80']})
         self.assertEqual(80, query.maximumRecords)
             
     def testValidateQuery(self):
         try:
-            query = SRUQuery('database', {'query':['TERM1)']})
+            query = SRUQuery({'query':['TERM1)']})
             self.fail()
         except SRUQueryParseException, e:
             self.assertEquals("Unexpected token after parsing, check for greediness ([)], cqlparser.cqlparser.CQL_QUERY(cqlparser.cqlparser.SCOPED_CLAUSE(cqlparser.cqlparser.SEARCH_CLAUSE(cqlparser.cqlparser.SEARCH_TERM('TERM1'))))).", str(e))
 
     def testRecordSchema(self):
-        query = SRUQuery('database', {})
+        query = SRUQuery({})
         self.assertEquals('dc', query.recordSchema)
 
-        query = SRUQuery('database', {'recordSchema':['']})
+        query = SRUQuery({'recordSchema':['']})
         self.assertEquals('dc', query.recordSchema)
 
-        query = SRUQuery('database', {'recordSchema':['lom']})
+        query = SRUQuery({'recordSchema':['lom']})
         self.assertEquals('lom', query.recordSchema)
         
     def testExtraRecordSchema(self):
-        query = SRUQuery('database', {})
+        query = SRUQuery({})
         self.assertEquals([], query.x_recordSchema)
 
-        query = SRUQuery('database', {'x-recordSchema':['']})
+        query = SRUQuery({'x-recordSchema':['']})
         self.assertEquals([], query.x_recordSchema)
 
-        query = SRUQuery('database', {'x-recordSchema':['lom']})
+        query = SRUQuery({'x-recordSchema':['lom']})
         self.assertEquals(['lom'], query.x_recordSchema)
         
-        query = SRUQuery('database', {'x-recordSchema':['lom', 'fields']})
+        query = SRUQuery({'x-recordSchema':['lom', 'fields']})
         self.assertEquals(['lom', 'fields'], query.x_recordSchema)
 
-        query = SRUQuery('database', {'x-recordSchema':['lom', '', 'fields']})
+        query = SRUQuery({'x-recordSchema':['lom', '', 'fields']})
         self.assertEquals(['lom', 'fields'], query.x_recordSchema)
 
     def testRecordPacking(self):
-        query = SRUQuery('database', {})
+        query = SRUQuery({})
         self.assertEquals('xml', query.recordPacking)
 
-        query = SRUQuery('database', {'recordPacking': ['someRecordPacking']})
+        query = SRUQuery({'recordPacking': ['someRecordPacking']})
         self.assertEquals('someRecordPacking', query.recordPacking)
 

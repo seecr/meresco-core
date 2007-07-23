@@ -37,11 +37,10 @@ class PluginException(Exception):
 
 class QueryPlugin:
     
-    def __init__(self, aRequest, searchInterface):
+    def __init__(self, aRequest):
         self._request = aRequest
         self._arguments = self._request.args
         self.contentType = 'text/plain'
-        self.searchInterface = searchInterface
         self.initialize()
         self._request.setResponseCode(200)
         self._request.setHeader('content-type', self.contentType)

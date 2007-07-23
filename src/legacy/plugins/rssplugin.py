@@ -53,7 +53,7 @@ class RSSPlugin(QueryPlugin):
             self._arguments['maximumRecords'] = [str(self.profile().maximumRecords())]
             
         try:
-            sruquery = SRUQuery(self._database, self._arguments)
+            sruquery = SRUQuery(self._arguments)
         except SRUQueryException, e:
             self.handleException(e)
             return
