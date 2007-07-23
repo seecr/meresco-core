@@ -223,25 +223,27 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     <srw:query>field=value</srw:query>
     <srw:x-recordSchema>extra</srw:x-recordSchema>
 </srw:echoedSearchRetrieveRequest>
-<srw:extraResponseData>
-</srw:extraResponseData>
 </srw:searchRetrieveResponse>
 """, resultStream.getvalue())
         
-    def testEmptyRecordWhenInconsistancyExistsBetweenIndexAndStorage(self):
-        self.fail("This should be simplified")
+    def testExtraResponseDataHandlerNoHandler(self):
+        resultStream = StringIO()
+        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
+        self.plugin.write = resultStream.write
+        self.assertEquals('' , resultStream.getvalue())
+    
+    def testExtraResponseDataHandlerNoData(self):
+        resultStream = StringIO()
         
-    def testExtraResponseDataHandler(self):
-        self.fail("this test is boring")
-        
-        notifications = []
         class TestHandler:
-            def writeExtraResponseData(self, *args):
-                notifications.append(args)
+            def extraResponseData(self, *args):
+                return []
         
         self.plugin.addObserver(TestHandler())
-        self.plugin._writeExtraResponseData(MockSearchResult())
-        self.assertEquals([(self.plugin, )], notifications)
+        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
+        self.plugin.write = resultStream.write
+        
+        self.assertEquals('' , resultStream.getvalue())
         
     def testNextRecordPosition(self):
         request = CallTrace('Request')
@@ -259,9 +261,6 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         plugin.process()
         self.assertTrue("<srw:nextRecordPosition>25</srw:nextRecordPosition>" in resultStream.getvalue(), resultStream.getvalue())
 
-        
-    def testIsEmptyExtraResponseDataAllowed(self):
-        self.fail("Johan")
         
 class MockListeners:
     def __init__(self, executeCQLResult):
