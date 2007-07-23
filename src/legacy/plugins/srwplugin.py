@@ -85,7 +85,6 @@ class SRWPlugin:
     def supportedOperation(self, operation):
         return operation == 'searchRetrieve'
 
-     def supportedParameter(self, parameter, operation):
-         supported = self.sruSupportedParameter(parameter, operation)
-         return supported and not parameter in UNSUPPORTED_PARAMETERS
-        
+    def supportedParameter(self, parameter, operation):
+        supported = self.sruSupportedParameter(parameter, operation)
+        return supported and not parameter in UNSUPPORTED_PARAMETERS

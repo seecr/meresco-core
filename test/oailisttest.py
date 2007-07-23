@@ -105,7 +105,7 @@ class OaiListTest(OaiTestCase):
     </metadata>
    </record>
  </ListRecords>""", self.stream.getvalue())
-         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
+        self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
     
     def testListRecordsUsingToken(self):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL', 'SET'))]}
@@ -224,7 +224,7 @@ class OaiListTest(OaiTestCase):
    </record>
  </ListRecords>""", self.stream.getvalue())
  
-         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
+        self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
         
     def testFromAndUntil(self):
         #ok, deze test wordt zo lang dat het haast wel lijkt of hier iets niet klopt.... KVS
