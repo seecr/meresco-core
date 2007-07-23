@@ -8,7 +8,9 @@ class DrilldownFieldComponent(Component, Observable):
         Observable.__init__(self)
         self._drilldownFields = listOfFields
 
-    def add(self, amaraXmlNode):
+    def add(self, amaraNodeNotification):
+        HIER ZIJN JOHAN EN KLAAS GEBLEVEN
+        amaraXmlNode = amaraNodeNotification.payload
         for field in self._drilldownFields:
             nodes = amaraXmlNode.xml_xpath("//%s" % field)
             if nodes:

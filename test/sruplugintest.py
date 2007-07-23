@@ -228,8 +228,8 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         
     def testExtraResponseDataHandlerNoHandler(self):
         resultStream = StringIO()
-        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
         self.plugin.write = resultStream.write
+        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
         self.assertEquals('' , resultStream.getvalue())
     
     def testExtraResponseDataHandlerNoData(self):
@@ -239,11 +239,24 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
             def extraResponseData(self, *args):
                 return []
         
+        self.plugin.write = resultStream.write
         self.plugin.addObserver(TestHandler())
         self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
-        self.plugin.write = resultStream.write
         
         self.assertEquals('' , resultStream.getvalue())
+        
+    def testExtraResponseDataHandlerWithData(self):
+        resultStream = StringIO()
+        
+        class TestHandler:
+            def extraResponseData(self, *args):
+                return ["<someD", "ata/>"]
+        
+        self.plugin.write = resultStream.write
+        self.plugin.addObserver(TestHandler())
+        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
+        
+        self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , resultStream.getvalue())
         
     def testNextRecordPosition(self):
         request = CallTrace('Request')

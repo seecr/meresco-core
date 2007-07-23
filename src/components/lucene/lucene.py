@@ -120,11 +120,11 @@ class LuceneIndex:
         return Hits(self._searcher, aQueryWrapper.getPyLuceneQuery(), aQueryWrapper.getPyLuceneSort())
     
     def executeCQL(self, cqlQueryString):
-        return Hits(self._searcher, self._parseLuceneQueryString(cqlToLucene(cqlQueryString)))
+        return Hits(self._searcher, self._parseLuceneQueryString(cqlToLucene(cqlQueryString)), None)
     
     def _parseLuceneQueryString(self, luceneQueryString):
         analyzer = PyLucene.StandardAnalyzer()
-        queryParser = PyLucene.QueryParser(document.CONTENTFIELD, analyzer)
+        queryParser = PyLucene.QueryParser(CONTENTFIELD, analyzer)
         queryParser.setDefaultOperator(PyLucene.QueryParser.Operator.AND)
         return queryParser.parse(luceneQueryString)
 

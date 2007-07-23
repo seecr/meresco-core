@@ -179,7 +179,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def _writeExtraResponseData(self, hits):
         openingTagWritten = False
-        dataIterator = self.any.extraResponseData(hits) or []
+        dataIterator = self.any.extraResponseData(self, hits) or []
         for data in dataIterator:
             if not openingTagWritten:
                 self.write('<srw:extraResponseData>')
@@ -310,4 +310,4 @@ class RecordWriterIgnoringErrors(Observable):
             pass 
 
 def registerOn(aRegistry):
-    aRegistry.registerByCommand('sru', SRUPlugin)
+    aRegistry.registerByCommand('sru', lambda webRequest, searchInterface: SRUPlugin(webRequest))

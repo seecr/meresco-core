@@ -28,6 +28,7 @@
 from StringIO import StringIO
 
 from cq2utils.cq2testcase import CQ2TestCase
+from cq2utils.calltrace import CallTrace
 
 from meresco.components.http.sru.drilldownxml import DrillDownXml
 
@@ -35,11 +36,11 @@ class DrillDownXmlTest(CQ2TestCase):
     
     def testOne(self):
         self._arguments = {"x-meresco-drilldown": ["field0:1,field1:2,field2:3"]}
-        result = StringIO()
-        self.write = result.write
-        drillDownXml = DrillDownXml(self)
-        drillDownXml.writeExtraResponseData(self)
-        self.assertEquals([('field0', '1'), ('field1', '2'), ('field2', '3')], self.tuples)
+        drillDownXml = DrillDownXml()
+        drillDownXml.addObserver(self)
+        hits = CallTrace("Hits")
+        hits.returnValues['getLuceneDocIds'] = "Hits are simply passed"
+        result = drillDownXml.extraResponseData(self, hits)
         self.assertEqualsWS("""<drilldown>
 <field name="field0">
     <value count="14">value0_0</value>
@@ -52,10 +53,13 @@ class DrillDownXmlTest(CQ2TestCase):
     <value count="3">value2_0</value>
     <value count="2">value2_1</value>
     <value count="1">value2_2</value>
-</field></drilldown>""", result.getvalue())
+</field></drilldown>""", "".join(result))
+        self.assertEquals([('field0', '1'), ('field1', '2'), ('field2', '3')], self.processed_tuples)
+        self.assertEquals("Hits are simply passed", self.processed_hits)
         
-    def process(self, tuples):
-        self.tuples = tuples
+    def process(self, hits, tuples):
+        self.processed_hits = hits
+        self.processed_tuples = tuples
         return [
             ('field0', [('value0_0', 14)]),
             ('field1', [('value1_0', 13), ('value1_1', 11)]),

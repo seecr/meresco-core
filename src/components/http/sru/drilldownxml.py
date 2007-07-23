@@ -27,13 +27,11 @@
 
 from xml.sax.saxutils import quoteattr, escape
 
-class DrillDownXml:
-    
-    def __init__(self, core):
-        self.core = core
-        # i (kvs) this is exactly the point where we want to step away from our old philosophy of making everything an observer
-    
-    def writeExtraResponseData(self, webRequest):
+from meresco.framework.observable import Observable
+
+class DrillDownXml(Observable):
+        
+    def extraResponseData(self, webRequest, hits):
         """webRequest supports: write, and _arguments"""
         
         #questions:
@@ -42,17 +40,22 @@ class DrillDownXml:
         #x-meresco-drilldown structure ??
         #shouldn't value really be called term??!
         
-        webRequest.write("<drilldown>") #I think this should reflect the original name
-        
         termsAndMaximums = webRequest._arguments.get('x-meresco-drilldown', [''])[0].split(",")
+        if termsAndMaximums == [""]:
+            raise StopIteration
+        print "klaas", termsAndMaximums
         asTuples = [tuple(s.split(":")) for s in termsAndMaximums]
+        asTuples2 = [(s + "__untokenized__", i) for (s, i) in asTuples]
+        #TODO! untokenized groeperen
         
-        drillDownResults = self.core.process(asTuples)
-        for fieldname, tuples in drillDownResults:
-            webRequest.write('<field name=%s>' % quoteattr(fieldname))
+        yield "<drilldown>" #I think this should reflect the original name
+        drillDownResults = self.any.process(hits.getLuceneDocIds(), asTuples)
+        for fieldnameWithGarbage, tuples in drillDownResults:
+            fieldname = fieldnameWithGarbage[:-len('__untokenized__')]
+            yield '<field name=%s>' % quoteattr(fieldname)
             for value, count in tuples:
-                webRequest.write('<value count=%s>%s</value>' % (quoteattr(str(count)), escape(str(value))))
-            webRequest.write('</field>')
+                yield '<value count=%s>%s</value>' % (quoteattr(str(count)), escape(str(value)))
+            yield '</field>'
         
-        webRequest.write("</drilldown>")
+        yield "</drilldown>"
         
