@@ -83,7 +83,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
     #refactor direction: remove queryplugin.QueryPlugin
 
     def __init__(self, aRequest):
-        queryplugin.QueryPlugin.__init__(self, aRequest)
+        queryplugin.QueryPlugin.__init__(self, aRequest, None)
         Observable.__init__(self)
 
     def initialize(self):

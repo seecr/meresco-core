@@ -288,7 +288,3 @@ class MockHits:
         self.slice_start = start
         self.slice_stop = stop
         return [str(i) for i in range(start, min(self.size, stop))]
-            
-
-    
-    #20, 3

@@ -39,7 +39,7 @@ SOAP_VERSIONMISMATCH = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/
 SOAP_JUNKMESSAGE="""<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body><SOAP:Fault><faultcode>SOAP:Server.userException</faultcode><faultstring>%s</faultstring></SOAP:Fault></SOAP:Body></SOAP:Envelope>"""
 
 def registerOn(aRegistry):
-    constructionMethod = lambda request,searchinterface: SRWPlugin(request, SRUPlugin(request, searchinterface))
+    constructionMethod = lambda request,searchinterface: SRWPlugin(request, SRUPlugin(request))
     aRegistry.registerByCommand('srw', constructionMethod)
 
 class SRWPlugin:

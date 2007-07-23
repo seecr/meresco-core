@@ -28,6 +28,7 @@
 from queryplugin import QueryPlugin
 
 class ResetPlugin(QueryPlugin):
+
     def initialize(self):
         self.contentType = 'text/plain'
         

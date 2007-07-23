@@ -30,8 +30,10 @@ from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 from meresco.legacy.plugins.queryplugin import PluginException
 from cStringIO import StringIO
+
 from meresco.legacy.plugins.sruplugin import SRUPlugin, GENERAL_SYSTEM_ERROR
 from meresco.legacy.plugins.srwplugin import SRWPlugin, SOAP_VERSIONMISMATCH
+from test.sruplugintest import MockListeners, MockHits
 
 soapEnvelope = '<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>'
 
@@ -42,7 +44,7 @@ echoedSearchRetrieveRequest = """<srw:echoedSearchRetrieveRequest>
 
 searchRetrieveResponse = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">\n<srw:version>1.1</srw:version><srw:numberOfRecords>%i</srw:numberOfRecords>%s</srw:searchRetrieveResponse>""" 
 
-wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MockSRUAnswer></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest + "<srw:extraResponseData></srw:extraResponseData>")
+wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-dc</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest)
 
 request = """<SRW:searchRetrieveRequest xmlns:SRW="http://www.loc.gov/zing/srw/">%s</SRW:searchRetrieveRequest>"""
 
@@ -55,19 +57,9 @@ class SRWPluginTest(CQ2TestCase):
         self.request = CallTrace('Request')
         self.request.write = self.responseStream.write
         self.request.content = StringIO(requestData)
-        self.searchinterface = CallTrace('SearchInterface')
-        
-        self.sruplugin = SRUPlugin(self.request, self.searchinterface)
+        self.sruplugin = SRUPlugin(self.request)
+        self.sruplugin.addObserver(MockListeners(MockHits(1)))
         self.plugin = SRWPlugin(self.request, self.sruplugin)
-        
-    def setSearchResult(self, numberOfRecords, recordData):
-        searchRecord = CallTrace('SearchRecord')
-        searchRecord.writeDataOn = lambda recordSchema, recordPacking, stream: stream.write(recordData)
-        searchResult = CallTrace('SearchResult')
-        searchResult.returnValues['getNumberOfRecords'] = numberOfRecords
-        searchResult.returnValues['getRecords'] = [searchRecord]
-        self.searchinterface.returnValues['search'] = searchResult
-        
 
     def testContentType(self):
         self.setupPluginWithRequest(soapEnvelope % request % argumentsWithMandatory % '')
@@ -142,8 +134,7 @@ class SRWPluginTest(CQ2TestCase):
     </SRW:searchRetrieveRequest>
   </SOAP:Body>
 </SOAP:Envelope>""")
-        self.setSearchResult(1,'<MockSRUAnswer>')
-
+        
         self.plugin.process()
         
         self.assertEquals(['searchRetrieve'], self.plugin._arguments['operation'])
@@ -156,11 +147,11 @@ class SRWPluginTest(CQ2TestCase):
 <srw:version>1.1</srw:version>
 <srw:query>dc.author = "jones" and  dc.title = "smith"</srw:query><srw:startRecord>1</srw:startRecord><srw:maximumRecords>10</srw:maximumRecords><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema></srw:echoedSearchRetrieveRequest>"""
         
-        self.assertEqualsWS(soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MockSRUAnswer></srw:recordData></srw:record></srw:records>' +echoRequest+'<srw:extraResponseData></srw:extraResponseData>'), self.responseStream.getvalue())
+        self.assertEqualsWS(soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), self.responseStream.getvalue())
         
     def testNormalOperation(self):
         self.setupPluginWithRequest(soapEnvelope % request % argumentsWithMandatory % "")
-        self.setSearchResult(1,'<MockSRUAnswer>')
+        
         self.plugin.process()
         self.assertEquals(['searchRetrieve'], self.plugin._arguments['operation'])
         self.assertEquals(['1.1'], self.plugin._arguments['version'])
