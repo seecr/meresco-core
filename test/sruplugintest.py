@@ -54,15 +54,40 @@ class SRUPluginTest(CQ2TestCase):
         stream = StringIO()
         self.request.write = stream.write
         configuration = {
-            'server.host': 'somehost',
-            'server.port': '3457',
-            'server.description': 'description',
-            'server.modifieddate': 'yesterday'
+            'server.host': 'TEST_SERVER_HOST',
+            'server.port': 'TEST_SERVER_PORT',
+            'server.description': 'TEST_SERVER_DESCRIPTION',
+            'server.modifieddate': 'TEST_SERVER_DATE'
         }
         self.request.getenv = configuration.get
         self.assertEquals(SUCCESS, self.plugin.validate())
         self.plugin.process()
-        self.assertEqualsWS(EXPLAIN_RESULT, stream.getvalue())
+        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
+xmlns:zr="http://explain.z3950.org/dtd/2.0/">
+<srw:version>1.1</srw:version>
+<srw:record>
+    <srw:recordPacking>XML</srw:recordPacking>
+    <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
+    <srw:recordData>
+        <zr:explain>
+            <zr:serverInfo wsdl="http://TEST_SERVER_HOST:TEST_SERVER_PORT/database" protocol="SRU" version="1.1">
+                <host>TEST_SERVER_HOST</host>
+                <port>TEST_SERVER_PORT</port>
+                <database>database</database>
+            </zr:serverInfo>
+            <zr:databaseInfo>
+                <title lang="en" primary="true">SRU Database</title>
+                <description lang="en" primary="true">TEST_SERVER_DESCRIPTION</description>
+            </zr:databaseInfo>
+            <zr:metaInfo>
+                <dateModified>TEST_SERVER_DATE</dateModified>
+            </zr:metaInfo>
+        </zr:explain>
+    </srw:recordData>
+</srw:record>
+</srw:explainResponse>
+""", stream.getvalue())
     
     def testGetOperation(self):
         self.plugin._arguments = {'operation':['explain']}
@@ -148,7 +173,7 @@ class SRUPluginTest(CQ2TestCase):
         request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
             'query':['field=value'], 'x-recordSchema':['extra']}
         request.database = 'database'
-        hits = MockHits()
+        hits = MockHits(2)
         observer = MockListeners(hits)
             
         resultStream = StringIO()
@@ -204,29 +229,11 @@ class SRUPluginTest(CQ2TestCase):
 """, resultStream.getvalue())
         
     def testEmptyRecordWhenInconsistancyExistsBetweenIndexAndStorage(self):
-        """
-        JJ: Evil code! If there is an inconsistency between the index and the storage, then it is possible for the storage being asked to retrieve a document that does not exist. This leads to an StorageException which currently floats up to the SRU interface generating an Diagnostics. This messes up the SRU response. Therefor it now writes an empty record to indicate something went wrong. There will need to be a better solution implemented for this, but currently that is not within the scope of this task.
-        """
-        
-        request = CallTrace('Request')
-        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
-            'query':['field=value'], 'x-recordSchema': ['extra']}
-        request.database = 'database'
-            
-        interface = MockSearchInterface()
-        interface.search_answer = MockSearchResultWithException()
-            
-        resultStream = StringIO()
-        request.write = resultStream.write
-
-        plugin = SRUPlugin(request, interface)
-        
-        plugin.process()
-        
-        self.assertTrue(interface.called, resultStream.getvalue())
-        self.assertEqualsWS(RESULT_WITH_EMPTY_RECORD, resultStream.getvalue())
+        self.fail("This should be simplified")
         
     def testExtraResponseDataHandler(self):
+        self.fail("this test is boring")
+        
         notifications = []
         class TestHandler:
             def writeExtraResponseData(self, *args):
@@ -237,7 +244,21 @@ class SRUPluginTest(CQ2TestCase):
         self.assertEquals([(self.plugin, )], notifications)
         
     def testNextRecordPosition(self):
-        self.fail("Klaas")
+        request = CallTrace('Request')
+        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
+            'query':['field=value'], 'x-recordSchema':['extra'], 'startRecord': ['10'], 'maximumRecords': ['15']}
+        request.database = 'database'
+        hits = MockHits(100)
+        observer = MockListeners(hits)
+            
+        resultStream = StringIO()
+        request.write = resultStream.write
+
+        plugin = SRUPlugin(request)
+        plugin.addObserver(observer)
+        plugin.process()
+        self.assertTrue("<srw:nextRecordPosition>25</srw:nextRecordPosition>" in resultStream.getvalue(), resultStream.getvalue())
+
         
     def testIsEmptyExtraResponseDataAllowed(self):
         self.fail("Johan")
@@ -258,80 +279,17 @@ class MockListeners:
     
 class MockHits:
     
-    #def getRecords(self):
-        #return (MockSearchRecord(i) for i in xrange(2))
+    def __init__(self, size):
+        self.size = size
+    
     def __len__(self):
-        return 2
+        return self.size
     
     def __getslice__(self, start, stop):
         self.slice_start = start
         self.slice_stop = stop
-        for i in range(2):
-            yield str(i)
+        return [str(i) for i in range(start, min(self.size, stop))]
             
 
     
     #20, 3
-
-EXPLAIN_RESULT = """<?xml version="1.0" encoding="UTF-8"?>
-<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
-xmlns:zr="http://explain.z3950.org/dtd/2.0/">
-<srw:version>1.1</srw:version>
-<srw:record>
-    <srw:recordPacking>XML</srw:recordPacking>
-    <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
-    <srw:recordData>
-        <zr:explain>
-            <zr:serverInfo wsdl="http://somehost:3457/database" protocol="SRU" version="1.1">
-                <host>somehost</host>
-                <port>3457</port>
-                <database>database</database>
-            </zr:serverInfo>
-            <zr:databaseInfo>
-                <title lang="en" primary="true">SRU Database</title>
-                <description lang="en" primary="true">description</description>
-            </zr:databaseInfo>
-            <zr:metaInfo>
-                <dateModified>yesterday</dateModified>
-            </zr:metaInfo>
-        </zr:explain>
-    </srw:recordData>
-</srw:record>
-</srw:explainResponse>
-"""
-
-RESULT_WITH_EMPTY_RECORD = """<?xml version="1.0" encoding="UTF-8"?>
-<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
-<srw:version>1.1</srw:version>
-<srw:numberOfRecords>0</srw:numberOfRecords>
-<srw:records>
-    <srw:record>
-        <srw:recordSchema>dc</srw:recordSchema>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordData><line><number>0</number></line></srw:recordData>
-        <srw:extraRecordData>
-            <recordData recordSchema="extra">
-                <extraline><number>0</number></extraline>
-            </recordData>
-        </srw:extraRecordData>
-    </srw:record>
-    <srw:record>
-        <srw:recordSchema>dc</srw:recordSchema>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordData></srw:recordData>
-        <srw:extraRecordData>
-            <recordData recordSchema="extra"></recordData>
-        </srw:extraRecordData>
-    </srw:record>
-</srw:records>
-<srw:nextRecordPosition>3</srw:nextRecordPosition>
-<srw:echoedSearchRetrieveRequest>
-    <srw:version>1.1</srw:version>
-    <srw:query>field=value</srw:query>
-    <srw:x-recordSchema>extra</srw:x-recordSchema>
-</srw:echoedSearchRetrieveRequest>
-<srw:extraResponseData>
-    <numberOfRecords>20</numberOfRecords>
-</srw:extraResponseData>
-</srw:searchRetrieveResponse>
-"""

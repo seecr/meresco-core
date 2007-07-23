@@ -199,7 +199,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
             self.write('</srw:records>')
             nextRecordPosition = start + recordsWritten
             if nextRecordPosition < len(hits):
-                self.write('<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % nextRecordPosition)
+                self.write('<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % (nextRecordPosition + SRU_IS_ONE_BASED))
 
         self._writeEchoedSearchRetrieveRequest()
         self._writeExtraResponseData(hits)
