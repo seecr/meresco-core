@@ -44,11 +44,11 @@ class DrillDownXml(Observable):
         if termsAndMaximums == [""]:
             raise StopIteration
         asTuples = [tuple(s.split(":")) for s in termsAndMaximums]
-        asTuples2 = [(s + "__untokenized__", i) for (s, i) in asTuples]
+        asTuples2 = [(s + "__untokenized__", int(i)) for (s, i) in asTuples]
         #TODO! __untokenized__ bij elkaar in een file
         
         yield "<drilldown>" #I think this should reflect the original name
-        drillDownResults = self.any.process(hits.getLuceneDocIds(), asTuples)
+        drillDownResults = self.any.process(hits.getLuceneDocIds(), asTuples2)
         for fieldnameWithGarbage, tuples in drillDownResults:
             fieldname = fieldnameWithGarbage[:-len('__untokenized__')]
             yield '<field name=%s>' % quoteattr(fieldname)

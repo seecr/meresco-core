@@ -48,7 +48,15 @@ class DrillDownTest(TestCase):
         self._luceneIndex = None
         rmtree(self._tempdir)
 
-    def testReloadDocSets(self):
+    def testLoadDocSetsNoTerms(self):
+        data = [('field_0', [])]
+        drillDown = DrillDown(['field_0'])
+        drillDown.loadDocSets(data, 5)
+
+        self.assertEquals(['field_0'], drillDown._docSets.keys())
+        self.assertEquals(0, len(drillDown._docSets['field_0']))
+    
+    def testLoadDocSets(self):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
         drillDown = DrillDown(['field_0'])

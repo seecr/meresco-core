@@ -40,6 +40,9 @@ def createDocSet(docs, length):
         result.set(doc)
     return result
 
+class DrillDownException(Exception):
+    pass
+
 class DrillDown(object):
 
     def __init__(self, drillDownFieldNames):
@@ -58,9 +61,8 @@ class DrillDown(object):
 
         self._docSets = {}
         for fieldname, terms in rawDocSets:
+            self._docSets[fieldname] = []
             for term, docIds in terms:
-                if not fieldname in self._docSets:
-                    self._docSets[fieldname] = []
                 self._docSets[fieldname].append((term, createDocSet(docIds, self._numDocsInIndex)))
 
     def _docSetForQueryResult(self, docIds):
@@ -88,7 +90,7 @@ class DrillDown(object):
             return 0
 
         if not self._docSets.has_key(fieldName):
-            raise LuceneException("No Docset For Field " + fieldName)
+            raise DrillDownException("No Docset For Field %s, legal docsets: %s" % (fieldName, self._docSets.keys()))
         result = []
 
         if not drillDownBitArray:

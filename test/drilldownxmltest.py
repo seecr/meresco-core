@@ -54,7 +54,7 @@ class DrillDownXmlTest(CQ2TestCase):
     <value count="2">value2_1</value>
     <value count="1">value2_2</value>
 </field></drilldown>""", "".join(result))
-        self.assertEquals([('field0', '1'), ('field1', '2'), ('field2', '3')], self.processed_tuples)
+        self.assertEquals([('field0__untokenized__', 1), ('field1__untokenized__', 2), ('field2__untokenized__', 3)], self.processed_tuples)
         self.assertEquals("Hits are simply passed", self.processed_hits)
         
     def process(self, hits, tuples):
