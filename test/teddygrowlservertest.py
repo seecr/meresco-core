@@ -41,52 +41,43 @@ class TeddyGrowlServerTest(unittest.TestCase):
     
     def setUp(self):
         self.server = TeddyGrowlServer(None)
-        self.server.changed = self.notify
-        self.notifications = []
+        self.server.addObserver(self)
+        self.adds = []
+        self.deletions = []
     
     def testAdd(self):
         contents = """<someXML>text and<tag with="anAttribute"/>and more text</someXML>"""
         aDocument = binderytools.bind_string(DOCUMENT % XML_PART % contents).document
         self.server._processDocument(aDocument)
         
-        self.assertEquals(1, len(self.notifications))
-        self.assertEquals("add", self.notifications[0].method)
-        self.assertEquals("anId_1", self.notifications[0].id)
-        self.assertEquals("part_1", self.notifications[0].partName)
-        self.assertEquals(contents, self.notifications[0].payload)
-    
+        self.assertEquals(1, len(self.adds))
+        self.assertEquals(0, len(self.deletions))
+        self.assertEquals(("anId_1", "part_1", contents), self.adds[0])
+        
     def testAddTwoParts(self):
         aDocument = binderytools.bind_string(DOCUMENT % (
             (XML_PART % "<xml/>") +
             (TEXT_PART))).document
         self.server._processDocument(aDocument)
         
-        self.assertEquals(2, len(self.notifications))
-        self.assertEquals("add", self.notifications[0].method)
-        self.assertEquals("anId_1", self.notifications[0].id)
-        self.assertEquals("part_1", self.notifications[0].partName)
-        self.assertEquals("<xml/>", self.notifications[0].payload)
+        self.assertEquals(2, len(self.adds))
+        self.assertEquals(0, len(self.deletions))
         
-        self.assertEquals("add", self.notifications[1].method)
-        self.assertEquals("anId_1", self.notifications[1].id)
-        self.assertEquals("part_2", self.notifications[1].partName)
-        self.assertEquals("Containing plain text", self.notifications[1].payload)
+        self.assertEquals(("anId_1", "part_1", "<xml/>"), self.adds[0])
+        self.assertEquals(("anId_1", "part_2", "Containing plain text"), self.adds[1])
     
     def testDelete(self):
         aDocument = binderytools.bind_string("""<document id="anId_1" delete="true"/>""").document
         
         self.server._processDocument(aDocument)
-        
-        self.assertEquals(1, len(self.notifications))
-        self.assertEquals("delete", self.notifications[0].method)
-        self.assertEquals("anId_1", self.notifications[0].id)
+        self.assertEquals(0, len(self.adds))
+        self.assertEquals(1, len(self.deletions))
+        self.assertEquals("anId_1", self.deletions[0])
     
-    def testObservable(self):
-        server = TeddyGrowlServer(None)
-        server.addObserver(self)
-        server.changed("a notification")
-        self.assertEquals(["a notification"], self.notifications)
-    
-    def notify(self, notification):
+    def add(self, id, partName, data):
         """self shunt"""
-        self.notifications.append(notification)
+        self.adds.append((id, partName, data))
+        
+    def delete(self, id):
+        """self shunt"""
+        self.deletions.append(id)

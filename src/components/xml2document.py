@@ -37,28 +37,24 @@ TEDDY_NS = "http://www.cq2.nl/teddy"
 
 class Xml2Document(Observable):
     
-    def notify(self, notification):
-        if notification.method != "add":
-            return self.changed(notification)
-        else:
-            newNotification = Notification
-            newNotification.method = notification.method
-            newNotification.id = notification.id
-            newNotification.document = self.create(notification.id, notification.payload)
-            self.changed(newNotification)
+    def unknown(self, method, *kwargs):
+        return self.all.__getattr__(methodName)(*args)
     
-    def create(self, documentId, topNode):
+    def add(self, id, partName, amaraXmlNode):
+        return self.all.add(id, partName, self._create(id, amaraXmlNode))
+    
+    def _create(self, documentId, topNode):
         doc = Document(documentId)
-        self.addToDocument(doc, topNode, '')
+        self._addToDocument(doc, topNode, '')
         return doc
         
-    def addToDocument(self, doc, aNode, parentName):
+    def _addToDocument(self, doc, aNode, parentName):
         if parentName:
             parentName += '.'
         for child in filter(is_element, aNode.childNodes):
-            self.indexChild(child, doc, parentName)
+            self._indexChild(child, doc, parentName)
     
-    def indexChild(self, child, doc, parentName):
+    def _indexChild(self, child, doc, parentName):
         tagname = parentName + str(child.localName)
         value = child.xml_child_text
         tokenize = True
@@ -72,4 +68,4 @@ class Xml2Document(Observable):
                     tagname = ''
         if not skip and str(value).strip():
             doc.addIndexedField(tagname, str(value), tokenize)
-        self.addToDocument(doc, child, tagname)
+        self._addToDocument(doc, child, tagname)

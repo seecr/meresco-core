@@ -27,7 +27,6 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from unittest import TestCase
 from cq2utils.calltrace import CallTrace
-from cq2utils.component import Notification
 from meresco.components.lucene.indexcomponent import IndexComponent
 from meresco.components.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
@@ -51,46 +50,40 @@ class IndexComponentTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.index = CallTrace("Index")
-        self.subject = IndexComponent(self.index)
+        self.indexComponent = IndexComponent(self.index)
         
-        self.notification = Notification()
-        self.notification.method = "add"
-        self.notification.id = "anId-123"
-        self.notification.partName = "xmlfields"
-        self.notification.document = Xml2Document().create(self.notification.id, FIELDS)
+        self.id = "id"
+        self.partName = "xmlfields"
+        self.document = Xml2Document()._create(self.id, FIELDS)
         
-        self.observable = Observable()
-        self.observable.addObserver(self.subject)
-    
     def testAdd(self):
-        self.observable.changed(self.notification)
+        self.indexComponent.add(self.id, self.partName, self.document)
         self.assertEquals(2,len(self.index.calledMethods))
-        self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
+        self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
         self.assertEquals('addToIndex(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
         
     def testDelete(self):
-        self.notification.method = "delete"
-        self.observable.changed(self.notification)
+        self.indexComponent.delete(self.id)
         
         self.assertEquals(1,len(self.index.calledMethods))
-        self.assertEquals("deleteID('anId-123')", str(self.index.calledMethods[0]))
+        self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
         
     def testListRecords(self):
-        self.subject.listRecords(partName = 'PART', sorted = None)
+        self.indexComponent.listRecords(partName = 'PART', sorted = None)
         executeQueryMethod = self.index.calledMethods[0]
         queryWrapper = executeQueryMethod.arguments[0]
         self.assertEquals('+__parts__.part:PART', str(queryWrapper.getPyLuceneQuery()))
         self.assertEquals(None, queryWrapper._sortBy)
 
     def testListRecordsSorted(self):
-        self.subject.listRecords(partName = 'PART', sorted = True)
+        self.indexComponent.listRecords(partName = 'PART', sorted = True)
         executeQueryMethod = self.index.calledMethods[0]
         queryWrapper = executeQueryMethod.arguments[0]
         self.assertEquals('+__parts__.part:PART', str(queryWrapper.getPyLuceneQuery()))
         self.assertEquals('__stamp__.unique', str(queryWrapper._sortBy))
     
     def testListRecordsParams(self):
-        self.subject.listRecords(partName = 'PART', continueAt = '0010', oaiFrom = '2000-01-01T00:00:00Z', oaiUntil = '2000-31-12T00:00:00Z', oaiSet = 'ONE:TWO:THREE', sorted = True)
+        self.indexComponent.listRecords(partName = 'PART', continueAt = '0010', oaiFrom = '2000-01-01T00:00:00Z', oaiUntil = '2000-31-12T00:00:00Z', oaiSet = 'ONE:TWO:THREE', sorted = True)
         executeQueryMethod = self.index.calledMethods[0]
         queryWrapper = executeQueryMethod.arguments[0]
         self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0010 TO *] +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z] +__set_membership__.set:ONE:TWO:THREE', str(queryWrapper.getPyLuceneQuery()))

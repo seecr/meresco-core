@@ -28,7 +28,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 
 from meresco.components.fields2xmlcomponent import Fields2XmlComponent
-from cq2utils.component import Notification
+from cq2utils.calltrace import CallTrace
 from meresco.components.xml2document import TEDDY_NS
 from amara import binderytools
 
@@ -43,34 +43,26 @@ XMLFIELDS = """<xmlfields xmlns:teddy="%(teddyns)s" teddy:skip="true">
 """ % {'teddyns': TEDDY_NS}
 
 class Fields2XmlComponentTest(CQ2TestCase):
+    
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.component = Fields2XmlComponent()
-        self.component.addObserver(self)
+        self.observer = CallTrace("Observer")
+        self.component.addObserver(self.observer)
         self.notifications = []
     
-    def notify(self, aNotification):
-        self.notifications.append(aNotification)
+    def testAdd(self):
+        self.component.add("id", "fields", FIELDS)
+        self.assertEquals(1, len(self.observer.calledMethods))
+        self.assertEquals(["id", "xmlfields"], self.observer.calledMethods[0].arguments[:2])
+        self.assertEqualsWS(XMLFIELDS, self.observer.calledMethods[0].arguments[2].xml())
     
-    def testNotify(self):
-        record = Notification('add', 'id', 'fields')
-        record.payload = FIELDS
-        self.component.notify(record)
-        self.assertEquals(1, len(self.notifications))
-        newNotification = self.notifications[0]
-        self.assertEquals(record.id, newNotification.id)
-        self.assertEquals('xmlfields', newNotification.partName)
-        self.assertEqualsWS(XMLFIELDS, newNotification.payload.xml())
-    
-    def testNotifyIgnored(self):
-        record = Notification('add', 'id', 'nofields')
-        self.component.notify(record)
-        self.assertEquals(0, len(self.notifications))
+    def testAddIgnoresNonFields(self):
+        self.component.add('id', 'this_is_not_fields', "also ignored")
+        self.assertEquals(0, len(self.observer.calledMethods))
 
     def testIndexSkipField(self):
-        record = Notification('add', 'id', 'fields')
-        record.payload = """<fields><field name="a">A</field><field name="original:lom">&lt;lom/&gt;</field></fields>"""
-        self.component.notify(record)
-        self.assertEquals(1, len(self.notifications))
-        newNotification = self.notifications[0]
-        self.assertEquals("""<xmlfields xmlns:teddy="%s" teddy:skip="true"><a>A</a></xmlfields>""" % TEDDY_NS, newNotification.payload.xml())
+        self.component.add('id', 'fields', """<fields><field name="a">A</field><field name="original:lom">&lt;lom/&gt;</field></fields>""")
+        
+        self.assertEquals(1, len(self.observer.calledMethods))
+        self.assertEqualsWS("""<xmlfields xmlns:teddy="%s" teddy:skip="true"><a>A</a></xmlfields>""" % TEDDY_NS, self.observer.calledMethods[0].arguments[2].xml())

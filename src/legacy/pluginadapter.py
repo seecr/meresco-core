@@ -52,7 +52,7 @@ class PluginAdapter(Observable): ###!!! No test for this backwards compatibilty 
     def getenv(self, key):
         return self.configuration.get(key,  None)
     
-    def notify(self, aRequest):
+    def handleRequest(self, aRequest):
         ignored, database, command, tail = (aRequest.path + '//').split('/',3)
         if database not in self.searchInterfaces.keys():
             return
@@ -72,7 +72,6 @@ class PluginAdapter(Observable): ###!!! No test for this backwards compatibilty 
             
             plugin.any = self.any
             plugin.all = self.all
-            plugin.changed = self.changed
             
             plugin.process()
         except Exception, e:

@@ -34,62 +34,31 @@ from amara import binderytools
 from meresco.components.xmlpump import XmlInflate, XmlDeflate
 
 class XmlPumpTest(CQ2TestCase):
+    
     def testInflate(self):
         observer = CallTrace('Observer')
-        observable = Observable()
-        subject = XmlInflate()
-        observable.addObserver(subject)
-        subject.addObserver(observer)
+        xmlInflate = XmlInflate()
+        xmlInflate.addObserver(observer)
         
-        notification = Notification('method', 'id', 'partName')
-        notification.payload = """<tag><content>contents</content></tag>"""
+        xmlString = """<tag><content>contents</content></tag>"""
+        xmlInflate.add("id", "partName", xmlString)
         
-        observable.changed(notification)
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals("add", observer.calledMethods[0].name)
+        self.assertEquals(["id", "partName"], observer.calledMethods[0].arguments[:2])
         
-        self.assertEquals(['notify'], [m.name for m in observer.calledMethods])
-        newNotification = observer.calledMethods[0].arguments[0]
-        self.assertNotEqual(id(notification), id(newNotification))
-        
-        self.assertEquals(notification.payload, newNotification.payload.xml())
-        self.assertEquals('tag', newNotification.payload.localName)
-        self.assertEquals('content', newNotification.payload.content.localName)
-        
-        
+        xmlNode = observer.calledMethods[0].arguments[2]
+        self.assertEquals('tag', xmlNode.localName)
+        self.assertEquals('content', xmlNode.content.localName)
     
     def testDeflate(self):
         observer = CallTrace('Observer')
-        observable = Observable()
-        subject = XmlDeflate()
-        observable.addObserver(subject)
-        subject.addObserver(observer)
+        xmlDeflate = XmlDeflate()
+        xmlDeflate.addObserver(observer)
         
-        notification = Notification('method', 'id', 'partName')
-        notification.payload = binderytools.bind_string("""<tag><content>contents</content></tag>""").tag
+        s = """<tag><content>contents</content></tag>"""
+        xmlDeflate.add("id", "partName", binderytools.bind_string(s).tag)
         
-        observable.changed(notification)
-        
-        self.assertEquals(['notify'], [m.name for m in observer.calledMethods])
-        newNotification = observer.calledMethods[0].arguments[0]
-        self.assertNotEqual(id(notification), id(newNotification))
-        
-        self.assertEquals(notification.payload.xml(), newNotification.payload)
-        
-        
-    def testJoin(self):
-        observer = CallTrace('Observer')
-        observable = Observable()
-        subject1 = XmlInflate()
-        subject2 = XmlDeflate()
-        observable.addObserver(subject1)
-        subject1.addObserver(subject2)
-        subject2.addObserver(observer)
-        
-        notification = Notification('method', 'id', 'partName')
-        notification.payload = """<tag><content>contents</content></tag>"""
-        
-        observable.changed(notification)
-        
-        self.assertEquals(['notify'], [m.name for m in observer.calledMethods])
-        newNotification = observer.calledMethods[0].arguments[0]
-        self.assertNotEqual(id(notification), id(newNotification))
-        self.assertEquals(notification.payload, newNotification.payload)
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals("add", observer.calledMethods[0].name)
+        self.assertEquals(["id", "partName", s], observer.calledMethods[0].arguments)

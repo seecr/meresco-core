@@ -46,20 +46,25 @@ class ObservableServer(Observable):
     
     def run(self):
         class WebRequest(http.Request):
-            def log(inner, something):
+            
+            def log(sself, something):
                 self.log(something)
+            
             def __str__(inner):
                 return '\t'.join([inner.client.host, inner.method, inner.uri])
-            def process(inner):
+            
+            def process(sself):
                 try:
-                    self.changed(inner)
+                    self.all.handleRequest(sself)
                 except:
                     self.logError()
-                inner.finish()
+                sself.finish()
+                
         class WebHTTPChannel(http.HTTPChannel):
             requestFactory = WebRequest
         class Factory(http.HTTPFactory):
             protocol = WebHTTPChannel
+        
         factory = Factory()
         reactor.listenTCP(self.port, factory)
         self.log("Ready to rumble at %d\n" % self.port)

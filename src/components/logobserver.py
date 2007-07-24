@@ -42,8 +42,8 @@ class LogObserver(object):
         self.write('%s\n' % aString)
         self.flush()
         
-    def notify(self, *args):
-        self._write(self.toString(*args))
+    def unknown(self, method, *args):
+        self._write("%s - %s" % (method, self.toString(*args)))
         
     def toString(self, *args):
         return '\t'.join(map(str, args))

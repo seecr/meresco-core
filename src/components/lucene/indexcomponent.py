@@ -38,13 +38,13 @@ class IndexComponent(Component):
     def __init__(self, anIndex):
         self._index = anIndex
         
-    def delete(self, anyNotification):
-        self._index.deleteID(anyNotification.id)
+    def add(self, id, partName, document):
+        self._index.deleteID(id)
+        self._index.addToIndex(document)
+    
+    def delete(self, id):
+        self._index.deleteID(id)
         
-    def add(self, luceneDocumentNotification):
-        self._index.deleteID(luceneDocumentNotification.id)
-        self._index.addToIndex(luceneDocumentNotification.document)
-            
     def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True):
         def addRange(root, field, lo, hi, inclusive):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)

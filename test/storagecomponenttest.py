@@ -41,22 +41,13 @@ class StorageComponentTest(CQ2TestCase):
         self.gottenUnit = None
         self.openedBox = None
         self.written = None
-        
-        self.notification = Notification()
-        self.notification.method = "add"
-        self.notification.id = "anId-123"
-        self.notification.partName = "somePartName"
-        self.notification.payload = "The contents of the part"
-        
-        self.observable = Observable()
-        self.observable.addObserver(self.storageComponent)
     
     def testAdd(self):
-        self.observable.changed(self.notification)
+        self.storageComponent.add("id_0", "partName", "The contents of the part")
         
         self.assertEquals(None, self.removedUnit)
-        self.assertEquals("anId-123", self.gottenUnit)
-        self.assertEquals("somePartName", self.openedBox)
+        self.assertEquals("id_0", self.gottenUnit)
+        self.assertEquals("partName", self.openedBox)
         self.assertEquals("The contents of the part", self.written)
 
     def testIsAvailable(self):

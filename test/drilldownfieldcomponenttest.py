@@ -15,7 +15,7 @@ DATA = """<xmlfields>
 
 class DrilldownFieldComponentTest(TestCase):
 
-    def testIfItWorks(self):
+    def testOne(self):
         data = binderytools.bind_string(DATA)
 
         observable = Observable()
@@ -25,11 +25,12 @@ class DrilldownFieldComponentTest(TestCase):
         observable.addObserver(drilldownFieldComponent)
         drilldownFieldComponent.addObserver(observer)
 
-        observable.all.add(data.xmlfields)
+        observable.all.add("id", "partName", data.xmlfields)
 
         self.assertEquals(1, len(observer.calledMethods))
-
-        resultXml = observer.calledMethods[0].arguments[0]
+        self.assertEquals(["id", "partName"], observer.calledMethods[0].arguments[:2])
+        
+        resultXml = observer.calledMethods[0].arguments[2]
         self.assertEquals(1, len(resultXml.xml_xpath('field_0')))
         self.assertEquals(1, len(resultXml.xml_xpath('field_0__untokenized__')))
         self.assertEquals(1, len(resultXml.xml_xpath('field_1')))
@@ -40,11 +41,3 @@ class DrilldownFieldComponentTest(TestCase):
         node = resultXml.xml_xpath("//field_0__untokenized__")[0]
         self.assertEquals(1, len(node.attributes))
         self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</field_0__untokenized__>', node.xml())
-
-
-#<xmlfields>
-    #<field_0>term_0</field_0>
-    #<field_0__untokenized__ teddy:tokenize="false">term_0</field_0__untokenized__>
-    #<field_1>term_1</field_1>
-    #<field_1__untokenized__ teddy:tokenize="false">term_1</field_1__untokenized__>
-#</xmlfields>

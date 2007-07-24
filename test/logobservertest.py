@@ -40,11 +40,11 @@ class LogObserverTest(TestCase):
         class AnArgument:
             def __str__(self):
                 return 'Looking for an argument.'
-        argument = AnArgument()        
-        log.notify('one', argument, 'three')
+        argument = AnArgument()
+        log.unknown('methodName', 'one', argument, 'three')
         
         time, line = stream.getvalue().split('\t',1)
-        self.assertEquals('one\tLooking for an argument.\tthree\n', line)
+        self.assertEquals('methodName - one\tLooking for an argument.\tthree\n', line)
         
     def testLoggingBySubclassing(self):
         stream = StringIO()
@@ -55,8 +55,8 @@ class LogObserverTest(TestCase):
                 return 'toString'
         log = MyLogObserver(stream)
         
-        log.notify('one', 'two')
+        log.unknown('methodName', 'one', 'two')
         
         time, line = stream.getvalue().split('\t',1)
-        self.assertEquals('toString\n', line)
+        self.assertEquals('methodName - toString\n', line)
         self.assertEquals([('one','two')], arguments)

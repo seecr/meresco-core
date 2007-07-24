@@ -27,12 +27,11 @@
 
 
 from cq2utils.cq2testcase import CQ2TestCase
+from cq2utils.calltrace import CallTrace
 
 from meresco.components.xml2document import Xml2Document, TEDDY_NS
 from meresco.components.lucene.document import Document, IDFIELD
 from amara import binderytools 
-from meresco.framework.observable import Function
-from cq2utils.component import Notification
 
 class Xml2DocumentTest(CQ2TestCase):
     def setUp(self):
@@ -40,13 +39,13 @@ class Xml2DocumentTest(CQ2TestCase):
         self.converter = Xml2Document()
     
     def testId(self):
-        document = self.converter.create('id', binderytools.bind_string('<fields/>').fields)
+        document = self.converter._create('id', binderytools.bind_string('<fields/>').fields)
         self.assertTrue(isinstance(document, Document))
         luceneDoc = document._document
         self.assertEquals('id', luceneDoc.get(IDFIELD))
         
     def testIndexField(self):
-        document = self.converter.create('id', binderytools.bind_string('<fields><tag>value</tag></fields>').fields)
+        document = self.converter._create('id', binderytools.bind_string('<fields><tag>value</tag></fields>').fields)
         luceneDoc = document._document
         field = luceneDoc.getFields('tag')[0]
         self.assertEquals('value', field.stringValue())
@@ -54,7 +53,7 @@ class Xml2DocumentTest(CQ2TestCase):
         self.assertEquals(True, field.isTokenized())
         
     def testIndexTokenizedField(self):
-        document = self.converter.create('id', binderytools.bind_string('<fields xmlns:teddy="%s">\n<tag teddy:tokenize="false">value</tag></fields>' % TEDDY_NS).fields)
+        document = self.converter._create('id', binderytools.bind_string('<fields xmlns:teddy="%s">\n<tag teddy:tokenize="false">value</tag></fields>' % TEDDY_NS).fields)
         luceneDoc = document._document
         field = luceneDoc.getFields('tag')[0]
         self.assertEquals('value', field.stringValue())
@@ -62,7 +61,7 @@ class Xml2DocumentTest(CQ2TestCase):
         self.assertEquals(False, field.isTokenized())
         
     def testMultiLevel(self):
-        document = self.converter.create('id', binderytools.bind_string("""<document xmlns:t="%s">
+        document = self.converter._create('id', binderytools.bind_string("""<document xmlns:t="%s">
         <tag t:tokenize="false">value</tag>
         <lom>
             <general>
@@ -81,7 +80,7 @@ class Xml2DocumentTest(CQ2TestCase):
         self.assertEquals(True, field.isTokenized())
         
     def testSkipFirstLevelForXmlFields(self):
-        document = self.converter.create('id', binderytools.bind_string("""<document xmlns:t="%s">
+        document = self.converter._create('id', binderytools.bind_string("""<document xmlns:t="%s">
         <xmlfields t:skip="true">
             <title>The title</title>
             <general><identifier>ID</identifier></general>
@@ -100,9 +99,12 @@ class Xml2DocumentTest(CQ2TestCase):
         self.assertEquals(True, field.isTokenized())
         
     def testIsObservable(self):
-        notification = Notification()
-        notification.id = "id_0"
-        notification.method = "add"
-        notification.payload = binderytools.bind_string('<fields/>').fields
-        result = Function(self.converter)(notification)
-        self.assertEquals("id_0", result.id)        
+        observer = CallTrace("Observer")
+        self.converter.addObserver(observer)
+        self.converter.add("id_0", "partName", binderytools.bind_string('<fields/>').fields)
+        
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals("add", observer.calledMethods[0].name)
+        self.assertEquals(["id_0", "partName"], observer.calledMethods[0].arguments[:2])
+        self.assertEquals(Document, observer.calledMethods[0].arguments[2].__class__)
+        

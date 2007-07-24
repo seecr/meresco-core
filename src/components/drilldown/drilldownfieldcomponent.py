@@ -8,7 +8,7 @@ class DrilldownFieldComponent(Component, Observable):
         Observable.__init__(self)
         self._drilldownFields = listOfFields
 
-    def add(self, amaraXmlNode):
+    def add(self, id, partName, amaraXmlNode):
         for field in self._drilldownFields:
             nodes = amaraXmlNode.xml_xpath("//%s" % field)
             if nodes:
@@ -17,10 +17,7 @@ class DrilldownFieldComponent(Component, Observable):
                     content=unicode(node),
                     attributes={(u'teddy:tokenize', unicode(TEDDY_NS)): u'false'})
                 amaraXmlNode.xml_append(newfield)
-        return self.all.add(amaraXmlNode)
+        return self.all.add(id, partName, amaraXmlNode)
 
-    def delete(self, amaraXmlNode):
-        return self.all.delete(amaraXmlNode)
-
-    def unknown(self, **kwargs):
-        return self.all.unknown(**kwargs)
+    def unknown(self, method, *kwargs):
+        return self.all.__getattr__(methodName)(*args)
