@@ -40,16 +40,7 @@ class SRUPluginTest(CQ2TestCase):
         self.request.args = {}
         self.request.database = 'database'
         self.plugin = SRUPlugin(self.request)
-        
-    def testRegistry(self):
-        registry = CallTrace('PluginRegistry')
-        registerOn(registry)
-        self.assertEquals(1, len(registry.calledMethods))
-        self.assertEquals("registerByCommand('sru', <class 'meresco.legacy.plugins.sruplugin.SRUPlugin'>)", str(registry.calledMethods[0]))
-        
-    def logException(self):
-        print traceback.format_exc()
-
+    
     def testExplain(self):
         stream = StringIO()
         self.request.write = stream.write

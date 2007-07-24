@@ -61,6 +61,6 @@ class DrillDownXmlTest(CQ2TestCase):
         self.processed_hits = hits
         self.processed_tuples = tuples
         return [
-            ('field0', [('value0_0', 14)]),
-            ('field1', [('value1_0', 13), ('value1_1', 11)]),
-            ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+            ('field0__untokenized__', [('value0_0', 14)]),
+            ('field1__untokenized__', [('value1_0', 13), ('value1_1', 11)]),
+            ('field2__untokenized__', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]

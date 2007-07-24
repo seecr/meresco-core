@@ -43,10 +43,9 @@ class DrillDownXml(Observable):
         termsAndMaximums = webRequest._arguments.get('x-meresco-drilldown', [''])[0].split(",")
         if termsAndMaximums == [""]:
             raise StopIteration
-        print "klaas", termsAndMaximums
         asTuples = [tuple(s.split(":")) for s in termsAndMaximums]
         asTuples2 = [(s + "__untokenized__", i) for (s, i) in asTuples]
-        #TODO! untokenized groeperen
+        #TODO! __untokenized__ bij elkaar in een file
         
         yield "<drilldown>" #I think this should reflect the original name
         drillDownResults = self.any.process(hits.getLuceneDocIds(), asTuples)
