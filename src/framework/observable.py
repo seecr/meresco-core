@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -52,13 +52,10 @@ class AllFunction(DeferredFunction):
 
 class AnyFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
-        result = None
         for delegate in self._delegates:
             if hasattr(delegate, self._attr):
-                result = getattr(delegate, self._attr)(*args, **kwargs)
-                if result:
-                    return result
-        return result
+                return getattr(delegate, self._attr)(*args, **kwargs)
+        raise AttributeError('None of the %d delegates answers any.%s(...)' % (len(self._delegates), self._attr))
 
 class Observable(object):
     def __init__(self, name = None):
