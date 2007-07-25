@@ -15,15 +15,12 @@ class DrillDownFiltersTest(TestCase):
     <field_2>term_2</field_2>
 </xmlfields>""")
 
-        observable = Observable()
         drillDownUpdateFieldFilter = DrillDownUpdateFieldFilter(['field_0', 'field_1'])
         observer = CallTrace('Observer')
 
-        observable.addObserver(drillDownUpdateFieldFilter)
         drillDownUpdateFieldFilter.addObserver(observer)
 
-        responses = observable.all.add("id", "partName", data.xmlfields)
-        map(list, responses)
+        drillDownUpdateFieldFilter.add("id", "partName", data.xmlfields)
 
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals(["id", "partName"], observer.calledMethods[0].arguments[:2])

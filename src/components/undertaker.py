@@ -40,4 +40,4 @@ class Undertaker(Observable):
         self.do.add(id, *args)
 
     def unknown(self, message, *args, **kwargs):
-        return self.all.unknown(message, *args, **kwargs)
+        self.do.unknown(message, *args, **kwargs)

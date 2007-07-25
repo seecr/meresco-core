@@ -32,7 +32,7 @@ class DrillDownUpdateFieldFilter(Observable):
                     content=unicode(node),
                     attributes={(u'teddy:tokenize', unicode(TEDDY_NS)): u'false'})
                 amaraXmlNode.xml_append(newfield)
-        return self.all.add(id, partName, amaraXmlNode)
+        self.do.add(id, partName, amaraXmlNode)
 
     def unknown(self, message, *args, **kwargs):
-        return self.all.unknown(message, *args, **kwargs)
+        self.do.unknown(message, *args, **kwargs)

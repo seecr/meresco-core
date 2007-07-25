@@ -53,11 +53,11 @@ class UnderTakerTest(TestCase):
     def testPassAlongEverythingElse(self):
         class MyObservable(Observable):
             def somethingElse(self):
-                return self.all.somethingElse()
+                return self.do.somethingElse()
         root = MyObservable()
         root.addObserver(self.undertaker)
         self.assertFalse(self.somethingElseCalled)
-        list(map(list, root.somethingElse()))
+        root.somethingElse()
         self.assertTrue(self.somethingElseCalled)
         
     def add(self, *args):

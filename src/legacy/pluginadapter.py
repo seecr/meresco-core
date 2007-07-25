@@ -72,6 +72,7 @@ class PluginAdapter(Observable): ###!!! No test for this backwards compatibilty 
             
             plugin.any = self.any
             plugin.all = self.all
+            plugin.do = self.do
             
             plugin.process()
         except Exception, e:

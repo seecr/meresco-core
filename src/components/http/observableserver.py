@@ -55,7 +55,7 @@ class ObservableServer(Observable):
             
             def process(sself):
                 try:
-                    self.all.handleRequest(sself)
+                    self.do.handleRequest(sself)
                 except:
                     self.logError()
                 sself.finish()

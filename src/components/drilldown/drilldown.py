@@ -48,7 +48,7 @@ class DrillDown(object):
     def __init__(self, drillDownFieldNames):
         self._drillDownFieldnames = drillDownFieldNames
 
-    def process(self, docIds, drillDownFieldnamesAndMaximumResults):
+    def drillDown(self, docIds, drillDownFieldnamesAndMaximumResults):
         drillDownResults = []
         queryDocSet = self._docSetForQueryResult(docIds)
         for fieldName, maximumResults in drillDownFieldnamesAndMaximumResults:

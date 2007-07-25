@@ -238,6 +238,14 @@ class ObservableTest(unittest.TestCase):
         self.assertEquals(('with',), interceptor.args)
         self.assertEquals({'unknown': 'arguments'}, interceptor.kwargs)
 
+    def testUnknownDispatchingNoImplementation(self):
+        observable = Observable()
+        class Listener(object):
+            pass
+        observable.addObserver(Listener())
+        retval = observable.all.unknown('non_existing_method', 'one')
+        self.assertEquals([], list(retval))
+        
     def testUnknownDispatching(self):
         observable = Observable()
         class Listener(object):
@@ -246,6 +254,33 @@ class ObservableTest(unittest.TestCase):
         observable.addObserver(Listener())
         retval = observable.any.unknown('method', 'one')
         self.assertEquals('one another', retval)
+        
+    def testUnknownDispatchingBackToUnknown(self):
+        observable = Observable()
+        class Listener(object):
+            def unknown(self, methodName, one):
+                return "via unknown " + one
+        observable.addObserver(Listener())
+        retval = observable.any.unknown('non_existing_method', 'one')
+        self.assertEquals("via unknown one", retval)
+        
+    def testSyntacticSugarIsPreserved(self):
+        """ON PURPOSE BROKEN CHECKIN: testSyntacticSugarIsPreserved.theory() != reality"""
+        class WithUnknown(Observable):
+            def unknown(self, methodName, *args):
+                self.all.unknown(methodName, "extra arg", *args)
+        
+        observer = CallTrace("Observer")
+        
+        withUnknown = WithUnknown()
+        withUnknown.addObserver(observer)
+
+        source = Observable()
+        source.addObserver(withUnknown)
+        source.do.someMethod("original arg")
+        #if syntactic sugar (i.e. "do") is preseverd, it would force the call self.all.unknown directly
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals('someMethod("extra arg", "original arg")', str(observer.calledMethods[0]))
         
     def testProperErrorMessage(self):
         observable = Observable()

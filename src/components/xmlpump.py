@@ -34,7 +34,7 @@ class XmlInflate(Observable):
         self.do.add(id, partName, binderytools.bind_string(xmlString).rootNode.childNodes[0])
         
     def unknown(self, methodName, *args):
-        return self.all.__getattr__(methodName)(*args)
+        return self.do.unknown(methodName, *args)
 
 class XmlDeflate(Observable):
 
@@ -42,5 +42,4 @@ class XmlDeflate(Observable):
         self.do.add(id, partName, amaraXmlNode.xml())
         
     def unknown(self, methodName, *args):
-        return self.all.__getattr__(methodName)(*args)
-        #self.all.unknown(methodName, *args)
+        return self.do.unknown(methodName, *args)

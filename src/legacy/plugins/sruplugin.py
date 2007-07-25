@@ -289,10 +289,10 @@ class WriteRecordsForXMLStorage(Observable):
 
     def writeRecord(self, sink, recordId, recordSchema, recordPacking):
         if recordPacking == 'xml':
-            self.all.write(sink, recordId, recordSchema)
+            self.do.write(sink, recordId, recordSchema)
         elif recordPacking == 'string':
             buffer = StringIO()
-            self.all.write(buffer, recordId, recordSchema)
+            self.do.write(buffer, recordId, recordSchema)
             sink.write(xmlEscape(buffer.getvalue()))
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
@@ -308,7 +308,7 @@ class RecordWriterIgnoringErrors(Observable):
     
     def writeRecord(self, sink, recordId, recordSchema, recordPacking):
         try:
-            self.all.write(sink, recordId, recordSchema, recordPacking)
+            self.do.write(sink, recordId, recordSchema, recordPacking)
         except (IOError, StorageException):
             pass 
 
