@@ -39,10 +39,10 @@ class HitsTest(unittest.TestCase):
         hits = self.createHits(range(15))
         self.assertEquals(15, len(hits))
         
-    def testGetLuceneDocIds(self):
+    def testDocNumbers(self):
         pyLuceneIds = [33, 34, 10, 11, 12, 54, 55]
         hits = self.createHits(pyLuceneIds)
-        self.assertEquals(pyLuceneIds, list(hits.getLuceneDocIds()))
+        self.assertEquals(pyLuceneIds, list(hits.docNumbers()))
     
     def testQueryIsExecuted(self):
         hitsCount = 3

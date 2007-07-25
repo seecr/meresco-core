@@ -50,7 +50,8 @@ class DeferredFunction:
             elif hasattr(delegate, 'unknown'):
                 yield getattr(delegate, 'unknown')(self._attr, *args, **kwargs)
 
-class AllFunction(DeferredFunction): pass
+class AllFunction(DeferredFunction):
+    pass
 
 class AnyFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
@@ -61,7 +62,8 @@ class AnyFunction(DeferredFunction):
         
 class DoFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
-        for ignore in DeferredFunction.__call__(self, *args, **kwargs): pass
+        for ignore in DeferredFunction.__call__(self, *args, **kwargs):
+            pass
 
 class Observable(object):
     def __init__(self, name = None):

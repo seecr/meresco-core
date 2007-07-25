@@ -32,8 +32,8 @@ DEFAULT_FETCHED_DOCS_COUNT = 10
 class Hits:
     """Remake of Lucene's hits object, with added 'TeddyIds' functionality
     Provides high performance access to both
-        - luceneDocIds (without fetching the associated document
-            - Using the special method getLuceneDocIds
+        - docNumbers (without fetching the associated document
+            - Using the special method docNumbers
         - TeddyIds (the associated document is fetched)
             - These ids are returned for __getitem__, __getslice__ and __iter__
         - __len__ is equal for these two approaches
@@ -54,9 +54,9 @@ class Hits:
     def __len__(self):
         return self._totalHits
     
-    def getLuceneDocIds(self):
+    def docNumbers(self):
         self._loadScoreDocs(self._totalHits)
-        return [scoreDoc.doc for scoreDoc in self._scoreDocs]
+        return (scoreDoc.doc for scoreDoc in self._scoreDocs)
     
     def __getslice__(self, start, stop):
         self._loadScoreDocs(min(len(self), stop))

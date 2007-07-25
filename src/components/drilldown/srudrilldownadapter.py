@@ -29,32 +29,18 @@ from xml.sax.saxutils import quoteattr, escape
 
 from meresco.framework.observable import Observable
 
-class DrillDownXml(Observable):
-        
+class SRUDrillDownAdapter(Observable):
     def extraResponseData(self, webRequest, hits):
-        """webRequest supports: write, and _arguments"""
+        fieldsAndMaximums = webRequest._arguments.get('x-meresco-drilldown', [''])[0].split(",")
+        fieldMaxTuples = ((s, int(i)) for (s, i) in (tuple(s.split(":")) for s in fieldsAndMaximums))
         
-        #questions:
-        #<drilldown> - should reflect the original name?
-        #x-meresco-drilldown ??
-        #x-meresco-drilldown structure ??
-        #shouldn't value really be called term??!
-        
-        termsAndMaximums = webRequest._arguments.get('x-meresco-drilldown', [''])[0].split(",")
-        if termsAndMaximums == [""]:
+        if fieldsAndMaximums == [""]:
             raise StopIteration
-        asTuples = [tuple(s.split(":")) for s in termsAndMaximums]
-        asTuples2 = [(s + "__untokenized__", int(i)) for (s, i) in asTuples]
-        #TODO! __untokenized__ bij elkaar in een file
-        
         yield "<drilldown>" #I think this should reflect the original name
-        drillDownResults = self.any.process(hits.getLuceneDocIds(), asTuples2)
-        for fieldnameWithGarbage, tuples in drillDownResults:
-            fieldname = fieldnameWithGarbage[:-len('__untokenized__')]
+        drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
+        for fieldname, termCounts in drillDownResults:
             yield '<field name=%s>' % quoteattr(fieldname)
-            for value, count in tuples:
-                yield '<value count=%s>%s</value>' % (quoteattr(str(count)), escape(str(value)))
+            for term, count in termCounts:
+                yield '<value count=%s>%s</value>' % (quoteattr(str(count)), escape(str(term)))
             yield '</field>'
-        
         yield "</drilldown>"
-        

@@ -241,11 +241,11 @@ class ObservableTest(unittest.TestCase):
     def testUnknownDispatching(self):
         observable = Observable()
         class Listener(object):
-            def aap(inner, one):
-                return one + " mies"
+            def method(inner, one):
+                return one + " another"
         observable.addObserver(Listener())
-        retval = observable.any.unknown('aap', 'one')
-        self.assertEquals('one mies', retval)
+        retval = observable.any.unknown('method', 'one')
+        self.assertEquals('one another', retval)
         
     def testProperErrorMessage(self):
         observable = Observable()

@@ -60,7 +60,6 @@ from configurationtest import ConfigurationTest
 from documenttest import DocumentTest
 from lucenetest import LuceneTest
 from srurecordupdateplugintest import SRURecordUpdatePluginTest
-#from stresstest import StressTest #TJ/JJ: TODO rewrite stresstest.
 from teddyinterfacetest import TeddyInterfaceTest
 from teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
 from teddygrowlservertest import TeddyGrowlServerTest
@@ -79,12 +78,12 @@ from oailistmetadataformatstest import OaiListMetadataFormatsTest
 from partscomponenttest import PartsComponentTest
 from setscomponenttest import SetsComponentTest
 from oailistsetstest import OaiListSetsTest
-from drilldownxmltest import DrillDownXmlTest
+from srudrilldownadaptertest import SRUDrillDownAdapterTest
 from observabletest import ObservableTest
 from logobservertest import LogObserverTest
 from drilldowntest import DrillDownTest
 from convertertest import ConverterTest
-from drilldownfieldcomponenttest import DrilldownFieldComponentTest
+from drilldownfilterstest import DrillDownFiltersTest
 
 if __name__ == '__main__':
         unittest.main()

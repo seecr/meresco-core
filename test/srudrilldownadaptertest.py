@@ -30,17 +30,17 @@ from StringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.http.sru.drilldownxml import DrillDownXml
+from meresco.components.drilldown.srudrilldownadapter import SRUDrillDownAdapter
 
-class DrillDownXmlTest(CQ2TestCase):
+class SRUDrillDownAdapterTest(CQ2TestCase):
     
     def testOne(self):
         self._arguments = {"x-meresco-drilldown": ["field0:1,field1:2,field2:3"]}
-        drillDownXml = DrillDownXml()
-        drillDownXml.addObserver(self)
+        adapter = SRUDrillDownAdapter()
+        adapter.addObserver(self)
         hits = CallTrace("Hits")
-        hits.returnValues['getLuceneDocIds'] = "Hits are simply passed"
-        result = drillDownXml.extraResponseData(self, hits)
+        hits.returnValues['docNumbers'] = "Hits are simply passed"
+        result = adapter.extraResponseData(self, hits)
         self.assertEqualsWS("""<drilldown>
 <field name="field0">
     <value count="14">value0_0</value>
@@ -54,13 +54,13 @@ class DrillDownXmlTest(CQ2TestCase):
     <value count="2">value2_1</value>
     <value count="1">value2_2</value>
 </field></drilldown>""", "".join(result))
-        self.assertEquals([('field0__untokenized__', 1), ('field1__untokenized__', 2), ('field2__untokenized__', 3)], self.processed_tuples)
+        self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
         self.assertEquals("Hits are simply passed", self.processed_hits)
         
-    def process(self, hits, tuples):
+    def drillDown(self, hits, tuples):
         self.processed_hits = hits
         self.processed_tuples = tuples
         return [
-            ('field0__untokenized__', [('value0_0', 14)]),
-            ('field1__untokenized__', [('value1_0', 13), ('value1_1', 11)]),
-            ('field2__untokenized__', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+            ('field0', [('value0_0', 14)]),
+            ('field1', [('value1_0', 13), ('value1_1', 11)]),
+            ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]

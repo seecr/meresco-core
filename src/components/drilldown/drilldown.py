@@ -66,9 +66,8 @@ class DrillDown(object):
                 self._docSets[fieldname].append((term, createDocSet(docIds, self._numDocsInIndex)))
 
     def _docSetForQueryResult(self, docIds):
-        sortedDocs = docIds
-        sortedDocs.sort()
-        return createDocSet(docIds, self._numDocsInIndex)
+        sortedDocs = sorted(docIds)
+        return createDocSet(sortedDocs, self._numDocsInIndex)
 
     def _docSetsForField(self, fieldName):
         result = self._docSetsForFieldLucene(fieldName)

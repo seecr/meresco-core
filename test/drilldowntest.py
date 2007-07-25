@@ -80,7 +80,7 @@ class DrillDownTest(TestCase):
         queryResults = self._luceneIndex.executeQuery(QueryWrapper(TermQuery(Term("field_1", "inquery"))))
         self.assertEquals(3, len(queryResults))
 
-        drilldownResult = drillDown.process(queryResults.getLuceneDocIds(), [('field_0', 0), ('field_1', 0)])
+        drilldownResult = drillDown.process(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)])
 
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)

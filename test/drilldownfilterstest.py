@@ -1,29 +1,26 @@
 from unittest import TestCase
 
-from cq2utils.component import Notification
 from cq2utils.calltrace import CallTrace
 from amara import binderytools
 
-from meresco.components.drilldown.drilldownfieldcomponent import DrilldownFieldComponent
+from meresco.components.drilldown.drilldownfilters import DrillDownUpdateFieldFilter, DrillDownRequestFieldFilter
 from meresco.framework.observable import Observable
 
-DATA = """<xmlfields>
+class DrillDownFiltersTest(TestCase):
+
+    def testDrillDownUpdateFieldFilter(self):
+        data = binderytools.bind_string("""<xmlfields>
     <field_0>term_0</field_0>
     <field_1>term_1</field_1>
     <field_2>term_2</field_2>
-</xmlfields>"""
-
-class DrilldownFieldComponentTest(TestCase):
-
-    def testOne(self):
-        data = binderytools.bind_string(DATA)
+</xmlfields>""")
 
         observable = Observable()
-        drilldownFieldComponent = DrilldownFieldComponent(['field_0', 'field_1'])
+        drillDownUpdateFieldFilter = DrillDownUpdateFieldFilter(['field_0', 'field_1'])
         observer = CallTrace('Observer')
 
-        observable.addObserver(drilldownFieldComponent)
-        drilldownFieldComponent.addObserver(observer)
+        observable.addObserver(drillDownUpdateFieldFilter)
+        drillDownUpdateFieldFilter.addObserver(observer)
 
         responses = observable.all.add("id", "partName", data.xmlfields)
         map(list, responses)
@@ -42,3 +39,15 @@ class DrilldownFieldComponentTest(TestCase):
         node = resultXml.xml_xpath("//field_0__untokenized__")[0]
         self.assertEquals(1, len(node.attributes))
         self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</field_0__untokenized__>', node.xml())
+
+    def testDrillDownRequestFieldFilter(self):
+        requestFilter = DrillDownRequestFieldFilter(['field_0', 'field_1'])
+        observer = CallTrace('Observer')
+        observer.returnValues["drillDown"] = [("field_0__untokenized__", "Passed Along Result")]
+        requestFilter.addObserver(observer)
+        result = requestFilter.drillDown("Passed Along Input", [("field_0", 0), ("field_1", 1)])
+        self.assertEquals(1, len(observer.calledMethods))
+        method = observer.calledMethods[0]
+        self.assertEquals("Passed Along Input", method.arguments[0])
+        self.assertEquals([("field_0__untokenized__", 0), ("field_1__untokenized__", 1)], list(method.arguments[1]))
+        self.assertEquals([("field_0", "Passed Along Result")], list(result))
