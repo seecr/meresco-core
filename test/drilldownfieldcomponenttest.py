@@ -25,7 +25,8 @@ class DrilldownFieldComponentTest(TestCase):
         observable.addObserver(drilldownFieldComponent)
         drilldownFieldComponent.addObserver(observer)
 
-        observable.all.add("id", "partName", data.xmlfields)
+        responses = observable.all.add("id", "partName", data.xmlfields)
+        map(list, responses)
 
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals(["id", "partName"], observer.calledMethods[0].arguments[:2])

@@ -82,7 +82,6 @@ from oailistsetstest import OaiListSetsTest
 from drilldownxmltest import DrillDownXmlTest
 from observabletest import ObservableTest
 from logobservertest import LogObserverTest
-from typedobservabletest import TypedObservableTest
 from drilldowntest import DrillDownTest
 from convertertest import ConverterTest
 from drilldownfieldcomponenttest import DrilldownFieldComponentTest

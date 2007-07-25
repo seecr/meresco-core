@@ -34,11 +34,15 @@ class Defer:
 
     def __getattr__(self, attr):
         return self._defereeType(self._observable._observers, attr)
+    
+    def unknown(self, message, *args, **kwargs):
+        return getattr(self, message)(*args, **kwargs)
 
 class DeferredFunction:
     def __init__(self, delegates, attr):
         self._delegates = delegates
         self._attr = attr
+        
     def __call__(self, *args, **kwargs):
         for delegate in self._delegates:
             if hasattr(delegate, self._attr):
@@ -57,7 +61,7 @@ class AnyFunction(DeferredFunction):
         
 class DoFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
-        list(DeferredFunction.__call__(self, *args, **kwargs))
+        for ignore in DeferredFunction.__call__(self, *args, **kwargs): pass
 
 class Observable(object):
     def __init__(self, name = None):

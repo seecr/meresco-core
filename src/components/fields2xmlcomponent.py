@@ -42,7 +42,7 @@ class Fields2XmlComponent(Component, Observable):
         originalXml = binderytools.bind_string(someString)
         root = self._fields2Xml(originalXml)
         
-        self.all.add(id, 'xmlfields', root.childNodes[0])
+        self.do.add(id, 'xmlfields', root.childNodes[0])
 
     def unknown(self, method, *kwargs):
         return self.all.__getattr__(methodName)(*args)

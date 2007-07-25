@@ -238,6 +238,15 @@ class ObservableTest(unittest.TestCase):
         self.assertEquals(('with',), interceptor.args)
         self.assertEquals({'unknown': 'arguments'}, interceptor.kwargs)
 
+    def testUnknownDispatching(self):
+        observable = Observable()
+        class Listener(object):
+            def aap(inner, one):
+                return one + " mies"
+        observable.addObserver(Listener())
+        retval = observable.any.unknown('aap', 'one')
+        self.assertEquals('one mies', retval)
+        
     def testProperErrorMessage(self):
         observable = Observable()
         try:

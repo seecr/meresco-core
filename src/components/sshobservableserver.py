@@ -40,7 +40,7 @@ class TeddyGrowlServer(GrowlServer, Observable):
         id = str(aDocument.id)
 
         if hasattr(aDocument, "delete") and aDocument.delete == 'true':
-            self.all.delete(id) #yield?
+            self.do.delete(id) #yield?
             return
 
         for part in aDocument.part:
@@ -53,4 +53,4 @@ class TeddyGrowlServer(GrowlServer, Observable):
             else:
                 pass #i.e. just not stored KVS: vraagteken - is dit geen probleem?
 
-            self.all.add(id, part.name, payload.getvalue()) #yield?
+            self.do.add(id, part.name, payload.getvalue()) #yield?

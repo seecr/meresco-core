@@ -31,7 +31,7 @@ from amara import binderytools
 class XmlInflate(Observable):
     
     def add(self, id, partName, xmlString):
-        self.all.add(id, partName, binderytools.bind_string(xmlString).rootNode.childNodes[0])
+        self.do.add(id, partName, binderytools.bind_string(xmlString).rootNode.childNodes[0])
         
     def unknown(self, methodName, *args):
         return self.all.__getattr__(methodName)(*args)
@@ -39,7 +39,7 @@ class XmlInflate(Observable):
 class XmlDeflate(Observable):
 
     def add(self, id, partName, amaraXmlNode):
-        self.all.add(id, partName, amaraXmlNode.xml())
+        self.do.add(id, partName, amaraXmlNode.xml())
         
     def unknown(self, methodName, *args):
         return self.all.__getattr__(methodName)(*args)

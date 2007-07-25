@@ -1,9 +1,7 @@
-from cq2utils.component import Component
 from meresco.framework.observable import Observable
-
 from meresco.components.xml2document import TEDDY_NS
 
-class DrilldownFieldComponent(Component, Observable):
+class DrilldownFieldComponent(Observable):
     def __init__(self, listOfFields):
         Observable.__init__(self)
         self._drilldownFields = listOfFields
@@ -19,5 +17,5 @@ class DrilldownFieldComponent(Component, Observable):
                 amaraXmlNode.xml_append(newfield)
         return self.all.add(id, partName, amaraXmlNode)
 
-    def unknown(self, method, *kwargs):
-        return self.all.__getattr__(methodName)(*args)
+    def unknown(self, message, *args, **kwargs):
+        return self.all.unknown(message, *args, **kwargs)

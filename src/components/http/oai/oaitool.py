@@ -103,7 +103,7 @@ class OaiVerb(object):
         from StringIO import StringIO
         from amara.binderytools import bind_string
         buffer = StringIO()
-        self.all.write(buffer, id, partName)
+        self.do.write(buffer, id, partName)
         return bind_string(buffer.getvalue()).childNodes[0]
         
     def writeFooter(self, webRequest):

@@ -163,7 +163,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def _writeRecordData(self, recordId):
         self.write('<srw:recordData>')
-        self.all.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
+        self.do.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
         self.write('</srw:recordData>')
 
     def _writeExtraRecordData(self, recordId):
@@ -173,7 +173,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
         self.write('<srw:extraRecordData>')
         for schema in self.sruQuery.x_recordSchema:
             self.write('<recordData recordSchema="%s">' % xmlEscape(schema))
-            self.all.writeRecord(self, recordId, schema, self.sruQuery.recordPacking)
+            self.do.writeRecord(self, recordId, schema, self.sruQuery.recordPacking)
             self.write('</recordData>')
         self.write('</srw:extraRecordData>')
 
@@ -181,6 +181,8 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
         openingTagWritten = False
         extraResponses = self.all.extraResponseData(self, hits)
         for response in extraResponses:
+            if not response:
+                continue
             if not openingTagWritten:
                 self.write('<srw:extraResponseData>')
                 openingTagWritten = True

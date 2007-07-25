@@ -25,18 +25,19 @@
 #
 ## end license ##
 from meresco.framework.observable import Observable
-from cq2utils.component import Notification
 from amara.binderytools import bind_string
 
 TOMBSTONE_PART = '__tombstone__'
 
 class Undertaker(Observable):
     
-    def notify(self, notification):
-        self.changed(notification)
-        if notification.method == "delete":
-            tombStone = Notification("add", notification.id, TOMBSTONE_PART, bind_string("<%s/>" % TOMBSTONE_PART).childNodes[0])
-            self.changed(tombStone)
-        if notification.method == "add":
-            self.all.deletePart(notification.id, TOMBSTONE_PART)
-    
+    def delete(self, id, *args):
+        self.do.add(id, TOMBSTONE_PART, bind_string("<%s/>" % TOMBSTONE_PART).childNodes[0])
+        self.do.delete(id, *args)
+      
+    def add(self, id, *args):
+        self.do.deletePart(id, TOMBSTONE_PART)
+        self.do.add(id, *args)
+
+    def unknown(self, message, *args, **kwargs):
+        return self.all.unknown(message, *args, **kwargs)

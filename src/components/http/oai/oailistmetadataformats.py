@@ -54,7 +54,7 @@ Error and Exception Conditions
     
     def preProcess(self, webRequest):
         if self._identifier:
-            if self.all.isAvailable(self._identifier, PARTS_PART) != (True, True):
+            if self.any.isAvailable(self._identifier, PARTS_PART) != (True, True):
                 return self.writeError(webRequest, 'idDoesNotExist')
             
             names = self.xmlSteal(self._identifier, PARTS_PART)

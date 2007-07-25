@@ -26,8 +26,8 @@
 ## end license ##
 
 from unittest import TestCase
+from meresco.framework.observable import Observable
 from meresco.components.undertaker import Undertaker
-from cq2utils.component import Notification
 from amara.binderytools import bind_string
 
 class UnderTakerTest(TestCase):
@@ -35,26 +35,37 @@ class UnderTakerTest(TestCase):
     def setUp(self):
         self.undertaker = Undertaker()
         self.undertaker.addObserver(self)
-        self.notifyCalls = []
-        self.deletedParts = []
+        self.addArgs = []
+        self.deletePartArgs = []
+        self.somethingElseCalled = False
     
     def testAdd(self):
-        notification = Notification('add', 'AN_ID', 'A_PARTNAME', 'A PAYLOAD (is in reality amary object)')
-        self.undertaker.notify(notification)
-        self.assertEquals([(notification,)], self.notifyCalls)
-        self.assertEquals([('AN_ID', '__tombstone__')], self.deletedParts)
+        self.undertaker.add("AN_ID", "A_PARTNAME", 'A PAYLOAD (is in reality amary object)')
+        self.assertEquals([('AN_ID', "A_PARTNAME", 'A PAYLOAD (is in reality amary object)')], self.addArgs)
+        self.assertEquals([('AN_ID', '__tombstone__')], self.deletePartArgs)
         
     def testDelete(self):
-        xml = bind_string("<__tombstone__/>").__tombstone__
-        notification = Notification('delete', 'AN_ID')
-        self.undertaker.notify(notification)
-        self.assertEquals(map(str, [
-            (notification,),
-            (Notification('add', 'AN_ID', '__tombstone__', xml),)]), map(str, self.notifyCalls))
+        self.undertaker.delete('AN_ID')
+        self.assertEquals(0, len(self.deletePartArgs))
+        self.assertEquals(('AN_ID', '__tombstone__'), self.addArgs[0][:2])
+        self.assertEquals("<__tombstone__/>", self.addArgs[0][2].xml())
+    
+    def testPassAlongEverythingElse(self):
+        class MyObservable(Observable):
+            def somethingElse(self):
+                return self.all.somethingElse()
+        root = MyObservable()
+        root.addObserver(self.undertaker)
+        self.assertFalse(self.somethingElseCalled)
+        list(map(list, root.somethingElse()))
+        self.assertTrue(self.somethingElseCalled)
         
-    def notify(self, *args):
+    def add(self, *args):
         """self shunt"""
-        self.notifyCalls.append(args)
+        self.addArgs.append(args)
         
     def deletePart(self, id, partName):
-        self.deletedParts.append((id, partName))
+        self.deletePartArgs.append((id, partName))
+
+    def somethingElse(self):
+        self.somethingElseCalled = True

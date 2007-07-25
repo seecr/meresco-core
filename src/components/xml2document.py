@@ -30,9 +30,6 @@ from amara import binderytools
 from amara.bindery import is_element
 from meresco.framework.observable import Observable
 
-class Notification:
-    pass
-
 TEDDY_NS = "http://www.cq2.nl/teddy"
 
 class Xml2Document(Observable):
@@ -41,7 +38,7 @@ class Xml2Document(Observable):
         return self.all.__getattr__(methodName)(*args)
     
     def add(self, id, partName, amaraXmlNode):
-        return self.all.add(id, partName, self._create(id, amaraXmlNode))
+        self.do.add(id, partName, self._create(id, amaraXmlNode))
     
     def _create(self, documentId, topNode):
         doc = Document(documentId)

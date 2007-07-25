@@ -57,7 +57,7 @@ Error and Exception Conditions
     
     def process(self, webRequest):
         for id in self._queryResult:
-            self.all.write(webRequest, id, 'set')
+            self.do.write(webRequest, id, 'set')
 
         if self._resumptionToken:
             webRequest.write('<resumptionToken/>')
