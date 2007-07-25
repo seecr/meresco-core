@@ -26,6 +26,7 @@
 ## end license ##
 
 import sys
+from types import GeneratorType
 
 from meresco.framework.observable import Observable, Function, FunctionObservable
 from cq2utils.calltrace import CallTrace
@@ -119,48 +120,38 @@ class ObservableTest(unittest.TestCase):
         observable.notify("A")
         self.assertEquals([("Extended A", "Additional Argument")], one.notifications)
 
-    def testAll(self):
+    def testAllWithoutImplementers(self):
         observable = Observable()
-
-        observerAB = ObserverAB()
-        observerA = ObserverA()
-        doesNotReturn = DoesNotReturn()
-
-        observable.addObserver(observerAB)
-        observable.addObserver(observerA)
-        observable.addObserver(doesNotReturn)
-
-        resultA = observable.all.methodA(0)
-        resultB = observable.all.methodB(1, 2)
-        self.assertEquals([
-            ("Method A", (0,)),
-            ("Method B", (1, 2))], observerAB.notifications)
-        self.assertEquals([("Method A", (0,))], observerA.notifications)
-        self.assertEquals([("Method A", (0,))], doesNotReturn.notifications)
-        self.assertEquals("A.methodA", resultA)
-        self.assertEquals("AB.methodB", resultB)
-
-    def testAny(self):
+        responses = observable.all.someMethodNobodyIsListeningTo()
+        self.assertEquals(GeneratorType, type(responses))
+        
+    def testAllWithMoreImplementers(self):
         observable = Observable()
+        observerOne = CallTrace(returnValues={'aMethod': 'one'})
+        observerTwo = CallTrace(returnValues={'aMethod': 'two'})
+        observable.addObservers([observerOne, observerTwo])
+        
+        responses = observable.all.aMethod()
+        
+        self.assertEquals(GeneratorType, type(responses))
+        self.assertEquals(['one', 'two'], list(responses))
 
-        doesNotReturn = DoesNotReturn()
+        
+    def testAnyCallsFirstImplementer(self):
+        observable = Observable()
         observerA = ObserverA()
         observerAB = ObserverAB()
-
-        observable.addObserver(doesNotReturn)
         observable.addObserver(observerA)
         observable.addObserver(observerAB)
 
         resultA = observable.any.methodA(0)
         resultB = observable.any.methodB(1, 2)
-        self.assertEquals([("Method A", (0,))], doesNotReturn.notifications)
-        #self.assertEquals([("Method A", (0,))], observerA.notifications)
+        self.assertEquals([("Method A", (0,))], observerA.notifications)
         self.assertEquals([("Method B", (1, 2))], observerAB.notifications)
 
         self.assertEquals("A.methodA", resultA)
         self.assertEquals("AB.methodB", resultB)
 
-        #add a test for None-result
 
     def testAllException(self):
         observable = Observable()
@@ -174,12 +165,25 @@ class ObservableTest(unittest.TestCase):
         safe = Safe()
         observable.addObserver(safe)
         try:
-            observable.all.mayRaiseException()
+            list(observable.all.mayRaiseException())
             self.fail()
         except TestException:
             pass
         self.assertEquals([], safe.notifications)
 
+    def testDo(self):
+        observable = Observable()
+        retvalIsAlwaysNone = observable.do.oneWayMethodWithoutReturnValue()
+        self.assertEquals(None, retvalIsAlwaysNone)
+        
+        observer = CallTrace("Observer")
+        observer.something = lambda x,y: x.append(y)
+        
+        observable.addObserver(observer)
+        value = []
+        observable.do.something(value, 1)
+        self.assertEquals([1], value)
+        
     def testAddObserversEmptyList(self):
         observable = Observable()
         observable.addObservers([])
@@ -228,7 +232,8 @@ class ObservableTest(unittest.TestCase):
         interceptor = Interceptor()
         root = Observable()
         root.addObserver(interceptor)
-        root.all.anUnknownMessage('with', unknown='arguments')
+        list(root.all.anUnknownMessage('with', unknown='arguments'))
+        
         self.assertEquals('anUnknownMessage', interceptor.message)
         self.assertEquals(('with',), interceptor.args)
         self.assertEquals({'unknown': 'arguments'}, interceptor.kwargs)
@@ -252,6 +257,8 @@ class ObservableTest(unittest.TestCase):
             self.fail('shoud raise AttributeError')
         except TypeError, e:
             self.assertEquals('yes() takes exactly 2 arguments (1 given)', str(e))
+            
+     
 
 class TestException(Exception):
     pass

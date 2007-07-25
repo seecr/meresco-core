@@ -39,29 +39,32 @@ class DeferredFunction:
     def __init__(self, delegates, attr):
         self._delegates = delegates
         self._attr = attr
-
-class AllFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
-        result = None
         for delegate in self._delegates:
             if hasattr(delegate, self._attr):
-                result = getattr(delegate, self._attr)(*args, **kwargs) or result
+                yield getattr(delegate, self._attr)(*args, **kwargs)
             elif hasattr(delegate, 'unknown'):
-                result = getattr(delegate, 'unknown')(self._attr, *args, **kwargs) or result
-        return result
+                yield getattr(delegate, 'unknown')(self._attr, *args, **kwargs)
+
+class AllFunction(DeferredFunction): pass
 
 class AnyFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
-        for delegate in self._delegates:
-            if hasattr(delegate, self._attr):
-                return getattr(delegate, self._attr)(*args, **kwargs)
-        raise AttributeError('None of the %d delegates answers any.%s(...)' % (len(self._delegates), self._attr))
+        try:
+            return DeferredFunction.__call__(self, *args, **kwargs).next()
+        except StopIteration:
+            raise AttributeError('None of the %d delegates answers any.%s(...)' % (len(self._delegates), self._attr))
+        
+class DoFunction(DeferredFunction):
+    def __call__(self, *args, **kwargs):
+        list(DeferredFunction.__call__(self, *args, **kwargs))
 
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
         self.all = Defer(self, AllFunction)
         self.any = Defer(self, AnyFunction)
+        self.do = Defer(self, DoFunction)
         if name:
             self.__repr__ = lambda: name
 

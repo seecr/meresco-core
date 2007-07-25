@@ -179,12 +179,13 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def _writeExtraResponseData(self, hits):
         openingTagWritten = False
-        dataIterator = self.any.extraResponseData(self, hits) or []
-        for data in dataIterator:
+        extraResponses = self.all.extraResponseData(self, hits)
+        for response in extraResponses:
             if not openingTagWritten:
                 self.write('<srw:extraResponseData>')
                 openingTagWritten = True
-            self.write(data)
+            for line in response:
+                self.write(line)
         if openingTagWritten:
             self.write('</srw:extraResponseData>')
 
