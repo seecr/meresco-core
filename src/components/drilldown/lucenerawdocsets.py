@@ -1,6 +1,6 @@
 import PyLucene
 
-class Converter(object):
+class LuceneRawDocSets(object):
     def __init__(self, aLuceneIndexReader, fieldNames):
         self._reader = aLuceneIndexReader
         self._fieldNames = fieldNames

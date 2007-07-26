@@ -3,7 +3,7 @@ from tempfile import gettempdir
 from shutil import rmtree
 from os.path import join
 
-from meresco.components.lucene.converter import Converter
+from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.lucene.document import Document
 
@@ -16,7 +16,7 @@ def addUntokenized(index, documents):
         index.addToIndex(myDocument)
         index.reOpen()
 
-class ConverterTest(TestCase):
+class LuceneRawDocSetsTest(TestCase):
     def setUp(self):
         self._tempdir = gettempdir() + '/testing'
         self._directoryName = join(self._tempdir, 'lucene-index')
@@ -33,7 +33,9 @@ class ConverterTest(TestCase):
             ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
-        converter = Converter(self._luceneIndex._getReader(), ['field_0', 'field_1'])
-        docsets = [(field, [(term, list(docIds)) for term, docIds in terms]) for field, terms in converter.getDocSets()]
+        converter = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0', 'field_1'])
+        docsets = [(field, [(term, list(docIds)) 
+            for term, docIds in terms]) 
+                for field, terms in converter.getDocSets()]
         self.assertEquals(2, len(docsets))
         self.assertEquals([('field_0', [(u'this is term_0', [0, 1]), (u'this is term_1', [2]), (u'this is term_2', [3])]), ('field_1', [(u'cannotbefound', [3]), (u'inquery', [0, 1, 2])])], docsets)

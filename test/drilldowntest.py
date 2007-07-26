@@ -30,10 +30,10 @@ from shutil import rmtree
 from PyLucene import Term, TermQuery
 
 from unittest import TestCase
-from convertertest import addUntokenized
+from lucenerawdocsetstest import addUntokenized
 
 from meresco.components.lucene.lucene import LuceneIndex
-from meresco.components.lucene.converter import Converter
+from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 from meresco.components.drilldown.drilldown import DrillDown
 from meresco.components.lucene.querywrapper import QueryWrapper
 
@@ -73,7 +73,7 @@ class DrillDownTest(TestCase):
             ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
-        convertor = Converter(self._luceneIndex._getReader(), ['field_0', 'field_1'])
+        convertor = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0', 'field_1'])
         drillDown = DrillDown(['field_0', 'field_1'])
         drillDown.loadDocSets(convertor.getDocSets(), convertor.docCount())
 

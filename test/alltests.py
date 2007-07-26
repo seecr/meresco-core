@@ -82,7 +82,7 @@ from srudrilldownadaptertest import SRUDrillDownAdapterTest
 from observabletest import ObservableTest
 from logobservertest import LogObserverTest
 from drilldowntest import DrillDownTest
-from convertertest import ConverterTest
+from lucenerawdocsetstest import LuceneRawDocSetsTest
 from drilldownfilterstest import DrillDownFiltersTest
 
 if __name__ == '__main__':
