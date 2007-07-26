@@ -26,7 +26,7 @@
 ## end license ##
 from observabletestcase import ObservableTestCase
 
-from meresco.legacy.deathrow.portal import Portal
+from meresco.legacy.portal import Portal
 
 PORTAL_PAGE = """<html>
     <body>

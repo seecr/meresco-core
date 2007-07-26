@@ -36,7 +36,6 @@ sys.path.insert(0, "..")
 
 import unittest
 
-from servertest import ServerTest
 from sruplugintest import SRUPluginTest
 from srwplugintest import SRWPluginTest
 from xmlfileplugintest import XMLFilePluginTest
