@@ -34,7 +34,7 @@ class Defer:
 
     def __getattr__(self, attr):
         return self._defereeType(self._observable._observers, attr)
-    
+
     def unknown(self, message, *args, **kwargs):
         return getattr(self, message)(*args, **kwargs)
 
@@ -42,13 +42,16 @@ class DeferredFunction:
     def __init__(self, delegates, attr):
         self._delegates = delegates
         self._attr = attr
-        
+
     def __call__(self, *args, **kwargs):
         for delegate in self._delegates:
             if hasattr(delegate, self._attr):
                 yield getattr(delegate, self._attr)(*args, **kwargs)
             elif hasattr(delegate, 'unknown'):
-                yield getattr(delegate, 'unknown')(self._attr, *args, **kwargs)
+                responses = getattr(delegate, 'unknown')(self._attr, *args, **kwargs)
+                if responses:
+                    for response in responses:
+                        yield response
 
 class AllFunction(DeferredFunction):
     pass
@@ -59,7 +62,7 @@ class AnyFunction(DeferredFunction):
             return DeferredFunction.__call__(self, *args, **kwargs).next()
         except StopIteration:
             raise AttributeError('None of the %d delegates answers any.%s(...)' % (len(self._delegates), self._attr))
-        
+
 class DoFunction(DeferredFunction):
     def __call__(self, *args, **kwargs):
         for ignore in DeferredFunction.__call__(self, *args, **kwargs):

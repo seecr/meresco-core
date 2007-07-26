@@ -259,7 +259,7 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         class Listener(object):
             def unknown(self, methodName, one):
-                return "via unknown " + one
+                return ["via unknown " + one]
         observable.addObserver(Listener())
         retval = observable.any.unknown('non_existing_method', 'one')
         self.assertEquals("via unknown one", retval)
@@ -268,7 +268,7 @@ class ObservableTest(unittest.TestCase):
         """ON PURPOSE BROKEN CHECKIN: testSyntacticSugarIsPreserved.theory() != reality"""
         class WithUnknown(Observable):
             def unknown(self, methodName, *args):
-                self.all.unknown(methodName, "extra arg", *args)
+                return self.all.unknown(methodName, "extra arg", *args)
         
         observer = CallTrace("Observer")
         
@@ -280,7 +280,7 @@ class ObservableTest(unittest.TestCase):
         source.do.someMethod("original arg")
         #if syntactic sugar (i.e. "do") is preseverd, it would force the call self.all.unknown directly
         self.assertEquals(1, len(observer.calledMethods))
-        self.assertEquals('someMethod("extra arg", "original arg")', str(observer.calledMethods[0]))
+        self.assertEquals("someMethod('extra arg', 'original arg')", str(observer.calledMethods[0]))
         
     def testProperErrorMessage(self):
         observable = Observable()
