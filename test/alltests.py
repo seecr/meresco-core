@@ -53,7 +53,6 @@ from oailisttest import OaiListTest
 from oaisinktest import OaiSinkTest
 from oaicomponenttest import OaiComponentTest
 from oaitooltest import OaiToolTest
-from resetplugintest import ResetPluginTest
 from stampcomponenttest import StampComponentTest
 from portaltest import PortalTest
 from configurationtest import ConfigurationTest
