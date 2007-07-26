@@ -24,8 +24,6 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from traceback import format_exception
-from sys import exc_info
 
 class Defer:
     def __init__(self, observable, defereeType):
@@ -38,42 +36,42 @@ class Defer:
     def unknown(self, message, *args, **kwargs):
         return getattr(self, message)(*args, **kwargs)
 
-class DeferredFunction:
-    def __init__(self, delegates, attr):
-        self._delegates = delegates
-        self._attr = attr
+class DeferredMessage:
+    def __init__(self, observers, message):
+        self._observers = observers
+        self._message = message
 
     def __call__(self, *args, **kwargs):
-        for delegate in self._delegates:
-            if hasattr(delegate, self._attr):
-                yield getattr(delegate, self._attr)(*args, **kwargs)
-            elif hasattr(delegate, 'unknown'):
-                responses = getattr(delegate, 'unknown')(self._attr, *args, **kwargs)
+        for observer in self._observers:
+            if hasattr(observer, self._message):
+                yield getattr(observer, self._message)(*args, **kwargs)
+            elif hasattr(observer, 'unknown'):
+                responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
                 if responses:
                     for response in responses:
                         yield response
 
-class AllFunction(DeferredFunction):
+class AllMessage(DeferredMessage):
     pass
 
-class AnyFunction(DeferredFunction):
+class AnyMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            return DeferredFunction.__call__(self, *args, **kwargs).next()
+            return DeferredMessage.__call__(self, *args, **kwargs).next()
         except StopIteration:
-            raise AttributeError('None of the %d delegates answers any.%s(...)' % (len(self._delegates), self._attr))
+            raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
 
-class DoFunction(DeferredFunction):
+class DoMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
-        for ignore in DeferredFunction.__call__(self, *args, **kwargs):
+        for ignore in DeferredMessage.__call__(self, *args, **kwargs):
             pass
 
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
-        self.all = Defer(self, AllFunction)
-        self.any = Defer(self, AnyFunction)
-        self.do = Defer(self, DoFunction)
+        self.all = Defer(self, AllMessage)
+        self.any = Defer(self, AnyMessage)
+        self.do = Defer(self, DoMessage)
         if name:
             self.__repr__ = lambda: name
 
@@ -88,6 +86,7 @@ class Observable(object):
             self.addObserver(node)
 
     def _notifyObservers(self, __returnResult__, *args, **kwargs):
+        """deprecated"""
         i = 0
         while i < len(self._observers):
             result = self._observers[i].notify(*args, **kwargs)
@@ -96,9 +95,11 @@ class Observable(object):
             i += 1
 
     def changed(self, *args, **kwargs):
+        """deprecated"""
         return self._notifyObservers(False, *args, **kwargs)
 
     def process(self, *args, **kwargs):
+        """deprecated"""
         return self._notifyObservers(True, *args, **kwargs)
 
 class Function:

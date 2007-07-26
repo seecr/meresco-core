@@ -124,19 +124,19 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         responses = observable.all.someMethodNobodyIsListeningTo()
         self.assertEquals(GeneratorType, type(responses))
-        
+
     def testAllWithMoreImplementers(self):
         observable = Observable()
         observerOne = CallTrace(returnValues={'aMethod': 'one'})
         observerTwo = CallTrace(returnValues={'aMethod': 'two'})
         observable.addObservers([observerOne, observerTwo])
-        
+
         responses = observable.all.aMethod()
-        
+
         self.assertEquals(GeneratorType, type(responses))
         self.assertEquals(['one', 'two'], list(responses))
 
-        
+
     def testAnyCallsFirstImplementer(self):
         observable = Observable()
         observerA = ObserverA()
@@ -175,15 +175,15 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         retvalIsAlwaysNone = observable.do.oneWayMethodWithoutReturnValue()
         self.assertEquals(None, retvalIsAlwaysNone)
-        
+
         observer = CallTrace("Observer")
         observer.something = lambda x,y: x.append(y)
-        
+
         observable.addObserver(observer)
         value = []
         observable.do.something(value, 1)
         self.assertEquals([1], value)
-        
+
     def testAddObserversEmptyList(self):
         observable = Observable()
         observable.addObservers([])
@@ -233,7 +233,7 @@ class ObservableTest(unittest.TestCase):
         root = Observable()
         root.addObserver(interceptor)
         list(root.all.anUnknownMessage('with', unknown='arguments'))
-        
+
         self.assertEquals('anUnknownMessage', interceptor.message)
         self.assertEquals(('with',), interceptor.args)
         self.assertEquals({'unknown': 'arguments'}, interceptor.kwargs)
@@ -245,7 +245,7 @@ class ObservableTest(unittest.TestCase):
         observable.addObserver(Listener())
         retval = observable.all.unknown('non_existing_method', 'one')
         self.assertEquals([], list(retval))
-        
+
     def testUnknownDispatching(self):
         observable = Observable()
         class Listener(object):
@@ -254,7 +254,7 @@ class ObservableTest(unittest.TestCase):
         observable.addObserver(Listener())
         retval = observable.any.unknown('method', 'one')
         self.assertEquals('one another', retval)
-        
+
     def testUnknownDispatchingBackToUnknown(self):
         observable = Observable()
         class Listener(object):
@@ -263,15 +263,15 @@ class ObservableTest(unittest.TestCase):
         observable.addObserver(Listener())
         retval = observable.any.unknown('non_existing_method', 'one')
         self.assertEquals("via unknown one", retval)
-        
+
     def testSyntacticSugarIsPreserved(self):
         """ON PURPOSE BROKEN CHECKIN: testSyntacticSugarIsPreserved.theory() != reality"""
         class WithUnknown(Observable):
             def unknown(self, methodName, *args):
                 return self.all.unknown(methodName, "extra arg", *args)
-        
+
         observer = CallTrace("Observer")
-        
+
         withUnknown = WithUnknown()
         withUnknown.addObserver(observer)
 
@@ -281,14 +281,14 @@ class ObservableTest(unittest.TestCase):
         #if syntactic sugar (i.e. "do") is preseverd, it would force the call self.all.unknown directly
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals("someMethod('extra arg', 'original arg')", str(observer.calledMethods[0]))
-        
+
     def testProperErrorMessage(self):
         observable = Observable()
         try:
             answer = observable.any.gimmeAnswer('please')
             self.fail('shoud raise AttributeError')
         except AttributeError, e:
-            self.assertEquals('None of the 0 delegates answers any.gimmeAnswer(...)', str(e))
+            self.assertEquals('None of the 0 observers responds to any.gimmeAnswer(...)', str(e))
 
     def testProperErrorMessageWhenArgsDoNotMatch(self):
         from traceback import print_exc
@@ -301,8 +301,8 @@ class ObservableTest(unittest.TestCase):
             self.fail('shoud raise AttributeError')
         except TypeError, e:
             self.assertEquals('yes() takes exactly 2 arguments (1 given)', str(e))
-            
-     
+
+
 
 class TestException(Exception):
     pass
