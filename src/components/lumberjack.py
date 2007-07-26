@@ -25,13 +25,33 @@
 #
 ## end license ##
 
+from threading import Event
+
+from meresco.framework.observable import Observable
+
+from PyLucene import PythonThread
+
 class Lumberjack:
+    """We'll leave the test as an exercise to the reader"""
     
     def __init__(self, root, observersFactory):
         self.root = root
         self.observersFactory = observersFactory
+        self.event = Event()
+        thread = PythonThread(target=self.justKeepChopping)
+        thread.setDaemon(True)
+        thread.start()
         
     def unknown(self, methodName, *args):
-        newObservers = self.observersFactory()
-        self.root._observers = []
-        self.root.addObservers(newObservers)
+        self.event.set()
+            
+    def justKeepChopping(self):
+        while True:
+            self.event.wait()
+            self.event.clear()
+            self.chop()
+            
+    def chop(self):
+        atomicWorkAround = Observable()
+        atomicWorkAround.addObservers(self.observersFactory())
+        self.root._observers = atomicWorkAround._observers
