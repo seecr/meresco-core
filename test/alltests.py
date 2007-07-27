@@ -76,7 +76,7 @@ from oailistmetadataformatstest import OaiListMetadataFormatsTest
 from partscomponenttest import PartsComponentTest
 from setscomponenttest import SetsComponentTest
 from oailistsetstest import OaiListSetsTest
-from srudrilldownadaptertest import SRUDrillDownAdapterTest
+from srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
 from observabletest import ObservableTest
 from logobservertest import LogObserverTest
 from drilldowntest import DrillDownTest

@@ -30,30 +30,81 @@ from StringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.drilldown.srudrilldownadapter import SRUDrillDownAdapter
+from meresco.components.drilldown.srudrilldownadapter import SRUDrillDownAdapter, SRUTermDrillDown, SRUFieldDrillDown
 
 class SRUDrillDownAdapterTest(CQ2TestCase):
     
     def testOne(self):
-        self._arguments = {"x-meresco-drilldown": ["field0:1,field1:2,field2:3"]}
-        adapter = SRUDrillDownAdapter()
+        class MockedImpl:
+            def extraResponseData(sself, webRequest, hits):
+                yield "<tag>"
+                yield "something</tag>"
+                
+        adapter = SRUDrillDownAdapter([MockedImpl, MockedImpl])
+        result = list(adapter.extraResponseData("ignored_webRequest", "ignored_hits"))
+        self.assertEqualsWS([
+            '<dd:drilldown xmlns:dd="something/xsd/drilldown.xsd">',
+            '<tag>', 'something</tag>',
+            '<tag>', 'something</tag>',
+            '</dd:drilldown>'], result)
+
+class SRUTermDrillDownTest(CQ2TestCase):
+
+    def testSRUTermDrillDown(self):
+        self._arguments = {"x-term-drilldown": ["field0:1,field1:2,field2:3"]}
+        adapter = SRUTermDrillDown()
         adapter.addObserver(self)
         hits = CallTrace("Hits")
         hits.returnValues['docNumbers'] = "Hits are simply passed"
         result = adapter.extraResponseData(self, hits)
-        self.assertEqualsWS("""<drilldown>
-<field name="field0">
-    <value count="14">value0_0</value>
-</field>
-<field name="field1">
-    <value count="13">value1_0</value>
-    <value count="11">value1_1</value>
-</field>
-<field name="field2">
-    <value count="3">value2_0</value>
-    <value count="2">value2_1</value>
-    <value count="1">value2_2</value>
-</field></drilldown>""", "".join(result))
+        self.assertEqualsWS("""<dd:term-drilldown><dd:navigator name="field0">
+    <dd:item count="14">value0_0</dd:item>
+</dd:navigator>
+<dd:navigator name="field1">
+    <dd:item count="13">value1_0</dd:item>
+    <dd:item count="11">value1_1</dd:item>
+</dd:navigator>
+<dd:navigator name="field2">
+    <dd:item count="3">value2_0</dd:item>
+    <dd:item count="2">value2_1</dd:item>
+    <dd:item count="1">value2_2</dd:item>
+</dd:navigator></dd:term-drilldown>""", "".join(result))
+        self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
+        self.assertEquals("Hits are simply passed", self.processed_hits)
+        
+    def drillDown(self, hits, tuples):
+        self.processed_hits = hits
+        self.processed_tuples = tuples
+        return [
+            ('field0', [('value0_0', 14)]),
+            ('field1', [('value1_0', 13), ('value1_1', 11)]),
+            ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+
+
+
+!!!!!!!!!!!!!!!!SVN DOET HET WEER!!!!!!!!!!!!!!!!!!!!!!!
+
+class SRUFieldDrillDownTest(CQ2TestCase):
+
+    def testSRUFieldDrillDown(self):
+        self._arguments = {"x-term-drilldown": ["field0:1,field1:2,field2:3"]}
+        adapter = SRUTermDrillDown()
+        adapter.addObserver(self)
+        hits = CallTrace("Hits")
+        hits.returnValues['docNumbers'] = "Hits are simply passed"
+        result = adapter.extraResponseData(self, hits)
+        self.assertEqualsWS("""<dd:term-drilldown><dd:navigator name="field0">
+    <dd:item count="14">value0_0</dd:item>
+</dd:navigator>
+<dd:navigator name="field1">
+    <dd:item count="13">value1_0</dd:item>
+    <dd:item count="11">value1_1</dd:item>
+</dd:navigator>
+<dd:navigator name="field2">
+    <dd:item count="3">value2_0</dd:item>
+    <dd:item count="2">value2_1</dd:item>
+    <dd:item count="1">value2_2</dd:item>
+</dd:navigator></dd:term-drilldown>""", "".join(result))
         self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
         self.assertEquals("Hits are simply passed", self.processed_hits)
         

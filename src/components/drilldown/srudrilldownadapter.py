@@ -29,18 +29,68 @@ from xml.sax.saxutils import quoteattr, escape
 
 from meresco.framework.observable import Observable
 
+def flatten(generators):
+    for generator in generators:
+        for line in generator:
+            yield line
+
+def generatorDecorate(before, data, after):
+    beforeWritten = False
+    for d in data:
+        if not beforeWritten:
+            yield before
+            beforeWritten = True
+        yield d
+    if beforeWritten:
+        yield after
+
 class SRUDrillDownAdapter(Observable):
+    def __init__(self, observerFactories):
+        Observable.__init__(self)
+        for factory in observerFactories:
+            observer = factory()
+            self.addObserver(observer)
+            observer.all = self.all
+            #? not sure if this is required: - maybe extract something here?
+            observer.do = self.do
+            observer.any = self.any
+    
     def extraResponseData(self, webRequest, hits):
-        fieldsAndMaximums = webRequest._arguments.get('x-meresco-drilldown', [''])[0].split(",")
+        return generatorDecorate(
+            '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % "something",
+            flatten(self.all.extraResponseData(webRequest, hits)),
+            "</dd:drilldown>")
+
+class SRUTermDrillDown(Observable):
+    
+    def extraResponseData(self, webRequest, hits):
+        fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
         fieldMaxTuples = ((s, int(i)) for (s, i) in (tuple(s.split(":")) for s in fieldsAndMaximums))
         
         if fieldsAndMaximums == [""]:
             raise StopIteration
-        yield "<drilldown>" #I think this should reflect the original name
         drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
+        yield "<dd:term-drilldown>"
         for fieldname, termCounts in drillDownResults:
-            yield '<field name=%s>' % quoteattr(fieldname)
+            yield '<dd:navigator name=%s>' % quoteattr(fieldname)
             for term, count in termCounts:
-                yield '<value count=%s>%s</value>' % (quoteattr(str(count)), escape(str(term)))
-            yield '</field>'
-        yield "</drilldown>"
+                yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
+            yield '</dd:navigator>'
+        yield "</dd:term-drilldown>"
+
+class SRUFieldDrillDown(Observable):
+    
+    def extraResponseData(self, webRequest, hits):
+        fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
+        fieldMaxTuples = ((s, int(i)) for (s, i) in (tuple(s.split(":")) for s in fieldsAndMaximums))
+        
+        if fieldsAndMaximums == [""]:
+            raise StopIteration
+        drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
+        yield "<dd:term-drilldown>"
+        for fieldname, termCounts in drillDownResults:
+            yield '<dd:navigator name=%s>' % quoteattr(fieldname)
+            for term, count in termCounts:
+                yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
+            yield '</dd:navigator>'
+        yield "</dd:term-drilldown>"
