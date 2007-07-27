@@ -80,38 +80,21 @@ class SRUTermDrillDownTest(CQ2TestCase):
             ('field1', [('value1_0', 13), ('value1_1', 11)]),
             ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
 
-
-
-!!!!!!!!!!!!!!!!SVN DOET HET WEER!!!!!!!!!!!!!!!!!!!!!!!
-
 class SRUFieldDrillDownTest(CQ2TestCase):
 
-    def testSRUFieldDrillDown(self):
-        self._arguments = {"x-term-drilldown": ["field0:1,field1:2,field2:3"]}
-        adapter = SRUTermDrillDown()
-        adapter.addObserver(self)
-        hits = CallTrace("Hits")
-        hits.returnValues['docNumbers'] = "Hits are simply passed"
-        result = adapter.extraResponseData(self, hits)
-        self.assertEqualsWS("""<dd:term-drilldown><dd:navigator name="field0">
-    <dd:item count="14">value0_0</dd:item>
-</dd:navigator>
-<dd:navigator name="field1">
-    <dd:item count="13">value1_0</dd:item>
-    <dd:item count="11">value1_1</dd:item>
-</dd:navigator>
-<dd:navigator name="field2">
-    <dd:item count="3">value2_0</dd:item>
-    <dd:item count="2">value2_1</dd:item>
-    <dd:item count="1">value2_2</dd:item>
-</dd:navigator></dd:term-drilldown>""", "".join(result))
-        self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
-        self.assertEquals("Hits are simply passed", self.processed_hits)
+    def testSRUParamsAndXMLOutput(self):
+        self._arguments = {"x-field-drilldown": ["term"], 'x-field-drilldown-fields': ['field0,field1'], 'query': ['original']}
+        adapter = SRUFieldDrillDown()
+        adapter.drillDown = self.drillDown
         
-    def drillDown(self, hits, tuples):
-        self.processed_hits = hits
-        self.processed_tuples = tuples
-        return [
-            ('field0', [('value0_0', 14)]),
-            ('field1', [('value1_0', 13), ('value1_1', 11)]),
-            ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+        self.drillDownCall = None
+        result = adapter.extraResponseData(self, "ignored_hits")
+        self.assertEqualsWS("""<dd:field-drilldown>
+<dd:field name="field0">5</dd:field>
+<dd:field name="field1">10</dd:field></dd:field-drilldown>""", "".join(result))
+
+        self.assertEquals(('original', 'term', ['field0', 'field1']), self.drillDownCall)
+        
+    def drillDown(self, query, term, fields):
+        self.drillDownCall = (query, term, fields)
+        return [('field0', 5),('field1', 10)]

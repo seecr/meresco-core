@@ -81,16 +81,22 @@ class SRUTermDrillDown(Observable):
 class SRUFieldDrillDown(Observable):
     
     def extraResponseData(self, webRequest, hits):
-        fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
-        fieldMaxTuples = ((s, int(i)) for (s, i) in (tuple(s.split(":")) for s in fieldsAndMaximums))
+        query = webRequest._arguments.get('query', [''])[0]
+        term = webRequest._arguments.get('x-field-drilldown', [''])[0]
+        fields = webRequest._arguments.get('x-field-drilldown-fields', [''])[0].split(",")
         
-        if fieldsAndMaximums == [""]:
+        if not term or fields == [""]:
             raise StopIteration
-        drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
-        yield "<dd:term-drilldown>"
-        for fieldname, termCounts in drillDownResults:
-            yield '<dd:navigator name=%s>' % quoteattr(fieldname)
-            for term, count in termCounts:
-                yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
-            yield '</dd:navigator>'
-        yield "</dd:term-drilldown>"
+        
+        drillDownResults = self.drillDown(query, term, fields)
+        
+        yield "<dd:field-drilldown>"
+        for field, count in drillDownResults:
+            yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(str(field)), escape(str(count)))
+        yield "</dd:field-drilldown>"
+
+
+    def drillDown(self, query, term, fields):
+        for field in fields:
+            hits = self.any.executeCQL('(%s) AND %s=%s' % (query, field, term))
+            yield field, len(hits)
