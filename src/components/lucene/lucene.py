@@ -29,7 +29,7 @@ import os
 import PyLucene
 import xml.sax.saxutils
 
-from cqlparser.lucenecomposer import fromString as cqlToLucene
+from cqlparser.lucenecomposer import compose as cqlAbstractSyntaxTreeToLucene
 
 from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD, CONTENTFIELD
@@ -116,8 +116,11 @@ class LuceneIndex:
     def executeQuery(self, aQueryWrapper):
         return Hits(self._searcher, aQueryWrapper.getPyLuceneQuery(), aQueryWrapper.getPyLuceneSort())
     
-    def executeCQL(self, cqlQueryString):
-        return Hits(self._searcher, self._parseLuceneQueryString(cqlToLucene(cqlQueryString)), None)
+    #def executeCQL(self, cqlQueryString):
+        #return Hits(self._searcher, self._parseLuceneQueryString(cqlToLucene(cqlQueryString)), None)
+    
+    def executeCQL(self, cqlAbstractSyntaxTree):
+        return Hits(self._searcher, self._parseLuceneQueryString(cqlAbstractSyntaxTreeToLucene(cqlAbstractSyntaxTree)), None)
     
     def _parseLuceneQueryString(self, luceneQueryString):
         analyzer = PyLucene.StandardAnalyzer()

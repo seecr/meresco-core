@@ -3,21 +3,25 @@ from meresco.components.xml2document import TEDDY_NS
 
 TOKEN = '__untokenized__'
 
-class DrillDownRequestFieldFilter(Observable):
-    def __init__(self, listOfFields):
+class DrillDownRequestFieldnameMap(Observable):
+    def __init__(self, lookup, reverse):
         Observable.__init__(self)
-        self._fields = listOfFields
+        self.lookup = lookup
+        self.reverse = reverse
 
     def drillDown(self, docNumbers, fieldsAndMaximums):
-        translatedFields = ((s + TOKEN, i) 
-            for (s, i) in fieldsAndMaximums 
-            if s in self._fields)
+        translatedFields = ((self.lookup(field), maximum) 
+            for (field, maximum) in fieldsAndMaximums)
         drillDownResults = self.any.drillDown(docNumbers, translatedFields)
-        return ((field[:-len(TOKEN)], termCounts) 
-            for field, termCounts in drillDownResults 
-            if field[:-len(TOKEN)] in self._fields)
+        return ((self.reverse(field), termCounts) 
+            for field, termCounts in drillDownResults)
 
-
+class DrillDownRequestFieldFilter(DrillDownRequestFieldnameMap):
+    def __init__(self):
+        DrillDownRequestFieldnameMap.__init__(self,
+            lambda field: field + TOKEN,
+            lambda field: field[:-len(TOKEN)])
+                
 class DrillDownUpdateFieldFilter(Observable):
     def __init__(self, listOfFields):
         Observable.__init__(self)

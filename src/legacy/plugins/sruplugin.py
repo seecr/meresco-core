@@ -32,6 +32,7 @@ from cStringIO import StringIO
 from meresco.framework.observable import Observable
 from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 import queryplugin
+from cqlparser.cqlparser import parseString as parseCQL
 
 VERSION = '1.1'
 
@@ -193,7 +194,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def doSearchRetrieve(self):
         SRU_IS_ONE_BASED = 1
-        hits = self.any.executeCQL(self.sruQuery.query)
+        hits = self.any.executeCQL(parseCQL(self.sruQuery.query))
         self._startResults(len(hits))
 
         recordsWritten = 0

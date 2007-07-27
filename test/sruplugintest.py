@@ -30,6 +30,7 @@ from meresco.legacy.plugins.sruplugin import SUCCESS, SRUPlugin, SRUDiagnostic, 
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
+from cqlparser.cqlcomposer import compose as cqlCompose
 import traceback
 
 class SRUPluginTest(CQ2TestCase):
@@ -175,7 +176,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         plugin.process()
         
         self.assertTrue(observer.executeCQLCalled)
-        self.assertEquals('field=value', observer.cqlQuery)
+        self.assertEquals('field=value', cqlCompose(observer.cqlQuery))
         self.assertEquals(0, hits.slice_start)
         self.assertEquals(10, hits.slice_stop)
         

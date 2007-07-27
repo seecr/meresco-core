@@ -27,6 +27,8 @@
 
 from xml.sax.saxutils import quoteattr, escape
 
+from cqlparser.cqlparser import parseString as parseCQL
+
 from meresco.framework.observable import Observable
 
 def flatten(generators):
@@ -95,5 +97,5 @@ class SRUFieldDrillDown(Observable):
 
     def drillDown(self, query, term, fields):
         for field in fields:
-            hits = self.any.executeCQL('(%s) AND %s=%s' % (query, field, term))
+            hits = self.any.executeCQL(parseCQL('(%s) AND %s=%s' % (query, field, term)))
             yield field, len(hits)

@@ -38,7 +38,7 @@ class DrillDownFiltersTest(TestCase):
         self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</field_0__untokenized__>', node.xml())
 
     def testDrillDownRequestFieldFilter(self):
-        requestFilter = DrillDownRequestFieldFilter(['field_0', 'field_1'])
+        requestFilter = DrillDownRequestFieldFilter()
         observer = CallTrace('Observer')
         observer.returnValues["drillDown"] = [("field_0__untokenized__", "Passed Along Result")]
         requestFilter.addObserver(observer)

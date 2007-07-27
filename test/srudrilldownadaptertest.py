@@ -32,6 +32,8 @@ from cq2utils.calltrace import CallTrace
 
 from meresco.components.drilldown.srudrilldownadapter import SRUDrillDownAdapter, SRUTermDrillDown, SRUFieldDrillDown
 
+from cqlparser.cqlcomposer import compose as cqlCompose
+
 class SRUDrillDownAdapterTest(CQ2TestCase):
     
     def testOne(self):
@@ -108,7 +110,7 @@ class SRUFieldDrillDownTest(CQ2TestCase):
         result = list(adapter.drillDown('original', 'term', ['field0', 'field1']))
         
         self.assertEquals(2, len(observer.calledMethods))
-        self.assertEquals("executeCQL('(original) AND field0=term')", str(observer.calledMethods[0]))
-        self.assertEquals("executeCQL('(original) AND field1=term')", str(observer.calledMethods[1]))
+        self.assertEquals("executeCQL(<cqlparser.cqlparser.CQL_QUERY>)", str(observer.calledMethods[0]))
+        self.assertEquals("(original) and field0=term",  cqlCompose(observer.calledMethods[0].arguments[0]))
         self.assertEquals([("field0", 16), ("field1", 16)], result)
         
