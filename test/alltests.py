@@ -81,6 +81,7 @@ from observabletest import ObservableTest
 from logobservertest import LogObserverTest
 from drilldowntest import DrillDownTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
+from contextsettest import ContextSetTest
 from drilldownfilterstest import DrillDownFiltersTest
 
 if __name__ == '__main__':
