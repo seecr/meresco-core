@@ -83,6 +83,7 @@ from drilldowntest import DrillDownTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from contextsettest import ContextSetTest
 from drilldownfilterstest import DrillDownFiltersTest
+from generatorutilstest import GeneratorUtilsTest
 
 if __name__ == '__main__':
         unittest.main()
