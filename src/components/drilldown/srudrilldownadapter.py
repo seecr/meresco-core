@@ -44,21 +44,28 @@ def generatorDecorate(before, data, after):
     if beforeWritten:
         yield after
 
-class SRUDrillDownAdapter(Observable):
+class SlightlyWeirdObservable(Observable):
+    
     def __init__(self, observerFactories):
         Observable.__init__(self)
+        self._privateTree = Observable()
+        
         for factory in observerFactories:
-            observer = factory()
-            self.addObserver(observer)
-            observer.all = self.all
-            #? not sure if this is required: - maybe extract something here?
-            observer.do = self.do
-            observer.any = self.any
+            branch = factory()
+            branch.all = self.all
+            branch.any = self.any
+            branch.do = self.do
+            self._privateTree.addObserver(branch)
+                
+    def unknown(self, methodName, *args, **kwargs):
+        return self._privateTree.all.unknown(methodName, *args, **kwargs)
+
+class SRUDrillDownAdapter(SlightlyWeirdObservable):
     
     def extraResponseData(self, webRequest, hits):
         return generatorDecorate(
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % "something",
-            flatten(self.all.extraResponseData(webRequest, hits)),
+            flatten(self._privateTree.all.extraResponseData(webRequest, hits)),
             "</dd:drilldown>")
 
 class SRUTermDrillDown(Observable):
@@ -69,6 +76,8 @@ class SRUTermDrillDown(Observable):
         
         if fieldsAndMaximums == [""]:
             raise StopIteration
+        
+        
         drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
         yield "<dd:term-drilldown>"
         for fieldname, termCounts in drillDownResults:
