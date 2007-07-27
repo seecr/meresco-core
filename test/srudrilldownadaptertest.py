@@ -98,3 +98,16 @@ class SRUFieldDrillDownTest(CQ2TestCase):
     def drillDown(self, query, term, fields):
         self.drillDownCall = (query, term, fields)
         return [('field0', 5),('field1', 10)]
+    
+    def testDrillDown(self):
+        adapter = SRUFieldDrillDown()
+        observer = CallTrace("Observer")
+        observer.returnValues["executeCQL"] = "hits with len 16"
+        adapter.addObserver(observer)
+        result = list(adapter.drillDown('original', 'term', ['field0', 'field1']))
+        
+        self.assertEquals(2, len(observer.calledMethods))
+        self.assertEquals("executeCQL('(original) AND field0=term')", str(observer.calledMethods[0]))
+        self.assertEquals("executeCQL('(original) AND field1=term')", str(observer.calledMethods[1]))
+        self.assertEquals([("field0", 16), ("field1", 16)], result)
+        
