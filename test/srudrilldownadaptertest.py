@@ -40,10 +40,11 @@ class SRUDrillDownAdapterTest(CQ2TestCase):
                 yield "<tag>"
                 yield "something</tag>"
                 
-        adapter = SRUDrillDownAdapter([MockedImpl, MockedImpl])
+        adapter = SRUDrillDownAdapter("serverUrl")
+        adapter.addObservers([MockedImpl(), MockedImpl()])
         result = list(adapter.extraResponseData("ignored_webRequest", "ignored_hits"))
         self.assertEqualsWS([
-            '<dd:drilldown xmlns:dd="something/xsd/drilldown.xsd">',
+            '<dd:drilldown xmlns:dd="serverUrl/xsd/drilldown.xsd">',
             '<tag>', 'something</tag>',
             '<tag>', 'something</tag>',
             '</dd:drilldown>'], result)

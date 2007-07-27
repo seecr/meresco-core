@@ -44,28 +44,16 @@ def generatorDecorate(before, data, after):
     if beforeWritten:
         yield after
 
-class SlightlyWeirdObservable(Observable):
+class SRUDrillDownAdapter(Observable):
     
-    def __init__(self, observerFactories):
+    def __init__(self, serverUrl):
         Observable.__init__(self)
-        self._privateTree = Observable()
-        
-        for factory in observerFactories:
-            branch = factory()
-            branch.all = self.all
-            branch.any = self.any
-            branch.do = self.do
-            self._privateTree.addObserver(branch)
-                
-    def unknown(self, methodName, *args, **kwargs):
-        return self._privateTree.all.unknown(methodName, *args, **kwargs)
-
-class SRUDrillDownAdapter(SlightlyWeirdObservable):
+        self.serverUrl = serverUrl
     
     def extraResponseData(self, webRequest, hits):
         return generatorDecorate(
-            '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % "something",
-            flatten(self._privateTree.all.extraResponseData(webRequest, hits)),
+            '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
+            flatten(self.all.extraResponseData(webRequest, hits)),
             "</dd:drilldown>")
 
 class SRUTermDrillDown(Observable):
