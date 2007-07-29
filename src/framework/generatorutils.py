@@ -15,14 +15,9 @@ class Peek:
 			self._first = self._generator.next()
 
 def decorate(before, generator, after):
-	empty = False
-	try:
-		first = generator.next()
-	except StopIteration:
-		empty = True
-	if not empty:
-		yield before
-		yield first
-		for value in generator:
-			yield value
-		yield after
+	first = generator.next()
+	yield before
+	yield first
+	for value in generator:
+		yield value
+	yield after
