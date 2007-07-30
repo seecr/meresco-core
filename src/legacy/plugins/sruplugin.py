@@ -299,20 +299,5 @@ class WriteRecordsForXMLStorage(Observable):
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
         
-class RecordWriterIgnoringErrors(Observable):
-    """ 
-        Reason of usage:
-        JJ/KVS: Evil code! If there is an inconsistency between the index and the storage, then it is possible for the storage being asked to retrieve a document that does not exist. This leads to an StorageException which currently floats up to the SRU interface generating an Diagnostics. This messes up the SRU response. Therefor it now writes an empty record to indicate something went wrong. There will need to be a better solution implemented for this, but currently that is (still) not within the scope of this task.
-        
-        Final solution which will obsolete this:
-        proper implementation of a validate - process mechanism. Any errors should be caught in the validate part.
-        """
-    
-    def writeRecord(self, sink, recordId, recordSchema, recordPacking):
-        try:
-            self.do.write(sink, recordId, recordSchema, recordPacking)
-        except (IOError, StorageException):
-            pass 
-
 def registerOn(aRegistry):
     aRegistry.registerByCommand('sru', lambda webRequest, searchInterface: SRUPlugin(webRequest, aRegistry._configuration.get('sru.recordSchema', ''), aRegistry._configuration.get('sru.recordPacking', '')))
