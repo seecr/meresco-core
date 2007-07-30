@@ -221,12 +221,10 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
         for parameterName in ECHOED_PARAMETER_NAMES:
             for value in map(xmlEscape, self._arguments.get(parameterName, [])):
                 self.write('<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals())
-        self._writeEchoedExtraRequestData()
+        for response in self.all.echoedExtraRequestData(self._arguments):
+            for chunk in response:
+                self.write(chunk)
         self.write('</srw:echoedSearchRetrieveRequest>')
-
-    def _writeEchoedExtraRequestData(self):
-        """Write extra request data like drilldown parameters. Not used yet."""
-        pass
 
     def doExplain(self):
         version = VERSION

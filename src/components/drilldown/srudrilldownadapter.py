@@ -57,6 +57,13 @@ class SRUDrillDownAdapter(Observable):
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
             flatten(self.all.extraResponseData(webRequest, hits)),
             "</dd:drilldown>")
+            
+    def echoedExtraRequestData(self, arguments):
+        return generatorDecorate(
+            '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
+            flatten(self.all.echoedExtraRequestData(arguments)),
+            "</dd:drilldown>")
+
 
 class SRUTermDrillDown(Observable):
     
@@ -76,6 +83,13 @@ class SRUTermDrillDown(Observable):
                 yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
             yield '</dd:navigator>'
         yield "</dd:term-drilldown>"
+        
+    def echoedExtraRequestData(self, arguments):
+        argument = arguments.get('x-term-drilldown', [''])[0]
+        if argument:
+            yield "<dd:term-drilldown>"
+            yield argument
+            yield "</dd:term-drilldown>"
 
 class SRUFieldDrillDown(Observable):
     
@@ -94,8 +108,19 @@ class SRUFieldDrillDown(Observable):
             yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(str(field)), escape(str(count)))
         yield "</dd:field-drilldown>"
 
-
     def drillDown(self, query, term, fields):
         for field in fields:
             hits = self.any.executeCQL(parseCQL('(%s) AND %s=%s' % (query, field, term)))
             yield field, len(hits)
+
+    def echoedExtraRequestData(self, arguments):
+        fieldDrillDown = arguments.get('x-field-drilldown', [''])[0]
+        fieldDrillDownFields = arguments.get('x-field-drilldown-fields', [''])[0]
+        if fieldDrillDown:
+            yield "<dd:field-drilldown>"
+            yield fieldDrillDown
+            yield "</dd:field-drilldown>"
+        if fieldDrillDownFields:
+            yield "<dd:field-drilldown-fields>"
+            yield fieldDrillDownFields
+            yield "</dd:field-drilldown-fields>"

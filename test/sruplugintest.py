@@ -156,9 +156,6 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
 </srw:echoedSearchRetrieveRequest>""", b.getvalue())
-        
-        self.assertEquals(1, len(mock.calledMethods))
-        self.assertEquals('_writeEchoedExtraRequestData()', str(mock.calledMethods[0]))
                 
     def testSearchRetrieve(self):
         request = CallTrace('Request')
