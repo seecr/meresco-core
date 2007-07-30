@@ -40,6 +40,7 @@ class XMLFilePlugin(QueryPlugin):
         if not os.path.isfile(absoluteFilename):
             return ''
         url = self._request.serverurl
+        database = self._request.database
         contents = open(absoluteFilename).read() % locals()
         return contents
     

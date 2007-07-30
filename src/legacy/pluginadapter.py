@@ -27,6 +27,8 @@
 import sys
 import traceback
 import time
+
+from meresco.legacy.plugins.queryplugin import PluginException
 from meresco.legacy.pluginregistry import PluginRegistry
 from meresco.framework.observable import Observable
 
@@ -83,7 +85,7 @@ class PluginAdapter(Observable): ###!!! No test for this backwards compatibilty 
         except Exception, e:
             self.logException()
             aRequest.setResponseCode(500)
-            Request.setHeader('content-type', 'text/plain')
+            aRequest.setHeader('content-type', 'text/plain')
             aRequest.write(str(e))
         
         

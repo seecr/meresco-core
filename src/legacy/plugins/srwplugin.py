@@ -78,6 +78,10 @@ class SRWPlugin:
         return arguments
     
     def process(self):
+        self._sruplugin.do = self.do
+        self._sruplugin.all = self.all
+        self._sruplugin.any = self.any
+        
         self.write("""<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>""")
         self._sruplugin.process()
         self.write("</SOAP:Body></SOAP:Envelope>")
