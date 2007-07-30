@@ -83,9 +83,11 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
     #current status: not supporting pure plugin behavior - is really an observable
     #refactor direction: remove queryplugin.QueryPlugin
 
-    def __init__(self, aRequest):
+    def __init__(self, aRequest, aRecordSchema = "dc", aRecordPacking = "xml"):
         queryplugin.QueryPlugin.__init__(self, aRequest, None)
         Observable.__init__(self)
+        self.recordPacking = aRecordPacking
+        self.recordSchema = aRecordSchema
 
     def initialize(self):
         self.xmlHeader = '<?xml version="1.0" encoding="UTF-8"?>'
@@ -123,7 +125,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def _validateSearchRetrieve(self):
         try:
-            self.sruQuery = SRUQuery(self._arguments)
+            self.sruQuery = SRUQuery(self._arguments, self.recordSchema, self.recordPacking)
         except SRUQueryParameterException, e:
             return UNSUPPORTED_PARAMETER_VALUE + [str(e)]
         except SRUQueryParseException, e:
@@ -194,6 +196,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def doSearchRetrieve(self):
         SRU_IS_ONE_BASED = 1
+        
         hits = self.any.executeCQL(parseCQL(self.sruQuery.query))
         self._startResults(len(hits))
 
@@ -312,4 +315,4 @@ class RecordWriterIgnoringErrors(Observable):
             pass 
 
 def registerOn(aRegistry):
-    aRegistry.registerByCommand('sru', lambda webRequest, searchInterface: SRUPlugin(webRequest))
+    aRegistry.registerByCommand('sru', lambda webRequest, searchInterface: SRUPlugin(webRequest, aRegistry._configuration.get('sru.recordSchema', ''), aRegistry._configuration.get('sru.recordPacking', '')))
