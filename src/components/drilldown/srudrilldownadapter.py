@@ -31,6 +31,8 @@ from cqlparser.cqlparser import parseString as parseCQL
 
 from meresco.framework.observable import Observable
 
+DEFAULT_MAXIMUM_TERMS = 10
+
 def flatten(generators):
     for generator in generators:
         for line in generator:
@@ -68,12 +70,17 @@ class SRUDrillDownAdapter(Observable):
 class SRUTermDrillDown(Observable):
     
     def extraResponseData(self, webRequest, hits):
-        fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
-        fieldMaxTuples = ((s, int(i)) for (s, i) in (tuple(s.split(":")) for s in fieldsAndMaximums))
+        def splitTermAndMaximum(s):
+            l = s.split(":")
+            if len(l) == 1:
+                return l[0], DEFAULT_MAXIMUM_TERMS
+            return l[0], int(l[1])
         
+        fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
+        fieldMaxTuples = (splitTermAndMaximum(s) for s in fieldsAndMaximums)
+
         if fieldsAndMaximums == [""]:
             raise StopIteration
-        
         
         drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
         yield "<dd:term-drilldown>"

@@ -75,6 +75,14 @@ class SRUTermDrillDownTest(CQ2TestCase):
         self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
         self.assertEquals("Hits are simply passed", self.processed_hits)
         
+    def testSRUTermDrillDownNoMaximums(self):
+        self._arguments = {"x-term-drilldown": ["field0,field1,field2"]}
+        adapter = SRUTermDrillDown()
+        adapter.addObserver(self)
+        hits = CallTrace("Hits")
+        list(adapter.extraResponseData(self, hits))
+        self.assertEquals([('field0', 10), ('field1', 10), ('field2', 10)], list(self.processed_tuples))
+    
     def drillDown(self, hits, tuples):
         self.processed_hits = hits
         self.processed_tuples = tuples
