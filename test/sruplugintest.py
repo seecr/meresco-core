@@ -171,7 +171,6 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         plugin = SRUPlugin(request)
         plugin.addObserver(observer)
         plugin.process()
-        
         self.assertTrue(observer.executeCQLCalled)
         self.assertEquals('field=value', cqlCompose(observer.cqlQuery))
         self.assertEquals(0, hits.slice_start)
@@ -269,9 +268,11 @@ class MockListeners:
         self.executeCQLResult = executeCQLResult
         self.writtenRecords = []
         
-    def executeCQL(self, cqlQuery):
+    def executeCQL(self, cqlQuery, sortKey, sortDirection):
         self.executeCQLCalled = True
         self.cqlQuery = cqlQuery
+        self.sortKey = sortKey
+        self.sortDirection = sortDirection
         return self.executeCQLResult
     
     def writeRecord(self, sink, recordId, recordSchema, recordPacking):

@@ -197,7 +197,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
     def doSearchRetrieve(self):
         SRU_IS_ONE_BASED = 1
         
-        hits = self.any.executeCQL(parseCQL(self.sruQuery.query))
+        hits = self.any.executeCQL(parseCQL(self.sruQuery.query), self.sruQuery.sortBy,  self.sruQuery.sortDirection)
         self._startResults(len(hits))
 
         recordsWritten = 0

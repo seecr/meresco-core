@@ -113,14 +113,16 @@ class LuceneIndex:
         """Stop using this (deprecated) or use queryWrapper here in stead of LuceneQuery"""
         return LuceneQuery(self, aString, anOffset, aCount, sortBy, sortDescending)
     
-    def executeQuery(self, aQueryWrapper):
-        return Hits(self._searcher, aQueryWrapper.getPyLuceneQuery(), aQueryWrapper.getPyLuceneSort())
+    def _getPyLuceneSort(self, sortBy, sortDescending):
+        return sortBy and PyLucene.Sort(sortBy, bool(sortDescending)) or None
     
-    #def executeCQL(self, cqlQueryString):
-        #return Hits(self._searcher, self._parseLuceneQueryString(cqlToLucene(cqlQueryString)), None)
+    def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
+        return Hits(self._searcher, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
     
-    def executeCQL(self, cqlAbstractSyntaxTree):
-        return Hits(self._searcher, self._parseLuceneQueryString(cqlAbstractSyntaxTreeToLucene(cqlAbstractSyntaxTree)), None)
+    def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
+        return Hits(self._searcher,
+            self._parseLuceneQueryString(cqlAbstractSyntaxTreeToLucene(cqlAbstractSyntaxTree)),
+            self._getPyLuceneSort(sortBy, sortDescending))
     
     def _parseLuceneQueryString(self, luceneQueryString):
         analyzer = PyLucene.StandardAnalyzer()

@@ -35,7 +35,6 @@ from lucenerawdocsetstest import addUntokenized
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 from meresco.components.drilldown.drilldown import DrillDown
-from meresco.components.lucene.querywrapper import QueryWrapper
 
 class DrillDownTest(TestCase):
 
@@ -77,7 +76,7 @@ class DrillDownTest(TestCase):
         drillDown = DrillDown(['field_0', 'field_1'])
         drillDown.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
-        queryResults = self._luceneIndex.executeQuery(QueryWrapper(TermQuery(Term("field_1", "inquery"))))
+        queryResults = self._luceneIndex.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
         drilldownResult = drillDown.drillDown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)])
@@ -93,11 +92,6 @@ class OldStuffForReference:
         self._tempdir = gettempdir() + '/testing'
         self._directoryName = os.path.join(self._tempdir, 'lucene-index')
         self._luceneIndex = LuceneIndex(self._directoryName)
-
-    def performQuery(self, queryString, sortBy = None, sortDescending = False):
-        queryWrapper = QueryWrapper(queryString, sortBy, sortDescending)
-        hitsWrapper = self._luceneIndex.executeQuery(queryWrapper)
-        return hitsWrapper
 
     def testDrillDown(self):
         #self._luceneIndex._untokenizedTwinFieldnames = ['author', 'title']

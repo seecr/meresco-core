@@ -28,7 +28,6 @@
 from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
-from meresco.components.lucene.querywrapper import QueryWrapper
 from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 from meresco.components.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.components.partscomponent import PARTS_PART, PART
@@ -64,7 +63,7 @@ class IndexComponent(Component):
             query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
         
         sortBy = sorted and '%s.%s' % (STAMP_PART, UNIQUE)
-        return self._index.executeQuery(QueryWrapper(query, sortBy))
+        return self._index.executeQuery(query, sortBy)
 
     def listAll(self):
-        return self._index.executeQuery(QueryWrapper(MatchAllDocsQuery(), None))
+        return self._index.executeQuery(MatchAllDocsQuery())
