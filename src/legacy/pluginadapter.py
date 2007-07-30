@@ -75,10 +75,15 @@ class PluginAdapter(Observable): ###!!! No test for this backwards compatibilty 
             plugin.do = self.do
             
             plugin.process()
-        except Exception, e:
+        except PluginException, e:
             self.logException()
             aRequest.setResponseCode(e.errorCode)
             aRequest.setHeader('content-type', e.contentType)
+            aRequest.write(str(e))
+        except Exception, e:
+            self.logException()
+            aRequest.setResponseCode(500)
+            Request.setHeader('content-type', 'text/plain')
             aRequest.write(str(e))
         
         
