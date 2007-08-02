@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -24,28 +24,26 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
+from os.path import dirname, isfile, join, getmtime
+from os import system
+
 def _init():
-    from os import system, stat
-    from stat import ST_MTIME
-    from os.path import abspath, join, isfile
-    
-    if len(__path__) != 1:
-        raise Exception("__path__ contains multiple paths, this is not supported yet")
-    
-    mypath =  abspath(__path__[0])
-    
-    statWithExists = lambda filename: isfile(join(mypath, filename)) and stat(join(mypath, filename))[ST_MTIME] or -1
-    
-    myStat = lambda filename: stat(join(mypath, filename))[ST_MTIME]
-    
-    modtimeH = myStat('BitArray.h')
-    modtimeCPP = myStat('BitArray.cpp')
-    modtimeSO = statWithExists('_bitarray.so')
-    
-    if modtimeH > modtimeSO or modtimeCPP > modtimeSO:
-        system("cd %s; ./make_so.sh" % mypath)
-        if myStat('_bitarray.so') == modtimeSO:
-            raise Exception("Compile process failed")
-    
+    mydir = dirname(__file__)
+    sofile = join(mydir, '_bitarray.so')
+    hfile =  join(mydir, 'BitArray.h')
+    cppfile =  join(mydir, 'BitArray.cpp')
+    if isfile(cppfile) and isfile(hfile):
+        if isfile(sofile):
+            sotime = getmtime(sofile)
+            if sotime < getmtime(hfile) or sotime < getmtime(cppfile):
+                system("cd %s; ./make_so.sh" % mydir)
+                if sotime == getmtime(sofile):
+                    raise Exception("Compile of BitArray extension failed")
+        else:
+            system("cd %s; ./make_so.sh" % mydir)
+            if not isfile(sofile):
+                raise Exception("Compile of BitArray extension failed")
+
 _init()
 del _init
