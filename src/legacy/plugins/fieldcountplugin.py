@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,9 +31,12 @@ from xml.sax.saxutils import escape as xmlEscape
 ERROR_MESSAGE="""<?xml version="1.0" encoding="utf-8"?>
 <error>Mandatory argument '%s' not specified.</error>"""
 
+from warnings import warn
+warn("DEPRECATED: FieldCountPlugin works exclusivly with PyLucene == 2.0.0. Remove lucene.countfield and related stuff, or fix it, or create an new implementation with drilldown.")
+
 class FieldCountPlugin(QueryPlugin):
     #Refactordirection: this should start to use the drilldown countfield functionality.
-    
+
     def initialize(self):
         self.contentType = XML_CONTENT_TYPE
 
@@ -41,7 +44,7 @@ class FieldCountPlugin(QueryPlugin):
         if not self._arguments.has_key('field'):
             raise PluginException(ERROR_MESSAGE % 'field')
         fieldName = self._arguments['field'][0]
-        
+
         results = self.searchInterface.countField(fieldName)
         self.write('<?xml version="1.0" encoding="UTF-8"?>')
         self.write('<fieldcount count="%i">' % len(results))
