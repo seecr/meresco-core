@@ -20,5 +20,9 @@ setup(
         'meresco.components.http.oai': ['data/*']
     },
     ext_modules=[
-        Extension("meresco.components.drilldown.cpp.bitarray", ["meresco/components/drilldown/cpp/BitArray.cpp"])]
+        Extension("meresco.components.drilldown.cpp._bitarray", [
+		"meresco/components/drilldown/cpp/bitarray_wrap.cxx",
+		"meresco/components/drilldown/cpp/BitArray.cpp"]
+		)
+    ]
 )
