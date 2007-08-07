@@ -34,7 +34,7 @@ TEDDY_NS = "http://www.cq2.nl/teddy"
 
 class Xml2Document(Observable):
     
-    def unknown(self, method, *args):
+    def unknown(self, methodName, *args):
         self.do.unknown(methodName, *args)
     
     def add(self, id, partName, amaraXmlNode):
