@@ -46,12 +46,12 @@ messageWithEnter "Now installing the Meresco Core"
 
 message "Installing required packages."
 
-PACKAGES="python2.4 python-profiler python-xml python-twisted-web rsync wget"
+PACKAGES="python2.4 python-profiler python-xml python-twisted-web rsync wget python-lxml bzip2"
 
 $PM_INSTALL $PACKAGES
 if [ -e /usr/bin/python2.4 ]; then
 	rm /usr/bin/python
-	ln -s /usr/bin/python2.4 /usr/bin/python
+	( cd /usr/bin; ln -s python2.4 python)
 fi
 
 if [ "$INSTALL_DAEMONTOOLS" == "YES" ]; then
@@ -63,13 +63,65 @@ sys.setdefaultencoding('utf-8')
 " > /usr/lib/python2.4/site-packages/sitecustomize.py
 
 messageWithEnter "Installing prepackaged version of PyLucene."
-
-aptitude install libc6 libgcc1 zlib1g libstdc++5
-aptitude_install "http://debian.cq2.org" stable main pylucene python2.4-cq2utils python2.4-storage
+aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev
+depsdir=$merescodir/deps.d
+tempdir=$merescodir/temp
+distdir=$merescodir/dist
+securitydir=/usr/lib/python2.4/site-packages/security
+test -d $securitydir || mkdir $securitydir
+architecture=$(dpkg --print-architecture)
+if [ "$architecture" == "amd64" ]; then
+    (
+        cd $depsdir
+        tar xjf $distdir/pylucene-2.0.0-amd64.tar.bz2
+        tar xjf $distdir/libgcj5.tar.bz2
+        cp $depsdir/pylucene-2.0.0-amd64/security/*.security $securitydir
+    )
+elif [ "$architecture" == "i386" ]; then
+    (
+        cd $depsdir
+        tar xjf $distdir/pylucene-2.0.0-i386.tar.bz2
+        cp $depsdir/pylucene-2.0.0-i386/security/*.security $securitydir
+    )
+else
+    messageWithEnter "The architecture $architecture is not supported by the installation!
+You'll have to manually compile PyLucene."
+fi
+messageWithEnter "Installing the packages:
+    - Suite-XML-1.0.2
+    - Amara-1.1.7
+    - storage-4.1
+    - cq2utils-4.3"
+packages="4Suite-XML-1.0.2
+Amara-1.1.7
+storage-4.1
+cq2utils-4.3
+cqlparser-1.2.1"
+for package in $packages; do
+    (
+        test -d $depsdir/$package && continue
+        message "Installing $package"
+        test -d $tempdir && rm -rf $tempdir
+        mkdir $tempdir
+        cd $tempdir
+        thepath=
+        for d in $(ls -1 $depsdir); do
+            test -d $depsdir/$d && thepath=$depsdir/$d:$thepath
+        done
+        tar xzf $distdir/${package}.tar.gz
+        cd ${package}
+        if [ "$package" == "Amara-1.1.7" ]; then
+            #fix amara
+            ln -s lib amara
+        fi
+        PYTHONPATH=$thepath python setup.py install --install-lib $depsdir/$package --prefix $depsdir/$package
+    )
+done
 
 
 testresult=/tmp/meresco.testresult
 (
+test -d $merescodir/deps.d/libgcj5 && export LD_LIBRARY_PATH=$merescodir/deps.d/libgcj5
 cd $merescodir/test
 ./alltests.py > $testresult 2>&1
 )
