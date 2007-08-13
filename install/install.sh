@@ -124,10 +124,11 @@ done
 
 
 testresult=/tmp/meresco.testresult
+owner=$(stat --format %U $0)
 (
+rm $testresult -f
 test -d $merescodir/deps.d/libgcj5 && export LD_LIBRARY_PATH=$merescodir/deps.d/libgcj5
 cd $merescodir/test
-owner=$(stat --format %U $0)
 su -c "./alltests.py > $testresult 2>&1" $owner
 )
 
