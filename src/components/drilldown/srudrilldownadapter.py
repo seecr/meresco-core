@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -49,17 +49,17 @@ def generatorDecorate(before, data, after):
         yield after
 
 class SRUDrillDownAdapter(Observable):
-    
+
     def __init__(self, serverUrl):
         Observable.__init__(self)
         self.serverUrl = serverUrl
-    
+
     def extraResponseData(self, webRequest, hits):
         return generatorDecorate(
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
             flatten(self.all.extraResponseData(webRequest, hits)),
             "</dd:drilldown>")
-            
+
     def echoedExtraRequestData(self, arguments):
         return generatorDecorate(
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
@@ -68,20 +68,20 @@ class SRUDrillDownAdapter(Observable):
 
 
 class SRUTermDrillDown(Observable):
-    
+
     def extraResponseData(self, webRequest, hits):
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:
                 return l[0], DEFAULT_MAXIMUM_TERMS
             return l[0], int(l[1])
-        
+
         fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
         fieldMaxTuples = (splitTermAndMaximum(s) for s in fieldsAndMaximums)
 
         if fieldsAndMaximums == [""]:
             raise StopIteration
-        
+
         drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
         yield "<dd:term-drilldown>"
         for fieldname, termCounts in drillDownResults:
@@ -90,7 +90,7 @@ class SRUTermDrillDown(Observable):
                 yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
             yield '</dd:navigator>'
         yield "</dd:term-drilldown>"
-        
+
     def echoedExtraRequestData(self, arguments):
         argument = arguments.get('x-term-drilldown', [''])[0]
         if argument:
@@ -99,17 +99,17 @@ class SRUTermDrillDown(Observable):
             yield "</dd:term-drilldown>"
 
 class SRUFieldDrillDown(Observable):
-    
+
     def extraResponseData(self, webRequest, hits):
         query = webRequest._arguments.get('query', [''])[0]
         term = webRequest._arguments.get('x-field-drilldown', [''])[0]
         fields = webRequest._arguments.get('x-field-drilldown-fields', [''])[0].split(",")
-        
+
         if not term or fields == [""]:
             raise StopIteration
-        
+
         drillDownResults = self.drillDown(query, term, fields)
-        
+
         yield "<dd:field-drilldown>"
         for field, count in drillDownResults:
             yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(str(field)), escape(str(count)))
