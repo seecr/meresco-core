@@ -36,54 +36,55 @@ sys.path.insert(0, "..")
 
 import unittest
 
-from sruplugintest import SRUPluginTest
-from srwplugintest import SRWPluginTest
-from xmlfileplugintest import XMLFilePluginTest
-from pluginregistrytest import PluginRegistryTest
-from sruquerytest import SRUQueryTest
-from fieldcountplugintest import FieldCountPluginTest
-from rssplugintest import RSSPluginTest
-from rssprofiletest import RSSProfileTest
-from logtest import LogTest
-from oaiidentifytest import OaiIdentifyTest
-from oaivalidatortest import OaiValidatorTest
-from oaigetrecordtest import OaiGetRecordTest
-from oailisttest import OaiListTest
-from oaisinktest import OaiSinkTest
-from oaicomponenttest import OaiComponentTest
-from oaitooltest import OaiToolTest
-from stampcomponenttest import StampComponentTest
-from portaltest import PortalTest
-from configurationtest import ConfigurationTest
+from contextsettest import ContextSetTest
 from documenttest import DocumentTest
-from lucenetest import LuceneTest
-from srurecordupdateplugintest import SRURecordUpdatePluginTest
-from teddyinterfacetest import TeddyInterfaceTest
-from teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
-from teddygrowlservertest import TeddyGrowlServerTest
-from xml2documenttest import Xml2DocumentTest
-from storagecomponenttest import StorageComponentTest
+from drilldownfilterstest import DrillDownFiltersTest
+from drilldowntest import DrillDownTest
+from fieldcountplugintest import FieldCountPluginTest
+from fields2xmlcomponenttest import Fields2XmlComponentTest
+from generatorutilstest import GeneratorUtilsTest
+from hitstest import HitsTest
 from indexcomponenttest import IndexComponentTest
 from indexcomponenttest import IndexComponentWithLuceneTest
-from fields2xmlcomponenttest import Fields2XmlComponentTest
 from logcomponenttest import LogComponentTest
-from venturitest import VenturiTest
-from xmlpumptest import XmlPumpTest
-from hitstest import HitsTest
-from xslicetest import XSliceTest
-from undertakertest import UnderTakerTest
-from oailistmetadataformatstest import OaiListMetadataFormatsTest
-from partscomponenttest import PartsComponentTest
-from setscomponenttest import SetsComponentTest
-from oailistsetstest import OaiListSetsTest
-from srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
-from observabletest import ObservableTest
 from logobservertest import LogObserverTest
-from drilldowntest import DrillDownTest
+from logtest import LogTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
-from contextsettest import ContextSetTest
-from drilldownfilterstest import DrillDownFiltersTest
-from generatorutilstest import GeneratorUtilsTest
+from lucenetest import LuceneTest
+from oaicomponenttest import OaiComponentTest
+from oaigetrecordtest import OaiGetRecordTest
+from oaiidentifytest import OaiIdentifyTest
+from oailistmetadataformatstest import OaiListMetadataFormatsTest
+from oailistsetstest import OaiListSetsTest
+from oailisttest import OaiListTest
+from oaisinktest import OaiSinkTest
+from oaitooltest import OaiToolTest
+from oaivalidatortest import OaiValidatorTest
+from observabletest import ObservableTest
+from partscomponenttest import PartsComponentTest
+from rssplugintest import RSSPluginTest
+from rssprofiletest import RSSProfileTest
+from setscomponenttest import SetsComponentTest
+from srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
+from sruplugintest import SRUPluginTest
+from sruquerytest import SRUQueryTest
+from srurecordupdateplugintest import SRURecordUpdatePluginTest
+from srwplugintest import SRWPluginTest
+from stampcomponenttest import StampComponentTest
+from storagecomponenttest import StorageComponentTest
+from teddygrowlservertest import TeddyGrowlServerTest
+from undertakertest import UnderTakerTest
+from venturitest import VenturiTest
+from xml2documenttest import Xml2DocumentTest
+from xmlfileplugintest import XMLFilePluginTest
+from xmlpumptest import XmlPumpTest
+from xslicetest import XSliceTest
+
+from legacy.teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
+from legacy.teddyinterfacetest import TeddyInterfaceTest
+from legacy.configurationtest import ConfigurationTest
+from legacy.portaltest import PortalTest
+from legacy.pluginregistrytest import PluginRegistryTest
 
 if __name__ == '__main__':
         unittest.main()
