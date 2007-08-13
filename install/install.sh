@@ -62,41 +62,47 @@ echo "import sys
 sys.setdefaultencoding('utf-8')
 " > /usr/lib/python2.4/site-packages/sitecustomize.py
 
-messageWithEnter "Installing prepackaged version of PyLucene."
-aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev
 depsdir=$merescodir/deps.d
 tempdir=$merescodir/temp
 distdir=$merescodir/dist
-securitydir=/usr/lib/python2.4/site-packages/security
-test -d $securitydir || mkdir $securitydir
+messageWithEnter "Installing prepackaged version of PyLucene."
+aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev
+
 architecture=$(dpkg --print-architecture)
-if [ "$architecture" == "amd64" ]; then
-    (
-        cd $depsdir
-        tar xjf $distdir/pylucene-2.0.0-amd64.tar.bz2
-        tar xjf $distdir/libgcj5.tar.bz2
-        cp $depsdir/pylucene-2.0.0-amd64/security/*.security $securitydir
-    )
-elif [ "$architecture" == "i386" ]; then
-    (
-        cd $depsdir
-        tar xjf $distdir/pylucene-2.0.0-i386.tar.bz2
-        cp $depsdir/pylucene-2.0.0-i386/security/*.security $securitydir
-    )
-else
-    messageWithEnter "The architecture $architecture is not supported by the installation!
-You'll have to manually compile PyLucene."
+luceneverion=2.0.0
+lucenedir=$distdir/pylucene-${luceneverion}-$architecture
+if [ ! -d $lucenedir ]; then
+    securitydir=/usr/lib/python2.4/site-packages/security
+    test -d $securitydir || mkdir $securitydir
+    if [ "$architecture" == "amd64" ]; then
+        (
+            cd $depsdir
+            tar xjf $distdir/pylucene-2.0.0-amd64.tar.bz2
+            tar xjf $distdir/libgcj5.tar.bz2
+            cp $lucenedir/security/*.security $securitydir
+        )
+    elif [ "$architecture" == "i386" ]; then
+        (
+            cd $depsdir
+            tar xjf $distdir/pylucene-2.0.0-i386.tar.bz2
+            cp $lucenedir/security/*.security $securitydir
+        )
+    else
+        messageWithEnter "The architecture $architecture is not supported by the installation!
+    You'll have to manually compile PyLucene."
+    fi
 fi
+
 messageWithEnter "Installing the packages:
     - Suite-XML-1.0.2
-    - Amara-1.1.7
-    - storage-4.1
+    - Amara-1.2
+    - storage-5.0
     - cq2utils-4.3"
 packages="4Suite-XML-1.0.2
-Amara-1.1.7
-storage-4.1
-cq2utils-4.3
-cqlparser-1.2.1"
+Amara-1.2
+storage-5.0
+cq2utils-4.4
+cqlparser-1.3"
 for package in $packages; do
     (
         test -d $depsdir/$package && continue
