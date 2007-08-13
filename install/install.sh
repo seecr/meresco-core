@@ -66,12 +66,12 @@ depsdir=$merescodir/deps.d
 tempdir=$merescodir/temp
 distdir=$merescodir/dist
 messageWithEnter "Installing prepackaged version of PyLucene."
-aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev
+aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev swig
 
 architecture=$(dpkg --print-architecture)
 luceneverion=2.0.0
 lucenename=pylucene-${luceneverion}-$architecture
-lucenedir=$distdir/$lucenename
+lucenedir=$depsdir/$lucenename
 if [ ! -d $lucenedir ]; then
     securitydir=/usr/lib/python2.4/site-packages/security
     test -d $securitydir || mkdir $securitydir
@@ -118,6 +118,7 @@ for package in $packages; do
         tar xzf $distdir/${package}.tar.gz
         cd ${package}
         PYTHONPATH=$thepath python setup.py install --install-lib $depsdir/$package --prefix $depsdir/$package
+        rm -rf $tempdir
     )
 done
 
@@ -126,7 +127,8 @@ testresult=/tmp/meresco.testresult
 (
 test -d $merescodir/deps.d/libgcj5 && export LD_LIBRARY_PATH=$merescodir/deps.d/libgcj5
 cd $merescodir/test
-./alltests.py > $testresult 2>&1
+owner=$(stat --format %U $0)
+su -c "./alltests.py > $testresult 2>&1" $owner
 )
 
 if [ $? -eq 0 ] ; then
