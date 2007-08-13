@@ -32,8 +32,8 @@ merescodir=$(cd $basedir/..; pwd)
 source $basedir/functions.sh
 
 if [ ! isDebian ] ; then
-	echo Unsupported Linux Distribution. Only Debian is supported.
-	exit
+    echo Unsupported Linux Distribution. Only Debian is supported.
+    exit
 fi
 
 INSTALL_DAEMONTOOLS="YES"
@@ -50,8 +50,8 @@ PACKAGES="python2.4 python-profiler python-xml python-twisted-web rsync wget pyt
 
 $PM_INSTALL $PACKAGES
 if [ -e /usr/bin/python2.4 ]; then
-	rm /usr/bin/python
-	( cd /usr/bin; ln -s python2.4 python)
+    rm /usr/bin/python
+    ( cd /usr/bin; ln -s python2.4 python)
 fi
 
 if [ "$INSTALL_DAEMONTOOLS" == "YES" ]; then
@@ -70,21 +70,22 @@ aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev
 
 architecture=$(dpkg --print-architecture)
 luceneverion=2.0.0
-lucenedir=$distdir/pylucene-${luceneverion}-$architecture
+lucenename=pylucene-${luceneverion}-$architecture
+lucenedir=$distdir/$lucenename
 if [ ! -d $lucenedir ]; then
     securitydir=/usr/lib/python2.4/site-packages/security
     test -d $securitydir || mkdir $securitydir
     if [ "$architecture" == "amd64" ]; then
         (
             cd $depsdir
-            tar xjf $distdir/pylucene-2.0.0-amd64.tar.bz2
+            tar xjf $distdir/$lucenename.tar.bz2
             tar xjf $distdir/libgcj5.tar.bz2
             cp $lucenedir/security/*.security $securitydir
         )
     elif [ "$architecture" == "i386" ]; then
         (
             cd $depsdir
-            tar xjf $distdir/pylucene-2.0.0-i386.tar.bz2
+            tar xjf $distdir/$lucenename.tar.bz2
             cp $lucenedir/security/*.security $securitydir
         )
     else
@@ -99,9 +100,9 @@ messageWithEnter "Installing the packages:
     - storage-5.0
     - cq2utils-4.3"
 packages="4Suite-XML-1.0.2
-Amara-1.2
+Amara-1.2a2
 storage-5.0
-cq2utils-4.4
+cq2utils-4.4.1
 cqlparser-1.3"
 for package in $packages; do
     (
@@ -116,10 +117,6 @@ for package in $packages; do
         done
         tar xzf $distdir/${package}.tar.gz
         cd ${package}
-        if [ "$package" == "Amara-1.1.7" ]; then
-            #fix amara
-            ln -s lib amara
-        fi
         PYTHONPATH=$thepath python setup.py install --install-lib $depsdir/$package --prefix $depsdir/$package
     )
 done
@@ -133,13 +130,13 @@ cd $merescodir/test
 )
 
 if [ $? -eq 0 ] ; then
-	message "Installation of MERESCO finished.
+    message "Installation of MERESCO finished.
 
 See the manual for further configuration steps.
 "
     
 else
-	message "Installation of MERESO Core FAILED.
+    message "Installation of MERESO Core FAILED.
     
 Result of the tests was:"
     cat $testresult
