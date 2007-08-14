@@ -66,7 +66,7 @@ depsdir=$merescodir/deps.d
 tempdir=$merescodir/temp
 distdir=$merescodir/dist
 messageWithEnter "Installing prepackaged version of PyLucene."
-aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev swig
+aptitude install libc6 libgcc1 zlib1g libstdc++5 python2.4-dev swig gcc
 
 architecture=$(dpkg --print-architecture)
 luceneverion=2.0.0
