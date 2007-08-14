@@ -35,7 +35,7 @@ from cStringIO import StringIO
 class TeddyInterfaceTest(CQ2TestCase):
     def testTeddyInterface(self):
         luceneIndex = CallTrace('LuceneIndex')
-        storage = CallTrace('Storage')
+        storage = CallTrace('StorageComponent')
         luceneQuery = CallTrace('LuceneQuery')
         luceneIndex.returnValues['createQuery'] = luceneQuery
         
@@ -70,36 +70,22 @@ class TeddyInterfaceTest(CQ2TestCase):
         self.assertEquals(2, recordTwo._documentId)
         
     def testTeddyRecord(self):
-        storage = CallTrace('Storage')
-        storageUnit = CallTrace('StorageUnit')
-        storage.returnValues['getUnit'] = storageUnit
+        storage = CallTrace('StorageComponent')
         
-        openBoxCalls=[]
-        def openBox(boxName, mode='r'):
-            openBoxCalls.append(boxName)
-            if boxName in ['test', 'fields']:
-                return StringIO("<someXml/>")
-            else:
-                raise Exception(boxName)
-
-        storageUnit.openBox = openBox
-        
-        record = TeddyRecord(1, storage)
+        record = TeddyRecord('oai:aap', storage)
+        storage.returnValues['get'] = StringIO("<someXml/>")
         
         stream = StringIO()
         record.writeDataOn('test', 'xml', stream)
         self.assertEquals(1, len(storage.calledMethods))
-        self.assertEquals('getUnit(1)', str(storage.calledMethods[0]))
+        self.assertEquals("get('oai:aap', 'test')", str(storage.calledMethods[0]))
         self.assertEquals('<someXml/>', stream.getvalue())
         
-        self.assertEquals(1, len(openBoxCalls))
-        self.assertEquals('test', openBoxCalls[0])
-        
+        storage.returnValues['get'] = StringIO("<someXml/>")
         stream = StringIO()
         record.writeDataOn('fields', 'string', stream)
         self.assertEquals(2, len(storage.calledMethods))
-        self.assertEquals(2, len(openBoxCalls))
-        self.assertEquals('fields', openBoxCalls[1])
+        self.assertEquals("get('oai:aap', 'test')", str(storage.calledMethods[0]))
         self.assertEquals('&lt;someXml/&gt;', stream.getvalue())
         
 
@@ -147,14 +133,10 @@ class TeddyInterfaceTest(CQ2TestCase):
         self.assertEquals("countField('fieldname')", str(luceneIndex.calledMethods[0]))
         
     def testCatchException(self):
-        storage = CallTrace('Storage')
-        storageUnit = CallTrace('StorageUnit')
-        storage.returnValues['getUnit'] = storageUnit
-        
-        openBoxCalls=[]
-        def openBox(boxName, mode='r'):
-            raise IOError()
-        storageUnit.openBox = openBox
+        storage = CallTrace('StorageComponent')
+        class CustomException(Exception):
+            pass
+        storage.exceptions['get'] = CustomException('Uh oh')
         
         record = TeddyRecord(1, storage)
         

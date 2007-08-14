@@ -36,9 +36,9 @@ class TeddyInterface(SearchInterface):
     """
     Interface used by queryserver to query a search engine.
     """
-    def __init__(self, luceneIndex, storage):
+    def __init__(self, luceneIndex, storageComponent):
         self._luceneIndex = luceneIndex
-        self._storage = storage
+        self._storageComponent = storageComponent
     
     def search(self, sruQuery):
         """
@@ -55,7 +55,7 @@ class TeddyInterface(SearchInterface):
             batchSize, 
             sortBy, 
             sortDescending)
-        return TeddyResult(luceneQuery, self._storage)
+        return TeddyResult(luceneQuery, self._storageComponent)
     
     def countField(self, fieldName):
         """
@@ -71,9 +71,9 @@ class TeddyResult(SearchResult):
     """
     Abstract class that defines methods needed for the queryserver to generate its output
     """
-    def __init__(self, luceneQuery, storage):
+    def __init__(self, luceneQuery, storageComponent):
         self._luceneQuery = luceneQuery
-        self._storage = storage
+        self._storageComponent = storageComponent
     
     def getNumberOfRecords(self):
         """
@@ -86,7 +86,7 @@ class TeddyResult(SearchResult):
         """
         Return a generator that will yield one SearchRecord object at a time
         """
-        return (TeddyRecord(documentId, self._storage) for documentId in self._luceneQuery.perform())
+        return (TeddyRecord(documentId, self._storageComponent) for documentId in self._luceneQuery.perform())
     
     def getNextRecordPosition(self):
         """
@@ -103,9 +103,9 @@ class TeddyResult(SearchResult):
         aStream.write('<numberOfRecords>%d</numberOfRecords>' % self._luceneQuery.getHitCount())
     
 class TeddyRecord(SearchRecord):
-    def __init__(self, documentId, storage):
+    def __init__(self, documentId, storageComponent):
         self._documentId = documentId
-        self._storage = storage
+        self._storageComponent = storageComponent
     
     def writeDataOn(self, recordSchema, recordPacking, aStream):
         """
@@ -126,7 +126,9 @@ class TeddyRecord(SearchRecord):
                 
     def readData(self, dataName):
         try:
-            return self._storage.get('/'.join((self._documentId, dataName)))
-        except (IOError, HierarchicalStorageError):
+            return self._storageComponent.get(self._documentId, dataName)
+        except (SystemExit, KeyboardInterrupt):
+            raise
+        except Exception:
             return StringIO()
         

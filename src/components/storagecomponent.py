@@ -62,3 +62,6 @@ class StorageComponent(Component):
             sink.write(stream.read())
         finally:
             stream.close()
+
+    def get(self, id, partName):
+        return self._storage.get((id, partName))
