@@ -28,7 +28,7 @@
 
 from configuration import Configuration
 from meresco.components.lucene.lucene import LuceneIndex
-from storage.storage import Storage
+from storage import HierarchicalStorage, Storage
 from teddyinterface import TeddyInterface
 from os.path import join, basename
 from glob import glob
@@ -42,6 +42,6 @@ def construct(configuration):
         configuration = Configuration()
         configuration.readFromFile(databaseFile)
         lucene = LuceneIndex(configuration.getLucene())
-        storage = Storage(configuration.getStorage())
+        storage = HierarchicalStorage(Storage(configuration.getStorage()))
         searchInterfaces[database] = TeddyInterface(lucene, storage)
     return searchInterfaces

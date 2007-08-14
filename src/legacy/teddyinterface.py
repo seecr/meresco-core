@@ -26,7 +26,7 @@
 ## end license ##
 from meresco.legacy.plugins.searchinterface import SearchInterface, SearchResult, SearchRecord
 from cqlparser.lucenecomposer import fromString as cqlToLucene
-from storage.storage import StorageException
+from storage import HierarchicalStorageError
 from cStringIO import StringIO
 from xml.sax.saxutils import escape as xmlEscape
 
@@ -107,9 +107,6 @@ class TeddyRecord(SearchRecord):
         self._documentId = documentId
         self._storage = storage
     
-    def _getStorageUnit(self):
-        return self._storage.getUnit(self._documentId)
-
     def writeDataOn(self, recordSchema, recordPacking, aStream):
         """
         Write data with name to aStream
@@ -129,7 +126,7 @@ class TeddyRecord(SearchRecord):
                 
     def readData(self, dataName):
         try:
-            return self._getStorageUnit().openBox(dataName)
-        except (IOError, StorageException):
+            return self._storage.get('/'.join((self._documentId, dataName)))
+        except (IOError, HierarchicalStorageError):
             return StringIO()
         

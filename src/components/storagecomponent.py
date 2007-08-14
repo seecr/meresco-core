@@ -25,33 +25,39 @@
 #
 ## end license ##
 from cq2utils.component import Component
+from storage import HierarchicalStorage, Storage, HierarchicalStorageError
 
 class StorageComponent(Component):
-    def __init__(self, aStorage):
-        self._storage = aStorage
+    def __init__(self, storeDirectory):
+        self._storage = HierarchicalStorage(Storage(storeDirectory), split = self._split)
 
     def add(self, id, partName, someString):
-        unit = self._storage.getUnit(id)
-        stream = unit.openBox(partName, 'w')
+        sink = self._storage.put((id, partName))
         try:
-            stream.write(someString)
+            sink.send(someString)
         finally:
-            stream.close()
-            
+            return sink.close()
+
+    def _split(self, (id, partName)):
+        return id.split(':',1) + [partName + '.xml']
+
     def deletePart(self, id, partName):
-        unit = self._storage.getUnit(id)
-        unit.removeBox(partName)
+        try:
+            self._storage.delete((id, partName))
+        except HierarchicalStorageError, ignored:
+            pass
             
     def isAvailable(self, id, partName):
         """returns (hasId, hasPartName)"""
+        raise NotImplementedError("Wait and see, it might be coming to you soon!!!")
+        # FF uit vanwegen ombouw storage.
         if self._storage.hasUnit(id):
             unit = self._storage.getUnit(id) #caching optional
             return True, unit.hasBox(partName)
         return False, False
     
     def write(self, sink, id, partName):
-        unit = self._storage.getUnit(id) #caching optional
-        stream = unit.openBox(partName)
+        stream = self._storage.get((id, partName))
         try:
             sink.write(stream.read())
         finally:

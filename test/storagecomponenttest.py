@@ -28,6 +28,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 
 from meresco.components.storagecomponent import StorageComponent
+from storage import HierarchicalStorage, Storage
 from cq2utils.component import Notification
 from cStringIO import StringIO
 from meresco.framework.observable import Observable
@@ -36,19 +37,14 @@ class StorageComponentTest(CQ2TestCase):
             
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.storageComponent = StorageComponent(self)
-        self.removedUnit = None
-        self.gottenUnit = None
-        self.openedBox = None
-        self.written = None
+        self.storageComponent = StorageComponent(self.tempdir)
+        self.storage = HierarchicalStorage(Storage(self.tempdir), split = lambda x:x)
     
     def testAdd(self):
-        self.storageComponent.add("id_0", "partName", "The contents of the part")
-        
-        self.assertEquals(None, self.removedUnit)
-        self.assertEquals("id_0", self.gottenUnit)
-        self.assertEquals("partName", self.openedBox)
-        self.assertEquals("The contents of the part", self.written)
+        old,new = self.storageComponent.add("id_0", "partName", "The contents of the part")
+
+        self.assertEquals('The contents of the part', self.storage.get(('id_0', 'partName.xml')).read())
+        self.assertEquals((0,1), (old,new))
 
     def testIsAvailable(self):
         hasId, hasPartName = self.storageComponent.isAvailable("anId-123", "somePartName")
@@ -57,38 +53,24 @@ class StorageComponentTest(CQ2TestCase):
         self.assertTrue(hasPartName)
         
     def testWrite(self):
-        self.storageComponent.write(self, "anId-123", "somePartName")
-        self.assertEquals('read string', self.written)
-    
-    def hasUnit(self, anId):
-        """Storage shunt"""
-        return True
-    
-    def removeUnit(self, anId):
-        """Storage shunt"""
-        self.removedUnit = anId
-    
-    def getUnit(self, anId):
-        """Storage shunt"""
-        self.gottenUnit = anId
-        return self
-    
-    def hasBox(self, boxName):
-        """Unit shunt"""
-        return True
-    
-    def openBox(self, boxName, mode = 'r'):
-        """Unit shunt"""
-        self.openedBox = boxName
-        return self
+        sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))
+        sink.send('read string')
+        sink.close()
+        
+        stream = StringIO()
+        self.storageComponent.write(stream, "some:thing:anId-123", "somePartName")
+        self.assertEquals('read string', stream.getvalue())
 
-    def write(self, string):
-        """Stream shunt"""
-        self.written = string
-        
-    def read(self):
-        return 'read string'
-        
-    def close(self):
-        """Stream shunt"""
-        pass
+    def testDelete(self):
+        identifier = ('some','thing:anId-123','somePartName.xml')
+        self.storage.put(identifier).close()
+        self.assertTrue(identifier in self.storage)
+        self.storageComponent.deletePart('some:thing:anId-123', 'somePartName')
+        self.assertFalse(identifier in self.storage)
+
+    def testDeleteNonexisting(self):
+        identifier = ('some','thing:anId-123','somePartName.xml')
+        self.assertFalse(identifier in self.storage)
+        self.storageComponent.deletePart('some:thing:anId-123', 'somePartName')
+        self.assertFalse(identifier in self.storage)
+    
