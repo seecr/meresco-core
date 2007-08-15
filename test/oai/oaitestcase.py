@@ -53,21 +53,19 @@ class OaiTestCase(CQ2TestCase):
         self.stream = StringIO()
         self.request.write = self.stream.write
         
-    def testNotMyVerb(self):
-        """All verbs are observers and should only react to their own verb. This is not true for the sink and the umbrella OaiComponent"""
-        if self.subject.__class__ in [OaiComponent, OaiSink]:
-            return
-        self.request.args = {'verb': ['NotMyVerb']}
-        self.observable.changed(self.request)
-        self.assertEquals('', self.stream.getvalue())
+    #def testNotMyVerb(self):
+        #"""All verbs are observers and should only react to their own verb. This is not true for the sink and the umbrella OaiComponent"""
+        #if self.subject.__class__ in [OaiComponent, OaiSink]:
+            #return
+        #self.request.args = {'verb': ['NotMyVerb']}
+        #self.observable.any.unknown('notMyVerb', self.request)
+        #self.assertEquals('', self.stream.getvalue())
         
-    def assertBadArgument(self, arguments, additionalMessage = '', errorCode = "badArgument"):
-        if hasattr(self, 'ranAssertBadArgument'):
-            self.fail("""NOTE: this method can be used only once per test (not very pretty, but not priority now (20/04/2007 - KVS)""")
-        self.ranAssertBadArgument = True
-        
+    def assertBadArgument(self, verb, arguments, additionalMessage = '', errorCode = "badArgument"):
         self.request.args = arguments
-        self.observable.changed(self.request)
+        
+        self.observable.any.unknown(verb, self.request)
+        
         self.assertTrue(len(self.request.calledMethods) >= 1)
         self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
         result = self.stream.getvalue()

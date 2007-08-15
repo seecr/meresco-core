@@ -77,15 +77,16 @@ from legacy.configurationtest import ConfigurationTest
 from legacy.portaltest import PortalTest
 from legacy.pluginregistrytest import PluginRegistryTest
 
-from oai.oaicomponenttest import OaiComponentTest
-from oai.oaigetrecordtest import OaiGetRecordTest
-from oai.oaiidentifytest import OaiIdentifyTest
-from oai.oailistmetadataformatstest import OaiListMetadataFormatsTest
-from oai.oailistsetstest import OaiListSetsTest
-from oai.oailisttest import OaiListTest
+#from oai.oaicomponenttest import OaiComponentTest
+#from oai.oaigetrecordtest import OaiGetRecordTest
+#from oai.oaiidentifytest import OaiIdentifyTest
+#from oai.oailistmetadataformatstest import OaiListMetadataFormatsTest
+#from oai.oailistsetstest import OaiListSetsTest
+#from oai.oailisttest import OaiListTest
 from oai.oaisinktest import OaiSinkTest
-from oai.oaitooltest import OaiToolTest
-from oai.oaivalidatortest import OaiValidatorTest
+#from oai.oaitooltest import OaiToolTest
+#from oai.oaivalidatortest import OaiValidatorTest
+from oai.oaimaintest import OaiMainTest
 
 if __name__ == '__main__':
         unittest.main()
