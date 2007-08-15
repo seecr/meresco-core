@@ -46,11 +46,28 @@ class StorageComponentTest(CQ2TestCase):
         self.assertEquals('The contents of the part', self.storage.get(('id_0', 'partName.xml')).read())
         self.assertEquals((0,1), (old,new))
 
-    def testIsAvailable(self):
-        hasId, hasPartName = self.storageComponent.isAvailable("anId-123", "somePartName")
+    def testIsAvailableIdAndPart(self):
+        sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))
+        sink.send('read string')
+        sink.close()
         
+        hasId, hasPartName = self.storageComponent.isAvailable("some:thing:anId-123", "somePartName")
         self.assertTrue(hasId)
         self.assertTrue(hasPartName)
+    
+    def testIsAvailableId(self):
+        sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))
+        sink.send('read string')
+        sink.close()
+        
+        hasId, hasPartName = self.storageComponent.isAvailable("some:thing:anId-123", "nonExistingPart")
+        self.assertTrue(hasId)
+        self.assertFalse(hasPartName)
+    
+    def testIsNotAvailable(self):
+        hasId, hasPartName = self.storageComponent.isAvailable("some:thing:anId-123", "nonExistingPart")
+        self.assertFalse(hasId)
+        self.assertFalse(hasPartName)
         
     def testWrite(self):
         sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))

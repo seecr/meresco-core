@@ -39,7 +39,10 @@ class StorageComponent(Component):
             return sink.close()
 
     def _split(self, (id, partName)):
-        return id.split(':',1) + [partName + '.xml']
+        result = id.split(':',1)
+        if partName != None:
+            result += [partName + '.xml']
+        return result
 
     def deletePart(self, id, partName):
         try:
@@ -49,11 +52,10 @@ class StorageComponent(Component):
             
     def isAvailable(self, id, partName):
         """returns (hasId, hasPartName)"""
-        raise NotImplementedError("Wait and see, it might be coming to you soon!!!")
-        # FF uit vanwegen ombouw storage.
-        if self._storage.hasUnit(id):
-            unit = self._storage.getUnit(id) #caching optional
-            return True, unit.hasBox(partName)
+        if (id, partName) in self._storage:
+            return True, True
+        elif (id, None) in self._storage:
+            return True, False
         return False, False
     
     def write(self, sink, id, partName):

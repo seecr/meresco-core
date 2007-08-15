@@ -49,13 +49,11 @@ class OaiRecordVerb(OaiVerb):
             webRequest.write('</record>')
 
     def _isDeleted(self, id):
-        aTuple = self.any.isAvailable(id, "__tombstone__")
-        ignored, hasTombstonePart = aTuple or (False, False)
+        ignored, hasTombstonePart = self.any.isAvailable(id, "__tombstone__")
         return hasTombstonePart
     
     def _getSetSpecs(self, id):
-        aTuple = self.any.isAvailable(id, "__sets__")
-        ignored, hasSetsPart = aTuple or (False, False)
+        ignored, hasSetsPart = self.any.isAvailable(id, "__sets__")
         if hasSetsPart:
             sets = self.xmlSteal(id, "__sets__") 
             if hasattr(sets, 'set'):
