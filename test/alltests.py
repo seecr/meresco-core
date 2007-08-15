@@ -51,15 +51,6 @@ from logobservertest import LogObserverTest
 from logtest import LogTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
-from oaicomponenttest import OaiComponentTest
-from oaigetrecordtest import OaiGetRecordTest
-from oaiidentifytest import OaiIdentifyTest
-from oailistmetadataformatstest import OaiListMetadataFormatsTest
-from oailistsetstest import OaiListSetsTest
-from oailisttest import OaiListTest
-from oaisinktest import OaiSinkTest
-from oaitooltest import OaiToolTest
-from oaivalidatortest import OaiValidatorTest
 from observabletest import ObservableTest
 from partscomponenttest import PartsComponentTest
 from rssplugintest import RSSPluginTest
@@ -85,6 +76,16 @@ from legacy.teddyinterfacetest import TeddyInterfaceTest
 from legacy.configurationtest import ConfigurationTest
 from legacy.portaltest import PortalTest
 from legacy.pluginregistrytest import PluginRegistryTest
+
+from oai.oaicomponenttest import OaiComponentTest
+from oai.oaigetrecordtest import OaiGetRecordTest
+from oai.oaiidentifytest import OaiIdentifyTest
+from oai.oailistmetadataformatstest import OaiListMetadataFormatsTest
+from oai.oailistsetstest import OaiListSetsTest
+from oai.oailisttest import OaiListTest
+from oai.oaisinktest import OaiSinkTest
+from oai.oaitooltest import OaiToolTest
+from oai.oaivalidatortest import OaiValidatorTest
 
 if __name__ == '__main__':
         unittest.main()
