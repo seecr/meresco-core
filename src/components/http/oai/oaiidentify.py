@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import OaiVerb, DONE
+from meresco.components.http.oai.oaiverb import OaiVerb, DONE
 
 class OaiIdentify(OaiVerb):
     """
@@ -62,14 +62,19 @@ The response may include multiple instances of the following optional elements:
     * description : an extensible mechanism for communities to describe their repositories. For example, the description container could be used to include collection-level metadata in the response to the Identify request. Implementation Guidelines are available to give directions with this respect. Each description container must be accompanied by the URL of an XML schema describing the structure of the description container.
 
     """
-    def __init__(self):
+    def __init__(self, repositoryName = "The Repository Name", adminEmail = 'not available'):
         OaiVerb.__init__(self, ['Identify'], {})
+        self._repositoryName = repositoryName
+        self._adminEmail = adminEmail
     
-    def process(self, webRequest):    
+    def identify(self, webRequest):
+        self.startProcessing(webRequest)
+
+    def process(self, webRequest):
         values = {
-            'repositoryName': 'The Repository Name',
+            'repositoryName': self._repositoryName,
             'baseURL': self.getRequestUrl(webRequest),
-            'adminEmails': ''.join([ADMIN_EMAIL % email for email in ['info@cq2.nl']]),
+            'adminEmails': ''.join([ADMIN_EMAIL % email for email in [self._adminEmail]]),
             'deletedRecord': 'persistent'
         }
         values.update(hardcoded_values)

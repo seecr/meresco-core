@@ -27,3 +27,4 @@
 
 from oaimain import OaiMain
 from oaisink import OaiSink
+from oaiidentify import OaiIdentify

@@ -32,8 +32,8 @@ from meresco.framework.observable import Observable
 from cStringIO import StringIO
 from meresco.components.http.oai.oaivalidator import assertValidString
 
-from meresco.components.http.oai.oaicomponent import OaiComponent
-from meresco.components.http.oai.oaisink import OaiSink
+#from meresco.components.http.oai.oaicomponent import OaiComponent
+#from meresco.components.http.oai.oaisink import OaiSink
 
 class OaiTestCase(CQ2TestCase):
     

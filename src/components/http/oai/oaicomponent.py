@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import OaiVerb
+from meresco.components.http.oai.oaiverb import OaiVerb
 from meresco.components.http.oai.oaiidentify import OaiIdentify
 from meresco.components.http.oai.oaigetrecord import OaiGetRecord
 from meresco.components.http.oai.oailistsets import OaiListSets
