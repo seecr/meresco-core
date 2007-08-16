@@ -70,6 +70,7 @@ from xml2documenttest import Xml2DocumentTest
 from xmlfileplugintest import XMLFilePluginTest
 from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
+from bitmatrixtest import BitMatrixTest
 
 from legacy.teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
 from legacy.teddyinterfacetest import TeddyInterfaceTest

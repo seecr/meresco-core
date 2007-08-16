@@ -34,7 +34,7 @@ from lucenerawdocsetstest import addUntokenized
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
-from meresco.components.drilldown.drilldown import DrillDown
+from meresco.components.drilldown.drilldown2 import DrillDown
 
 class DrillDownTest(TestCase):
 
@@ -54,7 +54,7 @@ class DrillDownTest(TestCase):
 
         self.assertEquals(['field_0'], drillDown._docSets.keys())
         self.assertEquals(0, len(drillDown._docSets['field_0']))
-    
+
     def testLoadDocSets(self):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
@@ -79,10 +79,10 @@ class DrillDownTest(TestCase):
         queryResults = self._luceneIndex.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
-        drilldownResult = drillDown.drillDown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)])
+        drilldownResult = list(drillDown.drillDown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)]))
 
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)
         self.assertEquals(['field_0', 'field_1'], result.keys())
-        self.assertEquals([("this is term_0", 2), ("this is term_1", 1)], result['field_0'])
-        self.assertEquals([("inquery", 3)], result['field_1'])
+        self.assertEquals([("this is term_0", 2), ("this is term_1", 1)], list(result['field_0']))
+        self.assertEquals([("inquery", 3)], list(result['field_1']))

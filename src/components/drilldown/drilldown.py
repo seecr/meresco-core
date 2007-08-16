@@ -95,7 +95,7 @@ class DrillDown(object):
         if not drillDownBitArray:
             for term, docSet in self._docSets[fieldName]:
                 result.append((term, docSet.cardinality()))
-        else: #Use drillDownBitArray
+        else: #Use drillDownBitArray << This branch is the HOTSPOT >>
             minValueInResult = 0
             for term, docSet in self._docSets[fieldName]:
                 if docSet.cardinality() < minValueInResult:
