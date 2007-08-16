@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import DONE
+from meresco.components.http.oai.oaiverb import DONE
 from meresco.framework.observable import Observable
 from meresco.components.http.oai.oairecordverb import OaiRecordVerb
 
@@ -52,6 +52,9 @@ Error and Exception Conditions
             'metadataPrefix': 'required'})
         Observable.__init__(self)
         self.partNames = partNames
+    
+    def getRecord(self, webRequest):
+        self.startProcessing(webRequest)
     
     def preProcess(self, webRequest):
         if not self._metadataPrefix in self.partNames:

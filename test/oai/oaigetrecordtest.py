@@ -36,19 +36,19 @@ class OaiGetRecordTest(OaiTestCase):
         return OaiGetRecord(['oai_dc'])    
         
     def testGetRecordNoArguments(self):
-        self.assertBadArgument({'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
+        self.assertBadArgument('getRecord', {'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
         
     def testGetNoMetadataPrefix(self):
-        self.assertBadArgument({'verb': ['GetRecord'], 'identifier': ['oai:ident']}, 'Missing argument(s) "metadataPrefix".')
+        self.assertBadArgument('getRecord', {'verb': ['GetRecord'], 'identifier': ['oai:ident']}, 'Missing argument(s) "metadataPrefix".')
 
     def testGetNoIdentifierArgument(self):
-        self.assertBadArgument({'verb': ['GetRecord'], 'metadataPrefix': ['oai_dc']}, 'Missing argument(s) "identifier".')
+        self.assertBadArgument('getRecord', {'verb': ['GetRecord'], 'metadataPrefix': ['oai_dc']}, 'Missing argument(s) "identifier".')
 
     def testNonsenseArgument(self):
-        self.assertBadArgument({'verb': ['GetRecord'], 'metadataPrefix': ['aPrefix'], 'identifier': ['anIdentifier'], 'nonsense': ['bla']}, 'Argument(s) "nonsense" is/are illegal.')
+        self.assertBadArgument('getRecord', {'verb': ['GetRecord'], 'metadataPrefix': ['aPrefix'], 'identifier': ['anIdentifier'], 'nonsense': ['bla']}, 'Argument(s) "nonsense" is/are illegal.')
 
     def testDoubleArguments(self):
-        self.assertBadArgument({'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident', '2']}, 'Argument "identifier" may not be repeated.')
+        self.assertBadArgument('getRecord', {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident', '2']}, 'Argument "identifier" may not be repeated.')
     
     def testGetRecordNotAvailable(self):
         self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
@@ -61,7 +61,7 @@ class OaiGetRecordTest(OaiTestCase):
         observer.isAvailable = isAvailable
         self.subject.addObserver(observer)
         
-        self.observable.changed(self.request)
+        self.observable.any.getRecord(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
 <request identifier="oai:ident" metadataPrefix="oai_dc" verb="GetRecord">http://server:9000/path/to/oai</request>
@@ -92,7 +92,7 @@ class OaiGetRecordTest(OaiTestCase):
                 pass
             
         self.subject.addObserver(Observable())
-        self.observable.changed(self.request)
+        self.observable.any.getRecord(self.request)
         self.assertEqualsWS(self.OAIPMH % """
 <request identifier="oai:ident"
  metadataPrefix="oai_dc"
@@ -131,5 +131,5 @@ class OaiGetRecordTest(OaiTestCase):
                 pass
             
         self.subject.addObserver(Observable())
-        self.observable.changed(self.request)
+        self.observable.any.getRecord(self.request)
         self.assertTrue("deleted" in self.stream.getvalue())

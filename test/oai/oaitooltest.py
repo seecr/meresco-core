@@ -25,7 +25,8 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import ResumptionToken, resumptionTokenFromString, ISO8601Exception, ISO8601, OaiVerb
+from meresco.components.http.oai.oaitool import ISO8601Exception, ISO8601
+from meresco.components.http.oai.oaiverb import OaiVerb
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
@@ -46,17 +47,6 @@ class OaiToolTest(CQ2TestCase):
         writeCall = request.calledMethods[-1]
         self.assertEquals('write', writeCall.name)
         self.assertEquals('<request identifier="with a &quot;">http://localhost:8000/oai</request>', writeCall.arguments[0])
-    
-    def assertResumptionToken(self, token):
-        aTokenString = str(token)
-        token2 = resumptionTokenFromString(aTokenString)
-        self.assertEquals(token, token2)
-    
-    def testResumptionToken(self):
-        self.assertResumptionToken(ResumptionToken())
-        self.assertResumptionToken(ResumptionToken('oai:dc', '100', '2002-06-01T19:20:30Z', '2002-06-01T19:20:39Z', 'some:set:name'))
-        self.assertResumptionToken(ResumptionToken(_set=None))
-        
         
     def testISO8601(self):
         """http://www.w3.org/TR/NOTE-datetime

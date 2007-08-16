@@ -27,7 +27,7 @@
 
 from oaitestcase import OaiTestCase
 
-from meresco.components.http.oai.oailistmetadataformats import OaiListMetadataFormats
+from meresco.components.http.oai import OaiListMetadataFormats
 from meresco.components.http.oai.oaivalidator import assertValidString
 
 class OaiListMetadataFormatsTest(OaiTestCase):
@@ -40,7 +40,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
     def testListAllMetadataFormats(self):
         self.request.args = {'verb': ['ListMetadataFormats']}
         
-        self.observable.changed(self.request)
+        self.observable.any.listMetadataFormats(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
         <request verb="ListMetadataFormats">http://server:9000/path/to/oai</request>
@@ -67,7 +67,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         self._isAvailable = True, True
         self._writeString = "<__parts__><part>oai_dc</part></__parts__>"
         
-        self.observable.changed(self.request)
+        self.observable.any.listMetadataFormats(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
         <request identifier="id_0" verb="ListMetadataFormats">http://server:9000/path/to/oai</request>
@@ -87,13 +87,13 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         self.subject.addObserver(self)
         self._isAvailable = None
         
-        self.observable.changed(self.request)
+        self.observable.any.listMetadataFormats(self.request)
         
         self.assertTrue("""<error code="idDoesNotExist">The value of the identifier argument is unknown or illegal in this repository.</error>""" in self.stream.getvalue())
         assertValidString(self.stream.getvalue())
         
     def testIllegalArguments(self):
-        self.assertBadArgument({'verb': ['ListMetadataFormats'], 'somethingElse': ['illegal']})
+        self.assertBadArgument('listMetadataFormats', {'verb': ['ListMetadataFormats'], 'somethingElse': ['illegal']})
         
     def isAvailable(self, id, partName):
         return self._isAvailable

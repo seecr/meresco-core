@@ -27,9 +27,10 @@
 
 from oaitestcase import OaiTestCase
 
-from meresco.components.http.oai.oailist import OaiList, BATCH_SIZE
+from meresco.components.http.oai.oailist import BATCH_SIZE
+from meresco.components.http.oai import OaiList
 from cq2utils.calltrace import CallTrace
-from meresco.components.http.oai.oaitool import resumptionTokenFromString, ResumptionToken
+from meresco.components.http.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
 from amara.binderytools import bind_string
 from StringIO import StringIO
 
@@ -38,19 +39,19 @@ class OaiListTest(OaiTestCase):
         return OaiList(['oai_dc'])
     
     def testNoArguments(self):
-        self.assertBadArgument({'verb': ['ListRecords']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')
+        self.assertBadArgument('listRecords', {'verb': ['ListRecords']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')
         
     def testTokenNotUsedExclusively(self):
-        self.assertBadArgument({'verb': ['ListRecords'], 'resumptionToken': ['aToken'], 'from': ['aDate']}, '"resumptionToken" argument may only be used exclusively.')
+        self.assertBadArgument('listRecords', {'verb': ['ListRecords'], 'resumptionToken': ['aToken'], 'from': ['aDate']}, '"resumptionToken" argument may only be used exclusively.')
 
     def testNeitherTokenNorMetadataPrefix(self):
-        self.assertBadArgument({'verb': ['ListRecords'], 'from': ['aDate']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')
+        self.assertBadArgument('listRecords', {'verb': ['ListRecords'], 'from': ['aDate']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')
 
     def testNonsenseArguments(self):
-        self.assertBadArgument({'verb': ['ListRecords'], 'metadataPrefix': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
+        self.assertBadArgument('listRecords', {'verb': ['ListRecords'], 'metadataPrefix': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
 
     def testDoubleArguments(self):
-        self.assertBadArgument({'verb':['ListRecords'], 'metadataPrefix': ['oai_dc', '2']}, 'Argument "metadataPrefix" may not be repeated.')
+        self.assertBadArgument('listRecords', {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc', '2']}, 'Argument "metadataPrefix" may not be repeated.')
     
     def testListRecordsUsingMetadataPrefix(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
@@ -76,11 +77,8 @@ class OaiListTest(OaiTestCase):
                     return True, True
                 return True, False
             
-            def notify(sself, *args, **kwargs):
-                pass
-        
         self.subject.addObserver(Observer())
-        self.observable.changed(self.request)
+        self.observable.any.listRecords(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
 <request metadataPrefix="oai_dc"
@@ -121,10 +119,10 @@ class OaiListTest(OaiTestCase):
                 
         observer.listRecords = listRecords
         self.subject.addObserver(observer)
-        self.observable.changed(self.request)
+        self.observable.any.listRecords(self.request)
         
     def testRottenToken(self):
-        self.assertBadArgument({'verb': ['ListRecords'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")
+        self.assertBadArgument('listRecords', {'verb': ['ListRecords'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")
         
     def testResumptionTokensAreProduced(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z'], 'set': ['SET']}
@@ -140,11 +138,14 @@ class OaiListTest(OaiTestCase):
         <datestamp>DATESTAMP_FOR_TEST</datestamp>
         <unique>UNIQUE_FOR_TEST</unique>
     </__stamp__>""")
+        def writeRecord(*args, **kwargs):
+            pass
         observer.listRecords = listRecords
         observer.write = write
         self.subject.addObserver(observer)
+        self.subject.writeRecord = writeRecord
         
-        self.observable.changed(self.request)
+        self.observable.any.listRecords(self.request)
         
         self.assertTrue(self.stream.getvalue().find("<resumptionToken>") > -1)
         xml = bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken
@@ -165,11 +166,14 @@ class OaiListTest(OaiTestCase):
                 sink.write("""<__stamp__>
         <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </__stamp__>""")
+        def writeRecord(*args, **kwargs):
+            pass
         observer.listRecords = listRecords
         observer.write = write
         self.subject.addObserver(observer)
+        self.subject.writeRecord = writeRecord
         
-        self.observable.changed(self.request)
+        self.observable.any.listRecords(self.request)
         
         self.assertTrue(self.stream.getvalue().find("<resumptionToken") > -1)
         self.assertEquals('', str(bind_string(self.stream.getvalue()).OAI_PMH.ListRecords.resumptionToken))
@@ -201,7 +205,7 @@ class OaiListTest(OaiTestCase):
                 pass
         
         self.subject.addObserver(Observer())
-        self.observable.changed(self.request)
+        self.observable.any.listRecords(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
 <request metadataPrefix="oai_dc"
@@ -251,9 +255,6 @@ class OaiListTest(OaiTestCase):
                 if partName == '__tombstone__' and id == 'id_1':
                     return True, True
                 return True, False
-            
-            def notify(self, *args):
-                pass
                 
         self.subject.addObserver(Observer())
                     
@@ -265,7 +266,7 @@ class OaiListTest(OaiTestCase):
                 self.request.args['from'] = [oaiFrom]
             if oaiUntil:
                 self.request.args['until'] = [oaiUntil]
-            self.observable.changed(self.request)
+            self.observable.any.listRecords(self.request)
             return results
         
         def right(oaiFrom, oaiUntil, expectedFrom = None, expectedUntil = None):
@@ -312,12 +313,9 @@ class OaiListTest(OaiTestCase):
                 if partName == 'oai_dc':
                     return True, True
                 return True, False
-            
-            def notify(sself, *args, **kwargs):
-                pass
         
         self.subject.addObserver(Observer())
-        self.observable.changed(self.request)
+        self.observable.any.listIdentifiers(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
 <request metadataPrefix="oai_dc"
@@ -340,7 +338,7 @@ class OaiListTest(OaiTestCase):
                 pass
         
         self.subject.addObserver(Observer())
-        self.observable.changed(self.request)
+        self.observable.any.listIdentifiers(self.request)
         
         self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)
 
@@ -369,12 +367,9 @@ class OaiListTest(OaiTestCase):
                 if partName == 'oai_dc' or partName == '__sets__':
                     return True, True
                 return True, False
-            
-            def notify(sself, *args, **kwargs):
-                pass
         
         self.subject.addObserver(Observer())
-        self.observable.changed(self.request)
+        self.observable.any.listRecords(self.request)
         
         self.assertTrue("<setSpec>one:two:three</setSpec>" in self.stream.getvalue())
         self.assertTrue("<setSpec>one:two:four</setSpec>" in self.stream.getvalue())    

@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import OaiVerb, DONE
+from meresco.components.http.oai.oaiverb import OaiVerb, DONE
 from meresco.components.partscomponent import PARTS_PART
 from meresco.framework.observable import Observable
 
@@ -51,6 +51,9 @@ Error and Exception Conditions
         OaiVerb.__init__(self, ['ListMetadataFormats'], {'identifier': 'optional'})
         Observable.__init__(self)
         self.supportedMetadataFormats = metadataFormats
+
+    def listMetadataFormats(self, aWebRequest):
+        self.startProcessing(aWebRequest)
     
     def preProcess(self, webRequest):
         if self._identifier:

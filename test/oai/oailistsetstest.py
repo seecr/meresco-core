@@ -26,14 +26,14 @@
 ## end license ##
 
 from oaitestcase import OaiTestCase
-from meresco.components.http.oai.oailistsets import OaiListSets
+from meresco.components.http.oai import OaiListSets
 
 class OaiListSetsTest(OaiTestCase):
     def getSubject(self):
         return OaiListSets()
     
     def testNonsenseArguments(self):
-        self.assertBadArgument({'verb': ['ListSets'], 'nonsense': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
+        self.assertBadArgument('listSets', {'verb': ['ListSets'], 'nonsense': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
 
     def testListSetsNoArguments(self):
         self.request.args = {'verb':['ListSets']}
@@ -52,7 +52,7 @@ class OaiListSetsTest(OaiTestCase):
                 pass
         
         self.subject.addObserver(Observer())
-        self.observable.changed(self.request)
+        self.observable.any.listSets(self.request)
         
         self.assertEqualsWS(self.OAIPMH % """
 <request verb="ListSets">http://server:9000/path/to/oai</request>
@@ -63,5 +63,5 @@ class OaiListSetsTest(OaiTestCase):
         self.assertFalse('<resumptionToken' in self.stream.getvalue())
 
     def testResumptionTokensNotSupported(self):
-        self.assertBadArgument({'verb': ['ListSets'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")
+        self.assertBadArgument('listSets', {'verb': ['ListSets'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")
 

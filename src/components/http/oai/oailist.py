@@ -25,7 +25,9 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import OaiVerb, DONE, ResumptionTokenException, resumptionTokenFromString, ResumptionToken, ISO8601, ISO8601Exception
+from meresco.components.http.oai.oaiverb import OaiVerb, DONE 
+from meresco.components.http.oai.resumptiontoken import ResumptionTokenException, resumptionTokenFromString, ResumptionToken
+from meresco.components.http.oai.oaitool import ISO8601, ISO8601Exception
 from meresco.components.http.oai.oairecordverb import OaiRecordVerb
 from meresco.components.stampcomponent import UNIQUE, STAMP_PART
 from meresco.framework.observable import Observable
@@ -85,6 +87,12 @@ Error and Exception Conditions
             'metadataPrefix': 'required'})
         Observable.__init__(self)
         self.partNames = partNames
+
+    def listRecords(self, webRequest):
+        self.startProcessing(webRequest)
+    
+    def listIdentifiers(self, webRequest):
+        self.startProcessing(webRequest)
     
     def preProcess(self, webRequest):
         if self._resumptionToken:
