@@ -31,4 +31,5 @@ from oaiidentify import OaiIdentify
 from oailistmetadataformats import OaiListMetadataFormats
 from oailist import OaiList
 from oailistsets import OaiListSets
+from oaigetrecord import OaiGetRecord
 

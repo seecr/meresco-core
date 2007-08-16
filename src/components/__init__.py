@@ -26,3 +26,4 @@
 ## end license ##
 
 from logobserver import LogObserver
+from storagecomponent import StorageComponent
