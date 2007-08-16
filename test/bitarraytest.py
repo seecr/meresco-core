@@ -28,7 +28,7 @@
 # $Id: configurationtest.py 78 2006-05-18 13:20:26Z svn $
 #
 
-from bitarray import DenseBitArray, SparseBitArray
+from meresco.components.drilldown.cpp.bitarray import DenseBitArray, SparseBitArray
 import unittest
 
 class BitArrayTest(unittest.TestCase):

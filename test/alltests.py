@@ -36,6 +36,8 @@ sys.path.insert(0, "..")
 
 import unittest
 
+from bitarraytest import BitArrayTest
+from bitmatrixtest import BitMatrixTest
 from contextsettest import ContextSetTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrillDownFiltersTest
@@ -70,7 +72,6 @@ from xml2documenttest import Xml2DocumentTest
 from xmlfileplugintest import XMLFilePluginTest
 from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
-from bitmatrixtest import BitMatrixTest
 
 from legacy.teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
 from legacy.teddyinterfacetest import TeddyInterfaceTest
