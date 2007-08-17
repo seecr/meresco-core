@@ -1,12 +1,14 @@
 from bitmatrix import BitMatrix
 
 class FieldMatrix(object):
+
 	def __init__(self, terms, numDocsInIndex):
 		self._matrix = BitMatrix(numDocsInIndex)
 		self._row2term = {}
 		for term, docIds in terms:
 			nr = self._matrix.addRow(docIds)
 			self._row2term[nr] = term
+
 	def drilldown(self, docIds = None, maxresults = 0):
 		if not docIds:
 			for nr, occurences in self._matrix.rowCadinalities():
@@ -14,8 +16,10 @@ class FieldMatrix(object):
 		else:
 			for nr, occurences in self._matrix.combinedRowCardinalities(docIds, maxresults):
 				yield self._row2term[nr], occurences
+
 	# below here is for supporting the old test only
 	def __len__(self): return len(self._row2term)
+
 	def __iter__(self):
 		class MockBitSet:
 			def __init__(self, occurences): self._occurences = occurences
@@ -24,6 +28,7 @@ class FieldMatrix(object):
 			yield self._row2term[nr], MockBitSet(occurences)
 
 class DrillDown(object):
+
 	def __init__(self, drilldownFieldnames):
 		self._drilldownFieldnames = drilldownFieldnames
 		self._fieldMatrices = {}

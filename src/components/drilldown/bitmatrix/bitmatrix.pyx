@@ -18,6 +18,7 @@ cdef extern unsigned int combinedCardinality(unsigned int* lhs, unsigned int* rh
 cdef unsigned int* pythonListOfIntsToCIntArray(object pyList):
 	cdef unsigned int* arrayOfInts
 	cdef int i
+	pyList = list(pyList)
 	arrayOfInts = <unsigned int*> PyMem_Malloc((len(pyList)+2) * sizeof(unsigned int))
 	i = 1
 	for number in pyList:
