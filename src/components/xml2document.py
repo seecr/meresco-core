@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -33,24 +33,24 @@ from meresco.framework.observable import Observable
 TEDDY_NS = "http://www.cq2.nl/teddy"
 
 class Xml2Document(Observable):
-    
+
     def unknown(self, methodName, *args):
         self.do.unknown(methodName, *args)
-    
+
     def add(self, id, partName, amaraXmlNode):
         self.do.add(id, partName, self._create(id, amaraXmlNode))
-    
+
     def _create(self, documentId, topNode):
         doc = Document(documentId)
         self._addToDocument(doc, topNode, '')
         return doc
-        
+
     def _addToDocument(self, doc, aNode, parentName):
         if parentName:
             parentName += '.'
         for child in filter(is_element, aNode.childNodes):
             self._indexChild(child, doc, parentName)
-    
+
     def _indexChild(self, child, doc, parentName):
         tagname = parentName + str(child.localName)
         value = child.xml_child_text

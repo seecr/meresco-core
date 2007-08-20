@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,16 +31,25 @@ from amara.binderytools import bind_stream, bind_string
 PARTS_PART = '__parts__' # __ because purpose is internal use only!
 PART = 'part'
 
+
+
+
+from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
+
+
+
+
+
 class PartsComponent(Observable):
-    
+
     def __init__(self, storage, maintainedParts):
         Observable.__init__(self)
         self.maintainedParts = maintainedParts
         self._storage = storage
-    
+
     def notify(self, notification):
         self.changed(notification)
-        
+
         if notification.partName in self.maintainedParts:
             unit = self._storage.getUnit(notification.id)
             newNode = notification.payload
@@ -57,10 +66,13 @@ class PartsComponent(Observable):
                 parts.add(notification.partName)
             elif notification.method == "delete":
                 parts.remove(notification.partName)
-            
+
             thexml = "<__parts__>%s</__parts__>"  % "".join(map(
                 lambda s: '<part xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">%s</part>' % s,
                 parts))
-            
+
             newNotification = Notification("add", notification.id, PARTS_PART, bind_string(thexml).__parts__)
             self.changed(newNotification)
+
+    def extendQuery(self, luceneQuery, *args, **kwargs):
+       luceneQuery.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), kwargs['metadataPrefix'])), BooleanClause.Occur.MUST)

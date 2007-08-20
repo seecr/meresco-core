@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -36,33 +36,32 @@ from meresco.components.setscomponent import MEMBERSHIP_PART, SET
 class IndexComponent(Component):
     def __init__(self, anIndex):
         self._index = anIndex
-        
+
     def add(self, id, partName, document):
         self._index.deleteID(id)
         self._index.addToIndex(document)
-    
+
     def delete(self, id):
         self._index.deleteID(id)
-        
-    def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True):
+
+    def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True, query = None, sortBy = None):
         def addRange(root, field, lo, hi, inclusive):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
             root.add(range, BooleanClause.Occur.MUST)
-        
+
         #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase
-        
-        query = BooleanQuery()
-        query.add(TermQuery(Term('%s.%s' % (PARTS_PART, PART), partName)), BooleanClause.Occur.MUST)
-        if continueAt != '0':    
-            addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, None, False)
-        if oaiFrom or oaiUntil:
-            oaiFrom = oaiFrom or None
-            oaiUntil = oaiUntil or None
-            addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
-        if oaiSet:
-            query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
-        
-        sortBy = sorted and '%s.%s' % (STAMP_PART, UNIQUE)
+
+        #if continueAt != '0':
+            #addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, None, False)
+        #if oaiFrom or oaiUntil:
+            #oaiFrom = oaiFrom or None
+            #oaiUntil = oaiUntil or None
+            #addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
+        #if oaiSet:
+            #query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
+
+        print str(query)
+        sortBy = sorted and sortBy
         return self._index.executeQuery(query, sortBy)
 
     def listAll(self):

@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -36,19 +36,19 @@ from amara.binderytools import bind_string
 from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
 
 class StampComponent(Observable):
-    
+
     uniqueFormat = '%019i'
     """Since we don't work with Integer-fields, only with string-fields, some measure must be taken to garantuee lexicographical sorting works - this is done by padding 64bit zeros
     19 == int(floor(log(pow(2, 64), 10))) == len('18446744073709551616')"""
-    
+
     def __init__(self, uniqueNumbersFilename):
         Observable.__init__(self)
         self.unique = UniqueNumberGenerator(uniqueNumbersFilename)
-    
+
     def getTime(self):
         return strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
         #na al dat nadenken wat we hier eerder over gedaan hebben (denk aan urlcache ed.) kan ik me niet voorstellen dat het zo simpel is.
-    
+
     def notify(self, notification):
         time = self.getTime()
 
@@ -60,7 +60,7 @@ class StampComponent(Observable):
         thexml = bind_string("""<%(STAMP_PART)s xmlns:teddy="http://www.cq2.nl/teddy">
             <%(TIME_FIELD)s teddy:tokenize="false">%(time)s</%(TIME_FIELD)s>
             <%(UNIQUE_FIELD)s>%(unique)s</%(UNIQUE_FIELD)s>
-        </%(STAMP_PART)s>""" % 
+        </%(STAMP_PART)s>""" %
             {'time': time,
             'unique': self.uniqueFormat % unique,
             'STAMP_PART': STAMP_PART,
@@ -69,4 +69,6 @@ class StampComponent(Observable):
             )
         newNotification.payload = thexml.rootNode.childNodes[0]
         self.changed(newNotification)
-        
+
+    def getSortKey(self):
+        return '%s.%s' % (STAMP_PART, UNIQUE)

@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,7 +25,16 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaiverb import OaiVerb, DONE 
+
+
+
+# Auw! WEG!
+from PyLucene import BooleanQuery
+
+
+
+
+from meresco.components.http.oai.oaiverb import OaiVerb, DONE
 from meresco.components.http.oai.resumptiontoken import ResumptionTokenException, resumptionTokenFromString, ResumptionToken
 from meresco.components.http.oai.oaitool import ISO8601, ISO8601Exception
 from meresco.components.http.oai.oairecordverb import OaiRecordVerb
@@ -90,10 +99,10 @@ Error and Exception Conditions
 
     def listRecords(self, webRequest):
         self.startProcessing(webRequest)
-    
+
     def listIdentifiers(self, webRequest):
         self.startProcessing(webRequest)
-    
+
     def preProcess(self, webRequest):
         if self._resumptionToken:
             token = resumptionTokenFromString(self._resumptionToken)
@@ -118,14 +127,19 @@ Error and Exception Conditions
                 self._until = self._until and self._until.ceil()
             except ISO8601Exception, e:
                 return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
-        
+
         if not self._metadataPrefix in self.partNames:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
-        
-        self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
+
+        query = BooleanQuery()
+        self.do.extendQuery(query, metadataPrefix=self._metadataPrefix)
+
+        sortBy = self.any.getSortKey()
+        self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set, query=query, sortBy=sortBy)
+        #self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
         if len(self._queryResult) == 0:
             return self.writeError(webRequest, 'noRecordsMatch')
-    
+
     def process(self, webRequest):
         for i, id in enumerate(self._queryResult):
             if i == BATCH_SIZE:
@@ -136,13 +150,13 @@ Error and Exception Conditions
                     self._until,
                     self._set))
                 return
-            
+
             self.writeRecord(webRequest, id, self._verb == "ListRecords")
             prevId = id
 
         if self._resumptionToken:
             webRequest.write('<resumptionToken/>')
-            
+
     def getUnique(self, id):
         return str(getattr(self.xmlSteal(id, STAMP_PART), UNIQUE))
 
