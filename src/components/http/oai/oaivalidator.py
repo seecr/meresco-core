@@ -5,7 +5,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -29,28 +29,31 @@
 from lxml.etree import parse, XMLSchema, XMLSchemaParseError
 from os.path import join, abspath, dirname
 from cStringIO import StringIO
-
-# Lines with 'SLOW' are commented out because they are superfluous (we dare to say the official OAI XSD is indeed a valid XSD) and phase-of-the-moon-slow
+from glob import glob
 
 schemaLocation = join(abspath(dirname(__file__)), 'data')
-# Create an XSD validator to validate the XSD
-# xsdxsd = XMLSchema(parse(join(schemaLocation, 'XMLSchema.xsd'))) # SLOW
 
-# Parse the XSD and validate it as XSD
-oai = parse(join(schemaLocation, 'OAI-PMH.xsd'))
-# xsdxsd.validate(oai) # SLOW
+rootSchema = '<?xml version="1.0" encoding="utf-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">' \
+ + '\n'.join('<xsd:import namespace="%s" schemaLocation="%s"/>' %
+    (parse(xsd).getroot().get('targetNamespace'), xsd)
+        for xsd in glob(join(schemaLocation,'*.xsd'))) \
++ '</xsd:schema>'
 
-# Create an XSD validator to validate the XML instance
-oaixsd = XMLSchema(oai)
+oai = parse(StringIO(rootSchema))
+
+try:
+    oaixsd = XMLSchema(oai)
+except XMLSchemaParseError, e:
+    print e.error_log.last_error
+    raise
 
 def validate(oaiResponse):
-    # Parse the XML and validate it
     oaixsd.validate(parse(oaiResponse))
     if oaixsd.error_log:
         return False, oaixsd.error_log.last_error
     else:
         return True, ''
-    
+
 def assertValid(oaiResponse):
     success, message = validate(oaiResponse)
     if not success:
@@ -58,7 +61,7 @@ def assertValid(oaiResponse):
 
 def assertValidString(oaiResponseString):
     assertValid(StringIO(oaiResponseString))
-    
+
 if __name__ == '__main__':
     from sys import argv, exit
     args = argv[1:]
