@@ -58,37 +58,13 @@ class OaiListTest(OaiTestCase):
     def testListRecordsUsingMetadataPrefix(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        class Observer:
-            def oaiSelect(sself, set, prefix, continueAt, oaiFrom, oaiUntil):
-                self.assertEquals('oai_dc', prefix)
-                self.assertEquals('0', continueAt)
-                return ['id_0&0', 'id_1&1']
+        self.subject.addObserver(MockObserver(
+            selectAnswer=['id_0&0', 'id_1&1'],
+            isAvailableDefault=(True,True),
+            isAvailableAnswer=[
+                (None, 'oai_dc', (True,False)),
+                (None, '__tombstone__', (True, False))]))
 
-            def getUnique(self, id):
-                return 'Unique for test'
-
-            def getSets(self, id):
-                return []
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
-                elif partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-        </__stamp__>""")
-                else:
-                    self.fail(partName + ' is unexpected')
-
-            def isAvailable(sself, id, partName):
-                if partName == 'oai_dc':
-                    return True, True
-                return True, False
-
-        self.subject.addObserver(Observer())
         self.observable.any.listRecords(self.request)
 
         self.assertEqualsWS(self.OAIPMH % """
@@ -160,20 +136,9 @@ class OaiListTest(OaiTestCase):
 
     def testFinalResumptionToken(self):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '200'))]}
-        observer = CallTrace('RecordAnswering')
-        def oaiSelect(set, partName, continueAt, oaiFrom, oaiUntil):
-            return map(lambda i: 'id_%i' % i, range(BATCH_SIZE))
-        def write(sink, id, partName):
-            if partName == '__stamp__':
-                sink.write("""<__stamp__>
-        <datestamp>DATESTAMP_FOR_TEST</datestamp>
-    </__stamp__>""")
-        def writeRecord(*args, **kwargs):
-            pass
-        observer.oaiSelect = oaiSelect
-        observer.write = write
-        self.subject.addObserver(observer)
-        self.subject.writeRecord = writeRecord
+
+        self.subject.addObserver(MockObserver(selectAnswer=map(lambda i: 'id_%i' % i, range(BATCH_SIZE))))
+        self.subject.writeRecord = lambda *args, **kwargs: None
 
         self.observable.any.listRecords(self.request)
 
@@ -183,36 +148,11 @@ class OaiListTest(OaiTestCase):
     def testDeletedTombstones(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        class Observer:
-            def oaiSelect(sself, sets, partName, continueAt, oaiFrom, oaiUntil):
-                self.assertEquals('0', continueAt)
-                return ['id_0', 'id_1']
+        self.subject.addObserver(MockObserver(
+            selectAnswer=['id_0', 'id_1'],
+            isAvailableDefault=(True,False),
+            isAvailableAnswer=[('id_1', '__tombstone__', (True,True))]))
 
-            def getSets(self, id):
-                return []
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
-                elif partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-        </__stamp__>""")
-                else:
-                    self.fail(partName + ' is unexpected')
-
-            def isAvailable(sself, id, partName):
-                if partName == '__tombstone__' and id == 'id_1':
-                    return True, True
-                return True, False
-
-            def notify(sself, *args, **kwargs):
-                pass
-
-        self.subject.addObserver(Observer())
         self.observable.any.listRecords(self.request)
 
         self.assertEqualsWS(self.OAIPMH % """
@@ -241,37 +181,12 @@ class OaiListTest(OaiTestCase):
     def testFromAndUntil(self):
         #ok, deze test wordt zo lang dat het haast wel lijkt of hier iets niet klopt.... KVS
 
-        #helper methods:
-        results = [None, None]
-        class Observer:
-            def oaiSelect(sself, sets, partName, continueAt, oaiFrom, oaiUntil):
-                results[0] = oaiFrom
-                results[1] = oaiUntil
-                return ['id_0', 'id_1']
+        observer = MockObserver(
+            selectAnswer=['id_0', 'id_1'],
+            isAvailableDefault=(True, False),
+            isAvailableAnswer=[("id_1", "__tombstone__", (True, True))])
 
-            def getSets(self, id):
-                return []
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
-                elif partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-        </__stamp__>""")
-                else:
-                    self.fail(partName + ' is unexpected')
-
-            def isAvailable(sself, id, partName):
-                if partName == '__tombstone__' and id == 'id_1':
-                    return True, True
-                return True, False
-
-        self.subject.addObserver(Observer())
+        self.subject.addObserver(observer)
 
         def doIt(oaiFrom, oaiUntil):
             self.stream = StringIO()
@@ -282,7 +197,7 @@ class OaiListTest(OaiTestCase):
             if oaiUntil:
                 self.request.args['until'] = [oaiUntil]
             self.observable.any.listRecords(self.request)
-            return results
+            return [observer.oaiSelectArguments[3], observer.oaiSelectArguments[4]]
 
         def right(oaiFrom, oaiUntil, expectedFrom = None, expectedUntil = None):
             expectedFrom = expectedFrom or oaiFrom
@@ -309,33 +224,10 @@ class OaiListTest(OaiTestCase):
     def testListIdentifiers(self):
         self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 
-        class Observer:
-            def oaiSelect(sself, set, partName, continueAt, oaiFrom, oaiUntil):
-                self.assertEquals('0', continueAt)
-                return ['id_0']
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-            def getSets(self, id):
-                return []
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
-                elif partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-        </__stamp__>""")
-                else:
-                    self.fail(partName + ' is unexpected')
-
-            def isAvailable(sself, id, partName):
-                if partName == 'oai_dc':
-                    return True, True
-                return True, False
-
-        self.subject.addObserver(Observer())
+        self.subject.addObserver(MockObserver(
+            selectAnswer=['id_0'],
+            isAvailableDefault=(True,False),
+            isAvailableAnswer=[(None, 'oai_dc', (True,True))]))
         self.observable.any.listIdentifiers(self.request)
 
         self.assertEqualsWS(self.OAIPMH % """
@@ -351,14 +243,7 @@ class OaiListTest(OaiTestCase):
     def testNoRecordsMatch(self):
         self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 
-        class Observer:
-            def oaiSelect(sself, set, prefix, continueAt, oaiFrom, oaiUntil):
-                return []
-
-            def notify(sself, *args, **kwargs):
-                pass
-
-        self.subject.addObserver(Observer())
+        self.subject.addObserver(MockObserver())
         self.observable.any.listIdentifiers(self.request)
 
         self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)
@@ -366,42 +251,58 @@ class OaiListTest(OaiTestCase):
     def testSetsInHeader(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        class Observer:
-            def oaiSelect(sself, set, prefix, continueAt, oaiFrom, oaiUntil):
-                self.assertEquals('oai_dc', prefix)
-                self.assertEquals('0', continueAt)
-                return ['id_0&0', 'id_1&1']
-
-            def getUnique(self, id):
-                return 'CRAP'
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-            def getSets(self, id):
-                return ['one:two:three', 'one:two:four']
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
-                elif partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-        </__stamp__>""")
-                elif partName == '__sets__':
-                    sink.write("""<__sets__><set><setSpec>one:two:three</setSpec><setName>Three Piggies</setName></set><set><setSpec>one:two:four</setSpec><setName>Four Chickies</setName></set></__sets__>""")
-                else:
-                    self.fail(partName + ' is unexpected')
-
-            def isAvailable(sself, id, partName):
-                if partName == 'oai_dc' or partName == '__sets__':
-                    return True, True
-                return True, False
-
-        self.subject.addObserver(Observer())
+        self.subject.addObserver(MockObserver(
+            selectAnswer=['id_0&0', 'id_1&1'],
+            setsAnswer=['one:two:three', 'one:two:four'],
+            isAvailableDefault=(True,False),
+            isAvailableAnswer=[
+                (None, 'oai_dc', (True, True)),
+                (None, '__sets__', (True, True))]))
         self.observable.any.listRecords(self.request)
 
         self.assertTrue("<setSpec>one:two:three</setSpec>" in self.stream.getvalue())
         self.assertTrue("<setSpec>one:two:four</setSpec>" in self.stream.getvalue())
 
+class MockObserver:
+    def __init__(self, selectAnswer = [], setsAnswer = [], isAvailableDefault=(True,True), isAvailableAnswer=[]):
+        self._selectAnswer = selectAnswer
+        self._setsAnswer = setsAnswer
+        self._isAvailableDefault = isAvailableDefault
+        self._isAvailableAnswer = isAvailableAnswer
+        self.oaiSelectArguments = {}
 
+    def oaiSelect(self, *args, **kwargs):
+        self.oaiSelectArguments = args
+        return self._selectAnswer
+
+    def getUnique(self, id):
+        return 'Unique for test'
+
+    def getSets(self, id):
+        return self._setsAnswer
+
+    def getDatestamp(self, id):
+        return 'DATESTAMP_FOR_TEST'
+
+    def getParts(self, id):
+        raise "STOP"
+
+    def write(self, sink, id, partName):
+        if partName == 'oai_dc':
+            sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
+        elif partName == '__stamp__':
+            sink.write("""<__stamp__>
+    <datestamp>DATESTAMP_FOR_TEST</datestamp>
+</__stamp__>""")
+        elif partName == '__sets__':
+            sink.write("""<__sets__><set><setSpec>one:two:three</setSpec><setName>Three Piggies</setName></set><set><setSpec>one:two:four</setSpec><setName>Four Chickies</setName></set></__sets__>""")
+        else:
+            self.fail(partName + ' is unexpected')
+
+    def isAvailable(self, id, partName):
+        result = self._isAvailableDefault
+        for (aId, aPartname, answer) in self._isAvailableAnswer:
+            if (aId == None or aId == id) and aPartname == partName:
+                result = answer
+                break
+        return result
