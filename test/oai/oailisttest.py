@@ -25,14 +25,16 @@
 #
 ## end license ##
 
-from oaitestcase import OaiTestCase
+from StringIO import StringIO
+
+from amara.binderytools import bind_string
+from cq2utils.calltrace import CallTrace
 
 from meresco.components.oai.oailist import BATCH_SIZE
 from meresco.components.oai import OaiList
-from cq2utils.calltrace import CallTrace
 from meresco.components.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
-from amara.binderytools import bind_string
-from StringIO import StringIO
+
+from oaitestcase import OaiTestCase
 
 class OaiListTest(OaiTestCase):
     def getSubject(self):
@@ -129,19 +131,10 @@ class OaiListTest(OaiTestCase):
         observer = CallTrace('RecordAnswering')
         def oaiSelect(set, prefix, continueAt, oaiFrom, oaiUntil):
             return map(lambda i: 'id_%i' % i, range(1000))
-
-        def write(sink, id, partName):
-            if partName == 'oai_dc':
-                pass
-            elif partName == '__stamp__':
-                sink.write("""<__stamp__>
-        <datestamp>DATESTAMP_FOR_TEST</datestamp>
-        <unique>UNIQUE_FOR_TEST</unique>
-    </__stamp__>""")
         def writeRecord(*args, **kwargs):
             pass
         observer.oaiSelect = oaiSelect
-        observer.write = write
+        observer.getUnique = lambda x: 'UNIQUE_FOR_TEST'
         self.subject.addObserver(observer)
         self.subject.writeRecord = writeRecord
 

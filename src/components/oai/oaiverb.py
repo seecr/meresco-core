@@ -6,60 +6,60 @@ from xml.utils import iso8601
 DONE = 1
 
 class OaiVerb(object):
-    
+
     def __init__(self, supportedVerbs, argsDef):
         self._supportedVerbs = supportedVerbs
         self._argsDef = argsDef
-    
+
     def startProcessing(self, webRequest):
         self._verb = webRequest.args.get('verb', [None])[0]
         if not self._verb in self._supportedVerbs:
             return
-        
+
         error = self._doElementaryArgumentsValidation(webRequest)
         if error:
             return self.writeError(webRequest, 'badArgument', error)
-        
+
         error = self.preProcess(webRequest)
         if error:
             return error
-        
+
         self.writeHeader(webRequest)
         self.writeRequestArgs(webRequest)
-        
+
         webRequest.write('<%s>' % self._verb)
         self.process(webRequest)
         webRequest.write('</%s>' % self._verb)
-        
+
         self.writeFooter(webRequest)
         return DONE
-    
+
     def preProcess(self, webRequest):
         """Hook"""
         pass
-    
+
     def process(self, webRequest):
         """Hook"""
         pass
-            
+
     def getTime(self):
         return strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
-    
+
     def getRequestUrl(self, webRequest):
         return 'http://%s:%s' % (webRequest.getRequestHostname(), webRequest.getHost().port) + webRequest.path
-    
+
     def writeHeader(self, webRequest):
         webRequest.setHeader('content-type', 'text/xml; charset=utf-8')
         webRequest.write(OAIHEADER)
         webRequest.write(RESPONSE_DATE % self.getTime())
-        
+
     def writeRequestArgs(self, webRequest):
         url = self.getRequestUrl(webRequest)
         args = ' '.join(['%s="%s"' % (xmlEscape(k), xmlEscape(v[0]).replace('"', '&quot;')) for k,v in sorted(webRequest.args.items())])
         webRequest.write(REQUEST % locals())
-    
+
     def writeError(self, webRequest, statusCode, addionalMessage = '', echoArgs = True):
-        space = addionalMessage and ' ' or '' 
+        space = addionalMessage and ' ' or ''
         message = ERROR_CODES[statusCode] + space + addionalMessage
         self.writeHeader(webRequest)
         url = self.getRequestUrl(webRequest)
@@ -72,37 +72,37 @@ class OaiVerb(object):
         webRequest.write(ERROR % locals())
         self.writeFooter(webRequest)
         return DONE
-        
+
     def xmlSteal(self, id, partName):
         from StringIO import StringIO
         from amara.binderytools import bind_string
         buffer = StringIO()
         self.do.write(buffer, id, partName)
         return bind_string(buffer.getvalue()).childNodes[0]
-        
+
     def writeFooter(self, webRequest):
         webRequest.write(OAIFOOTER)
-        
+
     def _isArgumentRepeated(self, webRequest):
         for k, v in webRequest.args.items():
             if len(v) > 1:
                 return k
         return False
-        
+
     def _select(self, neededNess):
         result = []
         for arg, definition in self._argsDef.items():
             if definition == neededNess:
                 result.append(arg)
         return result
-    
+
     def ___set(self, key, value):
         setattr(self, "_" + key, value[0])
-    
+
     def _doElementaryArgumentsValidation(self, webRequest):
         if self._isArgumentRepeated(webRequest):
             return 'Argument "%s" may not be repeated.' % self._isArgumentRepeated(webRequest)
-        
+
         exclusiveArguments = self._select('exclusive')
         for exclusiveArgument in exclusiveArguments:
             if exclusiveArgument in webRequest.args.keys():
@@ -112,7 +112,7 @@ class OaiVerb(object):
                 return
             else:
                 self.___set(exclusiveArgument, [None])
-            
+
         missing = []
         for requiredArgument in self._select('required'):
             if not requiredArgument in webRequest.args.keys():
@@ -123,16 +123,16 @@ class OaiVerb(object):
             return 'Missing argument(s) ' + \
                 " or ".join(quote(exclusiveArguments) + \
                 [" and ".join(quote(missing))]) + "."
-            
+
         for optionalArgument in self._select('optional'):
             self.___set(optionalArgument, webRequest.args.get(optionalArgument, [None]))
-        
+
         tooMuch = set(webRequest.args.keys()).difference(self._argsDef.keys() + ['verb'])
         if tooMuch:
             return 'Argument(s) %s is/are illegal.' % ", ".join(map(lambda s: '"%s"' %s, tooMuch))
 
 OAIHEADER = """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/" 
+<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
          http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">

@@ -32,10 +32,9 @@ from meresco.components.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
 from amara import binderytools
 from PyLucene import BooleanQuery
+from storage import Storage
+from os.path import join
 
-from tempfile import mkdtemp, gettempdir
-import os
-from shutil import rmtree
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.oai.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.components.lucene.document import Document
@@ -50,7 +49,8 @@ class OaiJazzLuceneTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.index = CallTrace("Index")
-        self.oaijazz = OaiJazzLucene(self.index)
+        self.storage = CallTrace("Storage")
+        self.oaijazz = OaiJazzLucene(self.index, self.storage)
 
         self.id = "id"
         self.partName = "xmlfields"
@@ -83,20 +83,24 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0010 TO *] +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z] +__set_membership__.set:ONE:TWO:THREE', str(executeQueryMethod.arguments[0]))
         self.assertEquals('__stamp__.unique', executeQueryMethod.arguments[1])
 
-class OaiJazzLuceneIntegrationTest(TestCase):
-    def setUp(self):
-        self._tempdir = gettempdir()+'/testingit'
-        self.directoryName = os.path.join(self._tempdir, 'lucene-index')
-        os.path.isdir(self.directoryName) or os.makedirs(self.directoryName)
-        self._luceneIndex = LuceneIndex(self.directoryName)
-        self.subject = OaiJazzLucene(self._luceneIndex)
+    def testGetUnique(self):
+        def write(sink, id, partName):
+            sink.write("""<__stamp__>
+        <datestamp>DATESTAMP_FOR_TEST</datestamp>
+        <unique>UNIQUE_FOR_TEST</unique>
+    </__stamp__>""")
+        self.storage.write = write
+        uniqueNumber = self.oaijazz.getUnique('somedocid')
+        self.assertEquals('UNIQUE_FOR_TEST', uniqueNumber)
 
-    def tearDown(self):
-        # remove references to the index before removing directory.
-        del self._luceneIndex
-        del self.subject
-        if os.path.exists(self._tempdir):
-            rmtree(self._tempdir)
+
+class OaiJazzLuceneIntegrationTest(CQ2TestCase):
+    def setUp(self):
+        CQ2TestCase.setUp(self)
+        self._luceneIndex = LuceneIndex(join(self.tempdir, "lucene-index"))
+        self._storage = Storage(join(self.tempdir, 'storage'))
+        self.subject = OaiJazzLucene(self._luceneIndex, self._storage)
+
 
     def addDocuments(self, size):
         for i in range(1,size+1):

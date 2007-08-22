@@ -25,15 +25,14 @@
 #
 ## end license ##
 
-
-from meresco.components.oai.oaiverb import OaiVerb, DONE
-from meresco.components.oai.resumptiontoken import ResumptionTokenException, resumptionTokenFromString, ResumptionToken
-from meresco.components.oai.oaitool import ISO8601, ISO8601Exception
-from meresco.components.oai.oairecordverb import OaiRecordVerb
-from meresco.components.oai.stampcomponent import UNIQUE, STAMP_PART
-from meresco.framework.observable import Observable
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'
+
+from meresco.framework.observable import Observable
+
+from meresco.components.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
+from meresco.components.oai.oaitool import ISO8601, ISO8601Exception
+from meresco.components.oai.oairecordverb import OaiRecordVerb
 
 BATCH_SIZE = 200
 
@@ -132,7 +131,7 @@ Error and Exception Conditions
             if i == BATCH_SIZE:
                 webRequest.write('<resumptionToken>%s</resumptionToken>' % ResumptionToken(
                     self._metadataPrefix,
-                    self.getUnique(prevId),
+                    self.any.getUnique(prevId),
                     self._from,
                     self._until,
                     self._set))
@@ -143,7 +142,3 @@ Error and Exception Conditions
 
         if self._resumptionToken:
             webRequest.write('<resumptionToken/>')
-
-    def getUnique(self, id):
-        return str(getattr(self.xmlSteal(id, STAMP_PART), UNIQUE))
-

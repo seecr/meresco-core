@@ -26,16 +26,14 @@
 ## end license ##
 
 from cq2utils.component import Component
-from amara import binderytools
-from xml.sax import SAXParseException
-from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
-from meresco.components.oai.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
-from meresco.components.oai.partscomponent import PARTS_PART, PART
-from meresco.components.oai.setscomponent import MEMBERSHIP_PART, SET
+from StringIO import StringIO
+from amara.binderytools import bind_string
+from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 
 class OaiJazzLucene(Component):
-    def __init__(self, anIndex):
+    def __init__(self, anIndex, aStorage):
         self._index = anIndex
+        self._storage = aStorage
 
     def add(self, id, partName, document):
         self._index.deleteID(id)
@@ -66,3 +64,8 @@ class OaiJazzLucene(Component):
 
     def listAll(self):
         return self._index.executeQuery(MatchAllDocsQuery())
+
+    def getUnique(self, id):
+        buffer = StringIO()
+        self._storage.write(buffer, id, '__stamp__')
+        return bind_string(buffer.getvalue()).__stamp__.unique
