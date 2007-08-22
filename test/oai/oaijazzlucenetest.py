@@ -93,6 +93,12 @@ class OaiJazzLuceneTest(CQ2TestCase):
         uniqueNumber = self.oaijazz.getUnique('somedocid')
         self.assertEquals('UNIQUE_FOR_TEST', uniqueNumber)
 
+    def testGetSets(self):
+        def write(sink, id, partName):
+            sink.write("<__sets__><setSpec>aSet</setSpec><setSpec>anotherSet</setSpec></__sets__>")
+        self.storage.write = write
+        sets = self.oaijazz.getSets('somedocid')
+        self.assertEquals(['aSet', 'anotherSet'], sets)
 
 class OaiJazzLuceneIntegrationTest(CQ2TestCase):
     def setUp(self):

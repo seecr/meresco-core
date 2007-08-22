@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -46,7 +46,7 @@ Error and Exception Conditions
     * idDoesNotExist - The value of the identifier argument is unknown or illegal in this repository.
     * noMetadataFormats - There are no metadata formats available for the specified item.
     """
-    
+
     def __init__(self, metadataFormats = [OAI_DC]):
         OaiVerb.__init__(self, ['ListMetadataFormats'], {'identifier': 'optional'})
         Observable.__init__(self)
@@ -54,23 +54,22 @@ Error and Exception Conditions
 
     def listMetadataFormats(self, aWebRequest):
         self.startProcessing(aWebRequest)
-    
+
     def preProcess(self, webRequest):
         if self._identifier:
             if self.any.isAvailable(self._identifier, PARTS_PART) != (True, True):
                 return self.writeError(webRequest, 'idDoesNotExist')
-            
-            names = self.xmlSteal(self._identifier, PARTS_PART)
-            names = map(str, names.part)
+
+            names = self.any.getParts(self._identifier)
             self.displayedMetadataFormats = filter(lambda (name, y, z): name in names, self.supportedMetadataFormats)
         else:
             self.displayedMetadataFormats = self.supportedMetadataFormats
-        
-    def process(self, webRequest):    
+
+    def process(self, webRequest):
         for metadataPrefix, schema, metadataNamespace in self.displayedMetadataFormats:
             webRequest.write("""<metadataFormat>
                 <metadataPrefix>%s</metadataPrefix>
                 <schema>%s</schema>
                 <metadataNamespace>%s</metadataNamespace>
             </metadataFormat>""" % (metadataPrefix, schema, metadataNamespace))
-        
+

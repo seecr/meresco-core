@@ -25,8 +25,8 @@
 #
 ## end license ##
 
-from cq2utils.component import Component
 from StringIO import StringIO
+from cq2utils.component import Component
 from amara.binderytools import bind_string
 from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 
@@ -69,3 +69,19 @@ class OaiJazzLucene(Component):
         buffer = StringIO()
         self._storage.write(buffer, id, '__stamp__')
         return bind_string(buffer.getvalue()).__stamp__.unique
+
+    def getDatestamp(self, id):
+        buffer = StringIO()
+        self._storage.write(buffer, id, '__stamp__')
+        return bind_string(buffer.getvalue()).__stamp__.datestamp
+
+    def getSets(self, id):
+        buffer = StringIO()
+        self._storage.write(buffer, id, '__sets__')
+        return map(str, bind_string(buffer.getvalue()).__sets__.setSpec)
+
+    def getParts(self, id):
+        buffer = StringIO()
+        self._storage.write(buffer, id, '__parts__')
+        return map(str, bind_string(buffer.getvalue()).__parts__.part)
+

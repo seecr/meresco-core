@@ -64,6 +64,15 @@ class OaiListTest(OaiTestCase):
                 self.assertEquals('0', continueAt)
                 return ['id_0&0', 'id_1&1']
 
+            def getUnique(self, id):
+                return 'Unique for test'
+
+            def getSets(self, id):
+                return []
+
+            def getDatestamp(self, id):
+                return 'DATESTAMP_FOR_TEST'
+
             def write(sself, sink, id, partName):
                 if partName == 'oai_dc':
                     sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
@@ -179,6 +188,12 @@ class OaiListTest(OaiTestCase):
                 self.assertEquals('0', continueAt)
                 return ['id_0', 'id_1']
 
+            def getSets(self, id):
+                return []
+
+            def getDatestamp(self, id):
+                return 'DATESTAMP_FOR_TEST'
+
             def write(sself, sink, id, partName):
                 if partName == 'oai_dc':
                     sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
@@ -234,6 +249,13 @@ class OaiListTest(OaiTestCase):
                 results[1] = oaiUntil
                 return ['id_0', 'id_1']
 
+            def getSets(self, id):
+                return []
+
+            def getDatestamp(self, id):
+                return 'DATESTAMP_FOR_TEST'
+
+
             def write(sself, sink, id, partName):
                 if partName == 'oai_dc':
                     sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id)
@@ -268,7 +290,7 @@ class OaiListTest(OaiTestCase):
             resultingOaiFrom, resultingOaiUntil = doIt(oaiFrom, oaiUntil)
             self.assertEquals(expectedFrom, resultingOaiFrom)
             self.assertEquals(expectedUntil, resultingOaiUntil)
-            self.assertTrue(not "<error" in self.stream.getvalue())
+            self.assertTrue(not "<error" in self.stream.getvalue(), self.stream.getvalue())
 
         def wrong(oaiFrom, oaiUntil):
             doIt(oaiFrom, oaiUntil)
@@ -291,6 +313,12 @@ class OaiListTest(OaiTestCase):
             def oaiSelect(sself, set, partName, continueAt, oaiFrom, oaiUntil):
                 self.assertEquals('0', continueAt)
                 return ['id_0']
+
+            def getDatestamp(self, id):
+                return 'DATESTAMP_FOR_TEST'
+
+            def getSets(self, id):
+                return []
 
             def write(sself, sink, id, partName):
                 if partName == 'oai_dc':
@@ -343,6 +371,15 @@ class OaiListTest(OaiTestCase):
                 self.assertEquals('oai_dc', prefix)
                 self.assertEquals('0', continueAt)
                 return ['id_0&0', 'id_1&1']
+
+            def getUnique(self, id):
+                return 'CRAP'
+
+            def getDatestamp(self, id):
+                return 'DATESTAMP_FOR_TEST'
+
+            def getSets(self, id):
+                return ['one:two:three', 'one:two:four']
 
             def write(sself, sink, id, partName):
                 if partName == 'oai_dc':

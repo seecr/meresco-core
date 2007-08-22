@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -24,15 +24,15 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.components.oai.oaiverb import OaiVerb
-from meresco.components.oai.stampcomponent import DATESTAMP, STAMP_PART
 from xml.sax.saxutils import escape as xmlEscape
 
+from meresco.components.oai.oaiverb import OaiVerb
+
 class OaiRecordVerb(OaiVerb):
-    
+
     def writeRecord(self, webRequest, id, writeBody = True):
         isDeletedStr = self._isDeleted(id) and ' status="deleted"' or ''
-        datestamp = str(getattr(self.xmlSteal(id, STAMP_PART), DATESTAMP))
+        datestamp = self.any.getDatestamp(id)
         setSpecs = self._getSetSpecs(id)
         if writeBody:
             webRequest.write('<record>')
@@ -51,14 +51,9 @@ class OaiRecordVerb(OaiVerb):
     def _isDeleted(self, id):
         ignored, hasTombstonePart = self.any.isAvailable(id, "__tombstone__")
         return hasTombstonePart
-    
+
     def _getSetSpecs(self, id):
-        ignored, hasSetsPart = self.any.isAvailable(id, "__sets__")
-        if hasSetsPart:
-            sets = self.xmlSteal(id, "__sets__") 
-            if hasattr(sets, 'set'):
-                l = []
-                for set in sets.set:
-                    l.append(set.setSpec)
-                return "".join(map(lambda setSpec: "<setSpec>%s</setSpec>" % setSpec, l))
-        return ""
+        sets = self.any.getSets(id)
+        if sets:
+            return ''.join('<setSpec>%s</setSpec>' % xmlEscape(setSpec) for setSpec in sets)
+        return ''
