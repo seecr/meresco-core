@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -27,7 +27,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from unittest import TestCase
 from cq2utils.calltrace import CallTrace
-from meresco.components.lucene.indexcomponent import IndexComponent
+from meresco.components.oai import OaiJazzLucene
 from meresco.components.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
 from amara import binderytools
@@ -37,67 +37,60 @@ from tempfile import mkdtemp, gettempdir
 import os
 from shutil import rmtree
 from meresco.components.lucene.lucene import LuceneIndex
-from meresco.components.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
+from meresco.components.oai.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
 from meresco.components.lucene.document import Document
-from meresco.components.partscomponent import PARTS_PART, PART
+from meresco.components.oai.partscomponent import PARTS_PART, PART
 
 FIELDS = binderytools.bind_string("""<xmlfields xmlns:teddy="%s">
     <field1>this is field1</field1>
     <untokenizedField teddy:tokenize="false">this should not be tokenized</untokenizedField>
 </xmlfields>""" % TEDDY_NS).xmlfields
 
-class IndexComponentTest(CQ2TestCase):
+class OaiJazzLuceneTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.index = CallTrace("Index")
-        self.indexComponent = IndexComponent(self.index)
-        
+        self.oaijazz = OaiJazzLucene(self.index)
+
         self.id = "id"
         self.partName = "xmlfields"
         self.document = Xml2Document()._create(self.id, FIELDS)
-        
+
     def testAdd(self):
-        self.indexComponent.add(self.id, self.partName, self.document)
+        self.oaijazz.add(self.id, self.partName, self.document)
         self.assertEquals(2,len(self.index.calledMethods))
         self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
         self.assertEquals('addToIndex(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
-        
+
     def testDelete(self):
-        self.indexComponent.delete(self.id)
-        
+        self.oaijazz.delete(self.id)
+
         self.assertEquals(1,len(self.index.calledMethods))
         self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
-        
-    def testListRecords(self):
-        self.indexComponent.listRecords(partName = 'PART', sorted = None)
-        executeQueryMethod = self.index.calledMethods[0]
-        self.assertEquals(2, len(executeQueryMethod.arguments))
-        self.assertEquals('+__parts__.part:PART', str(executeQueryMethod.arguments[0]))
-        self.assertEquals(None, executeQueryMethod.arguments[1])
 
-    def testListRecordsSorted(self):
-        self.indexComponent.listRecords(partName = 'PART', sorted = True)
+    def testListRecords(self):
+        self.oaijazz.oaiSelect(None, 'PART', '0', None, None)
         executeQueryMethod = self.index.calledMethods[0]
         self.assertEquals(2, len(executeQueryMethod.arguments))
         self.assertEquals('+__parts__.part:PART', str(executeQueryMethod.arguments[0]))
         self.assertEquals('__stamp__.unique', executeQueryMethod.arguments[1])
-    
+
     def testListRecordsParams(self):
-        self.indexComponent.listRecords(partName = 'PART', continueAt = '0010', oaiFrom = '2000-01-01T00:00:00Z', oaiUntil = '2000-31-12T00:00:00Z', oaiSet = 'ONE:TWO:THREE', sorted = True)
+        self.oaijazz.oaiSelect('ONE:TWO:THREE', 'PART', '0010', '2000-01-01T00:00:00Z', '2000-31-12T00:00:00Z')
         executeQueryMethod = self.index.calledMethods[0]
         queryWrapper = executeQueryMethod.arguments[0]
         self.assertEquals(2, len(executeQueryMethod.arguments))
         self.assertEquals('+__parts__.part:PART +__stamp__.unique:{0010 TO *] +__stamp__.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z] +__set_membership__.set:ONE:TWO:THREE', str(executeQueryMethod.arguments[0]))
         self.assertEquals('__stamp__.unique', executeQueryMethod.arguments[1])
-        
-class IndexComponentWithLuceneTest(TestCase):
+
+class OaiJazzLuceneIntegrationTest(TestCase):
     def setUp(self):
         self._tempdir = gettempdir()+'/testingit'
         self.directoryName = os.path.join(self._tempdir, 'lucene-index')
         os.path.isdir(self.directoryName) or os.makedirs(self.directoryName)
         self._luceneIndex = LuceneIndex(self.directoryName)
-        self.subject = IndexComponent(self._luceneIndex)
-        
+        self.subject = OaiJazzLucene(self._luceneIndex)
+
     def tearDown(self):
         # remove references to the index before removing directory.
         del self._luceneIndex
@@ -116,20 +109,20 @@ class IndexComponentWithLuceneTest(TestCase):
 
     def testListRecords(self):
         self.addDocuments(1)
-        
-        result = self.subject.listRecords('oai_dc')
+
+        result = self.subject.oaiSelect(None, 'oai_dc', '0', None, None)
         result2 = self.subject.listAll()
         self.assertEquals(['00001'], list(result2))
         self.assertEquals(['00001'], list(result))
-        
+
     def testListRecordsWith2000(self):
         BooleanQuery.setMaxClauseCount(10) # Cause an early TooManyClauses exception.
         self.addDocuments(50)
-        
-        result = self.subject.listRecords('oai_dc')
+
+        result = self.subject.oaiSelect(None, 'oai_dc', '0', None, None)
         #self.assertEquals(200, len(list(result)))
         first = iter(result).next()
         self.assertEquals('00001', first)
-        result = self.subject.listRecords('oai_dc', continueAt = '%020d' % 1)
+        result = self.subject.oaiSelect(None, 'oai_dc', '%020d' % 1, None, None)
         first = iter(result).next()
         self.assertEquals('00002', first)

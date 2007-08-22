@@ -24,8 +24,8 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.components.http.oai.oaiverb import OaiVerb
-from meresco.components.stampcomponent import DATESTAMP, STAMP_PART
+from meresco.components.oai.oaiverb import OaiVerb
+from meresco.components.oai.stampcomponent import DATESTAMP, STAMP_PART
 from xml.sax.saxutils import escape as xmlEscape
 
 class OaiRecordVerb(OaiVerb):

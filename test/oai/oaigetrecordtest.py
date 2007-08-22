@@ -27,8 +27,8 @@
 
 from oaitestcase import OaiTestCase
 
-from meresco.components.http.oai.oaigetrecord import OaiGetRecord
-from meresco.components.http.oai.oaivalidator import assertValidString
+from meresco.components.oai.oaigetrecord import OaiGetRecord
+from meresco.components.oai.oaivalidator import assertValidString
 from cq2utils.calltrace import CallTrace
 
 class OaiGetRecordTest(OaiTestCase):

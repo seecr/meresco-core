@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,18 +25,15 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaiverb import OaiVerb, DONE
+from oaimain import OaiMain
+from oaisink import OaiSink
+from oaiidentify import OaiIdentify
+from oailistmetadataformats import OaiListMetadataFormats
+from oailist import OaiList
+from oailistsets import OaiListSets
+from oaigetrecord import OaiGetRecord
+from stampcomponent import StampComponent
+from setscomponent import SetsComponent
+from oaijazzlucene import OaiJazzLucene
 
-class OaiSink(OaiVerb):
-    
-    def __init__(self):
-        OaiVerb.__init__(self, [], {})
-    
-    def unknown(self, message, webRequest):
-        if message == '':
-            self.writeError(webRequest, 'badArgument', 'No "verb" argument found.')
-        elif len(webRequest.args['verb']) > 1:
-            self.writeError(webRequest, 'badArgument', 'More than one "verb" argument found.')
-        else:
-             self.writeError(webRequest, 'badVerb', 'Value of the verb argument is not a legal OAI-PMH verb, the verb argument is missing, or the verb argument is repeated.')
-        yield DONE
+

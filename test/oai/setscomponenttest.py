@@ -26,7 +26,7 @@
 ## end license ##
 
 from unittest import TestCase
-from meresco.components.setscomponent import SetsComponent
+from meresco.components.oai.setscomponent import SetsComponent
 from cq2utils.component import Notification
 from amara.binderytools import bind_string
 

@@ -25,8 +25,8 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaitool import ISO8601Exception, ISO8601
-from meresco.components.http.oai.oaiverb import OaiVerb
+from meresco.components.oai.oaitool import ISO8601Exception, ISO8601
+from meresco.components.oai.oaiverb import OaiVerb
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 

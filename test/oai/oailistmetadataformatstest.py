@@ -27,8 +27,8 @@
 
 from oaitestcase import OaiTestCase
 
-from meresco.components.http.oai import OaiListMetadataFormats
-from meresco.components.http.oai.oaivalidator import assertValidString
+from meresco.components.oai import OaiListMetadataFormats
+from meresco.components.oai.oaivalidator import assertValidString
 
 class OaiListMetadataFormatsTest(OaiTestCase):
     

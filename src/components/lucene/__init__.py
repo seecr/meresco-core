@@ -25,5 +25,4 @@
 #
 ## end license ##
 
-from indexcomponent import IndexComponent
 from lucene import LuceneIndex

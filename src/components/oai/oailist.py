@@ -26,19 +26,11 @@
 ## end license ##
 
 
-
-
-# Auw! WEG!
-from PyLucene import BooleanQuery
-
-
-
-
-from meresco.components.http.oai.oaiverb import OaiVerb, DONE
-from meresco.components.http.oai.resumptiontoken import ResumptionTokenException, resumptionTokenFromString, ResumptionToken
-from meresco.components.http.oai.oaitool import ISO8601, ISO8601Exception
-from meresco.components.http.oai.oairecordverb import OaiRecordVerb
-from meresco.components.stampcomponent import UNIQUE, STAMP_PART
+from meresco.components.oai.oaiverb import OaiVerb, DONE
+from meresco.components.oai.resumptiontoken import ResumptionTokenException, resumptionTokenFromString, ResumptionToken
+from meresco.components.oai.oaitool import ISO8601, ISO8601Exception
+from meresco.components.oai.oairecordverb import OaiRecordVerb
+from meresco.components.oai.stampcomponent import UNIQUE, STAMP_PART
 from meresco.framework.observable import Observable
 from sys import getdefaultencoding
 assert getdefaultencoding() == 'utf-8'
@@ -131,12 +123,7 @@ Error and Exception Conditions
         if not self._metadataPrefix in self.partNames:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
 
-        query = BooleanQuery()
-        self.do.extendQuery(query, metadataPrefix=self._metadataPrefix)
-
-        sortBy = self.any.getSortKey()
-        self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set, query=query, sortBy=sortBy)
-        #self._queryResult = self.any.listRecords(self._metadataPrefix, self._continueAt, self._from, self._until, self._set)
+        self._queryResult = self.any.oaiSelect(self._set, self._metadataPrefix, self._continueAt, self._from, self._until)
         if len(self._queryResult) == 0:
             return self.writeError(webRequest, 'noRecordsMatch')
 

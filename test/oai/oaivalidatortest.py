@@ -27,7 +27,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.components.http.oai.oaivalidator import assertValidString, validate
+from meresco.components.oai.oaivalidator import assertValidString, validate
 from cStringIO import StringIO
 
 class OaiValidatorTest(CQ2TestCase):

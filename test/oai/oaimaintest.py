@@ -6,7 +6,7 @@ from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
 from cStringIO import StringIO
 
-from meresco.components.http.oai import OaiMain
+from meresco.components.oai import OaiMain
 
 class OaiMainTest(CQ2TestCase):
     

@@ -1,5 +1,5 @@
 
-from meresco.components.http.oai.resumptiontoken import ResumptionToken, resumptionTokenFromString
+from meresco.components.oai.resumptiontoken import ResumptionToken, resumptionTokenFromString
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 

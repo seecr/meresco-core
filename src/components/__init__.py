@@ -27,6 +27,4 @@
 
 from logobserver import LogObserver
 from storagecomponent import StorageComponent
-from stampcomponent import StampComponent
 from xml2document import Xml2Document
-from partscomponent import PartsComponent

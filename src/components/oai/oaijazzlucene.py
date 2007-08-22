@@ -29,11 +29,11 @@ from cq2utils.component import Component
 from amara import binderytools
 from xml.sax import SAXParseException
 from PyLucene import BooleanQuery, BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
-from meresco.components.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
-from meresco.components.partscomponent import PARTS_PART, PART
-from meresco.components.setscomponent import MEMBERSHIP_PART, SET
+from meresco.components.oai.stampcomponent import STAMP_PART, DATESTAMP, UNIQUE
+from meresco.components.oai.partscomponent import PARTS_PART, PART
+from meresco.components.oai.setscomponent import MEMBERSHIP_PART, SET
 
-class IndexComponent(Component):
+class OaiJazzLucene(Component):
     def __init__(self, anIndex):
         self._index = anIndex
 
@@ -44,25 +44,25 @@ class IndexComponent(Component):
     def delete(self, id):
         self._index.deleteID(id)
 
-    def listRecords(self, partName, continueAt = '0', oaiFrom = None, oaiUntil = None, oaiSet = None, sorted = True, query = None, sortBy = None):
+    def oaiSelect(self, oaiSet, prefix, continueAt, oaiFrom, oaiUntil):
         def addRange(root, field, lo, hi, inclusive):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
             root.add(range, BooleanClause.Occur.MUST)
 
         #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase
+        query = BooleanQuery()
+        query.add(TermQuery(Term('__parts__.part', prefix)), BooleanClause.Occur.MUST)
 
-        #if continueAt != '0':
-            #addRange(query, '%s.%s' % (STAMP_PART, UNIQUE), continueAt, None, False)
-        #if oaiFrom or oaiUntil:
-            #oaiFrom = oaiFrom or None
-            #oaiUntil = oaiUntil or None
-            #addRange(query, '%s.%s' % (STAMP_PART, DATESTAMP), oaiFrom, oaiUntil, True)
-        #if oaiSet:
-            #query.add(TermQuery(Term('%s.%s' % (MEMBERSHIP_PART, SET), oaiSet)), BooleanClause.Occur.MUST)
+        if continueAt != '0':
+            addRange(query, '__stamp__.unique', continueAt, None, False)
+        if oaiFrom or oaiUntil:
+            oaiFrom = oaiFrom or None
+            oaiUntil = oaiUntil or None
+            addRange(query, '__stamp__.datestamp', oaiFrom, oaiUntil, True)
+        if oaiSet:
+            query.add(TermQuery(Term('%s.%s' % ('__set_membership__', 'set'), oaiSet)), BooleanClause.Occur.MUST)
 
-        print str(query)
-        sortBy = sorted and sortBy
-        return self._index.executeQuery(query, sortBy)
+        return self._index.executeQuery(query, '__stamp__.unique')
 
     def listAll(self):
         return self._index.executeQuery(MatchAllDocsQuery())

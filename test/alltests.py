@@ -46,27 +46,22 @@ from fieldcountplugintest import FieldCountPluginTest
 from fields2xmlcomponenttest import Fields2XmlComponentTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
-from indexcomponenttest import IndexComponentTest
-from indexcomponenttest import IndexComponentWithLuceneTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
 from logtest import LogTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from observabletest import ObservableTest
-from partscomponenttest import PartsComponentTest
 from rssplugintest import RSSPluginTest
 from rssprofiletest import RSSProfileTest
-from setscomponenttest import SetsComponentTest
+
 from srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
 from sruplugintest import SRUPluginTest
 from sruquerytest import SRUQueryTest
 from srurecordupdateplugintest import SRURecordUpdatePluginTest
 from srwplugintest import SRWPluginTest
-from stampcomponenttest import StampComponentTest
 from storagecomponenttest import StorageComponentTest
 from teddygrowlservertest import TeddyGrowlServerTest
-from undertakertest import UnderTakerTest
 from venturitest import VenturiTest
 from xml2documenttest import Xml2DocumentTest
 from xmlfileplugintest import XMLFilePluginTest
@@ -79,6 +74,13 @@ from legacy.configurationtest import ConfigurationTest
 from legacy.portaltest import PortalTest
 from legacy.pluginregistrytest import PluginRegistryTest
 
+from oai.oaijazzlucenetest import OaiJazzLuceneTest
+from oai.oaijazzlucenetest import OaiJazzLuceneIntegrationTest
+
+from oai.setscomponenttest import SetsComponentTest
+from oai.partscomponenttest import PartsComponentTest
+from oai.undertakertest import UnderTakerTest
+from oai.stampcomponenttest import StampComponentTest
 #from oai.oaicomponenttest import OaiComponentTest
 from oai.oaigetrecordtest import OaiGetRecordTest
 from oai.oaiidentifytest import OaiIdentifyTest

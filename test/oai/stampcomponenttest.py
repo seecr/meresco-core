@@ -25,11 +25,10 @@
 #
 ## end license ##
 
-from oaimain import OaiMain
-from oaisink import OaiSink
-from oaiidentify import OaiIdentify
-from oailistmetadataformats import OaiListMetadataFormats
-from oailist import OaiList
-from oailistsets import OaiListSets
-from oaigetrecord import OaiGetRecord
+from unittest import TestCase
+from meresco.components.oai.stampcomponent import StampComponent
 
+class StampComponentTest(TestCase):
+    
+    def testOne(self):
+        pass

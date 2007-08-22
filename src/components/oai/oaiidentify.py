@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oaiverb import OaiVerb, DONE
+from meresco.components.oai.oaiverb import OaiVerb, DONE
 
 class OaiIdentify(OaiVerb):
     """

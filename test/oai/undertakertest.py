@@ -27,7 +27,7 @@
 
 from unittest import TestCase
 from meresco.framework.observable import Observable
-from meresco.components.undertaker import Undertaker
+from meresco.components.oai.undertaker import Undertaker
 from amara.binderytools import bind_string
 
 class UnderTakerTest(TestCase):

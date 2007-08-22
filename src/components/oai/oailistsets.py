@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.http.oai.oairecordverb import OaiRecordVerb
+from meresco.components.oai.oairecordverb import OaiRecordVerb
 from meresco.framework.observable import Observable
 
 class OaiListSets(OaiRecordVerb, Observable):

@@ -26,7 +26,7 @@
 ## end license ##
 
 from oaitestcase import OaiTestCase
-from meresco.components.http.oai import OaiListSets
+from meresco.components.oai import OaiListSets
 
 class OaiListSetsTest(OaiTestCase):
     def getSubject(self):
