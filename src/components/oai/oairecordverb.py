@@ -31,7 +31,7 @@ from meresco.components.oai.oaiverb import OaiVerb
 class OaiRecordVerb(OaiVerb):
 
     def writeRecord(self, webRequest, id, writeBody = True):
-        isDeletedStr = self._isDeleted(id) and ' status="deleted"' or ''
+        isDeletedStr = self.any.isDeleted(id) and ' status="deleted"' or ''
         datestamp = self.any.getDatestamp(id)
         setSpecs = self._getSetSpecs(id)
         if writeBody:
@@ -47,10 +47,6 @@ class OaiRecordVerb(OaiVerb):
             webRequest.write('</metadata>')
         if writeBody:
             webRequest.write('</record>')
-
-    def _isDeleted(self, id):
-        ignored, hasTombstonePart = self.any.isAvailable(id, "__tombstone__")
-        return hasTombstonePart
 
     def _getSetSpecs(self, id):
         sets = self.any.getSets(id)

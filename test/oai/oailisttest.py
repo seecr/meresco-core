@@ -30,6 +30,8 @@ from StringIO import StringIO
 from amara.binderytools import bind_string
 from cq2utils.calltrace import CallTrace
 
+from mockoaijazz import MockOaiJazz
+
 from meresco.components.oai.oailist import BATCH_SIZE
 from meresco.components.oai import OaiList
 from meresco.components.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
@@ -58,7 +60,7 @@ class OaiListTest(OaiTestCase):
     def testListRecordsUsingMetadataPrefix(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockObserver(
+        self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0&0', 'id_1&1'],
             isAvailableDefault=(True,True),
             isAvailableAnswer=[
@@ -137,7 +139,7 @@ class OaiListTest(OaiTestCase):
     def testFinalResumptionToken(self):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '200'))]}
 
-        self.subject.addObserver(MockObserver(selectAnswer=map(lambda i: 'id_%i' % i, range(BATCH_SIZE))))
+        self.subject.addObserver(MockOaiJazz(selectAnswer=map(lambda i: 'id_%i' % i, range(BATCH_SIZE))))
         self.subject.writeRecord = lambda *args, **kwargs: None
 
         self.observable.any.listRecords(self.request)
@@ -148,10 +150,10 @@ class OaiListTest(OaiTestCase):
     def testDeletedTombstones(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockObserver(
+        self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0', 'id_1'],
-            isAvailableDefault=(True,False),
-            isAvailableAnswer=[('id_1', '__tombstone__', (True,True))]))
+            deleted=['id_1'],
+            isAvailableDefault=(True,False)))
 
         self.observable.any.listRecords(self.request)
 
@@ -181,7 +183,7 @@ class OaiListTest(OaiTestCase):
     def testFromAndUntil(self):
         #ok, deze test wordt zo lang dat het haast wel lijkt of hier iets niet klopt.... KVS
 
-        observer = MockObserver(
+        observer = MockOaiJazz(
             selectAnswer=['id_0', 'id_1'],
             isAvailableDefault=(True, False),
             isAvailableAnswer=[("id_1", "__tombstone__", (True, True))])
@@ -224,7 +226,7 @@ class OaiListTest(OaiTestCase):
     def testListIdentifiers(self):
         self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockObserver(
+        self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0'],
             isAvailableDefault=(True,False),
             isAvailableAnswer=[(None, 'oai_dc', (True,True))]))
@@ -243,7 +245,7 @@ class OaiListTest(OaiTestCase):
     def testNoRecordsMatch(self):
         self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockObserver())
+        self.subject.addObserver(MockOaiJazz())
         self.observable.any.listIdentifiers(self.request)
 
         self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)
@@ -251,7 +253,7 @@ class OaiListTest(OaiTestCase):
     def testSetsInHeader(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockObserver(
+        self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0&0', 'id_1&1'],
             setsAnswer=['one:two:three', 'one:two:four'],
             isAvailableDefault=(True,False),
@@ -263,46 +265,3 @@ class OaiListTest(OaiTestCase):
         self.assertTrue("<setSpec>one:two:three</setSpec>" in self.stream.getvalue())
         self.assertTrue("<setSpec>one:two:four</setSpec>" in self.stream.getvalue())
 
-class MockObserver:
-    def __init__(self, selectAnswer = [], setsAnswer = [], isAvailableDefault=(True,True), isAvailableAnswer=[]):
-        self._selectAnswer = selectAnswer
-        self._setsAnswer = setsAnswer
-        self._isAvailableDefault = isAvailableDefault
-        self._isAvailableAnswer = isAvailableAnswer
-        self.oaiSelectArguments = {}
-
-    def oaiSelect(self, *args, **kwargs):
-        self.oaiSelectArguments = args
-        return self._selectAnswer
-
-    def getUnique(self, id):
-        return 'Unique for test'
-
-    def getSets(self, id):
-        return self._setsAnswer
-
-    def getDatestamp(self, id):
-        return 'DATESTAMP_FOR_TEST'
-
-    def getParts(self, id):
-        raise "STOP"
-
-    def write(self, sink, id, partName):
-        if partName == 'oai_dc':
-            sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
-        elif partName == '__stamp__':
-            sink.write("""<__stamp__>
-    <datestamp>DATESTAMP_FOR_TEST</datestamp>
-</__stamp__>""")
-        elif partName == '__sets__':
-            sink.write("""<__sets__><set><setSpec>one:two:three</setSpec><setName>Three Piggies</setName></set><set><setSpec>one:two:four</setSpec><setName>Four Chickies</setName></set></__sets__>""")
-        else:
-            self.fail(partName + ' is unexpected')
-
-    def isAvailable(self, id, partName):
-        result = self._isAvailableDefault
-        for (aId, aPartname, answer) in self._isAvailableAnswer:
-            if (aId == None or aId == id) and aPartname == partName:
-                result = answer
-                break
-        return result

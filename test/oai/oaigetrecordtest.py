@@ -27,6 +27,8 @@
 
 from oaitestcase import OaiTestCase
 
+from mockoaijazz import MockOaiJazz
+
 from meresco.components.oai.oaigetrecord import OaiGetRecord
 from meresco.components.oai.oaivalidator import assertValidString
 from cq2utils.calltrace import CallTrace
@@ -74,31 +76,9 @@ class OaiGetRecordTest(OaiTestCase):
     def testGetRecord(self):
         self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
 
-        class Observable:
-            def isAvailable(sself, id, partName):
-                if partName == "oai_dc":
-                    return True, True
-                return True, False
-
-            def getSets(self, id):
-                return []
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    sink.write('<some:recorddata xmlns:some="http://some.example.org"/>')
-                elif partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-            <unique>UNIQUE_NOT_USED_YET</unique>
-        </__stamp__>""")
-
-            def notify(sself, *args, **kwargs):
-                pass
-
-        self.subject.addObserver(Observable())
+        self.subject.addObserver(MockOaiJazz(
+            isAvailableDefault=(True, False),
+            isAvailableAnswer=[(None, 'oai_dc', (True,True))]))
         self.observable.any.getRecord(self.request)
         self.assertEqualsWS(self.OAIPMH % """
 <request identifier="oai:ident"
@@ -111,7 +91,7 @@ class OaiGetRecordTest(OaiTestCase):
       <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </header>
     <metadata>
-      <some:recorddata xmlns:some="http://some.example.org"/>
+      <some:recorddata xmlns:some="http://some.example.org" id="oai:ident"/>
     </metadata>
   </record>
  </GetRecord>""", self.stream.getvalue())
@@ -119,30 +99,9 @@ class OaiGetRecordTest(OaiTestCase):
     def testDeletedRecord(self):
         self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
 
-        class Observable:
-            def isAvailable(sself, id, partName):
-                if partName == 'oai_dc' or partName == '__tombstone__':
-                    return True, True
-                return True, False
-
-            def getSets(self, id):
-                return []
-
-            def getDatestamp(self, id):
-                return 'DATESTAMP_FOR_TEST'
-
-            def write(sself, sink, id, partName):
-                if partName == 'oai_dc':
-                    self.fail()
-                if partName == '__stamp__':
-                    sink.write("""<__stamp__>
-            <datestamp>DATESTAMP_FOR_TEST</datestamp>
-            <unique>UNIQUE_NOT_USED_YET</unique>
-        </__stamp__>""")
-
-            def notify(sself, *args, **kwargs):
-                pass
-
-        self.subject.addObserver(Observable())
+        self.subject.addObserver(MockOaiJazz(
+            isAvailableDefault=(True, False),
+            isAvailableAnswer=[(None, "oai_dc", (True, True))],
+            deleted=['oai:ident']))
         self.observable.any.getRecord(self.request)
-        self.assertTrue("deleted" in self.stream.getvalue())
+        self.assertTrue("deleted" in self.stream.getvalue(), self.stream.getvalue())

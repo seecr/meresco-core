@@ -35,11 +35,34 @@ class OaiJazzLucene(Component):
         self._index = anIndex
         self._storage = aStorage
 
-    def add(self, id, partName, document):
+    SRU update:
+        add(id, document)
+
+    Storage:
+        add(id, document)
+
+    #def add(self, id, name, part ):
+    #   document
+    #       id
+    #       parts
+    #           name -> part
+    #           name -> part
+    #               name -> part
+
+
+    def add(self, id, parts = {} ):
+        #if 'header' in parts:
+            #do set stuff
+
+        #do stamp
+        #for key in parts:
+            #do add part
+
         self._index.deleteID(id)
         self._index.addToIndex(document)
 
     def delete(self, id):
+        #create thumbstone
         self._index.deleteID(id)
 
     def oaiSelect(self, oaiSet, prefix, continueAt, oaiFrom, oaiUntil):
@@ -84,4 +107,10 @@ class OaiJazzLucene(Component):
         buffer = StringIO()
         self._storage.write(buffer, id, '__parts__')
         return map(str, bind_string(buffer.getvalue()).__parts__.part)
+
+    def isDeleted(self, id):
+        ignored, hasTombStone = self._storage.isAvailable(id, '__tombstone__')
+        return hasTombStone
+
+
 
