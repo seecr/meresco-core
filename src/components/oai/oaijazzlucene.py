@@ -35,28 +35,18 @@ class OaiJazzLucene(Component):
         self._index = anIndex
         self._storage = aStorage
 
-    SRU update:
-        add(id, document)
+    #SRU update:
+        #add(id, document)
 
-    Storage:
-        add(id, document)
+    #Storage:
+        #add(id, document)
 
-    #def add(self, id, name, part ):
-    #   document
-    #       id
-    #       parts
-    #           name -> part
-    #           name -> part
-    #               name -> part
-
-
-    def add(self, id, parts = {} ):
+    def add(self, id, partsGenerator ):
         #if 'header' in parts:
             #do set stuff
 
         #do stamp
-        #for key in parts:
-            #do add part
+
 
         self._index.deleteID(id)
         self._index.addToIndex(document)

@@ -58,7 +58,7 @@ from rssprofiletest import RSSProfileTest
 from srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
 from sruplugintest import SRUPluginTest
 from sruquerytest import SRUQueryTest
-from srurecordupdateplugintest import SRURecordUpdatePluginTest
+from srurecordupdatetest import SRURecordUpdateTest
 from srwplugintest import SRWPluginTest
 from storagecomponenttest import StorageComponentTest
 from teddygrowlservertest import TeddyGrowlServerTest
