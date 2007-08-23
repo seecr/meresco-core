@@ -28,7 +28,7 @@ from amara.binderytools import bind_stream
 from amara.bindery import is_element
 from meresco.framework.observable import Observable
 
-class SRURecordUpdatePlugin(Observable):
+class SRURecordUpdate(Observable):
 
     def handleRequest(self, httpRequest):
         try:

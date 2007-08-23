@@ -55,11 +55,11 @@ from observabletest import ObservableTest
 from rssplugintest import RSSPluginTest
 from rssprofiletest import RSSProfileTest
 
-from srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
-from sruplugintest import SRUPluginTest
-from sruquerytest import SRUQueryTest
-from srurecordupdatetest import SRURecordUpdateTest
-from srwplugintest import SRWPluginTest
+from sru.srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
+from sru.sruplugintest import SRUPluginTest
+from sru.sruquerytest import SRUQueryTest
+from sru.srurecordupdatetest import SRURecordUpdateTest
+from sru.srwplugintest import SRWPluginTest
 from storagecomponenttest import StorageComponentTest
 from teddygrowlservertest import TeddyGrowlServerTest
 from venturitest import VenturiTest

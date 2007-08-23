@@ -30,7 +30,7 @@ from StringIO import StringIO
 
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.http.srurecordupdateplugin import SRURecordUpdatePlugin
+from meresco.components.sru.srurecordupdate import SRURecordUpdate
 
 
 XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -56,11 +56,11 @@ CREATE = "create"
 REPLACE = "replace"
 DELETE = "delete"
 
-class SRURecordUpdatePluginTest(TestCase):
+class SRURecordUpdateTest(TestCase):
     """http://www.loc.gov/standards/sru/record-update/"""
 
     def setUp(self):
-        self.subject = SRURecordUpdatePlugin()
+        self.subject = SRURecordUpdate()
         self.observer = CallTrace("Observer")
         self.subject.addObserver(self.observer)
         self.requestData = {
