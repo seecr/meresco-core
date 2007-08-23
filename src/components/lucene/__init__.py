@@ -26,3 +26,4 @@
 ## end license ##
 
 from lucene import LuceneIndex
+from document import Document

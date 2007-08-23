@@ -29,24 +29,26 @@ from StringIO import StringIO
 from cq2utils.component import Component
 from amara.binderytools import bind_string
 from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
+from meresco.components.lucene import Document
+from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
+
 
 class OaiJazzLucene(Component):
-    def __init__(self, anIndex, aStorage):
+    def __init__(self, anIndex, aStorage, aNumberGenerator = None):
         self._index = anIndex
         self._storage = aStorage
+        self._numberGenerator = aNumberGenerator
 
-    #SRU update:
-        #add(id, document)
-
-    #Storage:
-        #add(id, document)
-
-    def add(self, id, partsGenerator ):
-        #if 'header' in parts:
-            #do set stuff
-
-        #do stamp
-
+    def add(self, id, name, *nodes):
+        uniqueNumber = self._numberGenerator.next()
+        document = Document(id)
+        document.addIndexedField('__parts__.part', name, False)
+        document.addIndexedField('__stamp__.unique', '%019i' % uniqueNumber, False)
+        for node in nodes:
+            if node.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
+                for s in node.setSpec:
+                    document.addIndexedField('__set_membership__.set', str(s), False)
+                self._storage.add(id, '__set_membership__', '<__set_membership__>%s</__set_membership__>' % (''.join('<setSpec>%s</setSpec>' % setSpec for setSpec in node.setSpec)))
 
         self._index.deleteID(id)
         self._index.addToIndex(document)
@@ -90,8 +92,8 @@ class OaiJazzLucene(Component):
 
     def getSets(self, id):
         buffer = StringIO()
-        self._storage.write(buffer, id, '__sets__')
-        return map(str, bind_string(buffer.getvalue()).__sets__.setSpec)
+        self._storage.write(buffer, id, '__set_membership__')
+        return map(str, bind_string(buffer.getvalue()).__set_membership__.setSpec)
 
     def getParts(self, id):
         buffer = StringIO()
