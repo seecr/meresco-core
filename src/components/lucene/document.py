@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -39,48 +39,48 @@ class DocumentException(Exception):
     pass
 
 class Document:
-    
+
     def __init__(self, anId):
         if not self._isValidFieldValue(anId):
             raise DocumentException('Empty ID')
-        
+
         self._document = PyLucene.Document()
         self._document.add(PyLucene.Field(IDFIELD, anId, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
         self._fields = [IDFIELD]
         self._contentField = []
-        
+
     def _isValidFieldValue(self, anObject):
         return type(anObject) == str and anObject.strip()
-            
+
     def fields(self):
         return self._fields
-    
+
     def _validFieldName(self, aKey):
         return self._isValidFieldValue(aKey)     and \
             aKey.lower() not in [CONTENTFIELD, IDFIELD]
 
     def addIndexedField(self, aKey, aValue, tokenize = True):
         if not self._validFieldName(aKey):
-                raise DocumentException('Invalid fieldname')
-        
+                raise DocumentException('Invalid fieldname: "%s"' % aKey)
+
         if not self._isValidFieldValue(aValue):
             return
-            
+
         self._addIndexedField(aKey, aValue, tokenize)
         self._fields.append(aKey)
         if not aKey.startswith("__"):
             self._contentField.append(aValue)
-        
+
     def _addIndexedField(self, aKey, aValue, tokenize = True):
         self._document.add(PyLucene.Field(aKey, aValue, PyLucene.Field.Store.NO, tokenize and PyLucene.Field.Index.TOKENIZED or PyLucene.Field.Index.UN_TOKENIZED))
 
     def contentField(self):
         return ' '.join(self._contentField)
-    
+
     def addToIndexWith(self, anIndexWriter):
         self._addIndexedField(CONTENTFIELD, self.contentField())
         anIndexWriter.addDocument(self._document)
-        
+
     def validate(self):
         if self._fields == [IDFIELD]:
             raise DocumentException('Empty document')

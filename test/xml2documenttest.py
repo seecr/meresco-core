@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,35 +31,35 @@ from cq2utils.calltrace import CallTrace
 
 from meresco.components.xml2document import Xml2Document, TEDDY_NS
 from meresco.components.lucene.document import Document, IDFIELD
-from amara import binderytools 
+from amara import binderytools
 
 class Xml2DocumentTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.converter = Xml2Document()
-    
+
     def testId(self):
         document = self.converter._create('id', binderytools.bind_string('<fields/>').fields)
         self.assertTrue(isinstance(document, Document))
         luceneDoc = document._document
         self.assertEquals('id', luceneDoc.get(IDFIELD))
-        
+
     def testIndexField(self):
         document = self.converter._create('id', binderytools.bind_string('<fields><tag>value</tag></fields>').fields)
         luceneDoc = document._document
-        field = luceneDoc.getFields('tag')[0]
+        field = luceneDoc.getFields('fields.tag')[0]
         self.assertEquals('value', field.stringValue())
-        self.assertEquals('tag', field.name())
+        self.assertEquals('fields.tag', field.name())
         self.assertEquals(True, field.isTokenized())
-        
+
     def testIndexTokenizedField(self):
         document = self.converter._create('id', binderytools.bind_string('<fields xmlns:teddy="%s">\n<tag teddy:tokenize="false">value</tag></fields>' % TEDDY_NS).fields)
         luceneDoc = document._document
-        field = luceneDoc.getFields('tag')[0]
+        field = luceneDoc.getFields('fields.tag')[0]
         self.assertEquals('value', field.stringValue())
-        self.assertEquals('tag', field.name())
+        self.assertEquals('fields.tag', field.name())
         self.assertEquals(False, field.isTokenized())
-        
+
     def testMultiLevel(self):
         document = self.converter._create('id', binderytools.bind_string("""<document xmlns:t="%s">
         <tag t:tokenize="false">value</tag>
@@ -70,16 +70,16 @@ class Xml2DocumentTest(CQ2TestCase):
         </lom>
     </document>""" % TEDDY_NS).document)
         luceneDoc = document._document
-        field = luceneDoc.getFields('tag')[0]
+        field = luceneDoc.getFields('document.tag')[0]
         self.assertEquals('value', field.stringValue())
-        self.assertEquals('tag', field.name())
+        self.assertEquals('document.tag', field.name())
         self.assertEquals(False, field.isTokenized())
-        field = luceneDoc.getFields('lom.general.title')[0]
+        field = luceneDoc.getFields('document.lom.general.title')[0]
         self.assertEquals('The title', field.stringValue())
-        self.assertEquals('lom.general.title', field.name())
+        self.assertEquals('document.lom.general.title', field.name())
         self.assertEquals(True, field.isTokenized())
-        
-    def testSkipFirstLevelForXmlFields(self):
+
+    def testSkip(self):
         document = self.converter._create('id', binderytools.bind_string("""<document xmlns:t="%s">
         <xmlfields t:skip="true">
             <title>The title</title>
@@ -97,14 +97,23 @@ class Xml2DocumentTest(CQ2TestCase):
         self.assertEquals('ID', field.stringValue())
         self.assertEquals('general.identifier', field.name())
         self.assertEquals(True, field.isTokenized())
-        
+
+    def testSkipRootTag(self):
+        document = self.converter._create('id', binderytools.bind_string("""<document xmlns:t="%s" t:skip="true">
+        <dc>
+            <title>The title</title>
+        </dc>
+    </document>""" % TEDDY_NS).document)
+        luceneDoc = document._document
+        fields = luceneDoc.getFields('dc.title')
+        self.assertTrue(fields != None)
+
     def testIsObservable(self):
         observer = CallTrace("Observer")
         self.converter.addObserver(observer)
         self.converter.add("id_0", "partName", binderytools.bind_string('<fields/>').fields)
-        
+
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals("add", observer.calledMethods[0].name)
         self.assertEquals(["id_0", "partName"], observer.calledMethods[0].arguments[:2])
         self.assertEquals(Document, observer.calledMethods[0].arguments[2].__class__)
-        

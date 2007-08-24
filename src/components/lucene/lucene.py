@@ -26,6 +26,7 @@
 ## end license ##
 
 import os
+from warnings import warn
 import PyLucene
 import xml.sax.saxutils
 
@@ -89,41 +90,52 @@ class LuceneQuery:
 class LuceneIndex:
 
     def __init__(self, aDirectoryName):
-        self._searcher = None
-        self._reader = None
-
+        self.__searcher = None
+        self.__reader = None
+        self.__writer = None
         self._directoryName = aDirectoryName
         if not os.path.isdir(self._directoryName):
             os.makedirs(self._directoryName)
-
-        if not self._indexExists():
-            self._createIndex()
-
-        self.reOpen()
+        if not PyLucene.IndexReader.indexExists(self._directoryName):
+            self._getWriter(createIndex = True)
         self._indexChanged = False
 
-    def _createIndex(self):
-        self._getWriter(createIndex = True).close()
+    def query(self, aQuery):
+        return self._getSearcher().search(aQuery)
 
-    def reOpen(self):
-        if self._searcher != None:
-            self._searcher.close()
-        self._searcher = PyLucene.IndexSearcher(self._directoryName)
+    def queryWith(self, aLuceneQuery):
+        for hit in aLuceneQuery.search():
+            yield hit
 
-    def createQuery(self, aString, anOffset = DEFAULT_OFFSET, aCount = DEFAULT_COUNT, sortBy = None, sortDescending = False):
-        """Stop using this (deprecated) or use queryWrapper here in stead of LuceneQuery"""
-        return LuceneQuery(self, aString, anOffset, aCount, sortBy, sortDescending)
+    def deleteID(self, anId):
+        self._getReader().deleteDocuments(PyLucene.Term(IDFIELD, anId))
+
+    def countField(self, fieldName):
+        """Deprecated (only used by legacay.plugins.fieldcountplugin) when killing kill TermIter too"""
+        countDict = {}
+        termEnum = self._getReader().terms(PyLucene.Term(fieldName, ''))
+        termIter = TermIter(termEnum, fieldName)
+        for term in termIter:
+            countDict[term.text()] = self._getReader().docFreq(term)
+        return countDict.items()
+
+    def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
+        return Hits(self._getSearcher(), pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
+
+    def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
+        return Hits(self._getSearcher(),
+            self._parseLuceneQueryString(cqlAbstractSyntaxTreeToLucene(cqlAbstractSyntaxTree)),
+            self._getPyLuceneSort(sortBy, sortDescending))
+
+    def addToIndex(self, aDocument):
+        aDocument.validate()
+        aDocument.addToIndexWith(self._getWriter())
+
+    def optimize(self):
+        self._getWriter().optimize()
 
     def _getPyLuceneSort(self, sortBy, sortDescending):
         return sortBy and PyLucene.Sort(sortBy, bool(sortDescending)) or None
-
-    def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return Hits(self._searcher, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
-
-    def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
-        return Hits(self._searcher,
-            self._parseLuceneQueryString(cqlAbstractSyntaxTreeToLucene(cqlAbstractSyntaxTree)),
-            self._getPyLuceneSort(sortBy, sortDescending))
 
     def _parseLuceneQueryString(self, luceneQueryString):
         analyzer = PyLucene.StandardAnalyzer()
@@ -131,86 +143,39 @@ class LuceneIndex:
         queryParser.setDefaultOperator(PyLucene.QueryParser.Operator.AND)
         return queryParser.parse(luceneQueryString)
 
-    def search(self, query, sort):
-        search = self._getSearch()
-        return sort and search.search(query, sort) or search.search(query)
-
-    def addToIndex(self, aDocument):
-        aDocument.validate()
-
-        writer = self._getWriter()
-        try:
-            aDocument.addToIndexWith(writer)
-        finally:
-            writer.close()
-            self._indexChanged = True
-
-    def optimize(self):
-        if self._reader:
-            self._reader.close() #KvS/EG 2007 08 02 - close without re open or setting to None (harmful?)
-
-        writer = self._getWriter()
-        try:
-            writer.optimize()
-        finally:
-            writer.close()
-
     def _getWriter(self, createIndex = False):
-        self._closeReader()
-        analyzer = PyLucene.StandardAnalyzer()
-        return PyLucene.IndexWriter(self._directoryName, analyzer, createIndex)
+        if self.__reader:
+            self.__reader.close()
+            self.__reader = None
+        if self.__searcher:
+            self.__searcher.close()
+            self.__searcher = None
+        if not self.__writer:
+            self.__writer = PyLucene.IndexWriter(self._directoryName, PyLucene.StandardAnalyzer(), createIndex)
+        return self.__writer
 
-    def _getSearch(self):
-        if self._searcher == None:
-            self.reOpen()
+    def _getSearcher(self):
+        if self.__reader:
+            self.__reader.close()
+            self.__reader = None
+        if self.__writer:
+            self.__writer.close()
+            self.__writer = None
+        if not self.__searcher:
+            self._searcher = PyLucene.IndexSearcher(self._directoryName)
         return self._searcher
 
-    def _closeReader(self):
-        if self._reader:
-            self._reader.close()
-            self._reader = None
-
     def _getReader(self):
-        if not self._reader:
-            self._reader = PyLucene.IndexReader.open(self._directoryName)
-        return self._reader
+        if self.__writer:
+            self.__writer.close()
+            self.__writer = None
+        if self.__searcher:
+            self.__searcher.close()
+            self.__searcher = None
+        if not self.__reader:
+            self.__reader = PyLucene.IndexReader.open(self._directoryName)
+        return self.__reader
 
-    def _indexExists(self):
-        return PyLucene.IndexReader.indexExists(self._directoryName)
-
-    def deleteID(self, anId):
-        reader = self._getReader()
-        reader.deleteDocuments(PyLucene.Term(IDFIELD, anId))
-        self._closeReader()
-
-    def queryWith(self, aLuceneQuery):
-        if not self._indexExists:
-            raise LuceneException('Index does not exist')
-        for hit in aLuceneQuery.search():
-            yield hit
-
-    def query(self, aQuery):
-        return self._getSearch().search(aQuery)
-
-    def countField(self, fieldName):
-        """Deprecated (only used by legacay.plugins.fieldcountplugin) when killing kill TermIter too"""
-        reader = self._getReader()
-        search = self._getSearch()
-        countDict = {}
-        try:
-
-            termEnum = reader.terms(PyLucene.Term(fieldName, ''))
-            termIter = TermIter(termEnum, fieldName)
-
-            for term in termIter:
-                countDict[term.text()] = reader.docFreq(term)
-
-            return countDict.items()
-        finally:
-            self._closeReader()
-
-    def updateField(self, anId, fieldName, value):
-        pass
 
 class TermIter:
     """Deprecated thing for countfield"""

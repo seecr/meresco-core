@@ -14,7 +14,6 @@ def addUntokenized(index, documents):
         for field, value in fields.items():
             myDocument.addIndexedField(field, value, tokenize = False)
         index.addToIndex(myDocument)
-        index.reOpen()
 
 class LuceneRawDocSetsTest(TestCase):
     def setUp(self):
@@ -34,8 +33,8 @@ class LuceneRawDocSetsTest(TestCase):
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
         converter = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0', 'field_1'])
-        docsets = [(field, [(term, list(docIds)) 
-            for term, docIds in terms]) 
+        docsets = [(field, [(term, list(docIds))
+            for term, docIds in terms])
                 for field, terms in converter.getDocSets()]
         self.assertEquals(2, len(docsets))
         self.assertEquals([('field_0', [(u'this is term_0', [0, 1]), (u'this is term_1', [2]), (u'this is term_2', [3])]), ('field_1', [(u'cannotbefound', [3]), (u'inquery', [0, 1, 2])])], docsets)

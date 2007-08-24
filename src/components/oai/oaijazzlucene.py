@@ -26,36 +26,64 @@
 ## end license ##
 
 from StringIO import StringIO
+
 from cq2utils.component import Component
-from amara.binderytools import bind_string
-from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
-from meresco.components.lucene import Document
 from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
 
+from amara.binderytools import bind_string, bind_stream
 
-class OaiJazzLucene(Component):
+from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
+
+from meresco.framework import Observable
+from meresco.components import Xml2Document, XmlParseAmara
+from meresco.components.lucene import IndexComponent
+
+def createOaiMeta(sets, prefixes, stamp, unique):
+    yield '<oaimeta>'
+    yield   '<sets>'
+    for set in sets:
+        yield '<setSpec>%s</setSpec>' % set
+    yield   '</sets>'
+    yield   '<prefixes>'
+    for prefix in prefixes:
+        yield '<prefix>%s</prefix>' % prefix
+    yield   '</prefixes>'
+    yield '<stamp>%s</stamp>' % stamp
+    yield '<unique>%019i</unique>' % unique
+    yield '</oaimeta>'
+
+def parseOaiMeta(xmlStream):
+    oaimeta = bind_stream(xmlStream).oaimeta
+    sets = [str(set) for set in oaimeta.sets]
+    prefixes = [str(prefix) for prefix in oaimeta.prefixes]
+    stamp = str(oaimeta.stamp)
+    unique = str(oaimeta.unique)
+    return sets, prefixes, stamp, unique
+
+class OaiJazzLucene(Observable):
     def __init__(self, anIndex, aStorage, aNumberGenerator = None):
-        self._index = anIndex
-        self._storage = aStorage
+        Observable.__init__(self)
+        self.addObservers([(XmlParseAmara(), [(Xml2Document(), [IndexComponent(anIndex)])]), aStorage])
         self._numberGenerator = aNumberGenerator
 
     def add(self, id, name, *nodes):
-        uniqueNumber = self._numberGenerator.next()
-        document = Document(id)
-        document.addIndexedField('__parts__.part', name, False)
-        document.addIndexedField('__stamp__.unique', '%019i' % uniqueNumber, False)
+        self.any.deletePart(id, 'tombstone')
+        sets = set()
+        prefixes = set()
+        if (True, True) == self.any.isAvailable(id, 'oaimeta'):
+            sets, prefixes, stamp, unique = parseOaiMeta(self._storage.get(id, 'oaimeta'))
+        prefixes.add(name)
+        unique = self._numberGenerator.next()
+        stamp = '?'
         for node in nodes:
             if node.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
-                for s in node.setSpec:
-                    document.addIndexedField('__set_membership__.set', str(s), False)
-                self._storage.add(id, '__set_membership__', '<__set_membership__>%s</__set_membership__>' % (''.join('<setSpec>%s</setSpec>' % setSpec for setSpec in node.setSpec)))
-
-        self._index.deleteID(id)
-        self._index.addToIndex(document)
+                sets.update(str(s) for s in node.setSpec)
+        newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
+        self.do.add(id, 'oaimeta', ''.join(newOaiMeta))
+        #self._index.add(id, 'oaimeta', bind_string(''.join(newOaiMeta)))
 
     def delete(self, id):
-        #create thumbstone
-        self._index.deleteID(id)
+        self._storage.add(id, '__tombstone__', '<tombstone/>')
 
     def oaiSelect(self, oaiSet, prefix, continueAt, oaiFrom, oaiUntil):
         def addRange(root, field, lo, hi, inclusive):
@@ -64,44 +92,44 @@ class OaiJazzLucene(Component):
 
         #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase
         query = BooleanQuery()
-        query.add(TermQuery(Term('__parts__.part', prefix)), BooleanClause.Occur.MUST)
+        query.add(TermQuery(Term('oaimeta.prefixes.prefix', prefix)), BooleanClause.Occur.MUST)
 
         if continueAt != '0':
-            addRange(query, '__stamp__.unique', continueAt, None, False)
+            addRange(query, 'oaimeta.unique', continueAt, None, False)
         if oaiFrom or oaiUntil:
             oaiFrom = oaiFrom or None
             oaiUntil = oaiUntil or None
-            addRange(query, '__stamp__.datestamp', oaiFrom, oaiUntil, True)
+            addRange(query, 'oaimeta.datestamp', oaiFrom, oaiUntil, True)
         if oaiSet:
-            query.add(TermQuery(Term('%s.%s' % ('__set_membership__', 'set'), oaiSet)), BooleanClause.Occur.MUST)
+            query.add(TermQuery(Term('oaimeta.sets.setSpec', oaiSet)), BooleanClause.Occur.MUST)
 
-        return self._index.executeQuery(query, '__stamp__.unique')
+        return self.any.executeQuery(query, 'oaimeta.unique')
 
     def listAll(self):
-        return self._index.executeQuery(MatchAllDocsQuery())
+        return self.any.executeQuery(MatchAllDocsQuery())
 
     def getUnique(self, id):
         buffer = StringIO()
-        self._storage.write(buffer, id, '__stamp__')
+        self.any.write(buffer, id, '__stamp__')
         return bind_string(buffer.getvalue()).__stamp__.unique
 
     def getDatestamp(self, id):
         buffer = StringIO()
-        self._storage.write(buffer, id, '__stamp__')
+        self.any.write(buffer, id, '__stamp__')
         return bind_string(buffer.getvalue()).__stamp__.datestamp
 
     def getSets(self, id):
         buffer = StringIO()
-        self._storage.write(buffer, id, '__set_membership__')
+        self.any.write(buffer, id, '__set_membership__')
         return map(str, bind_string(buffer.getvalue()).__set_membership__.setSpec)
 
     def getParts(self, id):
         buffer = StringIO()
-        self._storage.write(buffer, id, '__parts__')
+        self.any.write(buffer, id, '__parts__')
         return map(str, bind_string(buffer.getvalue()).__parts__.part)
 
     def isDeleted(self, id):
-        ignored, hasTombStone = self._storage.isAvailable(id, '__tombstone__')
+        ignored, hasTombStone = self.any.isAvailable(id, '__tombstone__')
         return hasTombStone
 
 

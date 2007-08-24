@@ -61,13 +61,12 @@ class LuceneTest(unittest.TestCase):
 
     def testCreation(self):
         self.assertEquals(os.path.isdir(self.directoryName), True)
-        self.assertTrue(self._luceneIndex._indexExists())
+        self.assertTrue(IndexReader.indexExists(self.directoryName))
 
     def testAddToIndex(self):
         myDocument = Document('0123456789')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
-        self._luceneIndex.reOpen()
 
         query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
         hits = self._luceneIndex.query(query)
@@ -89,8 +88,6 @@ class LuceneTest(unittest.TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
 
-        self._luceneIndex.reOpen()
-
         query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
         hits = self._luceneIndex.query(query)
         self.assertEquals(2, len(hits))
@@ -100,8 +97,6 @@ class LuceneTest(unittest.TestCase):
         myDocument.addIndexedField('field1', 'value_1')
         myDocument.addIndexedField('field1', 'value_2')
         self._luceneIndex.addToIndex(myDocument)
-
-        self._luceneIndex.reOpen()
 
         def check(value):
             query = PyLucene.QueryParser('field1', PyLucene.StandardAnalyzer()).parse(value)
@@ -116,20 +111,21 @@ class LuceneTest(unittest.TestCase):
         self._luceneIndex.addToIndex(myDocument)
 
     def testDeleteFromIndex(self):
-        myDocument = Document('0123456789')
+        myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
 
-        myDocument = Document('01234567890')
+        myDocument = Document('2')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
-
-        self._luceneIndex.deleteID('0123456789')
-        self._luceneIndex.reOpen()
         query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
         hits = self._luceneIndex.query(query)
+        self.assertEquals(2, len(hits))
 
-        self.assertEquals(len(hits), 1)
+        self._luceneIndex.deleteID('1')
+        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
+        hits = self._luceneIndex.query(query)
+        self.assertEquals(1, len(hits))
 
 
     def testCountField(self):
@@ -144,8 +140,6 @@ class LuceneTest(unittest.TestCase):
         my2Document.addIndexedField('title', 'een titel')
         my2Document.addIndexedField('creator', 'two')
         self._luceneIndex.addToIndex(my2Document)
-
-        self._luceneIndex.reOpen()
 
         self.assertEquals([(u'een', 1), (u'titel', 2)], self._luceneIndex.countField('title'))
 

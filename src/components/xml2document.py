@@ -52,7 +52,14 @@ class Xml2Document(Observable):
             self._indexChild(child, doc, parentName)
 
     def _indexChild(self, child, doc, parentName):
-        tagname = parentName + str(child.localName)
+        tagname = parentName + '.' + str(child.localName)
+        for xpathAttribute in child.xpathAttributes:
+            if xpathAttribute.namespaceURI == TEDDY_NS:
+                if xpathAttribute.localName == 'skip':
+                    skip = str.lower(xpathAttribute.value) == 'true'
+                    if skip:
+                        tagname = parentName
+
         value = child.xml_child_text
         tokenize = True
         skip = False
@@ -64,5 +71,6 @@ class Xml2Document(Observable):
                     skip = str(xpathAttribute.value).lower() == 'true'
                     tagname = ''
         if not skip and str(value).strip():
+            print tagname
             doc.addIndexedField(tagname, str(value), tokenize)
         self._addToDocument(doc, child, tagname)
