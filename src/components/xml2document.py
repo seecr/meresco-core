@@ -42,28 +42,17 @@ class Xml2Document(Observable):
 
     def _create(self, documentId, topNode):
         doc = Document(documentId)
-        self._addToDocument(doc, topNode, '')
+        self._indexChild(topNode, doc, '')
         return doc
 
-    def _addToDocument(self, doc, aNode, parentName):
+    def _indexChild(self, aNode, doc, parentName):
         if parentName:
             parentName += '.'
-        for child in filter(is_element, aNode.childNodes):
-            self._indexChild(child, doc, parentName)
-
-    def _indexChild(self, child, doc, parentName):
-        tagname = parentName + '.' + str(child.localName)
-        for xpathAttribute in child.xpathAttributes:
-            if xpathAttribute.namespaceURI == TEDDY_NS:
-                if xpathAttribute.localName == 'skip':
-                    skip = str.lower(xpathAttribute.value) == 'true'
-                    if skip:
-                        tagname = parentName
-
-        value = child.xml_child_text
+        tagname = parentName + str(aNode.localName)
+        value = aNode.xml_child_text
         tokenize = True
         skip = False
-        for xpathAttribute in child.xpathAttributes:
+        for xpathAttribute in aNode.xpathAttributes:
             if xpathAttribute.namespaceURI == TEDDY_NS:
                 if xpathAttribute.localName == 'tokenize':
                     tokenize = str(xpathAttribute.value).lower() != 'false'
@@ -71,6 +60,7 @@ class Xml2Document(Observable):
                     skip = str(xpathAttribute.value).lower() == 'true'
                     tagname = ''
         if not skip and str(value).strip():
-            print tagname
             doc.addIndexedField(tagname, str(value), tokenize)
-        self._addToDocument(doc, child, tagname)
+
+        for child in filter(is_element, aNode.childNodes):
+            self._indexChild(child, doc, tagname)
