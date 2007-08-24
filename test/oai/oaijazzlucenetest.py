@@ -87,20 +87,13 @@ class OaiJazzLuceneTest(CQ2TestCase):
 
     def testGetUnique(self):
         def write(sink, id, partName):
-            sink.write("""<__stamp__>
+            sink.write("""<oaimeta>
         <datestamp>DATESTAMP_FOR_TEST</datestamp>
         <unique>UNIQUE_FOR_TEST</unique>
-    </__stamp__>""")
+    </oaimeta>""")
         self.storage.write = write
         uniqueNumber = self.oaijazz.getUnique('somedocid')
         self.assertEquals('UNIQUE_FOR_TEST', uniqueNumber)
-
-    def testGetSets(self):
-        def write(sink, id, partName):
-            sink.write("<__sets__><setSpec>aSet</setSpec><setSpec>anotherSet</setSpec></__sets__>")
-        self.storage.write = write
-        sets = self.oaijazz.getSets('somedocid')
-        self.assertEquals(['aSet', 'anotherSet'], sets)
 
     def testAddPartWithUniqueNumbersAndSorting(self):
         jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
@@ -163,8 +156,8 @@ class OaiJazzLuceneTest(CQ2TestCase):
         sets = jazz.getSets('124')
         self.assertEquals(['1'], sets)
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('124', 'oai_dc', bind_string(header % 2).header)
-        sets = jazz.getSets('124')
+        jazz.add('125', 'oai_dc', bind_string(header % 2).header)
+        sets = jazz.getSets('125')
         self.assertEquals(['2'], sets)
 
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>1</setSpec><setSpec>2</setSpec></header>'

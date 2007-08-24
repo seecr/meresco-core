@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -49,7 +49,7 @@ class StorageComponent(Component):
             self._storage.delete((id, partName))
         except HierarchicalStorageError, ignored:
             pass
-            
+
     def isAvailable(self, id, partName):
         """returns (hasId, hasPartName)"""
         if (id, partName) in self._storage:
@@ -57,7 +57,7 @@ class StorageComponent(Component):
         elif (id, None) in self._storage:
             return True, False
         return False, False
-    
+
     def write(self, sink, id, partName):
         stream = self._storage.get((id, partName))
         try:

@@ -54,8 +54,11 @@ def createOaiMeta(sets, prefixes, stamp, unique):
 
 def parseOaiMeta(xmlStream):
     oaimeta = bind_stream(xmlStream).oaimeta
-    sets = [str(set) for set in oaimeta.sets]
-    prefixes = [str(prefix) for prefix in oaimeta.prefixes]
+
+    setSpecList = oaimeta.sets.setSpec and oaimeta.sets.setSpec or []
+    sets = set((str(setSpec) for setSpec in setSpecList))
+    prefixList = oaimeta.prefixes.prefix and oaimeta.prefixes.prefix or []
+    prefixes = set((str(prefix) for prefix in prefixList))
     stamp = str(oaimeta.stamp)
     unique = str(oaimeta.unique)
     return sets, prefixes, stamp, unique
@@ -71,7 +74,7 @@ class OaiJazzLucene(Observable):
         sets = set()
         prefixes = set()
         if (True, True) == self.any.isAvailable(id, 'oaimeta'):
-            sets, prefixes, stamp, unique = parseOaiMeta(self._storage.get(id, 'oaimeta'))
+            sets, prefixes, stamp, unique = parseOaiMeta(self.any.get(id, 'oaimeta'))
         prefixes.add(name)
         unique = self._numberGenerator.next()
         stamp = '?'
@@ -109,21 +112,19 @@ class OaiJazzLucene(Observable):
         return self.any.executeQuery(MatchAllDocsQuery())
 
     def getUnique(self, id):
-        buffer = StringIO()
-        self.any.write(buffer, id, '__stamp__')
-        return bind_string(buffer.getvalue()).__stamp__.unique
+        sets, prefixes, stamp, unique = parseOaiMeta(self.any.get(id, 'oaimeta'))
+        return unique
 
     def getDatestamp(self, id):
-        buffer = StringIO()
-        self.any.write(buffer, id, '__stamp__')
-        return bind_string(buffer.getvalue()).__stamp__.datestamp
+        sets, prefixes, stamp, unique = parseOaiMeta(self._storage.get(id, 'oaimeta'))
+        return stamp
 
     def getSets(self, id):
-        buffer = StringIO()
-        self.any.write(buffer, id, '__set_membership__')
-        return map(str, bind_string(buffer.getvalue()).__set_membership__.setSpec)
+        sets, prefixes, stamp, unique = parseOaiMeta(self.any.get(id, 'oaimeta'))
+        return list(sets)
 
     def getParts(self, id):
+        sets, prefixes, stamp, unique = parseOaiMeta(self._storage.get(id, 'oaimeta'))
         buffer = StringIO()
         self.any.write(buffer, id, '__parts__')
         return map(str, bind_string(buffer.getvalue()).__parts__.part)
