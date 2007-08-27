@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -33,18 +33,14 @@ from meresco.framework.observable import Observable
 from cq2utils.calltrace import CallTrace
 
 class LogComponentTest(CQ2TestCase):
-    
+
     def testLog(self):
-        notification = Notification("method", "anId", "partName", 'payload')
-        
         observable = Observable()
-        component = LogComponent(self.tempfile)
-        observable.addObserver(component)
-        
-        observable.changed(notification)
-        
+        logger = LogComponent(self.tempfile)
+        observable.addObserver(logger)
+        observable.any.method("anId", "partName", "payload", kwarg="kwarg", count=10)
         oneline = open(self.tempfile).read().strip()
         time, message = oneline.split('\t')
-        self.assertEquals("notify: %s" % str(notification), message)
+        self.assertEquals("notify: method, anId, partName, payload, count=10, kwarg='kwarg'", message)
         self.assertTrue(float(time))
-        
+

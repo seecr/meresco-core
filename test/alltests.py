@@ -77,10 +77,6 @@ from legacy.pluginregistrytest import PluginRegistryTest
 from oai.oaijazzlucenetest import OaiJazzLuceneTest
 from oai.oaijazzlucenetest import OaiJazzLuceneIntegrationTest
 
-from oai.setscomponenttest import SetsComponentTest
-from oai.partscomponenttest import PartsComponentTest
-from oai.undertakertest import UnderTakerTest
-from oai.stampcomponenttest import StampComponentTest
 #from oai.oaicomponenttest import OaiComponentTest
 from oai.oaigetrecordtest import OaiGetRecordTest
 from oai.oaiidentifytest import OaiIdentifyTest

@@ -25,6 +25,16 @@
 #
 ## end license ##
 
+from types import GeneratorType
+
+def compose(generator):
+    for value in generator:
+        if type(value) == GeneratorType:
+            for nested in compose(value):
+                yield nested
+        else:
+            yield value
+
 class Defer:
     def __init__(self, observable, defereeType):
         self._observable = observable
@@ -57,13 +67,13 @@ class AllMessage(DeferredMessage):
 class AnyMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            return DeferredMessage.__call__(self, *args, **kwargs).next()
+            return compose(DeferredMessage.__call__(self, *args, **kwargs)).next()
         except StopIteration:
             raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
 
 class DoMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
-        for ignore in DeferredMessage.__call__(self, *args, **kwargs):
+        for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
             pass
 
 class Observable(object):
@@ -84,48 +94,3 @@ class Observable(object):
                 node, branch = node
                 node.addObservers(branch)
             self.addObserver(node)
-
-    def _notifyObservers(self, __returnResult__, *args, **kwargs):
-        """deprecated"""
-        i = 0
-        while i < len(self._observers):
-            result = self._observers[i].notify(*args, **kwargs)
-            if __returnResult__ and result != None:
-                return result
-            i += 1
-
-    def changed(self, *args, **kwargs):
-        """deprecated"""
-        return self._notifyObservers(False, *args, **kwargs)
-
-    def process(self, *args, **kwargs):
-        """deprecated"""
-        return self._notifyObservers(True, *args, **kwargs)
-
-class Function:
-
-    def __init__(self, observable):
-        self._observable = observable
-        self._observable.addObserver(self)
-
-    def notify(self, *args, **kwargs):
-        self._result = args #kwargs is nog een vraagteken voor mij (KVS)
-        if len(self._result) == 0:
-            self._result = None
-        elif len(self._result) == 1:
-            self._result = self._result[0]
-
-    def __call__(self, *args, **kwargs):
-        self._observable.notify(*args, **kwargs) # hier is **kwargs triviaal
-        return self._result
-
-class FunctionObservable(Observable):
-    #ik weet het, YAGNI, maar het is zooooo mooi symmetrisch - wilde toch even laten zien dat dit het soort dingen is wat we kunnen doen en denk dat we het nut vrij snel tegenkomen. Zo niet dan mag hij in het vuilnisvat
-
-    def __init__(self, function):
-        Observable.__init__(self)
-        self._function = function
-
-    def notify(self, *args, **kwargs):
-        results = self._function(*args, **kwargs)
-        self.changed(*results)

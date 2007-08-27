@@ -117,6 +117,12 @@ class DocumentTest(unittest.TestCase):
         except DocumentException,e:
             self.assertEquals('Invalid fieldname: "%s"' % IDFIELD, str(e))
 
+    def testAddSameFieldTwice(self):
+        d = Document('1234')
+        d.addIndexedField('x', 'y')
+        d.addIndexedField('x', 'x')
+        d.addToIndexWith(self)
+        self.assertEquals(['__id__', 'x', 'x'], d.fields())
 
     """ self-shunt """
     def addDocument(self, aDocument):

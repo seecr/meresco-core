@@ -63,6 +63,21 @@ class LuceneTest(unittest.TestCase):
         self.assertEquals(os.path.isdir(self.directoryName), True)
         self.assertTrue(IndexReader.indexExists(self.directoryName))
 
+    def testAddToIndexWithDuplicateField(self):
+        myDocument = Document('id')
+        myDocument.addIndexedField('title', 'een titel')
+        myDocument.addIndexedField('title', 'een sub titel')
+        self._luceneIndex.addToIndex(myDocument)
+
+        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
+        hits = self._luceneIndex.query(query)
+        self.assertEquals(len(hits), 1)
+
+        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('sub')
+        hits = self._luceneIndex.query(query)
+        self.assertEquals(len(hits), 1)
+
+
     def testAddToIndex(self):
         myDocument = Document('0123456789')
         myDocument.addIndexedField('title', 'een titel')

@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -51,26 +51,27 @@ class Portal(object):
     def __init__(self):
         self._fieldsOrder = ['version', 'operation', 'query', 'recordSchema', 'startRecord']
         self._fields = {'version':'1.1', 'operation':'searchRetrieve', 'query':'', 'recordSchema':'LOMv1.0', 'startRecord':'1'}
-    
-    def notify(self, webrequest):
-        if webrequest.path.endswith('/portal'):
-            if webrequest.method == 'GET':
-                webrequest.write(HEADER % self.getRequestUrl(webrequest))
+
+    def handleRequest(self, webRequest):
+        if webRequest.path.endswith('/portal'):
+            if webRequest.method == 'GET':
+                webRequest.write(HEADER % self.getRequestUrl(webRequest))
                 for key in self._fieldsOrder:
                     value = self._fields[key]
-                    webrequest.write(self._generateHtmlRow(key, value))
-                webrequest.write(FOOTER)
+                    webRequest.write(self._generateHtmlRow(key, value))
+                webRequest.write(FOOTER)
             else:
                 queryArguments = {}
                 for arg in self._fields.keys():
-                    queryArguments[arg] = webrequest.args.get(arg, [''])[0]
-                    
+                    queryArguments[arg] = webRequest.args.get(arg, [''])[0]
+
                 #url = self.getRequestUrl(webrequest)
                 #url.replace('/portal', '/sru')
                 url = "http://sharelab.cq2.org:8000/lorenet/sru"
                 url += "?" + urlencode(queryArguments)
                 for line in urlopen(url).readlines():
-                    webrequest.write(line)
+                    webRequest.write(line)
+
 
     def _generateHtmlRow(self, key, value):
         return ROW_TEMPLATE % locals()

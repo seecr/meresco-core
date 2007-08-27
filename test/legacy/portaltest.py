@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,7 +25,8 @@
 #
 ## end license ##
 from observabletestcase import ObservableTestCase
-
+from cq2utils.calltrace import CallTrace
+from cStringIO import StringIO
 from meresco.legacy.portal import Portal
 
 PORTAL_PAGE = """<html>
@@ -61,14 +62,21 @@ PORTAL_PAGE = """<html>
 </html>"""
 
 class PortalTest(ObservableTestCase):
-    
+
     def getSubject(self):
         return Portal()
-    
-    def testRenderPortal(self):
-        self.request.path = '/testdatabase/portal'
-        self.request.args = {}
-        self.request.method = 'GET'
 
-        self.observable.changed(self.request)
+    def testRenderPortal(self):
+        self.request = CallTrace('Request')
+        self.request.path = '/testdatabase/portal'
+        self.request.method = 'GET'
+        self.request.args = {}
+        self.request.getRequestHostname = lambda: 'localhost'
+        class Host:
+            def __init__(self):
+                self.port = '8000'
+        self.request.getHost = lambda: Host()
+        self.stream = StringIO()
+        self.request.write = self.stream.write
+        self.subject.handleRequest(self.request)
         self.assertEqualsWS(PORTAL_PAGE % 'http://localhost:8000/testdatabase/portal', self.stream.getvalue())

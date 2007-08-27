@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -38,10 +38,9 @@ class Venturi(Component, Observable):
         Observable.__init__(self)
         self._storage = storage
         self._venturiName = venturiName
-        
-    def add(self, amaraNodeNotification):
-        unit = self._storage.getUnit(amaraNodeNotification.id)
-        newNode = amaraNodeNotification.payload
+
+    def add(self, id, name, newNode):
+        unit = self._storage.getUnit(id)
         if unit.hasBox(self._venturiName):
             box = unit.openBox(self._venturiName)
             try:
@@ -54,6 +53,4 @@ class Venturi(Component, Observable):
         else:
             venturiObject = binderytools.bind_string('<%s/>' % self._venturiName).rootNode.childNodes[0]
         venturiObject.xml_append(newNode)
-        
-        newNotification = Notification('add', amaraNodeNotification.id, self._venturiName, venturiObject)
-        self.changed(newNotification)
+        return self.all.add(id, self._venturiName, venturiObject)

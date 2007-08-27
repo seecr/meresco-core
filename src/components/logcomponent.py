@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -27,13 +27,10 @@
 
 from time import time
 
-from sys import exc_info
-from traceback import format_exception
-
 class LogComponent:
     def __init__(self, logfile):
         self._logfile = logfile
-        
+
     def _write(self, line):
         f = open(self._logfile, 'a')
         try:
@@ -43,7 +40,8 @@ class LogComponent:
             f.write('\n')
         finally:
             f.close()
-        
-    def notify(self, *args):
-        self._write("notify: " + ', '.join(map(str, args)))
-        
+
+    def unknown(self, *args, **kwargs):
+        self._write("notify: " + ', '.join(map(str, args + tuple('%s=%s' % (key, repr(item)) for key, item in kwargs.items()))))
+        yield None
+

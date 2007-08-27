@@ -39,26 +39,27 @@ from meresco.components import Xml2Document, XmlParseAmara
 from meresco.components.lucene import IndexComponent
 
 def createOaiMeta(sets, prefixes, stamp, unique):
-    yield '<oaimeta>'
+    yield '<oaimeta xmlns:t="http://www.cq2.nl/teddy">'
     yield   '<sets>'
     for set in sets:
-        yield '<setSpec>%s</setSpec>' % set
+        yield '<setSpec t:tokenize="false">%s</setSpec>' % set
     yield   '</sets>'
     yield   '<prefixes>'
     for prefix in prefixes:
-        yield '<prefix>%s</prefix>' % prefix
+        yield '<prefix t:tokenize="false">%s</prefix>' % prefix
     yield   '</prefixes>'
     yield '<stamp>%s</stamp>' % stamp
     yield '<unique>%019i</unique>' % unique
     yield '</oaimeta>'
 
-def parseOaiMeta(xmlStream):
-    oaimeta = bind_stream(xmlStream).oaimeta
-
-    setSpecList = oaimeta.sets.setSpec and oaimeta.sets.setSpec or []
-    sets = set((str(setSpec) for setSpec in setSpecList))
-    prefixList = oaimeta.prefixes.prefix and oaimeta.prefixes.prefix or []
-    prefixes = set((str(prefix) for prefix in prefixList))
+def parseOaiMeta(xmlString):
+    oaimeta = bind_string(xmlString).oaimeta
+    sets = set()
+    if hasattr(oaimeta.sets, 'setSpec'):
+        sets = set(str(setSpec) for setSpec in oaimeta.sets.setSpec)
+    prefixes = set()
+    if hasattr(oaimeta.prefixes, 'prefix_'):
+        prefixes = set(str(prefix) for prefix in oaimeta.prefixes.prefix_)
     stamp = str(oaimeta.stamp)
     unique = str(oaimeta.unique)
     return sets, prefixes, stamp, unique
@@ -66,7 +67,12 @@ def parseOaiMeta(xmlStream):
 class OaiJazzLucene(Observable):
     def __init__(self, anIndex, aStorage, aNumberGenerator = None):
         Observable.__init__(self)
-        self.addObservers([(XmlParseAmara(), [(Xml2Document(), [IndexComponent(anIndex)])]), aStorage])
+        self.addObservers([
+            (XmlParseAmara(), [
+                (Xml2Document(), [
+                    IndexComponent(anIndex)])
+                ]),
+            aStorage])
         self._numberGenerator = aNumberGenerator
 
     def add(self, id, name, *nodes):
@@ -74,19 +80,20 @@ class OaiJazzLucene(Observable):
         sets = set()
         prefixes = set()
         if (True, True) == self.any.isAvailable(id, 'oaimeta'):
-            sets, prefixes, stamp, unique = parseOaiMeta(self.any.get(id, 'oaimeta'))
+            data = ''.join(self.any.getStream(id, 'oaimeta'))
+            sets, prefixes, stamp, unique = parseOaiMeta(data)
         prefixes.add(name)
         unique = self._numberGenerator.next()
-        stamp = '?'
+        stamp = 'x'
         for node in nodes:
             if node.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
                 sets.update(str(s) for s in node.setSpec)
         newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
-        self.do.add(id, 'oaimeta', ''.join(newOaiMeta))
-        #self._index.add(id, 'oaimeta', bind_string(''.join(newOaiMeta)))
+        record = ''.join(newOaiMeta)
+        self.do.add(id, 'oaimeta', record)
 
     def delete(self, id):
-        self._storage.add(id, '__tombstone__', '<tombstone/>')
+        self.any.store(id, 'tombstone', '<tombstone/>')
 
     def oaiSelect(self, oaiSet, prefix, continueAt, oaiFrom, oaiUntil):
         def addRange(root, field, lo, hi, inclusive):
@@ -105,32 +112,29 @@ class OaiJazzLucene(Observable):
             addRange(query, 'oaimeta.datestamp', oaiFrom, oaiUntil, True)
         if oaiSet:
             query.add(TermQuery(Term('oaimeta.sets.setSpec', oaiSet)), BooleanClause.Occur.MUST)
-
         return self.any.executeQuery(query, 'oaimeta.unique')
 
     def listAll(self):
         return self.any.executeQuery(MatchAllDocsQuery())
 
     def getUnique(self, id):
-        sets, prefixes, stamp, unique = parseOaiMeta(self.any.get(id, 'oaimeta'))
+        sets, prefixes, stamp, unique = parseOaiMeta(''.join(self.any.getStream(id, 'oaimeta')))
         return unique
 
     def getDatestamp(self, id):
-        sets, prefixes, stamp, unique = parseOaiMeta(self._storage.get(id, 'oaimeta'))
+        sets, prefixes, stamp, unique = parseOaiMeta(''.join(self.any.getStream(id, 'oaimeta')))
         return stamp
 
     def getSets(self, id):
-        sets, prefixes, stamp, unique = parseOaiMeta(self.any.get(id, 'oaimeta'))
+        sets, prefixes, stamp, unique = parseOaiMeta(''.join(self.any.getStream(id, 'oaimeta')))
         return list(sets)
 
     def getParts(self, id):
-        sets, prefixes, stamp, unique = parseOaiMeta(self._storage.get(id, 'oaimeta'))
-        buffer = StringIO()
-        self.any.write(buffer, id, '__parts__')
-        return map(str, bind_string(buffer.getvalue()).__parts__.part)
+        sets, prefixes, stamp, unique = parseOaiMeta(''.join(self.any.getStream(id, 'oaimeta')))
+        return list(prefixes)
 
     def isDeleted(self, id):
-        ignored, hasTombStone = self.any.isAvailable(id, '__tombstone__')
+        ignored, hasTombStone = self.any.isAvailable(id, 'tombstone')
         return hasTombStone
 
 

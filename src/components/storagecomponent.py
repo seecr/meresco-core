@@ -31,6 +31,9 @@ class StorageComponent(Component):
     def __init__(self, storeDirectory):
         self._storage = HierarchicalStorage(Storage(storeDirectory), split = self._split)
 
+    def store(self, *args, **kwargs):
+        self.add(*args, **kwargs)
+
     def add(self, id, partName, someString):
         sink = self._storage.put((id, partName))
         try:
@@ -65,5 +68,5 @@ class StorageComponent(Component):
         finally:
             stream.close()
 
-    def get(self, id, partName):
+    def getStream(self, id, partName):
         return self._storage.get((id, partName))

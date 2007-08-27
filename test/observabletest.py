@@ -28,97 +28,11 @@
 import sys
 from types import GeneratorType
 
-from meresco.framework.observable import Observable, Function, FunctionObservable
+from meresco.framework.observable import Observable
 from cq2utils.calltrace import CallTrace
 import unittest
 
 class ObservableTest(unittest.TestCase):
-
-    def testNotifications(self):
-        observable = Observable()
-        one = MockObserver()
-        two = MockObserver()
-        observable.addObserver(one)
-        observable.addObserver(two)
-        observable.changed("A")
-        observable.changed("B", "C")
-        self.assertEquals([("A",), ("B", "C")], one.notifications)
-        self.assertEquals([("A",), ("B", "C")], two.notifications)
-
-    def testProcess(self):
-        observable = Observable()
-        observerOne = CallTrace('ObserverOne')
-        observerOne.returnValues['notify'] = True
-        observerTwo = CallTrace('ObserverTwo')
-        observerTwo.returnValues['notify'] = 1
-        observerThree = CallTrace('ObserverThree')
-        observerThree.returnValues['notify'] = 'yes'
-
-        observable.addObserver(observerOne)
-        observable.addObserver(observerTwo)
-        observable.addObserver(observerThree)
-
-        result = observable.process('This is a cool test')
-
-        self.assertEquals(True, result)
-        self.assertEquals(1, len(observerOne.calledMethods))
-        self.assertEquals(0, len(observerTwo.calledMethods))
-        self.assertEquals(0, len(observerThree.calledMethods))
-
-    def testProcessNoneReturnValues(self):
-        observable = Observable()
-        observerOne = CallTrace('Observer')
-        observerOne.returnValues['notify'] = None
-        observerTwo = CallTrace('ObserverTwo')
-        observerTwo.returnValues['notify'] = ''
-
-        observable.addObserver(observerOne)
-        observable.addObserver(observerTwo)
-
-        result = observable.process('This is a cool test')
-
-        self.assertEquals('', result)
-
-    def testFunctionWrapperOneResultValue(self):
-        class MockExtendedObservable(Observable):
-            def notify(self, arg0, arg1):
-                self.changed("The Result " + arg0)
-        f = Function(MockExtendedObservable())
-        self.assertEquals("The Result A", f("A", "B"))
-
-    def testFunctionWrapperNoResultValue(self):
-        class MockExtendedObservable(Observable):
-            def notify(self, arg0, arg1):
-                self.changed()
-        f = Function(MockExtendedObservable())
-        self.assertEquals(None, f("A", "B"))
-
-    def testFunctionWrapperNResultValues(self):
-        class MockExtendedObservable(Observable):
-            def notify(self, arg0, arg1):
-                self.changed("Extended " + arg0, "Extended " + arg1, "Additional Argument")
-        f = Function(MockExtendedObservable())
-        self.assertEquals(("Extended A", "Extended B", "Additional Argument"), f("A", "B"))
-
-    def testFunctionObservable(self):
-        function = lambda x: x
-
-        observable = FunctionObservable(function)
-        observer = MockObserver()
-        observable.addObserver(observer)
-
-        observable.notify("A")
-        self.assertEquals([("A",)], observer.notifications)
-
-    def testFunctionObservableTupleResult(self):
-        function = lambda arg0: ("Extended " + arg0, "Additional Argument")
-
-        observable = FunctionObservable(function)
-        one = MockObserver()
-        observable.addObserver(one)
-
-        observable.notify("A")
-        self.assertEquals([("Extended A", "Additional Argument")], one.notifications)
 
     def testAllWithoutImplementers(self):
         observable = Observable()
@@ -135,7 +49,6 @@ class ObservableTest(unittest.TestCase):
 
         self.assertEquals(GeneratorType, type(responses))
         self.assertEquals(['one', 'two'], list(responses))
-
 
     def testAnyCallsFirstImplementer(self):
         observable = Observable()
@@ -302,7 +215,43 @@ class ObservableTest(unittest.TestCase):
         except TypeError, e:
             self.assertEquals('yes() takes exactly 2 arguments (1 given)', str(e))
 
+    def testNestedAllWithDo(self):
+        self.done = False
+        class A(Observable):
+            def a(this):
+                return this.all.a()
+        class B(Observable):
+            def a(this):
+                return this.all.a()
+        class C(Observable):
+            def a(this):
+                self.done = True
+        a = A()
+        b = B()
+        c = C()
+        a.addObserver(b)
+        b.addObserver(c)
+        result = a.do.a()
+        self.assertEquals(None, result)
+        self.assertTrue(self.done)
 
+    def testNestedAllWithAny(self):
+        class A(Observable):
+            def a(this):
+                return this.all.a()
+        class B(Observable):
+            def a(this):
+                return this.all.a()
+        class C(Observable):
+            def a(this):
+                return 1
+        a = A()
+        b = B()
+        c = C()
+        a.addObserver(b)
+        b.addObserver(c)
+        result = a.any.a()
+        self.assertEquals(1, result)
 
 class TestException(Exception):
     pass

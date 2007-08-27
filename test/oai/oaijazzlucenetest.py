@@ -86,12 +86,14 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.assertEquals('oaimeta.unique', executeQueryMethod.arguments[1])
 
     def testGetUnique(self):
-        def write(sink, id, partName):
-            sink.write("""<oaimeta>
-        <datestamp>DATESTAMP_FOR_TEST</datestamp>
+        def getStream(id, partName):
+            yield """<oaimeta>
+        <stamp>DATESTAMP_FOR_TEST</stamp>
         <unique>UNIQUE_FOR_TEST</unique>
-    </oaimeta>""")
-        self.storage.write = write
+		<sets/>
+		<prefixes/>
+    </oaimeta>"""
+        self.storage.getStream = getStream
         uniqueNumber = self.oaijazz.getUnique('somedocid')
         self.assertEquals('UNIQUE_FOR_TEST', uniqueNumber)
 
@@ -172,7 +174,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
             iter(xrange(99)))
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
         jazz.add('124', 'oai_dc', bind_string(header % "1:23").header)
-        results =jazz.oaiSelect('1:23', 'oai_dc', '0', None, None)
+        results = jazz.oaiSelect('1:23', 'oai_dc', '0', None, None)
         self.assertEquals(1, len(results))
 
     def testDelete(self):
@@ -216,33 +218,26 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self._luceneIndex = LuceneIndex(join(self.tempdir, "lucene-index"))
-        self._storage = Storage(join(self.tempdir, 'storage'))
-        self.subject = OaiJazzLucene(self._luceneIndex, self._storage)
+        self._storage = StorageComponent(join(self.tempdir, 'storage'))
+        self.jazz = OaiJazzLucene(self._luceneIndex, self._storage, iter(xrange(9999)))
 
     def addDocuments(self, size):
-        for i in range(1,size+1):
-            d = Document('%05d' %  i)
-            d.addIndexedField('title', 'The title')
-            d.addIndexedField('%s.%s' % (PARTS_PART, PART), 'oai_dc', False)
-            d.addIndexedField('%s.%s' % (STAMP_PART, UNIQUE), '%020d' % i)
-            self._luceneIndex.addToIndex(d)
+        for id in range(1,size+1):
+            self.jazz.add('%05d' %id, 'oai_dc', bind_string('<title>The Title %d</title>' %id))
 
-    def testListRecords(self):
+    def testListAll(self):
         self.addDocuments(1)
-
-        result = self.subject.oaiSelect(None, 'oai_dc', '0', None, None)
-        result2 = self.subject.listAll()
+        result = self.jazz.oaiSelect(None, 'oai_dc', '0', None, None)
+        result2 = self.jazz.listAll()
         self.assertEquals(['00001'], list(result2))
         self.assertEquals(['00001'], list(result))
 
     def testListRecordsWith2000(self):
         BooleanQuery.setMaxClauseCount(10) # Cause an early TooManyClauses exception.
         self.addDocuments(50)
-
-        result = self.subject.oaiSelect(None, 'oai_dc', '0', None, None)
-        #self.assertEquals(200, len(list(result)))
+        result = self.jazz.oaiSelect(None, 'oai_dc', '0', None, None)
         first = iter(result).next()
         self.assertEquals('00001', first)
-        result = self.subject.oaiSelect(None, 'oai_dc', '%020d' % 1, None, None)
+        result = self.jazz.oaiSelect(None, 'oai_dc', '%020d' % 1, None, None)
         first = iter(result).next()
         self.assertEquals('00002', first)

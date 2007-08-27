@@ -111,7 +111,7 @@ class Xml2DocumentTest(CQ2TestCase):
     def testIsObservable(self):
         observer = CallTrace("Observer")
         self.converter.addObserver(observer)
-        self.converter.add("id_0", "partName", binderytools.bind_string('<fields/>').fields)
+        list(self.converter.add("id_0", "partName", binderytools.bind_string('<fields/>').fields))
 
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals("add", observer.calledMethods[0].name)

@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -27,19 +27,20 @@
 
 from meresco.framework.observable import Observable
 from amara import binderytools
-        
+
 class XmlInflate(Observable):
-    
+
     def add(self, id, partName, xmlString):
-        self.do.add(id, partName, binderytools.bind_string(xmlString).rootNode.childNodes[0])
-        
-    def unknown(self, methodName, *args):
-        return self.do.unknown(methodName, *args)
+        xml = binderytools.bind_string(xmlString)
+        return self.all.add(id, partName, xml.rootNode.childNodes[0])
+
+    def unknown(self, *args, **kwargs):
+        return self.all.unknown(*args, **kwargs)
 
 class XmlDeflate(Observable):
 
     def add(self, id, partName, amaraXmlNode):
-        self.do.add(id, partName, amaraXmlNode.xml())
-        
-    def unknown(self, methodName, *args):
-        return self.do.unknown(methodName, *args)
+        return self.all.add(id, partName, amaraXmlNode.xml())
+
+    def unknown(self, *args, **kwargs):
+        return self.all.unknown(*args, **kwargs)
