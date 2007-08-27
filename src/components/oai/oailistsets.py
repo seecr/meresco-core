@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -42,26 +42,26 @@ Error and Exception Conditions
     * badArgument - The request includes illegal arguments or is missing required arguments.
     * badResumptionToken - The value of the resumptionToken argument is invalid or expired.
     * noSetHierarchy - The repository does not support sets."""
-    
+
     def __init__(self):
         OaiRecordVerb.__init__(self, ['ListSets'], {'resumptionToken': 'exclusive'})
         Observable.__init__(self)
 
     def listSets(self, aWebRequest):
         self.startProcessing(aWebRequest)
-        
+
     def preProcess(self, webRequest):
         if self._resumptionToken:
             return self.writeError(webRequest, 'badResumptionToken')
-        
-        self._queryResult = self.any.listAll()
+
+        self._queryResult = self.any.listSets()
         if len(self._queryResult) == 0:
             return self.writeError(webRequest, 'noSetHierarchy')
-    
+
     def process(self, webRequest):
-        for id in self._queryResult:
-            self.do.write(webRequest, id, 'set')
+
+        webRequest.write(''.join('<set><setSpec>%s</setSpec><setName>%s</setName></set>' % (setSpec, setName) for setSpec, setName in self._queryResult))
 
         if self._resumptionToken:
             webRequest.write('<resumptionToken/>')
-    
+

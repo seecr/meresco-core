@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,35 +25,26 @@
 #
 ## end license ##
 
+from os.path import join
+
 from oaitestcase import OaiTestCase
-from meresco.components.oai import OaiListSets
+from meresco.components.oai import OaiListSets, OaiJazzLucene
+from meresco.components.lucene import LuceneIndex
+from meresco.components import StorageComponent
 
 class OaiListSetsTest(OaiTestCase):
     def getSubject(self):
         return OaiListSets()
-    
+
     def testNonsenseArguments(self):
         self.assertBadArgument('listSets', {'verb': ['ListSets'], 'nonsense': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
 
     def testListSetsNoArguments(self):
+        jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
+            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
         self.request.args = {'verb':['ListSets']}
-        
-        class Observer:
-            def listAll(sself):
-                return ['id_0', 'id_1']
-                    
-            def write(sself, sink, id, partName):
-                if partName == 'set':
-                    sink.write('<set><setSpec>some:name:%s</setSpec><setName>Some Name</setName></set>' % id)
-                else:
-                    self.fail(partName + ' is unexpected')
-            
-            def notify(sself, *args, **kwargs):
-                pass
-        
-        self.subject.addObserver(Observer())
-        self.observable.any.listSets(self.request)
-        
+        self.subject.addObserver(jazz)
+        self.subject.listSets(self.request)
         self.assertEqualsWS(self.OAIPMH % """
 <request verb="ListSets">http://server:9000/path/to/oai</request>
  <ListSets>

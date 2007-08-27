@@ -57,7 +57,7 @@ Error and Exception Conditions
 
     def preProcess(self, webRequest):
         if self._identifier:
-            if self.any.isAvailable(self._identifier, PARTS_PART) != (True, True):
+            if not self.any.isAvailable(self._identifier):
                 return self.writeError(webRequest, 'idDoesNotExist')
 
             names = self.any.getParts(self._identifier)

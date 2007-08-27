@@ -24,10 +24,13 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from os.path import join
+from amara.binderytools import bind_string
 
 from oaitestcase import OaiTestCase
-
-from meresco.components.oai import OaiListMetadataFormats
+from meresco.components.lucene import LuceneIndex
+from meresco.components import StorageComponent
+from meresco.components.oai import OaiListMetadataFormats, OaiJazzLucene
 from meresco.components.oai.oaivalidator import assertValidString
 
 class OaiListMetadataFormatsTest(OaiTestCase):
@@ -39,9 +42,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
 
     def testListAllMetadataFormats(self):
         self.request.args = {'verb': ['ListMetadataFormats']}
-
         self.observable.any.listMetadataFormats(self.request)
-
         self.assertEqualsWS(self.OAIPMH % """
         <request verb="ListMetadataFormats">http://server:9000/path/to/oai</request>
   <ListMetadataFormats>
@@ -62,14 +63,15 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         assertValidString(self.stream.getvalue())
 
     def testListMetadataFormatsForIdentifier(self):
+        jazz = OaiJazzLucene(
+            LuceneIndex(join(self.tempdir, 'index')),
+            StorageComponent(join(self.tempdir, 'storage')),
+            iter(xrange(99)))
+        self.subject.addObserver(jazz)
         self.request.args = {'verb': ['ListMetadataFormats'], 'identifier': ['id_0']}
-        self.subject.addObserver(self)
-        self._isAvailable = True, True
-        self.getParts = lambda id: ['oai_dc']
-        self._writeString = "<__parts__><part>oai_dc</part></__parts__>"
-
-        self.observable.any.listMetadataFormats(self.request)
-
+        jazz.add('id_0', 'oai_dc', bind_string('<tag/>'))
+        jazz.add('id_0', 'olac', bind_string('<tag/>'))
+        self.subject.listMetadataFormats(self.request)
         self.assertEqualsWS(self.OAIPMH % """
         <request identifier="id_0" verb="ListMetadataFormats">http://server:9000/path/to/oai</request>
   <ListMetadataFormats>
@@ -79,28 +81,23 @@ class OaiListMetadataFormatsTest(OaiTestCase):
        </schema>
      <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/
        </metadataNamespace>
-   </metadataFormat>
+   </metadataFormat><metadataFormat>
+                <metadataPrefix>olac</metadataPrefix>
+                <schema>http://www.language-archives.org/OLAC/olac-0.2.xsd</schema>
+                <metadataNamespace>http://www.language-archives.org/OLAC/0.2/</metadataNamespace>
+            </metadataFormat>
   </ListMetadataFormats>""", self.stream.getvalue())
         assertValidString(self.stream.getvalue())
 
     def testListMetadataFormatsNonExistingId(self):
+        class Observer:
+            def isAvailable(*args):
+                return False
         self.request.args = {'verb': ['ListMetadataFormats'], 'identifier': ['DoesNotExist']}
-        self.subject.addObserver(self)
-        self._isAvailable = None
-
+        self.subject.addObserver(Observer())
         self.observable.any.listMetadataFormats(self.request)
-
         self.assertTrue("""<error code="idDoesNotExist">The value of the identifier argument is unknown or illegal in this repository.</error>""" in self.stream.getvalue())
         assertValidString(self.stream.getvalue())
 
     def testIllegalArguments(self):
         self.assertBadArgument('listMetadataFormats', {'verb': ['ListMetadataFormats'], 'somethingElse': ['illegal']})
-
-    def isAvailable(self, id, partName):
-        return self._isAvailable
-
-    def write(self, sink, id, partName):
-        sink.write(self._writeString)
-
-    def notify(self, *args):
-        pass
