@@ -26,6 +26,7 @@
 ## end license ##
 
 from StringIO import StringIO
+from time import strftime, gmtime
 
 from cq2utils.component import Component
 from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
@@ -75,7 +76,7 @@ class OaiJazzLucene(Observable):
             aStorage])
         self._numberGenerator = aNumberGenerator
 
-    def add(self, id, name, *nodes):
+    def add(self, id, name, record, *nodes):
         self.any.deletePart(id, 'tombstone')
         sets = set()
         prefixes = set()
@@ -84,15 +85,16 @@ class OaiJazzLucene(Observable):
             sets, prefixes, stamp, unique = parseOaiMeta(data)
         prefixes.add(name)
         unique = self._numberGenerator.next()
-        stamp = 'x'
+        stamp =  strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
+        self.updateAllPrefixes(name, record)
         for node in nodes:
             if hasattr(node, 'header') and node.header.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
                 sets.update(str(s) for s in node.header.setSpec)
                 sets = self._flattenSetHierarchy(sets)
                 self.updateAllSets(sets)
         newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
-        record = ''.join(newOaiMeta)
-        self.do.add(id, 'oaimeta', record)
+        metaRecord = ''.join(newOaiMeta)
+        self.do.add(id, 'oaimeta', metaRecord)
 
     def delete(self, id):
         self.any.store(id, 'tombstone', '<tombstone/>')
@@ -141,6 +143,29 @@ class OaiJazzLucene(Observable):
         spec= '<setSpec>%s</setSpec>'
         setsXml = '<__sets__>' + ''.join(spec % set for set in allSets) + '</__sets__>'
         self.any.store('__all_sets__', '__sets__', setsXml)
+
+    def getAllPrefixes(self):
+        allPrefixes = set()
+        if (True, True) == self.any.isAvailable('__all_prefixes__', '__prefixes__'):
+            allPrefixesXml = bind_stream(self.any.getStream('__all_prefixes__', '__prefixes__')).ListMetadataFormats
+            allPrefixes.update((str(info.metadataPrefix), str(info.schema), str(info.metadataNamespace)) for info in allPrefixesXml.metadataFormat)
+        return allPrefixes
+
+    def updateAllPrefixes(self, prefix, data):
+        allPrefixes = self.getAllPrefixes()
+        record = data.childNodes[0]
+        nsDict = {}
+        if hasattr(record, 'schemaLocation'):
+            nsXsdList = record.schemaLocation.split()
+            for n in range(0, len(nsXsdList), 2):
+                nsDict[nsXsdList[n]] = nsXsdList[n+1]
+        ns = record.namespaceURI or ''
+        # idee: get prefix from record.xmlnsPrefix
+        prefixInfo = (prefix, nsDict.get(ns,''), ns)
+        allPrefixes.add(prefixInfo)
+        prefixTemplate = '<metadataFormat><metadataPrefix>%s</metadataPrefix><schema>%s</schema><metadataNamespace>%s</metadataNamespace></metadataFormat>'
+        prefixesXml = '<ListMetadataFormats>' + ''.join(prefixTemplate % prefixInfo for prefixInfo in allPrefixes) + '</ListMetadataFormats>'
+        self.any.store('__all_prefixes__', '__prefixes__', prefixesXml)
 
     def getUnique(self, id):
         sets, prefixes, stamp, unique = parseOaiMeta(''.join(self.any.getStream(id, 'oaimeta')))

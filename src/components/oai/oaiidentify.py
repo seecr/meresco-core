@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,7 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.oai.oaiverb import OaiVerb, DONE
+from meresco.components.oai.oaiverb import OaiVerb
 
 class OaiIdentify(OaiVerb):
     """
@@ -66,7 +66,7 @@ The response may include multiple instances of the following optional elements:
         OaiVerb.__init__(self, ['Identify'], {})
         self._repositoryName = repositoryName
         self._adminEmail = adminEmail
-    
+
     def identify(self, webRequest):
         self.startProcessing(webRequest)
 
@@ -79,7 +79,7 @@ The response may include multiple instances of the following optional elements:
         }
         values.update(hardcoded_values)
         webRequest.write(IDENTIFY % values)
-        
+
 
 hardcoded_values = {
     'protocolVersion': '2.0',

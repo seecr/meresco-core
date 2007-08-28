@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,7 +25,6 @@
 #
 ## end license ##
 
-from meresco.components.oai.oaiverb import DONE
 from meresco.framework.observable import Observable
 from meresco.components.oai.oairecordverb import OaiRecordVerb
 
@@ -52,22 +51,22 @@ Error and Exception Conditions
             'metadataPrefix': 'required'})
         Observable.__init__(self)
         self.partNames = partNames
-    
+
     def getRecord(self, webRequest):
         self.startProcessing(webRequest)
-    
+
     def preProcess(self, webRequest):
         if not self._metadataPrefix in self.partNames:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
-        
+
         hasId, hasPartName = self.any.isAvailable(self._identifier, self._metadataPrefix)
-        
+
         if not hasId:
             return self.writeError(webRequest, 'idDoesNotExist')
-        
+
         if not hasPartName:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
-        
+
     def process(self, webRequest):
         self.writeRecord(webRequest, self._identifier)
-    
+

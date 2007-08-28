@@ -25,8 +25,7 @@
 #
 ## end license ##
 
-from meresco.components.oai.oaiverb import OaiVerb, DONE
-from meresco.components.oai.partscomponent import PARTS_PART
+from meresco.components.oai.oaiverb import OaiVerb
 from meresco.framework.observable import Observable
 
 OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
