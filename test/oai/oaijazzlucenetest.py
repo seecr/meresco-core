@@ -54,31 +54,34 @@ class OaiJazzLuceneTest(CQ2TestCase):
         CQ2TestCase.setUp(self)
         self.index = CallTrace("Index")
         self.storage = CallTrace("Storage")
-        self.oaijazz = OaiJazzLucene(self.index, self.storage, (i for i in xrange(100)))
+        self.mockedjazz = OaiJazzLucene(self.index, self.storage, (i for i in xrange(100)))
         self.id = "id"
         self.partName = "xmlfields"
         self.document = Xml2Document()._create(self.id, FIELDS)
+        self.realjazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
+            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
+
 
     def testAdd(self):
-        self.oaijazz.add(self.id, self.partName)
+        self.mockedjazz.add(self.id, self.partName)
         self.assertEquals(2,len(self.index.calledMethods))
         self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
         self.assertEquals('addToIndex(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
 
     def testDelete(self):
-        self.oaijazz.delete(self.id)
+        self.mockedjazz.delete(self.id)
         self.assertEquals(1,len(self.index.calledMethods))
         self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
 
     def testListRecords(self):
-        self.oaijazz.oaiSelect(None, 'PART', '0', None, None)
+        self.mockedjazz.oaiSelect(None, 'PART', '0', None, None)
         executeQueryMethod = self.index.calledMethods[0]
         self.assertEquals(2, len(executeQueryMethod.arguments))
         self.assertEquals('+oaimeta.prefixes.prefix:PART', str(executeQueryMethod.arguments[0]))
         self.assertEquals('oaimeta.unique', executeQueryMethod.arguments[1])
 
     def testListRecordsParams(self):
-        self.oaijazz.oaiSelect('ONE:TWO:THREE', 'PART', '0010', '2000-01-01T00:00:00Z', '2000-31-12T00:00:00Z')
+        self.mockedjazz.oaiSelect('ONE:TWO:THREE', 'PART', '0010', '2000-01-01T00:00:00Z', '2000-31-12T00:00:00Z')
         executeQueryMethod = self.index.calledMethods[0]
         queryWrapper = executeQueryMethod.arguments[0]
         self.assertEquals(2, len(executeQueryMethod.arguments))
@@ -94,12 +97,11 @@ class OaiJazzLuceneTest(CQ2TestCase):
 		<prefixes/>
     </oaimeta>"""
         self.storage.getStream = getStream
-        uniqueNumber = self.oaijazz.getUnique('somedocid')
+        uniqueNumber = self.mockedjazz.getUnique('somedocid')
         self.assertEquals('UNIQUE_FOR_TEST', uniqueNumber)
 
     def testAddPartWithUniqueNumbersAndSorting(self):
-        jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
-            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
+        jazz = self.realjazz
         jazz.add('123', 'oai_dc', bind_string('<oai_dc/>'))
         jazz.add('124', 'lom', bind_string('<lom/>'))
         jazz.add('121', 'lom', bind_string('<lom/>'))
@@ -114,10 +116,9 @@ class OaiJazzLuceneTest(CQ2TestCase):
 
     def testAddSetInfo(self):
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
-            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
-        jazz.add('123', 'oai_dc', bind_string(header % 1).header)
-        jazz.add('124', 'oai_dc', bind_string(header % 2).header)
+        jazz = self.realjazz
+        jazz.add('123', 'oai_dc', bind_string(header % 1))
+        jazz.add('124', 'oai_dc', bind_string(header % 2))
         results =jazz.oaiSelect('1', 'oai_dc', '0', None, None)
         self.assertEquals(1, len(results))
         results =jazz.oaiSelect('2', 'oai_dc', '0', None, None)
@@ -127,63 +128,51 @@ class OaiJazzLuceneTest(CQ2TestCase):
 
     def testAddRecognizeNamespace(self):
         header = '<header xmlns="this.is.not.the.right.ns"><setSpec>%s</setSpec></header>'
-        jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
-            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
-        jazz.add('123', 'oai_dc', bind_string(header % 1).header)
+        jazz = self.realjazz
+        jazz.add('123', 'oai_dc', bind_string(header % 1))
         results =jazz.oaiSelect('1', 'oai_dc', '0', None, None)
         self.assertEquals(0, len(results))
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('124', 'oai_dc', bind_string(header % 1).header)
+        jazz.add('124', 'oai_dc', bind_string(header % 1))
         results =jazz.oaiSelect('1', 'oai_dc', '0', None, None)
         self.assertEquals(1, len(results))
 
-    def testMultipleSets(self):
+    def testMultipleHierarchicalSets(self):
         spec = "<setSpec>%s</setSpec>"
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/">%s</header>'
-        jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
-            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
-        jazz.add('124', 'oai_dc', bind_string(header % (spec % 1 + spec % 2)).header)
-        results = jazz.oaiSelect('1', 'oai_dc', '0', None, None)
-        self.assertEquals(1, len(results))
-        results = jazz.oaiSelect('2', 'oai_dc', '0', None, None)
-        self.assertEquals(1, len(results))
+        jazz = self.realjazz
+        jazz.add('124', 'oai_dc', bind_string(header % (spec % '2:3' + spec % '3:4')))
+        self.assertEquals(1, len(jazz.oaiSelect('2', 'oai_dc', '0', None, None)))
+        self.assertEquals(1, len(jazz.oaiSelect('2:3', 'oai_dc', '0', None, None)))
+        self.assertEquals(1, len(jazz.oaiSelect('3', 'oai_dc', '0', None, None)))
+        self.assertEquals(1, len(jazz.oaiSelect('3:4', 'oai_dc', '0', None, None)))
 
     def testGetSets(self):
-        jazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir, 'index')),
-            StorageComponent(join(self.tempdir, 'storage')),
-            iter(xrange(99)))
+        jazz = self.realjazz
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('124', 'oai_dc', bind_string(header % 1).header)
+        jazz.add('124', 'oai_dc', bind_string(header % 1))
         sets = jazz.getSets('124')
         self.assertEquals(['1'], sets)
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('125', 'oai_dc', bind_string(header % 2).header)
+        jazz.add('125', 'oai_dc', bind_string(header % 2))
         sets = jazz.getSets('125')
         self.assertEquals(['2'], sets)
-
-        header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>1</setSpec><setSpec>2</setSpec></header>'
-        jazz.add('124', 'oai_dc', bind_string(header).header)
+        header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>1:2</setSpec><setSpec>2</setSpec></header>'
+        jazz.add('124', 'oai_dc', bind_string(header))
         sets = jazz.getSets('124')
-        self.assertEquals(['1', '2'], sets)
+        self.assertEquals(['1', '1:2', '2'], sets)
 
     def testSetSpecWithTokensSplit(self):
-        jazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir, 'index')),
-            StorageComponent(join(self.tempdir, 'storage')),
-            iter(xrange(99)))
+        jazz = self.realjazz
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('124', 'oai_dc', bind_string(header % "1:23").header)
+        jazz.add('124', 'oai_dc', bind_string(header % "1:23"))
         results = jazz.oaiSelect('1:23', 'oai_dc', '0', None, None)
         self.assertEquals(1, len(results))
 
     def testDelete(self):
-        jazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir, 'index')),
-            StorageComponent(join(self.tempdir, 'storage')),
-            iter(xrange(99)))
+        jazz = self.realjazz
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('123', 'oai_dc', bind_string(header % "1").header)
+        jazz.add('123', 'oai_dc', bind_string(header % "1"))
         self.assertFalse(jazz.isDeleted('123'))
         self.assertEquals(1, len(jazz.oaiSelect(None, 'oai_dc', '0', None, None)))
         jazz.delete('123')
@@ -191,27 +180,37 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.assertEquals(1, len(jazz.oaiSelect(None, 'oai_dc', '0', None, None)))
 
     def testDeleteAndReAdd(self):
-        jazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir, 'index')),
-            StorageComponent(join(self.tempdir, 'storage')),
-            iter(xrange(99)))
+        jazz = self.realjazz
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
-        jazz.add('123', 'oai_dc', bind_string(header % "1").header)
+        jazz.add('123', 'oai_dc', bind_string(header % "1"))
         jazz.delete('123')
-        jazz.add('123', 'oai_dc', bind_string(header % "1").header)
+        jazz.add('123', 'oai_dc', bind_string(header % "1"))
         self.assertFalse(jazz.isDeleted('123'))
 
     def testGetParts(self):
-        jazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir, 'index')),
-            StorageComponent(join(self.tempdir, 'storage')),
-            iter(xrange(99)))
+        jazz = self.realjazz
         jazz.add('123', 'oai_dc', bind_string('<dc/>').dc)
         jazz.add('123', 'lom', bind_string('<lom/>').lom)
         parts = jazz.getParts('123')
         self.assertEquals(['oai_dc', 'lom'], parts)
         self.assertEquals(['123'], list(jazz.oaiSelect(None, 'lom', '0', None, None)))
         self.assertEquals(['123'], list(jazz.oaiSelect(None, 'oai_dc', '0', None, None)))
+
+    def testAddDocsWithSets(self):
+        jazz = self.realjazz
+        header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
+        jazz.add('456', 'oai_dc', bind_string(header % 'set1'))
+        jazz.add('457', 'oai_dc', bind_string(header % 'set2'))
+        jazz.add('458', 'oai_dc', bind_string(header % 'set3'))
+        sets = jazz.listSets()
+        self.assertEquals(['set1', 'set2', 'set3'], sets)
+
+    def testHierarchicalSets(self):
+        jazz = self.realjazz
+        header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
+        jazz.add('456', 'oai_dc', bind_string(header % 'set1:set2:set3'))
+        sets = jazz.listSets()
+        self.assertEquals(['set1', 'set1:set2', 'set1:set2:set3'], sorted(sets))
 
 
 class OaiJazzLuceneIntegrationTest(CQ2TestCase):

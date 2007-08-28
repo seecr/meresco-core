@@ -26,6 +26,7 @@
 ## end license ##
 
 from os.path import join
+from cq2utils.calltrace import CallTrace
 
 from oaitestcase import OaiTestCase
 from meresco.components.oai import OaiListSets, OaiJazzLucene
@@ -40,19 +41,17 @@ class OaiListSetsTest(OaiTestCase):
         self.assertBadArgument('listSets', {'verb': ['ListSets'], 'nonsense': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
 
     def testListSetsNoArguments(self):
-        jazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
-            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
+        mockJazz = CallTrace(returnValues = {'listSets': ['some:name:id_0', 'some:name:id_1']})
         self.request.args = {'verb':['ListSets']}
-        self.subject.addObserver(jazz)
+        self.subject.addObserver(mockJazz)
         self.subject.listSets(self.request)
         self.assertEqualsWS(self.OAIPMH % """
 <request verb="ListSets">http://server:9000/path/to/oai</request>
  <ListSets>
-   <set><setSpec>some:name:id_0</setSpec><setName>Some Name</setName></set>
-   <set><setSpec>some:name:id_1</setSpec><setName>Some Name</setName></set>
+   <set><setSpec>some:name:id_0</setSpec></set>
+   <set><setSpec>some:name:id_1</setSpec></set>
  </ListSets>""", self.stream.getvalue())
         self.assertFalse('<resumptionToken' in self.stream.getvalue())
 
     def testResumptionTokensNotSupported(self):
         self.assertBadArgument('listSets', {'verb': ['ListSets'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")
-

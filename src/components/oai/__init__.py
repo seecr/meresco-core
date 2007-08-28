@@ -33,7 +33,6 @@ from oailist import OaiList
 from oailistsets import OaiListSets
 from oaigetrecord import OaiGetRecord
 from stampcomponent import StampComponent
-from setscomponent import SetsComponent
 from oaijazzlucene import OaiJazzLucene
 
 

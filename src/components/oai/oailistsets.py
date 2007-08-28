@@ -60,7 +60,7 @@ Error and Exception Conditions
 
     def process(self, webRequest):
 
-        webRequest.write(''.join('<set><setSpec>%s</setSpec><setName>%s</setName></set>' % (setSpec, setName) for setSpec, setName in self._queryResult))
+        webRequest.write(''.join('<set><setSpec>%s</setSpec></set>' % setSpec for setSpec in self._queryResult))
 
         if self._resumptionToken:
             webRequest.write('<resumptionToken/>')

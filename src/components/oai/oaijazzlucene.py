@@ -86,8 +86,10 @@ class OaiJazzLucene(Observable):
         unique = self._numberGenerator.next()
         stamp = 'x'
         for node in nodes:
-            if node.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
-                sets.update(str(s) for s in node.setSpec)
+            if hasattr(node, 'header') and node.header.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
+                sets.update(str(s) for s in node.header.setSpec)
+                sets = self._flattenSetHierarchy(sets)
+                self.updateAllSets(sets)
         newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
         record = ''.join(newOaiMeta)
         self.do.add(id, 'oaimeta', record)
@@ -117,6 +119,29 @@ class OaiJazzLucene(Observable):
     def listAll(self):
         return self.any.executeQuery(MatchAllDocsQuery())
 
+    def _flattenSetHierarchy(self, sets):
+        """"[1:2:3, 1:2:4] => [1, 1:2, 1:2:3, 1:2:4]"""
+        result = set()
+        for setSpec in sets:
+            parts = setSpec.split(':')
+            for i in range(1, len(parts) + 1):
+                result.add(':'.join(parts[:i]))
+        return result
+
+    def getAllSets(self):
+        allSets = set()
+        if (True, True) == self.any.isAvailable('__all_sets__', '__sets__'):
+            setsXml = bind_stream(self.any.getStream('__all_sets__', '__sets__'))
+            allSets.update(str(setSpec) for setSpec in setsXml.__sets__.setSpec)
+        return allSets
+
+    def updateAllSets(self, sets):
+        allSets = self.getAllSets()
+        allSets.update(sets)
+        spec= '<setSpec>%s</setSpec>'
+        setsXml = '<__sets__>' + ''.join(spec % set for set in allSets) + '</__sets__>'
+        self.any.store('__all_sets__', '__sets__', setsXml)
+
     def getUnique(self, id):
         sets, prefixes, stamp, unique = parseOaiMeta(''.join(self.any.getStream(id, 'oaimeta')))
         return unique
@@ -142,6 +167,6 @@ class OaiJazzLucene(Observable):
         return hasRecord and hasMeta
 
     def listSets(self):
-        return [('some:name:id_0', 'Some Name'), ('some:name:id_1', 'Some Name')]
+        return list(self.getAllSets())
 
 
