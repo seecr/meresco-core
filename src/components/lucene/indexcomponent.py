@@ -41,3 +41,6 @@ class IndexComponent(Observable):
 
     def executeQuery(self, *args, **kwargs):
         return self._index.executeQuery(*args, **kwargs)
+
+    def numberOfDocuments(self):
+        return self._index.docCount()

@@ -134,6 +134,9 @@ class LuceneIndex:
     def optimize(self):
         self._getWriter().optimize()
 
+    def docCount(self):
+        return self._getReader().numDocs()
+
     def _getPyLuceneSort(self, sortBy, sortDescending):
         return sortBy and PyLucene.Sort(sortBy, bool(sortDescending)) or None
 

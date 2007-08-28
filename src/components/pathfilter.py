@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -24,20 +24,14 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
 from meresco.framework.observable import Observable
-from amara.binderytools import bind_string
 
-TOMBSTONE_PART = '__tombstone__'
+class PathFilter(Observable):
+    def __init__(self, subPath):
+        Observable.__init__(self)
+        self._subPath = subPath
 
-class Undertaker(Observable):
-    
-    def delete(self, id, *args):
-        self.do.add(id, TOMBSTONE_PART, bind_string("<%s/>" % TOMBSTONE_PART).childNodes[0])
-        self.do.delete(id, *args)
-      
-    def add(self, id, *args):
-        self.do.deletePart(id, TOMBSTONE_PART)
-        self.do.add(id, *args)
-
-    def unknown(self, message, *args, **kwargs):
-        self.do.unknown(message, *args, **kwargs)
+    def unknown(self, methodName, aRequest, *args, **kwargs):
+        if aRequest.path.startswith(self.subPath):
+            return self.all.unknown(methodName, aRequest, *args, **kwargs)

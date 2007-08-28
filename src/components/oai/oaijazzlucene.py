@@ -114,6 +114,9 @@ class OaiJazzLucene(Observable):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
             root.add(range, BooleanClause.Occur.MUST)
 
+        if self.any.numberOfDocuments() == 0:
+            return []
+
         #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase
         query = BooleanQuery()
         query.add(TermQuery(Term('oaimeta.prefixes.prefix', prefix)), BooleanClause.Occur.MUST)
