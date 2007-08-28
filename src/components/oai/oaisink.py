@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -28,10 +28,10 @@
 from meresco.components.oai.oaiverb import OaiVerb, DONE
 
 class OaiSink(OaiVerb):
-    
+
     def __init__(self):
         OaiVerb.__init__(self, [], {})
-    
+
     def unknown(self, message, webRequest):
         if message == '':
             self.writeError(webRequest, 'badArgument', 'No "verb" argument found.')

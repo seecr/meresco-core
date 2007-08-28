@@ -25,7 +25,7 @@
 #
 ## end license ##
 from unittest import TestCase
-from time import strftime, gmtime
+from time import strftime, gmtime, sleep
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
@@ -67,10 +67,16 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
         self.assertEquals('addToIndex(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
 
-    def testDelete(self):
-        self.mockedjazz.delete(self.id)
-        self.assertEquals(1,len(self.index.calledMethods))
-        self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
+    def testDeleteIncrementsDatestampAndUnique(self):
+        jazz = self.realjazz
+        header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
+        jazz.add('23', 'oai_dc', bind_string('<nothing/>'), bind_string(header % 'aSet'))
+        stamp = jazz.getDatestamp('23')
+        unique = jazz.getUnique('23')
+        sleep(1)
+        jazz.delete('23')
+        self.assertNotEqual(stamp,  jazz.getDatestamp('23'))
+        self.assertEquals(int(unique)+1, int(jazz.getUnique('23')))
 
     def testListRecords(self):
         self.mockedjazz.oaiSelect(None, 'PART', '0', None, None)
@@ -96,6 +102,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
 		<prefixes/>
     </oaimeta>"""
         self.storage.getStream = getStream
+        self.storage.isAvailable = lambda id, part: (True, True)
         uniqueNumber = self.mockedjazz.getUnique('somedocid')
         self.assertEquals('UNIQUE_FOR_TEST', uniqueNumber)
 
@@ -234,6 +241,15 @@ class OaiJazzLuceneTest(CQ2TestCase):
         jazz.add('457', 'dc2', bind_string('<oai_dc/>'))
         prefixes = jazz.getAllPrefixes()
         self.assertEquals(set([('dc2', '', '')]), prefixes)
+
+    def testPreserveRicherPrefixInfo(self):
+        jazz = self.realjazz
+        jazz.add('457', 'oai_dc', bind_string('<oai_dc:dc xmlns:oai_dc="http://oai_dc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
+             xsi:schemaLocation="http://oai_dc http://oai_dc/dc.xsd"/>'))
+        jazz.add('457', 'oai_dc', bind_string('<oai_dc/>'))
+        prefixes = jazz.getAllPrefixes()
+        self.assertEquals(set([('oai_dc', 'http://oai_dc/dc.xsd', 'http://oai_dc')]), prefixes)
+
 
 class OaiJazzLuceneIntegrationTest(CQ2TestCase):
     def setUp(self):
