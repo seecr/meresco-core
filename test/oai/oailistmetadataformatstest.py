@@ -36,11 +36,16 @@ from meresco.components.oai.oaivalidator import assertValidString
 class OaiListMetadataFormatsTest(OaiTestCase):
 
     def getSubject(self):
-        return OaiListMetadataFormats([
-            ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/"),
-            ("olac", "http://www.language-archives.org/OLAC/olac-0.2.xsd", "http://www.language-archives.org/OLAC/0.2/")])
+        return OaiListMetadataFormats()
 
     def testListAllMetadataFormats(self):
+        class MockJazz:
+            def getAllPrefixes(*args):
+                return [
+                    ('oai_dc', 'http://www.openarchives.org/OAI/2.0/oai_dc.xsd', 'http://www.openarchives.org/OAI/2.0/oai_dc/'),
+                    ('olac', 'http://www.language-archives.org/OLAC/olac-0.2.xsd','http://www.language-archives.org/OLAC/0.2/')
+                ]
+        self.subject.addObserver(MockJazz())
         self.request.args = {'verb': ['ListMetadataFormats']}
         self.observable.any.listMetadataFormats(self.request)
         self.assertEqualsWS(self.OAIPMH % """
@@ -69,23 +74,23 @@ class OaiListMetadataFormatsTest(OaiTestCase):
             iter(xrange(99)))
         self.subject.addObserver(jazz)
         self.request.args = {'verb': ['ListMetadataFormats'], 'identifier': ['id_0']}
-        jazz.add('id_0', 'oai_dc', bind_string('<tag/>'))
-        jazz.add('id_0', 'olac', bind_string('<tag/>'))
+        jazz.add('id_0', 'oai_dc', bind_string("""<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+            xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"></oai_dc:dc>""").dc)
+        jazz.add('id_0', 'olac', bind_string('<tag/>').tag)
         self.subject.listMetadataFormats(self.request)
-        self.assertEqualsWS(self.OAIPMH % """
-        <request identifier="id_0" verb="ListMetadataFormats">http://server:9000/path/to/oai</request>
-  <ListMetadataFormats>
-   <metadataFormat>
-     <metadataPrefix>oai_dc</metadataPrefix>
-     <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd
-       </schema>
-     <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/
-       </metadataNamespace>
-   </metadataFormat><metadataFormat>
-                <metadataPrefix>olac</metadataPrefix>
-                <schema>http://www.language-archives.org/OLAC/olac-0.2.xsd</schema>
-                <metadataNamespace>http://www.language-archives.org/OLAC/0.2/</metadataNamespace>
-            </metadataFormat>
+        self.assertEqualsWS(self.OAIPMH % """<request identifier="id_0" verb="ListMetadataFormats">http://server:9000/path/to/oai</request>
+    <ListMetadataFormats>
+        <metadataFormat>
+            <metadataPrefix>olac</metadataPrefix>
+            <schema></schema>
+            <metadataNamespace></metadataNamespace>
+        </metadataFormat>
+        <metadataFormat>
+            <metadataPrefix>oai_dc</metadataPrefix>
+            <schema>http://www.openarchives.org/OAI/2.0/oai_dc.xsd</schema>
+            <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/</metadataNamespace>
+        </metadataFormat>
   </ListMetadataFormats>""", self.stream.getvalue())
         assertValidString(self.stream.getvalue())
 
@@ -93,6 +98,8 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         class Observer:
             def isAvailable(*args):
                 return False
+            def getAllPrefixes(*args):
+                return []
         self.request.args = {'verb': ['ListMetadataFormats'], 'identifier': ['DoesNotExist']}
         self.subject.addObserver(Observer())
         self.observable.any.listMetadataFormats(self.request)

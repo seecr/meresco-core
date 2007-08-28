@@ -39,7 +39,7 @@ class XmlInflate(Observable):
 
 class XmlDeflate(Observable):
 
-    def add(self, id, partName, amaraXmlNode):
+    def add(self, id, partName, amaraXmlNode, *args, **kwargs):
         return self.all.add(id, partName, amaraXmlNode.xml())
 
     def unknown(self, *args, **kwargs):

@@ -98,8 +98,8 @@ class OaiJazzLucene(Observable):
         prefixes.add(name)
         self.updateAllPrefixes(name, record)
         for node in nodes:
-            if hasattr(node, 'header') and node.header.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
-                sets.update(str(s) for s in node.header.setSpec)
+            if node.localName == 'header' and node.namespaceURI == "http://www.openarchives.org/OAI/2.0/":
+                sets.update(str(s) for s in node.setSpec)
                 sets = self._flattenSetHierarchy(sets)
                 self.updateAllSets(sets)
         self.updateOaiMeta(id, sets, prefixes)

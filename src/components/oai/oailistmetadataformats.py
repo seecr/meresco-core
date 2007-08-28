@@ -28,8 +28,6 @@
 from meresco.components.oai.oaiverb import OaiVerb
 from meresco.framework.observable import Observable
 
-OAI_DC = ("oai_dc", "http://www.openarchives.org/OAI/2.0/oai_dc.xsd", "http://www.openarchives.org/OAI/2.0/oai_dc/")
-
 class OaiListMetadataFormats(OaiVerb, Observable):
     """4.4 ListMetadataFormats
 Summary and Usage Notes
@@ -46,23 +44,21 @@ Error and Exception Conditions
     * noMetadataFormats - There are no metadata formats available for the specified item.
     """
 
-    def __init__(self, metadataFormats = [OAI_DC]):
+    def __init__(self):
         OaiVerb.__init__(self, ['ListMetadataFormats'], {'identifier': 'optional'})
         Observable.__init__(self)
-        self.supportedMetadataFormats = metadataFormats
 
     def listMetadataFormats(self, aWebRequest):
         self.startProcessing(aWebRequest)
 
     def preProcess(self, webRequest):
+        metadataFormats = self.any.getAllPrefixes()
         if self._identifier:
             if not self.any.isAvailable(self._identifier):
                 return self.writeError(webRequest, 'idDoesNotExist')
-
-            names = self.any.getParts(self._identifier)
-            self.displayedMetadataFormats = filter(lambda (name, y, z): name in names, self.supportedMetadataFormats)
-        else:
-            self.displayedMetadataFormats = self.supportedMetadataFormats
+            prefixes = self.any.getParts(self._identifier)
+            metadataFormats = [(prefix, xsd, ns) for prefix, xsd, ns in metadataFormats if prefix in prefixes]
+        self.displayedMetadataFormats = metadataFormats
 
     def process(self, webRequest):
         for metadataPrefix, schema, metadataNamespace in self.displayedMetadataFormats:

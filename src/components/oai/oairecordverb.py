@@ -43,7 +43,7 @@ class OaiRecordVerb(OaiVerb):
         </header>""" % (isDeletedStr, xmlEscape(id.encode('utf-8')), datestamp, setSpecs))
         if writeBody and not isDeletedStr:
             webRequest.write('<metadata>')
-            self.do.write(webRequest, id, self._metadataPrefix)
+            self.any.write(webRequest, id, self._metadataPrefix)
             webRequest.write('</metadata>')
         if writeBody:
             webRequest.write('</record>')

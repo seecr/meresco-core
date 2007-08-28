@@ -34,7 +34,7 @@ class StorageComponent(Component):
     def store(self, *args, **kwargs):
         self.add(*args, **kwargs)
 
-    def add(self, id, partName, someString):
+    def add(self, id, partName, someString, *args, **kwargs):
         sink = self._storage.put((id, partName))
         try:
             sink.send(someString)
@@ -64,7 +64,8 @@ class StorageComponent(Component):
     def write(self, sink, id, partName):
         stream = self._storage.get((id, partName))
         try:
-            sink.write(stream.read())
+            for line in stream:
+                sink.write(line)
         finally:
             stream.close()
 
