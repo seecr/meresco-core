@@ -33,5 +33,5 @@ class PathFilter(Observable):
         self._subPath = subPath
 
     def unknown(self, methodName, aRequest, *args, **kwargs):
-        if aRequest.path.startswith(self.subPath):
+        if aRequest.path.startswith(self._subPath):
             return self.all.unknown(methodName, aRequest, *args, **kwargs)

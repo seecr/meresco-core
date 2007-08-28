@@ -25,3 +25,4 @@
 #
 ## end license ##
 from observableserver import ObservableServer
+from pathfilter import PathFilter

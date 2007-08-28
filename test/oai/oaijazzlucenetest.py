@@ -78,20 +78,10 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.assertNotEqual(stamp,  jazz.getDatestamp('23'))
         self.assertEquals(int(unique)+1, int(jazz.getUnique('23')))
 
-    def testListRecords(self):
-        self.mockedjazz.oaiSelect(None, 'PART', '0', None, None)
-        executeQueryMethod = self.index.calledMethods[0]
-        self.assertEquals(2, len(executeQueryMethod.arguments))
-        self.assertEquals('+oaimeta.prefixes.prefix:PART', str(executeQueryMethod.arguments[0]))
-        self.assertEquals('oaimeta.unique', executeQueryMethod.arguments[1])
-
-    def testListRecordsParams(self):
-        self.mockedjazz.oaiSelect('ONE:TWO:THREE', 'PART', '0010', '2000-01-01T00:00:00Z', '2000-31-12T00:00:00Z')
-        executeQueryMethod = self.index.calledMethods[0]
-        queryWrapper = executeQueryMethod.arguments[0]
-        self.assertEquals(2, len(executeQueryMethod.arguments))
-        self.assertEquals('+oaimeta.prefixes.prefix:PART +oaimeta.unique:{0010 TO *] +oaimeta.datestamp:[2000-01-01T00:00:00Z TO 2000-31-12T00:00:00Z] +oaimeta.sets.setSpec:ONE:TWO:THREE', str(executeQueryMethod.arguments[0]))
-        self.assertEquals('oaimeta.unique', executeQueryMethod.arguments[1])
+    def testListRecordsNoResults(self):
+        jazz = self.realjazz
+        result = jazz.oaiSelect(None, 'xxx', '0', None, None)
+        self.assertEquals([], result)
 
     def testGetUnique(self):
         def getStream(id, partName):
@@ -135,13 +125,18 @@ class OaiJazzLuceneTest(CQ2TestCase):
     def testAddRecognizeNamespace(self):
         header = '<header xmlns="this.is.not.the.right.ns"><setSpec>%s</setSpec></header>'
         jazz = self.realjazz
-        jazz.add('123', 'oai_dc', bind_string('<empty/>'), bind_string(header % 1))
+        jazz.add('123', 'oai_dc', bind_string('<empty/>'), bind_string(header % 1).header)
         results =jazz.oaiSelect('1', 'oai_dc', '0', None, None)
         self.assertEquals(0, len(results))
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'
         jazz.add('124', 'oai_dc', bind_string('<empty/>'), bind_string(header % 1))
         results =jazz.oaiSelect('1', 'oai_dc', '0', None, None)
         self.assertEquals(1, len(results))
+
+    def testAddWithoutData(self):
+        jazz = self.realjazz
+        jazz.add('9', 'oai_cd', bind_string('<empty/>'))
+
 
     def testMultipleHierarchicalSets(self):
         spec = "<setSpec>%s</setSpec>"
@@ -229,23 +224,23 @@ class OaiJazzLuceneTest(CQ2TestCase):
     def testMetadataPrefixes(self):
         jazz = self.realjazz
         jazz.add('456', 'oai_dc', bind_string('<oai_dc:dc xmlns:oai_dc="http://oai_dc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
-             xsi:schemaLocation="http://oai_dc http://oai_dc/dc.xsd"/>'))
+             xsi:schemaLocation="http://oai_dc http://oai_dc/dc.xsd"/>').dc)
         prefixes = jazz.getAllPrefixes()
         self.assertEquals([('oai_dc', 'http://oai_dc/dc.xsd', 'http://oai_dc')], list(prefixes))
-        jazz.add('457', 'dc2', bind_string('<oai_dc:dc xmlns:oai_dc="http://dc2"/>'))
+        jazz.add('457', 'dc2', bind_string('<oai_dc:dc xmlns:oai_dc="http://dc2"/>').dc)
         prefixes = jazz.getAllPrefixes()
         self.assertEquals(set([('oai_dc', 'http://oai_dc/dc.xsd', 'http://oai_dc'), ('dc2', '', 'http://dc2')]), prefixes)
 
     def testIncompletePrefixInfo(self):
         jazz = self.realjazz
-        jazz.add('457', 'dc2', bind_string('<oai_dc/>'))
+        jazz.add('457', 'dc2', bind_string('<oai_dc/>').oai_dc)
         prefixes = jazz.getAllPrefixes()
         self.assertEquals(set([('dc2', '', '')]), prefixes)
 
     def testPreserveRicherPrefixInfo(self):
         jazz = self.realjazz
         jazz.add('457', 'oai_dc', bind_string('<oai_dc:dc xmlns:oai_dc="http://oai_dc" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" \
-             xsi:schemaLocation="http://oai_dc http://oai_dc/dc.xsd"/>'))
+             xsi:schemaLocation="http://oai_dc http://oai_dc/dc.xsd"/>').dc)
         jazz.add('457', 'oai_dc', bind_string('<oai_dc/>'))
         prefixes = jazz.getAllPrefixes()
         self.assertEquals(set([('oai_dc', 'http://oai_dc/dc.xsd', 'http://oai_dc')]), prefixes)

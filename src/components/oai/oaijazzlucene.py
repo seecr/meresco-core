@@ -168,9 +168,8 @@ class OaiJazzLucene(Observable):
     def getAllPrefixes(self):
         return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
 
-    def updateAllPrefixes(self, prefix, data):
+    def updateAllPrefixes(self, prefix, record):
         allPrefixes = self._getAllPrefixes()
-        record = data.childNodes[0]
         nsDict = {}
         if hasattr(record, 'schemaLocation'):
             nsXsdList = record.schemaLocation.split()
