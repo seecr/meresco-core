@@ -89,6 +89,10 @@ from oai.oaitooltest import OaiToolTest
 from oai.oaivalidatortest import OaiValidatorTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
+from lxml.crosswalktest import CrosswalkTest
+from lxml.crosswalkbasetest import CrosswalkBaseTest
+from lxml.validatetest import ValidateTest
+
 if __name__ == '__main__':
         unittest.main()
         os.system('find .. -name "*.pyc" | xargs rm -f')
