@@ -29,3 +29,5 @@ from logobserver import LogObserver
 from storagecomponent import StorageComponent
 from xml2document import Xml2Document
 from xmlpump import XmlInflate as XmlParseAmara, XmlDeflate as XmlPrintAmara
+from validate import Validate
+from crosswalk import Crosswalk

@@ -31,7 +31,7 @@ from os.path import join, abspath, dirname
 from cStringIO import StringIO
 from glob import glob
 
-schemaLocation = join(abspath(dirname(__file__)), 'data')
+schemaLocation = join(abspath(dirname(__file__)), 'schemas')
 
 rootSchema = '<?xml version="1.0" encoding="utf-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">' \
  + '\n'.join('<xsd:import namespace="%s" schemaLocation="%s"/>' %
