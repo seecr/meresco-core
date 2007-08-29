@@ -89,9 +89,9 @@ from oai.oaitooltest import OaiToolTest
 from oai.oaivalidatortest import OaiValidatorTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
-from lxml2.crosswalktest import CrosswalkTest
-from lxml2.crosswalkbasetest import CrosswalkBaseTest
-from lxml2.validatetest import ValidateTest
+from xml.lxml_based.crosswalktest import CrosswalkTest
+from xml.lxml_based.crosswalkbasetest import CrosswalkBaseTest
+from xml.validatetest import ValidateTest
 
 if __name__ == '__main__':
         unittest.main()
