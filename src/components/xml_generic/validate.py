@@ -31,6 +31,11 @@ from os.path import join, abspath, dirname
 from cStringIO import StringIO
 from glob import glob
 
+from meresco.framework import Observable
+
+class ValidateException(Exception):
+    pass
+
 schemaLocation = join(abspath(dirname(__file__)), 'schemas')
 
 rootSchema = '<?xml version="1.0" encoding="utf-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">' \
@@ -39,28 +44,38 @@ rootSchema = '<?xml version="1.0" encoding="utf-8"?><xsd:schema xmlns:xsd="http:
         for xsd in glob(join(schemaLocation,'*.xsd'))) \
 + '</xsd:schema>'
 
-oai = parse(StringIO(rootSchema))
+schemaXml = parse(StringIO(rootSchema))
 
 try:
-    oaixsd = XMLSchema(oai)
+    schema = XMLSchema(schemaXml)
 except XMLSchemaParseError, e:
     print e.error_log.last_error
     raise
 
-def validate(oaiResponse):
-    oaixsd.validate(parse(oaiResponse))
-    if oaixsd.error_log:
-        return False, oaixsd.error_log.last_error
+def validate(aXmlStream):
+    schema.validate(parse(aXmlStream))
+    if schema.error_log:
+        return False, schema.error_log.last_error
     else:
         return True, ''
 
-def assertValid(oaiResponse):
-    success, message = validate(oaiResponse)
+def assertValid(aXmlStream):
+    success, message = validate(aXmlStream)
     if not success:
         raise AssertionError(message)
 
-def assertValidString(oaiResponseString):
-    assertValid(StringIO(oaiResponseString))
+def assertValidString(aXmlString):
+    assertValid(StringIO(aXmlString))
+
+class Validate(Observable):
+
+    def unknown(self, methodName, *args, **kwargs):
+        schema.validate(parse(StringIO(args[0])))
+        if schema.error_log:
+            exception = ValidateException(schema.error_log.last_error)
+            self.do.logException(exception)
+            raise exception
+        return self.all.unknown(methodName, *args, **kwargs)
 
 if __name__ == '__main__':
     from sys import argv, exit

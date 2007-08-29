@@ -1,7 +1,7 @@
 from unittest import TestCase
+
 from lxml.etree import parse, tostring, XMLParser
-from cq2utils.component import Notification
-from crosswalkcomponent import CrosswalkComponent
+from meresco.components import Crosswalk
 from difflib import unified_diff
 
 def readRecord(name):

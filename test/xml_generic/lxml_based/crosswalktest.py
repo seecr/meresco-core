@@ -30,8 +30,9 @@ from difflib import unified_diff
 from re import match
 from os import remove
 
-from meresco.components import Crosswalk, rewriteRules
-from meresco.components import Validate
+from meresco.components import Crosswalk
+from meresco.components.crosswalk import rewriteRules
+from meresco.components.xml_generic import Validate
 
 
 def readRecord(name):

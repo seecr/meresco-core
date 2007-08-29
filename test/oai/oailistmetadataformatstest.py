@@ -31,7 +31,7 @@ from oaitestcase import OaiTestCase
 from meresco.components.lucene import LuceneIndex
 from meresco.components import StorageComponent
 from meresco.components.oai import OaiListMetadataFormats, OaiJazzLucene
-from meresco.components.oai.oaivalidator import assertValidString
+from meresco.components.xml_generic.validate import assertValidString
 
 class OaiListMetadataFormatsTest(OaiTestCase):
 

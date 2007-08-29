@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -28,18 +28,18 @@
 from oaitestcase import OaiTestCase
 
 from meresco.components.oai import OaiIdentify
-from meresco.components.oai.oaivalidator import assertValidString
+from meresco.components.xml_generic.validate import assertValidString
 
 class OaiIdentifyTest(OaiTestCase):
-    
+
     def getSubject(self):
         return OaiIdentify(repositoryName = 'Repository Name', adminEmail = 'admin@meresco.org')
-    
+
     def testIdentify(self):
         self.request.args = {'verb': ['Identify']}
-        
+
         self.observable.any.unknown('identify', self.request)
-        
+
         self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
         self.assertEqualsWS(self.OAIPMH % """
         <request verb="Identify">http://server:9000/path/to/oai</request>
@@ -53,6 +53,6 @@ class OaiIdentifyTest(OaiTestCase):
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>""", self.stream.getvalue())
         assertValidString(self.stream.getvalue())
-        
+
     def testIllegalArguments(self):
         self.assertBadArgument('identify', {'verb': ['Identify'], 'metadataPrefix': ['oai_dc']}, 'Argument(s) "metadataPrefix" is/are illegal.')

@@ -86,12 +86,11 @@ from oai.oailisttest import OaiListTest
 from oai.oaimaintest import OaiMainTest
 from oai.oaisinktest import OaiSinkTest
 from oai.oaitooltest import OaiToolTest
-from oai.oaivalidatortest import OaiValidatorTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
-from xml.lxml_based.crosswalktest import CrosswalkTest
-from xml.lxml_based.crosswalkbasetest import CrosswalkBaseTest
-from xml.validatetest import ValidateTest
+from xml_generic.lxml_based.crosswalktest import CrosswalkTest
+from xml_generic.lxml_based.crosswalktestbase import CrosswalkTestBase
+from xml_generic.validatetest import ValidateTest
 
 if __name__ == '__main__':
         unittest.main()

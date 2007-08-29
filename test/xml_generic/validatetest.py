@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,12 +25,39 @@
 #
 ## end license ##
 
+from cStringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.components.oai.oaivalidator import assertValidString, validate
-from cStringIO import StringIO
+from meresco.components.xml_generic.validate import Validate, ValidateException
+from meresco.framework import Observable
 
-class OaiValidatorTest(CQ2TestCase):
+class ValidateTest(CQ2TestCase):
+
+    def setUp(self):
+        CQ2TestCase.setUp(self)
+        self.validate = Validate()
+        self.exception = None
+        self.args = None
+        class Interceptor:
+            def unknown(inner, message, *args, **kwargs):
+                self.args = args
+                yield None
+            def logException(inner, anException):
+                self.exception = anException
+
+        self.validate.addObserver(Interceptor())
+        self.observable = Observable()
+        self.observable.addObserver(self.validate)
+
+    def testOneInvalid(self):
+        validXml = '<lom xmlns="http://ltsc.ieee.org/xsd/LOM"/>'
+        try:
+            self.observable.any.someMethod(validXml)
+            self.fail('must raise exception')
+        except ValidateException:
+            pass
+        self.assertEquals("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element '{http://ltsc.ieee.org/xsd/LOM}lom': No matching global declaration available for the validation root.", str(self.exception))
+
     def testAssertValidString(self):
         s = """<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
@@ -49,18 +76,15 @@ class OaiValidatorTest(CQ2TestCase):
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>
 </OAI-PMH>"""
-        assertValidString(s)
-        success, message = validate(StringIO(s))
-        self.assertEquals(True, success)
-        self.assertEquals('', message)
-        
+        self.observable.any.callSomething(s)
+        self.assertEquals(None, self.exception)
+        self.assertEquals((s,), self.args)
+
     def testAssertInvalidString(self):
-        raisedError = None
+        invalid = '<OAI-PMH/>'
         try:
-            assertValidString('<OAI-PMH/>')
-            raisedError = False
-        except AssertionError, e:
-            raisedError = True
-            message = str(e)
-        self.assertEquals(True, raisedError)
-        self.assertEqualsWS("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element 'OAI-PMH': No matching global declaration available for the validation root.", message)
+            self.observable.any.message(invalid)
+            self.fail('must raise exception')
+        except ValidateException, e:
+            pass
+        self.assertEquals("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element 'OAI-PMH': No matching global declaration available for the validation root.", str(self.exception))

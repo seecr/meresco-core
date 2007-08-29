@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -30,13 +30,13 @@ from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
 from cStringIO import StringIO
-from meresco.components.oai.oaivalidator import assertValidString
+from meresco.components.xml_generic.validate import assertValidString
 
 #from meresco.components.http.oai.oaicomponent import OaiComponent
 #from meresco.components.http.oai.oaisink import OaiSink
 
 class OaiTestCase(CQ2TestCase):
-    
+
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.observable = Observable()
@@ -52,7 +52,7 @@ class OaiTestCase(CQ2TestCase):
         self.request.getHost = lambda: Host()
         self.stream = StringIO()
         self.request.write = self.stream.write
-        
+
     #def testNotMyVerb(self):
         #"""All verbs are observers and should only react to their own verb. This is not true for the sink and the umbrella OaiComponent"""
         #if self.subject.__class__ in [OaiComponent, OaiSink]:
@@ -60,23 +60,23 @@ class OaiTestCase(CQ2TestCase):
         #self.request.args = {'verb': ['NotMyVerb']}
         #self.observable.any.unknown('notMyVerb', self.request)
         #self.assertEquals('', self.stream.getvalue())
-        
+
     def assertBadArgument(self, verb, arguments, additionalMessage = '', errorCode = "badArgument"):
         self.request.args = arguments
-        
+
         self.observable.any.unknown(verb, self.request)
-        
+
         self.assertTrue(len(self.request.calledMethods) >= 1)
         self.assertEquals("setHeader('content-type', 'text/xml; charset=utf-8')",  str(self.request.calledMethods[0]))
         result = self.stream.getvalue()
         self.assertTrue('<error code="%s">' % errorCode in result)
         self.assertTrue(additionalMessage in result, 'Expected "%s" in "%s"' %(additionalMessage, result))
-        
+
         try:
             assertValidString(result)
         except Exception, e:
             self.fail("Not a valid string:\n" + result + "\n" + str(e))
-        
+
     OAIPMH = """<?xml version="1.0" encoding="UTF-8"?>
 <OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -85,4 +85,4 @@ class OaiTestCase(CQ2TestCase):
 <responseDate>2007-02-07T00:00:00Z</responseDate>
 %s
 </OAI-PMH>"""
-    
+

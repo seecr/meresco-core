@@ -22,13 +22,13 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cq2utils.component import Component, Notification
-from cq2utils.observable import Observable
 from StringIO import StringIO
 from lxml.etree import parse, XMLParser
 from cq2utils.xmlutils.xmlrewrite import XMLRewrite
 from glob import glob
 from os.path import basename, dirname
+
+from meresco.framework import Observable
 
 extension = '.rules'
 
@@ -42,7 +42,7 @@ def rewrite(pattern, replacement, rules):
 		return tuple(rewrite(pattern, replacement, rule) for rule in  rules)
 	return rules
 
-class CrosswalkComponent(Observable, Component):
+class Crosswalk(Observable):
 
 	def __init__(self, rulesDir=dirname(__file__)):
 		Observable.__init__(self)

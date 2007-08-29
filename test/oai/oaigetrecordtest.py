@@ -30,7 +30,8 @@ from oaitestcase import OaiTestCase
 from mockoaijazz import MockOaiJazz
 
 from meresco.components.oai.oaigetrecord import OaiGetRecord
-from meresco.components.oai.oaivalidator import assertValidString
+from meresco.components.xml_generic.validate import assertValidString
+
 from cq2utils.calltrace import CallTrace
 
 class OaiGetRecordTest(OaiTestCase):
