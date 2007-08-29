@@ -78,7 +78,7 @@ Error and Exception Conditions
     * noRecordsMatch - The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.
     * noSetHierarchy - The repository does not support sets.
 """
-    def __init__(self, partNames):
+    def __init__(self):
         OaiRecordVerb.__init__(self, ['ListIdentifiers', 'ListRecords'], {
             'from': 'optional',
             'until': 'optional',
@@ -86,7 +86,6 @@ Error and Exception Conditions
             'resumptionToken': 'exclusive',
             'metadataPrefix': 'required'})
         Observable.__init__(self)
-        self.partNames = partNames
 
     def listRecords(self, webRequest):
         self.startProcessing(webRequest)
@@ -119,7 +118,7 @@ Error and Exception Conditions
             except ISO8601Exception, e:
                 return self.writeError(webRequest, 'badArgument', 'from and/or until arguments are faulty')
 
-        if not self._metadataPrefix in self.partNames:
+        if not self._metadataPrefix in [prefix for prefix, na, na in self.any.getAllPrefixes()]:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
 
         self._queryResult = self.any.oaiSelect(self._set, self._metadataPrefix, self._continueAt, self._from, self._until)
