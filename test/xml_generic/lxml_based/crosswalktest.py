@@ -45,7 +45,7 @@ class CrosswalkTest(CQ2TestCase):
         class Interceptor:
             def notify(inner, notification): self.message = notification
             def undo(*args): pass
-        self.plugin = CrosswalkComponent()
+        self.plugin = Crosswalk()
         self.plugin.addObserver(Interceptor())
         self.validator = IeeeLomValidateComponent()
         self.plugin.addObserver(self.validator)

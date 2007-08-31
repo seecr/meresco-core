@@ -25,5 +25,11 @@
 #
 ## end license ##
 
-from observable import Observable
-from observer import ObserverFunction
+class ObserverFunction(object):
+    def __init__(self, function, name = None):
+        self._function = function
+        self._name = name
+    def unknown(self, name, *args, **kwargs):
+        if name != self._function.func_name and name != self._name:
+            raise StopIteration()
+        yield self._function(*args, **kwargs)

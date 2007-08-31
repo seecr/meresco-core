@@ -32,6 +32,7 @@ from cq2utils.calltrace import CallTrace
 
 from mockoaijazz import MockOaiJazz
 
+from meresco.framework import ObserverFunction
 from meresco.components.oai.oailist import BATCH_SIZE
 from meresco.components.oai import OaiList
 from meresco.components.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
@@ -40,7 +41,9 @@ from oaitestcase import OaiTestCase
 
 class OaiListTest(OaiTestCase):
     def getSubject(self):
-        return OaiList(['oai_dc'])
+        oailist = OaiList()
+        oailist.addObserver(ObserverFunction(lambda: [('oai_dc', '', '')], 'getAllPrefixes'))
+        return oailist
 
     def testNoArguments(self):
         self.assertBadArgument('listRecords', {'verb': ['ListRecords']}, 'Missing argument(s) "resumptionToken" or "metadataPrefix"')

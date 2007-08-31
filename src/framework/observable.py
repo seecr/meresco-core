@@ -25,15 +25,7 @@
 #
 ## end license ##
 
-from types import GeneratorType
-
-def compose(generator):
-    for value in generator:
-        if type(value) == GeneratorType:
-            for nested in compose(value):
-                yield nested
-        else:
-            yield value
+from generatorutils import compose
 
 class Defer:
     def __init__(self, observable, defereeType):

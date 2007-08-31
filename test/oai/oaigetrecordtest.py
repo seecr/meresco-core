@@ -29,6 +29,7 @@ from oaitestcase import OaiTestCase
 
 from mockoaijazz import MockOaiJazz
 
+from meresco.framework import ObserverFunction
 from meresco.components.oai.oaigetrecord import OaiGetRecord
 from meresco.components.xml_generic.validate import assertValidString
 
@@ -36,7 +37,9 @@ from cq2utils.calltrace import CallTrace
 
 class OaiGetRecordTest(OaiTestCase):
     def getSubject(self):
-        return OaiGetRecord(['oai_dc'])
+        oaigetrecord = OaiGetRecord()
+        oaigetrecord.addObserver(ObserverFunction(lambda: [('oai_dc', '', '')], 'getAllPrefixes'))
+        return oaigetrecord
 
     def testGetRecordNoArguments(self):
         self.assertBadArgument('getRecord', {'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
