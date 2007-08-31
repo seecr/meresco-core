@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from lxml.etree import parse, XMLSchema, XMLSchemaParseError
+from lxml.etree import parse, XMLSchema, XMLSchemaParseError, _ElementTree
 from os.path import join, abspath, dirname
 from cStringIO import StringIO
 from glob import glob
@@ -38,15 +38,20 @@ class ValidateException(Exception):
 
 schemaLocation = join(abspath(dirname(__file__)), 'schemas')
 
-rootSchema = '<?xml version="1.0" encoding="utf-8"?><xsd:schema xmlns:xsd="http://www.w3.org/2001/XMLSchema">' \
- + '\n'.join('<xsd:import namespace="%s" schemaLocation="%s"/>' %
+#targetNamespace="http://www.w3.org/2001/XMLSchema"
+
+rootSchema = '<?xml version="1.0" encoding="utf-8"?><schema targetNamespace="http://www.meresco.org/XML" \
+            xmlns="http://www.w3.org/2001/XMLSchema" \
+            elementFormDefault="qualified">\n' \
+ + '\n'.join('<import namespace="%s" schemaLocation="%s"/>' %
     (parse(xsd).getroot().get('targetNamespace'), xsd)
         for xsd in glob(join(schemaLocation,'*.xsd'))) \
-+ '</xsd:schema>'
++ '</schema>'
 
 schemaXml = parse(StringIO(rootSchema))
 
 try:
+    #schema = XMLSchema(parse(open(join(schemaLocation, 'lomCcNbc.xsd'))))
     schema = XMLSchema(schemaXml)
 except XMLSchemaParseError, e:
     print e.error_log.last_error
@@ -70,11 +75,13 @@ def assertValidString(aXmlString):
 class Validate(Observable):
 
     def unknown(self, methodName, *args, **kwargs):
-        schema.validate(parse(StringIO(args[0])))
-        if schema.error_log:
-            exception = ValidateException(schema.error_log.last_error)
-            self.do.logException(exception)
-            raise exception
+        for arg in args:
+            if type(arg) == _ElementTree:
+                schema.validate(arg)
+                if schema.error_log:
+                    exception = ValidateException(schema.error_log.last_error)
+                    self.do.logException(exception)
+                    raise exception
         return self.all.unknown(methodName, *args, **kwargs)
 
 if __name__ == '__main__':

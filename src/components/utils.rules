@@ -1,0 +1,6 @@
+
+inputNamespace = 'http://www.cq2.nl/xmlrewrite/utils'
+
+rewriteDate = [(r'(\d{2,4}-\d{2})-(\d{2})[T ]?(\d{2})?[:;\.]?(\d{2})?', '%s-%sT%s:%s', (str, lambda x: max('01', x), lambda x: x or '23', lambda x: x or '59'))]
+
+rewriteVcard = [('(?s)(?i).*BEGIN:VCARD(.*)END:VCARD.*', 'BEGIN:VCARD\n%s\nEND:VCARD', (lambda s: s.replace('\\n', '\n').strip(),))]

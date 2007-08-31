@@ -1,0 +1,105 @@
+extend('utils')
+
+inputNamespace='http://ltsc.ieee.org/xsd/LOM'
+
+rootTagName='lom'
+
+defaultNameSpace='http://ltsc.ieee.org/xsd/LOM'
+
+# namespaces for use in XPath expressions in rules
+xPathNs = {
+'lom': inputNamespace
+}
+
+rules = [
+('general/identifier/catalog', 'lom:general/lom:identifier/lom:catalog', ('.',), '%s'),
+('general/identifier/entry', 'lom:general/lom:identifier/lom:entry', ('.',), '%s'),
+('general/title', 'lom:general/lom:title', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('general/title', 'lom:general/lom:title', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
+('general/language', 'lom:general/lom:language', ('.',), '%s'),
+('general/description', 'lom:general/lom:description', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('general/keyword', 'lom:general/lom:keyword', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('general/aggregationLevel/source', 'lom:general/lom:aggregationLevel/lom:source', ('.',), '%s',),
+('general/aggregationLevel/value', 'lom:general/lom:aggregationLevel/lom:value', ('.',), '%s',),
+
+('lifeCycle/version', 'lom:lifeCycle/lom:version', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('lifeCycle/version', 'lom:lifeCycle/lom:version', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
+
+('lifeCycle/status/source', 'lom:lifeCycle/lom:status/lom:source', ('.',), '%s',),
+('lifeCycle/status/value', 'lom:lifeCycle/lom:status/lom:value', ('.',), '%s',),
+
+('lifeCycle/contribute/role/source', 'lom:lifeCycle/lom:contribute/lom:role/lom:source', ('.',), '%s',),
+('lifeCycle/contribute/role/value', 'lom:lifeCycle/lom:contribute/lom:role/lom:value', ('.',), '%s',),
+
+('lifeCycle/contribute/entity', 'lom:lifeCycle/lom:contribute/lom:entity', ('.',), '%s', rewriteVcard),
+('lifeCycle/contribute/date', 'lom:lifeCycle/lom:contribute/lom:date', ('lom:dateTime',), '<dateTime>%s</dateTime>', rewriteDate),
+
+('metaMetadata/metadataSchema', 'lom:metaMetadata/lom:metadataSchema', ('.',), '%s'),
+('metaMetadata/contribute/role/source', 'lom:metaMetadata/lom:contribute/lom:role/lom:source', ('.',), '%s',),
+('metaMetadata/contribute/role/value', 'lom:metaMetadata/lom:contribute/lom:role/lom:value', ('.',), '%s'),
+('metaMetadata/contribute/entity', 'lom:metaMetadata/lom:contribute/lom:entity', ('.',), '%s', rewriteVcard),
+('metaMetadata/contribute/date', 'lom:metaMetadata/lom:contribute/lom:date', ('lom:dateTime',), '<dateTime>%s</dateTime>', rewriteDate),
+
+('technical/format', 'lom:technical/lom:format', ('.',), '%s',  [('^$', 'application/octet-stream', (str,))]),
+('technical/location', 'lom:technical/lom:location', ('.',), '%s'),
+
+('educational/learningResourceType/source', 'lom:educational/lom:learningResourceType/lom:source', ('.',), '%s'),
+('educational/learningResourceType/value', 'lom:educational/lom:learningResourceType/lom:value', ('.',), '%s'),
+('educational/context/source', 'lom:educational/lom:context/lom:source', ('.',), '%s'),
+('educational/context/value', 'lom:educational/lom:context/lom:value', ('.',), '%s'),
+
+('rights/cost/source', 'lom:rights/lom:cost/lom:source', ('.',), '%s'),
+('rights/cost/value', 'lom:rights/lom:cost/lom:value', ('.',), '%s'),
+
+('rights/copyrightAndOtherRestrictions/source', 'lom:rights/lom:copyrightAndOtherRestrictions/lom:source', ('.',), '%s'),
+('rights/copyrightAndOtherRestrictions/value', 'lom:rights/lom:copyrightAndOtherRestrictions/lom:value', ('.',), '%s',
+		[('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]),
+('rights/description', 'lom:rights/lom:description', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+
+('annotation/entity', 'lom:annotation/lom:entity', ('.',), '%s', rewriteVcard),
+('annotation/date', 'lom:annotation/lom:date', ('lom:dateTime',), '<dateTime>%s</dateTime>', rewriteDate),
+('annotation/description', 'lom:annotation/lom:description', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('annotation/description', 'lom:annotation/lom:description', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
+
+('classification/purpose/source', 'lom:classification[lom:taxonPath/lom:source/lom:string="NBC"]/lom:purpose/lom:source', 	('.',), '%s'),
+('classification/purpose/value', 'lom:classification[lom:taxonPath/lom:source/lom:string="NBC"]/lom:purpose/lom:value', 	('.',), '%s'),
+
+('classification/taxonPath/source',
+	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:source',
+	('lom:langstring/lom:language', 'lom:langstring/lom:value'),
+	'<string language="%s">%s</string>'),
+('classification/taxonPath/taxon/id',
+	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:id',
+	('.',), '%s',
+	[('(?:NBC)?(\d+)', '%s', (int, '%02d',))]),
+('classification/taxonPath/taxon/entry',
+	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:entry',
+	('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>',
+	[('\s*\d+\s*(\w+)', '%s', (str,))]),
+('classification/taxonPath/taxon/entry',
+	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:entry',
+	('lom:string[not(@language)]',), '<string language="x-none">%s</string>',
+	[('\s*\d+\s*(\w+)', '%s', (str,))]),
+
+('classification/description', 'lom:classification/lom:description', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('classification/description', 'lom:classification/lom:description', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
+
+('classification/keyword', 'lom:classification/lom:keyword', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('classification/keyword', 'lom:classification/lom:keyword', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
+
+]
+
+vocabDict = {
+'auteur': 'author',
+'LOREnet LOM v1.0': 'LOMv1.0',
+'CZP VO/PO v1.0.1':'LOMv1.0',
+'verkennings- en onderzoeks materiaal': 'other',
+'open opdracht': 'exercise',
+'handleiding': 'other',
+'informatiebron': 'other',
+'evaluatie- en toetsmateriaal':  'exam',
+}
+
+# delete imported stuff
+del rewriteDate
+del rewriteVcard

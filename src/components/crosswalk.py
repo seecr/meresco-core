@@ -30,45 +30,52 @@ from os.path import basename, dirname
 
 from meresco.framework import Observable
 
-extension = '.rules'
+EXTENSION = '.rules'
 
 def rewriteRules(pattern, replacement, rules):
-	return [rewrite(pattern, replacement, rule) for rule in rules]
+    return [rewrite(pattern, replacement, rule) for rule in rules]
 
 def rewrite(pattern, replacement, rules):
-	if type(rules) == str:
-		return rules.replace(pattern, replacement)
-	if type(rules) == tuple:
-		return tuple(rewrite(pattern, replacement, rule) for rule in  rules)
-	return rules
+    if type(rules) == str:
+        return rules.replace(pattern, replacement)
+    if type(rules) == tuple:
+        return tuple(rewrite(pattern, replacement, rule) for rule in  rules)
+    return rules
 
 class Crosswalk(Observable):
 
-	def __init__(self, rulesDir=dirname(__file__)):
-		Observable.__init__(self)
-		self.ruleSet = {}
-		self.rulesDir = rulesDir
-		if rulesDir:
-			for fileName in glob(rulesDir + '/*' + extension):
-				args = {}
-				self.readConfig(basename(fileName[:-len(extension)]), args)
-				self.ruleSet[args['inputNamespace']] = args
-				del args['inputNamespace']
+    def __init__(self, rewriteName, rulesDir=dirname(__file__)):
+        Observable.__init__(self)
+        self.rewriteName = rewriteName
+        self.ruleSet = {}
+        self.rulesDir = rulesDir
+        if rulesDir:
+            for fileName in glob(rulesDir + '/*' + EXTENSION):
+                args = {}
+                self.readConfig(basename(fileName[:-len(EXTENSION)]), args)
+                self.ruleSet[args['inputNamespace']] = args
+                del args['inputNamespace']
 
-	def readConfig(self, ruleSetName, localsDict):
-		globs = {'extend': lambda name: self.readConfig(name, localsDict), 'rewriteRules': rewriteRules}
-		execfile(self.rulesDir + '/' + ruleSetName + extension, globs, localsDict)
+    def readConfig(self, ruleSetName, localsDict):
+        globs = {'extend': lambda name: self.readConfig(name, localsDict), 'rewriteRules': rewriteRules}
+        execfile(self.rulesDir + '/' + ruleSetName + EXTENSION, globs, localsDict)
 
+    def unknown(self, method, id, name, lxmlNode, *args, **kwargs):
+        root = lxmlNode.getroot()
+        namespaceURI = root.nsmap[root.prefix]
+        rewrite = XMLRewrite(lxmlNode, **self.ruleSet[namespaceURI])
+        rewrite.applyRules()
+        return self.all.unknown(method, id, self.rewriteName, rewrite, *args, **kwargs)
 
-	def notify(self, notification):
-		if notification.method != 'add': return
-		if notification.partName != 'metadata': return
-		tree = parse(StringIO(notification.payload), XMLParser(remove_blank_text=True))
-		root = tree.getroot()
-		namespaceURI = root.nsmap[root.prefix]
-		rewrite = XMLRewrite(tree, **self.ruleSet[namespaceURI])
-		rewrite.applyRules()
-		self.changed(Notification(notification.method, notification.id, 'LOMv1.0', rewrite.toString()))
+    def notify(self, notification):
+        if notification.method != 'add': return
+        if notification.partName != 'metadata': return
+        tree = parse(StringIO(notification.payload), XMLParser(remove_blank_text=True))
+        root = tree.getroot()
+        namespaceURI = root.nsmap[root.prefix]
+        rewrite = XMLRewrite(tree, **self.ruleSet[namespaceURI])
+        rewrite.applyRules()
+        self.changed(Notification(notification.method, notification.id, 'LOMv1.0', rewrite.toString()))
 
-	def __str__(self):
-		return 'CrosswalkComponent'
+    def __str__(self):
+        return 'CrosswalkComponent'

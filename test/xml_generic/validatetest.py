@@ -28,6 +28,8 @@
 from cStringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 
+from lxml.etree import parse, _ElementTree
+
 from meresco.components.xml_generic.validate import Validate, ValidateException
 from meresco.framework import Observable
 
@@ -52,7 +54,7 @@ class ValidateTest(CQ2TestCase):
     def testOneInvalid(self):
         validXml = '<lom xmlns="http://ltsc.ieee.org/xsd/LOM"/>'
         try:
-            self.observable.any.someMethod(validXml)
+            self.observable.any.someMethod(parse(StringIO(validXml)))
             self.fail('must raise exception')
         except ValidateException:
             pass
@@ -76,14 +78,14 @@ class ValidateTest(CQ2TestCase):
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>
 </OAI-PMH>"""
-        self.observable.any.callSomething(s)
+        self.observable.any.callSomething(parse(StringIO(s)))
         self.assertEquals(None, self.exception)
-        self.assertEquals((s,), self.args)
+        self.assertEquals(_ElementTree, type(self.args[0]))
 
     def testAssertInvalidString(self):
         invalid = '<OAI-PMH/>'
         try:
-            self.observable.any.message(invalid)
+            self.observable.any.message(parse(StringIO(invalid)))
             self.fail('must raise exception')
         except ValidateException, e:
             pass

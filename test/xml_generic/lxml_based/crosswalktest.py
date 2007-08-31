@@ -23,6 +23,9 @@
 #
 ## end license ##
 from cq2utils.cq2testcase import CQ2TestCase
+from cq2utils.calltrace import CallTrace
+from cq2utils.xmlutils.xmlrewrite import XMLRewrite
+
 from StringIO import StringIO
 from lxml.etree import parse, tostring, XMLParser
 from difflib import unified_diff
@@ -36,35 +39,36 @@ from meresco.components.xml_generic import Validate
 
 
 def readRecord(name):
-    return open('data/' + name).read()
+    return open('xml_generic/lxml_based/data/' + name)
 
 class CrosswalkTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        class Interceptor:
-            def notify(inner, notification): self.message = notification
-            def undo(*args): pass
-        self.plugin = Crosswalk()
-        self.plugin.addObserver(Interceptor())
-        self.validator = IeeeLomValidateComponent()
-        self.plugin.addObserver(self.validator)
-
-    def tearDown(self):
-        CQ2TestCase.tearDown(self)
-        if hasattr(self, 'message'): del self.message
+        self.crosswalk = Crosswalk('LOMv1.0')
+        self.observer = CallTrace()
+        self.crosswalk.addObserver(self.observer)
 
     def testOne(self):
-        notification = Notification(method = 'add', id=None, partName='metadata', payload=readRecord('imsmd_v1p2-1.xml'))
-        self.plugin.notify(notification)
-        self.assertTrue(hasattr(self, 'message'))
+        list(self.crosswalk.unknown('crosswalk', 'id', 'partname', parse(readRecord('imsmd_v1p2-1.xml'), XMLParser(remove_blank_text=True))))
+        self.assertEquals(1, len(self.observer.calledMethods))
+        self.assertEquals(3, len(self.observer.calledMethods[0].arguments))
+        arguments = self.observer.calledMethods[0].arguments
+        self.assertEquals("id", arguments[0])
+        self.assertEquals("LOMv1.0", arguments[1])
+        self.assertTrue("XMLRewrite" in str(arguments[2]))
 
     def testValidate(self):
-        notification = Notification(method = 'add', id=None, partName='LOMv1.0', payload=readRecord('lom-cc-nbc.xml'))
+        validate = Validate()
+        validate.unknown('methodname', 'id', 'part', parse(readRecord('lom-cc-nbc.xml')))
+        #notification = Notification(method = 'add', id=None, partName='LOMv1.0', payload=readRecord('lom-cc-nbc.xml'))
         try:
-            self.validator.notify(notification)
+            validate.unknown('methodname', 'id', 'part', parse(readRecord('lom-cc-nbc.xml')))
         except Exception, e:
             self.fail(e)
+
+
+        return
         notification = Notification(method = 'add', id=None, partName='metadata', payload=readRecord('imsmd_v1p2-1.xml'))
         try:
             self.validator.notify(notification)
@@ -91,70 +95,6 @@ class CrosswalkTest(CQ2TestCase):
         self.plugin.notify(notification)
         self.assertFalse('2006-11-28 19:00' in self.message.payload)
 
-    def testTripleLRecords(self):
-        self.assertRecord('triple_l:oai:triple-l:217132')
-        self.assertRecord('triple_l:oai:triple-l:217134')
-        self.assertRecord('triple_l:oai:triple-l:210219')
-        self.assertRecord('triple_l:oai:triple-l:209753')
-
-    def testWURTVRecords(self):
-        self.assertRecord('wurtv:oai:triple-l:02a7a352-907b-4f66-8d15-2c1d1ffbd4aa')
-
-    def testLUMCRecords(self):
-        self.assertRecord('lumc:69')
-        self.assertRecord('lumc:24')
-
-    def testUtRecords(self):
-        self.assertRecord('utlore:oai:lorenet:408')
-        self.assertRecord('utlore:oai:lorenet:201')
-
-    def testGroenlomRecords(self):
-        self.assertRecord('groenlom:oai:groenkennisnet.org:6426112')
-
-    def testSVPRecords(self):
-        self.assertRecord('svp:VPOAI:1')
-
-    def testSchoolVanDeToekomstRecords(self):
-        self.assertRecord('svdt_org:oai:repository.kenict.org:id:49')
-
-    def testDeltionRecords(self):
-        self.assertRecord('deltion_nl:oai:repository.kenict.org:id:75')
-
-    def testFontysRecords(self):
-        self.assertRecord('fontyselo:oai:prefix:0458cc8d30194c8d99534659cae8e014')
-        self.assertRecord('fontyselo:oai:prefix:e2b22198e99f4c828b55527216480256')
-        self.assertRecord('fontyselo:oai:fontys:38aa67ab30894df18f8c91ba33a24899')
-
-    def assertRecord(self, id):
-        inputRecord = readRecord('%s.xml' % id)
-        sollRecord = tostring(parse(open('data/%s.LOMv1.0.xml' % id), XMLParser(remove_blank_text=True)), pretty_print = True)
-        notification = Notification(method = 'add', id=None, partName='metadata', payload = inputRecord)
-        try:
-            self.plugin.notify(notification)
-        except Exception, e:
-            if hasattr(self, 'message'):
-                for nr, line in enumerate(self.message.payload.split('\n')): print nr, line
-            raise
-        self.assertTrue(hasattr(self, 'message'))
-        diffs = list(unified_diff(self.message.payload.split('\n'), sollRecord.split('\n'), fromfile='ist', tofile='soll', lineterm=''))
-        self.assertFalse(diffs, '\n' + '\n'.join(diffs))
-
-    def testReadRulesFromDir(self):
-        f = open('/tmp/prefix1.rules', 'w')
-        f.write("""
-inputNamespace='namespaceURI'
-rootTagName='lom'
-defaultNameSpace='http://ltsc.ieee.org/xsd/LOM'
-vocabDict={}
-rules=[]
-""")
-        f.close()
-        try:
-            crosswalk = CrosswalkComponent(rulesDir='/tmp')
-            rules = crosswalk.ruleSet['namespaceURI']
-            self.assertEquals('http://ltsc.ieee.org/xsd/LOM', rules['defaultNameSpace'])
-        finally:
-            remove('/tmp/prefix1.rules')
 
     def testReplacePrefix(self):
         rules = [('classification/taxonPath/taxon/entry', 'imsmd:classification/imsmd:taxonpath/imsmd:taxon/imsmd:entry', ('imsmd:langstring/@xml:lang', 'imsmd:langstring'), '<string language="%s">%s</string>',

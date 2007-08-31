@@ -26,6 +26,9 @@ class MockOaiJazz:
     def isDeleted(self, id):
         return id in self._deleted
 
+    def getAllPrefixes(self):
+        return [('oai_dc',None,None)]
+
     def write(self, sink, id, partName):
         if partName == 'oai_dc':
             sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
