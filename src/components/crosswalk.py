@@ -65,17 +65,7 @@ class Crosswalk(Observable):
         namespaceURI = root.nsmap[root.prefix]
         rewrite = XMLRewrite(lxmlNode, **self.ruleSet[namespaceURI])
         rewrite.applyRules()
-        return self.all.unknown(method, id, self.rewriteName, rewrite, *args, **kwargs)
-
-    def notify(self, notification):
-        if notification.method != 'add': return
-        if notification.partName != 'metadata': return
-        tree = parse(StringIO(notification.payload), XMLParser(remove_blank_text=True))
-        root = tree.getroot()
-        namespaceURI = root.nsmap[root.prefix]
-        rewrite = XMLRewrite(tree, **self.ruleSet[namespaceURI])
-        rewrite.applyRules()
-        self.changed(Notification(notification.method, notification.id, 'LOMv1.0', rewrite.toString()))
+        return self.all.unknown(method, id, self.rewriteName, rewrite.asLxml())
 
     def __str__(self):
         return 'CrosswalkComponent'

@@ -46,54 +46,174 @@ class CrosswalkTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.crosswalk = Crosswalk('LOMv1.0')
+        self.validate = Validate(['metadata'])
+        self.crosswalk.addObserver(self.validate)
         self.observer = CallTrace()
-        self.crosswalk.addObserver(self.observer)
+        self.validate.addObserver(self.observer)
+
+    def testDoesItReallyWorkThatWayOrWhyIsItNecessaryToPrettyPrintAndReparseTheXmlSixQuestionMarks(self):
+        xml = """<lom xmlns="http://ltsc.ieee.org/xsd/LOM">
+  <general>
+    <identifier>
+      <catalog>Naam van de repository of instelling</catalog>
+      <entry>Identificatiecode/identifier/etc, uniek binnen catalog</entry>
+    </identifier>
+    <title>
+      <string language="x-none">Een titel</string>
+    </title>
+    <language>
+                        nl
+                </language>
+    <description/>
+    <keyword/>
+    <aggregationLevel>
+      <value>1</value>
+    </aggregationLevel>
+  </general>
+  <lifeCycle>
+    <version>
+      <string language="x-none">v1.0beta-rc01-with-fixes</string>
+    </version>
+    <status>
+      <source>LOMv1.0</source>
+      <value>final</value>
+    </status>
+    <contribute>
+      <role>
+        <source>LOMv1.0</source>
+        <value>author</value>
+      </role>
+      <entity>BEGIN:VCARD
+FN:Suilen, A.
+END:VCARD</entity>
+      <date>
+        <dateTime>2007-12-31T13:31</dateTime>
+      </date>
+    </contribute>
+  </lifeCycle>
+  <metaMetadata>
+    <metadataSchema>lorelom</metadataSchema>
+    <contribute>
+      <role>
+        <source>LOMv1.0</source>
+        <value>creator</value>
+      </role>
+      <entity>BEGIN:VCARD
+FN;parameter:Suilen, A.
+VERSION:3.0
+x;aap:mies
+END:VCARD</entity>
+      <date>
+        <dateTime>2007-01-01T08:32</dateTime>
+      </date>
+    </contribute>
+  </metaMetadata>
+  <technical>
+    <format>!3e#s$p&amp;l.a+n-k^j_e/a_a+p#</format>
+    <location>http://my.system.nl/hier/staat/het.zip</location>
+    <location>http://my.system.nl/hier/staat/nog.zip</location>
+    <location>http://my.system.nl/hier/staat/meer.zip</location>
+  </technical>
+  <educational>
+    <learningResourceType>
+      <source>LOMv1.0</source>
+      <value>table</value>
+    </learningResourceType>
+    <context>
+      <source>LOMv1.0</source>
+      <value>higher education</value>
+    </context>
+  </educational>
+  <rights>
+    <cost>
+      <source>LOMv1.0</source>
+      <value>no</value>
+    </cost>
+    <copyrightAndOtherRestrictions>
+      <source>CCv2.5</source>
+      <value>by-nc-nd</value>
+    </copyrightAndOtherRestrictions>
+    <description/>
+  </rights>
+  <annotation>
+    <entity>BEGIN:VCARD
+FN:Suilen, A.
+N:Suilen\, A.
+VERSION:3.0
+END:VCARD</entity>
+    <date>
+      <dateTime>2007-01-01T08:32</dateTime>
+    </date>
+    <description>
+      <string language="x-none">Dit gaat ergens over.</string>
+    </description>
+  </annotation>
+  <classification>
+    <purpose>
+      <source>LOMv1.0</source>
+      <value>discipline</value>
+    </purpose>
+    <taxonPath>
+      <source/>
+      <taxon>
+        <id>
+                                        00047
+                                </id>
+        <entry>
+          <string language="x-none">NBC groeps NAAM</string>
+        </entry>
+      </taxon>
+    </taxonPath>
+    <description>
+      <string language="x-none">Vakgebied</string>
+    </description>
+    <keyword>
+      <string language="x-none">vakgebied discipline onderwerp</string>
+    </keyword>
+  </classification>
+</lom>
+"""
+        tree = parse(StringIO(xml))
+        from lxml.etree import XMLSchema
+        schema = XMLSchema(parse(open('/home/pair/development/cq2-svn-all/lorenet/trunk/xsd/src/data/lomCcNbc.xsd')))
+        validate = Validate()
+        validate.unknown('msg', 'id', 'name', tree)
+        schema.validate(tree)
+        self.assertEquals(None, schema.error_log.last_error)
 
     def testOne(self):
-        list(self.crosswalk.unknown('crosswalk', 'id', 'partname', parse(readRecord('imsmd_v1p2-1.xml'), XMLParser(remove_blank_text=True))))
+        list(self.crosswalk.unknown('crosswalk', 'id', 'metadata', parse(readRecord('imsmd_v1p2-1.xml'))))
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertEquals(3, len(self.observer.calledMethods[0].arguments))
         arguments = self.observer.calledMethods[0].arguments
         self.assertEquals("id", arguments[0])
         self.assertEquals("LOMv1.0", arguments[1])
-        self.assertTrue("XMLRewrite" in str(arguments[2]))
 
     def testValidate(self):
-        validate = Validate()
-        validate.unknown('methodname', 'id', 'part', parse(readRecord('lom-cc-nbc.xml')))
-        #notification = Notification(method = 'add', id=None, partName='LOMv1.0', payload=readRecord('lom-cc-nbc.xml'))
         try:
-            validate.unknown('methodname', 'id', 'part', parse(readRecord('lom-cc-nbc.xml')))
+            list(self.validate.unknown('methodname', 'id', 'metadata', parse(readRecord('lom-cc-nbc.xml'))))
         except Exception, e:
             self.fail(e)
 
-
-        return
-        notification = Notification(method = 'add', id=None, partName='metadata', payload=readRecord('imsmd_v1p2-1.xml'))
         try:
-            self.validator.notify(notification)
+            list(self.validate.unknown('methodname', 'id', 'metadata', parse(readRecord('imsmd_v1p2-1.xml'))))
             self.fail('must raise exception')
         except Exception, e:
-            self.assertEquals("<string>:2:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element '{http://dpc.uba.uva.nl/schema/lom/triplel}lom': No matching global declaration available for the validation root.", str(e))
+            self.assertEquals("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element '{http://dpc.uba.uva.nl/schema/lom/triplel}lom': No matching global declaration available for the validation root.", str(e))
 
     def testTripleLExample(self):
-        notification = Notification(method = 'add', id=None, partName='IMS', payload=readRecord('triple-lrecord.xml'))
         try:
-            self.plugin.notify(notification)
+            self.crosswalk.unknown('methodname', 'id', 'metadata', parse(readRecord('triple-lrecord.xml')))
         except Exception, e:
-            for n, line in enumerate(self.message.payload.split('\n')):
+            message = readRecord('triple-lrecord.xml').read()
+            for n, line in enumerate(message.split('\n')):
                 print n+1, line
             raise
 
-    def testDoNotActOnOther(self):
-        notification = Notification(method = 'add', id=None, partName='Other', payload=readRecord('imsmd_v1p2-1.xml'))
-        self.plugin.notify(notification)
-        self.assertFalse(hasattr(self, 'message'))
-
     def testNormalize(self):
-        notification = Notification(method = 'add', id=None, partName='metadata', payload=readRecord('triple-lrecord.xml'))
-        self.plugin.notify(notification)
-        self.assertFalse('2006-11-28 19:00' in self.message.payload)
+        list(self.crosswalk.unknown('add', None, 'metadata', parse(readRecord('triple-lrecord.xml'))))
+        self.assertEquals(1, len(self.observer.calledMethods))
+        self.assertFalse('2006-11-28 19:00' in tostring(self.observer.calledMethods[0].arguments[2]))
 
 
     def testReplacePrefix(self):

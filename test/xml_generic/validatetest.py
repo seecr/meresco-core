@@ -52,13 +52,13 @@ class ValidateTest(CQ2TestCase):
         self.observable.addObserver(self.validate)
 
     def testOneInvalid(self):
-        validXml = '<lom xmlns="http://ltsc.ieee.org/xsd/LOM"/>'
+        invalidXml = '<lom xmlns="http://ltsc.ieee.org/xsd/LOM_this_should_not_work"/>'
         try:
-            self.observable.any.someMethod(parse(StringIO(validXml)))
+            self.observable.any.someMethod(parse(StringIO(invalidXml)))
             self.fail('must raise exception')
         except ValidateException:
             pass
-        self.assertEquals("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element '{http://ltsc.ieee.org/xsd/LOM}lom': No matching global declaration available for the validation root.", str(self.exception))
+        self.assertEquals("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element '{http://ltsc.ieee.org/xsd/LOM_this_should_not_work}lom': No matching global declaration available for the validation root.", str(self.exception))
 
     def testAssertValidString(self):
         s = """<?xml version="1.0" encoding="UTF-8"?>

@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from lxml.etree import parse, XMLSchema, XMLSchemaParseError, _ElementTree
+from lxml.etree import parse, XMLSchema, XMLSchemaParseError, _ElementTree, tostring
 from os.path import join, abspath, dirname
 from cStringIO import StringIO
 from glob import glob
@@ -49,16 +49,18 @@ rootSchema = '<?xml version="1.0" encoding="utf-8"?><schema targetNamespace="htt
 + '</schema>'
 
 schemaXml = parse(StringIO(rootSchema))
+lomSchemaXml = parse(open(join(schemaLocation+"-lom", 'lomCcNbc.xsd')))
 
 try:
-    #schema = XMLSchema(parse(open(join(schemaLocation, 'lomCcNbc.xsd'))))
+    lomSchema = XMLSchema(lomSchemaXml)
     schema = XMLSchema(schemaXml)
 except XMLSchemaParseError, e:
     print e.error_log.last_error
     raise
 
 def validate(aXmlStream):
-    schema.validate(parse(aXmlStream))
+    tree = parse(aXmlStream)
+    schema.validate(tree)
     if schema.error_log:
         return False, schema.error_log.last_error
     else:
@@ -74,15 +76,25 @@ def assertValidString(aXmlString):
 
 class Validate(Observable):
 
-    def unknown(self, methodName, *args, **kwargs):
+    def unknown(self, *args, **kwargs):
         for arg in args:
             if type(arg) == _ElementTree:
-                schema.validate(arg)
-                if schema.error_log:
-                    exception = ValidateException(schema.error_log.last_error)
+                rootElement = arg.getroot()
+                usedNamespaces = rootElement.nsmap
+
+                # 20070831 - JJ - Workaround.
+                # Apparently there are bug(s) in libxml2 which prevents lxml from validating LOM in combination
+                # with other schema's.
+                validatingSchema = schema
+                if 'http://ltsc.ieee.org/xsd/LOM' in usedNamespaces.values():
+                    validatingSchema = lomSchema
+                toValidate = parse(StringIO(tostring(arg, pretty_print=True)))
+                validatingSchema.validate(toValidate)
+                if validatingSchema.error_log:
+                    exception = ValidateException(validatingSchema.error_log.last_error)
                     self.do.logException(exception)
                     raise exception
-        return self.all.unknown(methodName, *args, **kwargs)
+        return self.all.unknown(*args, **kwargs)
 
 if __name__ == '__main__':
     from sys import argv, exit
