@@ -28,8 +28,8 @@
 from StringIO import StringIO
 from time import strftime, gmtime
 
-from cq2utils.component import Component
 from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
+from cq2utils.xmlutils import findNamespaces
 
 from amara.binderytools import bind_string, bind_stream
 
@@ -168,16 +168,20 @@ class OaiJazzLucene(Observable):
     def getAllPrefixes(self):
         return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
 
-    def updateAllPrefixes(self, prefix, record):
-        allPrefixes = self._getAllPrefixes()
-        nsDict = {}
+    def findSchema(self, record):
+        ns2xsd = {}
         if hasattr(record, 'schemaLocation'):
             nsXsdList = record.schemaLocation.split()
             for n in range(0, len(nsXsdList), 2):
-                nsDict[nsXsdList[n]] = nsXsdList[n+1]
-        ns = record.namespaceURI or ''
-        # idee: get prefix from record.xmlnsPrefix
-        newPrefixInfo = (nsDict.get(ns,''), ns)
+                ns2xsd[nsXsdList[n]] = nsXsdList[n+1]
+        return ns2xsd
+
+    def updateAllPrefixes(self, prefix, record):
+        allPrefixes = self._getAllPrefixes()
+        ns2xsd = self.findSchema(record)
+        nsmap = findNamespaces(record)
+        ns = nsmap[record.prefix]
+        newPrefixInfo = (ns2xsd.get(ns,''), ns)
         if prefix not in allPrefixes or newPrefixInfo > allPrefixes[prefix]:
             allPrefixes[prefix] = newPrefixInfo
         prefixTemplate = '<metadataFormat><metadataPrefix>%s</metadataPrefix><schema>%s</schema><metadataNamespace>%s</metadataNamespace></metadataFormat>'

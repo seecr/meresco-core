@@ -27,6 +27,8 @@
 
 from meresco.framework.observable import Observable
 from amara import binderytools
+from lxml.etree import parse, _ElementTree, tostring
+from cStringIO import StringIO
 
 class XmlInflate(Observable):
 
@@ -44,3 +46,37 @@ class XmlDeflate(Observable):
 
     def unknown(self, *args, **kwargs):
         return self.all.unknown(*args, **kwargs)
+
+class XmlPrintLxml(Observable):
+    def printXml(self, node):
+        if type(node) == _ElementTree:
+            return tostring(node, pretty_print = True)
+        return node
+
+    def unknown(self, msg, *args, **kwargs):
+        newArgs = [self.printXml(arg) for arg in args]
+        newKwargs = dict((key, self.printXml(value)) for key, value in kwargs.items())
+        return self.all.unknown(msg, *newArgs, **newKwargs)
+
+class Amara2Lxml(Observable):
+
+    def amara2lxml(self, something):
+        if 'amara.bindery.' in str(type(something)):
+            return parse(StringIO(something.xml()))
+        return something
+
+    def unknown(self, msg, *args, **kwargs):
+        newArgs = [self.amara2lxml(arg) for arg in args]
+        newKwargs = dict((key, self.amara2lxml(value)) for key, value in kwargs.items())
+        return self.all.unknown(msg, *newArgs, **newKwargs)
+
+class Lxml2Amara(Observable):
+    def lxml2amara(self, arg):
+        if type(arg) == _ElementTree:
+            arg = binderytools.bind_string(tostring(arg))
+        return arg
+
+    def unknown(self, msg, *args, **kwargs):
+        newArgs = [self.lxml2amara(arg) for arg in args]
+        newKwargs = dict((key, self.lxml2amara(value)) for key, value in kwargs.items())
+        return self.all.unknown(msg, *newArgs, **newKwargs)

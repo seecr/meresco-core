@@ -45,7 +45,7 @@ class CrosswalkTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.crosswalk = Crosswalk('LOMv1.0')
+        self.crosswalk = Crosswalk('theXmlRecord')
         self.validate = Validate(['metadata'])
         self.crosswalk.addObserver(self.validate)
         self.observer = CallTrace()
@@ -175,19 +175,19 @@ END:VCARD</entity>
 """
         tree = parse(StringIO(xml))
         from lxml.etree import XMLSchema
-        schema = XMLSchema(parse(open('/home/pair/development/cq2-svn-all/lorenet/trunk/xsd/src/data/lomCcNbc.xsd')))
+        schema = XMLSchema(parse(open('../src/components/xml_generic/schemas-lom/lomCcNbc.xsd')))
         validate = Validate()
         validate.unknown('msg', 'id', 'name', tree)
         schema.validate(tree)
         self.assertEquals(None, schema.error_log.last_error)
 
     def testOne(self):
-        list(self.crosswalk.unknown('crosswalk', 'id', 'metadata', parse(readRecord('imsmd_v1p2-1.xml'))))
+        list(self.crosswalk.unknown('crosswalk', 'id', 'metadata', theXmlRecord=parse(readRecord('imsmd_v1p2-1.xml'))))
         self.assertEquals(1, len(self.observer.calledMethods))
-        self.assertEquals(3, len(self.observer.calledMethods[0].arguments))
+        self.assertEquals(2, len(self.observer.calledMethods[0].arguments))
         arguments = self.observer.calledMethods[0].arguments
         self.assertEquals("id", arguments[0])
-        self.assertEquals("LOMv1.0", arguments[1])
+        self.assertEquals("metadata", arguments[1])
 
     def testValidate(self):
         try:
@@ -203,7 +203,7 @@ END:VCARD</entity>
 
     def testTripleLExample(self):
         try:
-            self.crosswalk.unknown('methodname', 'id', 'metadata', parse(readRecord('triple-lrecord.xml')))
+            self.crosswalk.unknown('methodname', 'id', 'metadata', theXmlRecord=parse(readRecord('triple-lrecord.xml')))
         except Exception, e:
             message = readRecord('triple-lrecord.xml').read()
             for n, line in enumerate(message.split('\n')):
@@ -211,9 +211,9 @@ END:VCARD</entity>
             raise
 
     def testNormalize(self):
-        list(self.crosswalk.unknown('add', None, 'metadata', parse(readRecord('triple-lrecord.xml'))))
+        list(self.crosswalk.unknown('add', None, 'metadata', theXmlRecord=parse(readRecord('triple-lrecord.xml'))))
         self.assertEquals(1, len(self.observer.calledMethods))
-        self.assertFalse('2006-11-28 19:00' in tostring(self.observer.calledMethods[0].arguments[2]))
+        self.assertFalse('2006-11-28 19:00' in tostring(self.observer.calledMethods[0].kwargs['theXmlRecord']))
 
 
     def testReplacePrefix(self):

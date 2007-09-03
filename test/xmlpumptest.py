@@ -25,13 +25,15 @@
 #
 ## end license ##
 
+from cStringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 from meresco.framework.observable import Observable
 from cq2utils.component import Notification
 from cq2utils.calltrace import CallTrace
 from amara import binderytools
+from lxml.etree import _ElementTree, tostring, parse
 
-from meresco.components.xmlpump import XmlInflate, XmlDeflate
+from meresco.components.xmlpump import XmlInflate, XmlDeflate, Amara2Lxml, Lxml2Amara
 
 class XmlPumpTest(CQ2TestCase):
 
@@ -62,3 +64,25 @@ class XmlPumpTest(CQ2TestCase):
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals("add", observer.calledMethods[0].name)
         self.assertEquals(["id", "partName", s], observer.calledMethods[0].arguments)
+
+    def testAmara2LXml(self):
+        class Observer:
+            def ape(inner, lxmlNode):
+                self.lxmlNode = lxmlNode
+        amara2lxml = Amara2Lxml()
+        amara2lxml.addObserver(Observer())
+        amaraNode = binderytools.bind_string('<a><b>c</b></a>')
+        list(amara2lxml.unknown('ape', amaraNode))
+        self.assertEquals(_ElementTree, type(self.lxmlNode))
+        self.assertEquals('<a><b>c</b></a>', tostring(self.lxmlNode))
+
+    def testLxml2Amara(self):
+        class Observer:
+            def ape(inner, amaraNode):
+                self.amaraNode = amaraNode
+        lxml2amara = Lxml2Amara()
+        lxml2amara.addObserver(Observer())
+        lxmlNode = parse(StringIO('<a><b>c</b></a>'))
+        list(lxml2amara.unknown('ape', lxmlNode))
+        self.assertEquals("<class 'amara.bindery.root_base'>", str(type(self.amaraNode)))
+        self.assertEquals('<?xml version="1.0" encoding="UTF-8"?>\n<a><b>c</b></a>', self.amaraNode.xml())

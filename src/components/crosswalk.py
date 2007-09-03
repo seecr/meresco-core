@@ -23,8 +23,9 @@
 #
 ## end license ##
 from StringIO import StringIO
-from lxml.etree import parse, XMLParser
+from lxml.etree import parse, XMLParser, _ElementTree
 from cq2utils.xmlutils.xmlrewrite import XMLRewrite
+from cq2utils.xmlutils import findNamespaces
 from glob import glob
 from os.path import basename, dirname
 
@@ -44,11 +45,11 @@ def rewrite(pattern, replacement, rules):
 
 class Crosswalk(Observable):
 
-    def __init__(self, rewriteName, rulesDir=dirname(__file__)):
+    def __init__(self,argumentKeyword, rulesDir=dirname(__file__)):
         Observable.__init__(self)
-        self.rewriteName = rewriteName
         self.ruleSet = {}
         self.rulesDir = rulesDir
+        self.argumentKeyword = argumentKeyword
         if rulesDir:
             for fileName in glob(rulesDir + '/*' + EXTENSION):
                 args = {}
@@ -60,12 +61,22 @@ class Crosswalk(Observable):
         globs = {'extend': lambda name: self.readConfig(name, localsDict), 'rewriteRules': rewriteRules}
         execfile(self.rulesDir + '/' + ruleSetName + EXTENSION, globs, localsDict)
 
-    def unknown(self, method, id, name, lxmlNode, *args, **kwargs):
-        root = lxmlNode.getroot()
-        namespaceURI = root.nsmap[root.prefix]
+    def unknown(self, method, *args, **kwargs):
+        if self.argumentKeyword in kwargs:
+            kwargs[self.argumentKeyword] = self.convert(kwargs[self.argumentKeyword])
+            return self.all.unknown(method, *args, **kwargs)
+        raise StopIteration()
+
+    def convert(self, lxmlNode):
+        nsmap = findNamespaces(lxmlNode)
+        if type(lxmlNode) == _ElementTree:
+            prefix = lxmlNode.getroot().prefix
+        else:
+            prefix = lxmlNode.prefix
+        namespaceURI = nsmap[prefix]
         rewrite = XMLRewrite(lxmlNode, **self.ruleSet[namespaceURI])
         rewrite.applyRules()
-        return self.all.unknown(method, id, self.rewriteName, rewrite.asLxml())
+        return rewrite.asLxml()
 
     def __str__(self):
         return 'CrosswalkComponent'

@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -35,15 +35,18 @@ class LogObserver(object):
         self.write = self._stream.write
         self.flush = self._stream.flush
         self._printtime = printtime
-        
+
     def _write(self, aString):
         if self._printtime:
             self.write( '%s\t' % strftime("%Y-%m-%dT%H:%M:%SZ", gmtime()))
         self.write('%s\n' % aString)
         self.flush()
-        
-    def unknown(self, method, *args):
+
+    def unknown(self, method, *args, **kwargs):
         self._write("%s - %s" % (method, self.toString(*args)))
-        
+
+    def logException(self, exception):
+        raise exception
+
     def toString(self, *args):
         return '\t'.join(map(str, args))
