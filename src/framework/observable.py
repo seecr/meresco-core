@@ -24,7 +24,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-
+from sys import exc_info
 from generatorutils import compose
 
 class Defer:
@@ -36,7 +36,11 @@ class Defer:
         return self._defereeType(self._observable._observers, attr)
 
     def unknown(self, message, *args, **kwargs):
-        return getattr(self, message)(*args, **kwargs)
+        try:
+            return getattr(self, message)(*args, **kwargs)
+        except:
+            exType, exValue, exTraceback = exc_info()
+            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 class DeferredMessage:
     def __init__(self, observers, message):
@@ -46,12 +50,20 @@ class DeferredMessage:
     def __call__(self, *args, **kwargs):
         for observer in self._observers:
             if hasattr(observer, self._message):
-                yield getattr(observer, self._message)(*args, **kwargs)
+                try:
+                    yield getattr(observer, self._message)(*args, **kwargs)
+                except:
+                    exType, exValue, exTraceback = exc_info()
+                    raise exType, exValue, exTraceback.tb_next # skip myself from traceback
             elif hasattr(observer, 'unknown'):
                 responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
                 if responses:
-                    for response in responses:
-                        yield response
+                    try:
+                        for response in responses:
+                            yield response
+                    except:
+                        exType, exValue, exTraceback = exc_info()
+                        raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 class AllMessage(DeferredMessage):
     pass
@@ -62,11 +74,19 @@ class AnyMessage(DeferredMessage):
             return compose(DeferredMessage.__call__(self, *args, **kwargs)).next()
         except StopIteration:
             raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
+        except:
+            exType, exValue, exTraceback = exc_info()
+            raise exType, exValue, exTraceback.tb_next.tb_next # skip myself and compose from traceback
 
 class DoMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
-        for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
-            pass
+        try:
+            for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
+                pass
+        except:
+            exType, exValue, exTraceback = exc_info()
+            raise exType, exValue, exTraceback.tb_next.tb_next # skip myself and compose from traceback
+
 
 class Observable(object):
     def __init__(self, name = None):

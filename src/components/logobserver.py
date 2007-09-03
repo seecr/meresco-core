@@ -27,7 +27,7 @@
 
 from time import strftime, gmtime
 from sys import stdout, exc_info
-from traceback import format_exception
+from traceback import print_exc
 
 class LogObserver(object):
     def __init__(self, stream = stdout, printtime = True):
@@ -45,8 +45,8 @@ class LogObserver(object):
     def unknown(self, method, *args, **kwargs):
         self._write("%s - %s" % (method, self.toString(*args)))
 
-    def logException(self, exception):
-        raise exception
+    def logException(self, exception='ignored'):
+        print_exc(file=self._stream)
 
     def toString(self, *args):
         return '\t'.join(map(str, args))

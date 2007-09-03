@@ -67,7 +67,8 @@
 	<xs:redefine schemaLocation="common/dataTypes.xsd">
 		<xs:simpleType name="MimeType">
 			<xs:restriction base="MimeType">
-				<xs:pattern value="\s*[\w\d!#\$\&amp;\.\+\-\^_]+/[\w\d!#\$\&amp;\.\+\-\^_]+\s*"/>
+                <xs:pattern value="\s*[\w\d!#$&amp;\.\+\-\^_]+/[\w\d!#$&amp;\.\+\-\^_]+\s*"/>
+             <!--xs:pattern value="\s*[\w\d!#\$\&amp;\.\+\-\^_]+/[\w\d!#\$\&amp;\.\+\-\^_]+\s*"/-->
 			</xs:restriction>
 		</xs:simpleType>
 	</xs:redefine>

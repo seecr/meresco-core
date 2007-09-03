@@ -26,6 +26,7 @@
 ## end license ##
 
 import sys
+from traceback import format_tb
 from types import GeneratorType
 
 from meresco.framework.observable import Observable
@@ -253,6 +254,80 @@ class ObservableTest(unittest.TestCase):
         result = a.any.a()
         self.assertEquals(1, result)
 
+    def testFixUpExceptionTraceBack(self):
+        class A:
+            def a(self):
+                raise Exception('A.a')
+            def unknown(self, msg, *args, **kwargs):
+                yield self.a()
+        observable = Observable()
+        observable.addObserver(A())
+        try:
+            observable.any.a()
+        except Exception:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('A.a', str(exValue))
+            self.assertEquals(2, len(format_tb(exTraceback)))
+        try:
+            list(observable.all.a())
+        except Exception:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('A.a', str(exValue))
+            self.assertEquals(2, len(format_tb(exTraceback)))
+        try:
+            observable.do.a()
+        except Exception:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('A.a', str(exValue))
+            self.assertEquals(2, len(format_tb(exTraceback)))
+        try:
+            observable.any.unknown('a')
+        except Exception:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('A.a', str(exValue))
+            self.assertEquals(2, len(format_tb(exTraceback)))
+        try:
+            observable.any.somethingNotThereButHandledByUnknown('a')
+        except Exception:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('A.a', str(exValue))
+            # unknown calls a(), so one extra traceback: 3
+            self.assertEquals(3, len(format_tb(exTraceback)))
+
+    def testMoreElaborateExceptionCleaning(self):
+        class A(Observable):
+            def a(self): return self.any.b()
+        class B(Observable):
+            def b(self): return self.any.c()
+        class C(Observable):
+            def c(self): return self.any.d()
+        class D:
+            def d(self): raise Exception('D.d')
+        a = A()
+        b = B()
+        c = C()
+        a.addObserver(b)
+        b.addObserver(c)
+        c.addObserver(D())
+        try:
+            a.a()
+            self.fail('should raise exception')
+        except:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('D.d', str(exValue))
+            self.assertEquals('testMoreElaborateExceptionCleaning', exTraceback.tb_frame.f_code.co_name)
+            exTraceback = exTraceback.tb_next
+            self.assertEquals('a', exTraceback.tb_frame.f_code.co_name)
+            exTraceback = exTraceback.tb_next
+            self.assertEquals('b', exTraceback.tb_frame.f_code.co_name)
+            exTraceback = exTraceback.tb_next
+            self.assertEquals('c', exTraceback.tb_frame.f_code.co_name)
+            exTraceback = exTraceback.tb_next
+            self.assertEquals('d', exTraceback.tb_frame.f_code.co_name)
+            exTraceback = exTraceback.tb_next
+            self.assertEquals(None, exTraceback)
+
+
 class TestException(Exception):
     pass
 
@@ -260,13 +335,6 @@ class MockObserver:
 
     def __init__(self):
         self.notifications = []
-
-    def notify(self, *args):
-        self.notifications.append(args)
-
-    def notifyRaisesException(self, *args):
-        self.notifications.append(args)
-        raise TestException("notifyRaisesException")
 
 class ObserverA(MockObserver):
 

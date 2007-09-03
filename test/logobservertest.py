@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -32,20 +32,20 @@ from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
 
 class LogObserverTest(TestCase):
-    
+
     def testLogging(self):
         stream = StringIO()
         log = LogObserver(stream)
-        
+
         class AnArgument:
             def __str__(self):
                 return 'Looking for an argument.'
         argument = AnArgument()
         log.unknown('methodName', 'one', argument, 'three')
-        
+
         time, line = stream.getvalue().split('\t',1)
         self.assertEquals('methodName - one\tLooking for an argument.\tthree\n', line)
-        
+
     def testLoggingBySubclassing(self):
         stream = StringIO()
         arguments = []
@@ -54,9 +54,34 @@ class LogObserverTest(TestCase):
                 arguments.append(args)
                 return 'toString'
         log = MyLogObserver(stream)
-        
+
         log.unknown('methodName', 'one', 'two')
-        
+
         time, line = stream.getvalue().split('\t',1)
         self.assertEquals('methodName - toString\n', line)
         self.assertEquals([('one','two')], arguments)
+
+    def testLogException(self):
+        class B:
+            def b(self): raise Exception('B')
+        class A(Observable):
+            def a(self):
+                try:
+                    self.any.b()
+                except Exception, e:
+                    self.do.logException(e)
+        a = A()
+        stream = StringIO()
+        log = LogObserver(stream)
+        a.addObserver(B())
+        a.addObserver(log)
+        a.a()
+        lines = stream.getvalue().split('\n')
+        self.assertTrue('Traceback (most recent call last):' in lines[0], lines[0])
+        self.assertTrue('/test/logobservertest.py", line 70, in a' in lines[1], lines[1])
+        self.assertTrue('    self.any.b()' in lines[2], lines[2])
+        self.assertTrue('test/logobservertest.py", line 66, in b' in lines[3], lines[3])
+        self.assertTrue("    def b(self): raise Exception('B')" in lines[4], lines[4])
+        self.assertTrue('Exception: B' in lines[5], lines[5])
+        self.assertEquals('', lines[6])
+        self.assertEquals(7, len(lines))
