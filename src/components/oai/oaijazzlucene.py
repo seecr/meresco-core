@@ -169,6 +169,8 @@ class OaiJazzLucene(Observable):
         return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
 
     def findSchema(self, record):
+        if 'amara.bindery.root_base' in str(type(record)):
+            record = record.childNodes[0]
         ns2xsd = {}
         if hasattr(record, 'schemaLocation'):
             nsXsdList = record.schemaLocation.split()
@@ -177,6 +179,8 @@ class OaiJazzLucene(Observable):
         return ns2xsd
 
     def updateAllPrefixes(self, prefix, record):
+        if 'amara.bindery.root_base' in str(type(record)):
+            record = record.childNodes[0]
         allPrefixes = self._getAllPrefixes()
         ns2xsd = self.findSchema(record)
         nsmap = findNamespaces(record)
