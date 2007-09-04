@@ -65,7 +65,7 @@ class Crosswalk(Observable):
         if self.argumentKeyword in kwargs:
             kwargs[self.argumentKeyword] = self.convert(kwargs[self.argumentKeyword])
             return self.all.unknown(method, *args, **kwargs)
-        raise StopIteration()
+        return (i for i in [])
 
     def convert(self, lxmlNode):
         nsmap = findNamespaces(lxmlNode)
