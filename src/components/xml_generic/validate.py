@@ -51,14 +51,23 @@ rootSchema = '<?xml version="1.0" encoding="utf-8"?><schema targetNamespace="htt
 schemaXml = parse(StringIO(rootSchema))
 lomSchemaXml = parse(open(join(schemaLocation+"-lom", 'lomCcNbc.xsd')))
 
-try:
-    lomSchema = XMLSchema(lomSchemaXml)
-    schema = XMLSchema(schemaXml)
-except XMLSchemaParseError, e:
-    print e.error_log.last_error
-    raise
+schema = None
+lomSchema = None
+
+def getSchema():
+    global schema
+    global lomSchema
+    if not schema:
+        try:
+            lomSchema = XMLSchema(lomSchemaXml)
+            schema = XMLSchema(schemaXml)
+        except XMLSchemaParseError, e:
+            print e.error_log.last_error
+            raise
+    return schema
 
 def validate(aXmlStream):
+    schema = getSchema()
     tree = parse(aXmlStream)
     schema.validate(tree)
     if schema.error_log:
@@ -85,7 +94,7 @@ class Validate(Observable):
                 # 20070831 - JJ - Workaround.
                 # Apparently there are bug(s) in libxml2 which prevents lxml from validating LOM in combination
                 # with other schema's.
-                validatingSchema = schema
+                validatingSchema = getSchema()
                 if 'http://ltsc.ieee.org/xsd/LOM' in usedNamespaces.values():
                     validatingSchema = lomSchema
                 toValidate = parse(StringIO(tostring(arg, pretty_print=True)))
