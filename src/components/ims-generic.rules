@@ -142,8 +142,8 @@ vocabDict = {
 'http://download.edustandaard.nl/vdex/vdex_cost_lomv1p0_20060628.xml':'LOMv1.0',
 'http://download.edustandaard.nl/vdex/vdex_context_czp_20060628.xml':'LOMv1.0',
 'http://download.edustandaard.nl/vdex/vdex_lifecycle_contribute_role_lomv1p0_20060628.xml':'LOMv1.0',
-'http://download.edustandaard.nl/vdex/vdex_aggregationlevel_czp_20060628.xml':'LOMv1.0', 
-#'':'LOMv1.0', 
+'http://download.edustandaard.nl/vdex/vdex_aggregationlevel_czp_20060628.xml':'LOMv1.0',
+#'':'LOMv1.0',
 # for ou_nl:
 'gereedschap': 'other',
 # for Triple L:

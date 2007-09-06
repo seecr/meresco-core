@@ -86,7 +86,8 @@ def assertValidString(aXmlString):
 class Validate(Observable):
 
     def unknown(self, *args, **kwargs):
-        for arg in args:
+        allArguments = list(args) + kwargs.values()
+        for arg in allArguments:
             if type(arg) == _ElementTree:
                 rootElement = arg.getroot()
                 usedNamespaces = rootElement.nsmap
