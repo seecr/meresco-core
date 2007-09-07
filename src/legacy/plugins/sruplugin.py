@@ -29,7 +29,7 @@ import os
 from xml.sax.saxutils import escape as xmlEscape
 from cStringIO import StringIO
 
-from meresco.framework.observable import Observable
+from meresco.framework  import Observable, decorate
 from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 import queryplugin
 from cqlparser.cqlparser import parseString as parseCQL
@@ -172,7 +172,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
     def _writeExtraRecordData(self, recordId):
         if not self.sruQuery.x_recordSchema:
             return
-        
+
         self.write('<srw:extraRecordData>')
         for schema in self.sruQuery.x_recordSchema:
             self.write('<recordData recordSchema="%s">' % xmlEscape(schema))
@@ -196,7 +196,7 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 
     def doSearchRetrieve(self):
         SRU_IS_ONE_BASED = 1
-        
+
         hits = self.any.executeCQL(parseCQL(self.sruQuery.query), self.sruQuery.sortBy,  self.sruQuery.sortDirection)
         self._startResults(len(hits))
 
@@ -224,9 +224,9 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
         for parameterName in ECHOED_PARAMETER_NAMES:
             for value in map(xmlEscape, self._arguments.get(parameterName, [])):
                 self.write('<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals())
-        for response in self.all.echoedExtraRequestData(self._arguments):
-            for chunk in response:
-                self.write(chunk)
+        extraRequestDataGenerator = (chunk for chunk in (response for response in self.all.echoedExtraRequestData(self._arguments)))
+        for chunk in decorate('<srw:extraRequestData>', extraRequestDataGenerator, '</srw:extraRequestData>'):
+            self.write(chunk)
         self.write('</srw:echoedSearchRetrieveRequest>')
 
     def doExplain(self):
@@ -298,6 +298,6 @@ class WriteRecordsForXMLStorage(Observable):
             sink.write(xmlEscape(buffer.getvalue()))
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
-        
+
 def registerOn(aRegistry):
     aRegistry.registerByCommand('sru', lambda webRequest, searchInterface: SRUPlugin(webRequest, aRegistry._configuration.get('sru.recordSchema', ''), aRegistry._configuration.get('sru.recordPacking', '')))

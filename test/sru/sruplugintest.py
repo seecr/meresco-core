@@ -4,7 +4,7 @@
 #    Copyright (C) SURF Foundation. http://www.surf.nl
 #    Copyright (C) Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) SURFnet. http://www.surfnet.nl
-#    Copyright (C) Stichting Kennisnet Ict op school. 
+#    Copyright (C) Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -41,7 +41,7 @@ class SRUPluginTest(CQ2TestCase):
         self.request.args = {}
         self.request.database = 'database'
         self.plugin = SRUPlugin(self.request)
-    
+
     def testExplain(self):
         stream = StringIO()
         self.request.write = stream.write
@@ -80,14 +80,14 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
 </srw:record>
 </srw:explainResponse>
 """, stream.getvalue())
-    
+
     def testGetOperation(self):
         self.plugin._arguments = {'operation':['explain']}
         self.assertEquals("explain", self.plugin.getOperation())
         self.plugin._arguments = {'operation':['searchRetrieve']}
         self.assertEquals("searchRetrieve", self.plugin.getOperation())
-                
-    
+
+
     def testMandatoryArgumentsSupplied(self):
         error = MANDATORY_PARAMETER_NOT_SUPPLIED
         self.validate(error, {'version':['1.1']})
@@ -98,36 +98,36 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         error = UNSUPPORTED_PARAMETER
         self.validate(error, {'version':['1.1'], 'query':['x'], 'operation':['searchRetrieve'], 'niet geldig':['bla']})
         self.validate(SUCCESS, {'version':['1.1'], 'query':['x'], 'operation':['searchRetrieve'], 'x-whatever-comes-after-an-x': ['something']})
-            
+
     def testValidVersion(self):
         error = UNSUPPORTED_VERSION
         self.validate(error, {'version':['1.0'], 'query':['twente'], 'operation':['searchRetrieve']})
-        self.validate(error, {'version':['2.0'], 'query':['twente'], 'operation':['searchRetrieve']})    
-        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve']})    
-        
+        self.validate(error, {'version':['2.0'], 'query':['twente'], 'operation':['searchRetrieve']})
+        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve']})
+
     def testValidOperation(self):
         error = UNSUPPORTED_OPERATION
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['']})    
-        self.validate(error,{'version':['1.1'], 'query':['twente'], 'operation':['unsupportedOperation']})    
-        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve']})    
-        
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['']})
+        self.validate(error,{'version':['1.1'], 'query':['twente'], 'operation':['unsupportedOperation']})
+        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve']})
+
     def testValidStartRecord(self):
         error = UNSUPPORTED_PARAMETER_VALUE
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['']})    
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['A']})    
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['-1']})    
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['0']})    
-        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['1']})    
-        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['999999999']})    
-        
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['']})
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['A']})
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['-1']})
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['0']})
+        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['1']})
+        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['999999999']})
+
     def testValidMaximumRecords(self):
         error = UNSUPPORTED_PARAMETER_VALUE
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['']})    
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['A']})    
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['-1']})    
-        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['0']})    
-        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['1']})    
-        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['999999999']})    
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['']})
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['A']})
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['-1']})
+        self.validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['0']})
+        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['1']})
+        self.validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['999999999']})
 
     def testValidateCQLSyntax(self):
         error = UNSUPPORTED_PARAMETER_VALUE
@@ -138,25 +138,43 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         NO_DETAILS = 2
         self.plugin._arguments = aDict
         self.assertEquals(code, self.plugin.validate()[:NO_DETAILS])
-                
+
     def testEchoedSearchRetrieveRequest(self):
         request = CallTrace('Request')
         request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
             'query':['query >= 3']}
-            
+
         b = StringIO()
         request.write = b.write
         mock = CallTrace('ExtraRequestData')
-        
+
         plugin = SRUPlugin(request)
         plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
-        
+
         plugin._writeEchoedSearchRetrieveRequest()
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
 </srw:echoedSearchRetrieveRequest>""", b.getvalue())
-                
+
+    def testEchoedSearchRetrieveRequestWithExtraRequestData(self):
+        request = CallTrace('Request')
+        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
+            'query':['query >= 3']}
+        b = StringIO()
+        request.write = b.write
+        mock = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': 'some extra request data'})
+        plugin = SRUPlugin(request)
+        plugin.addObserver(mock)
+        plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
+
+        plugin._writeEchoedSearchRetrieveRequest()
+        self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
+    <srw:version>1.1</srw:version>
+    <srw:query>query &gt;= 3</srw:query>
+    <srw:extraRequestData>some extra request data</srw:extraRequestData>
+</srw:echoedSearchRetrieveRequest>""", b.getvalue())
+
     def testSearchRetrieve(self):
         request = CallTrace('Request')
         request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
@@ -164,7 +182,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         request.database = 'database'
         hits = MockHits(2)
         observer = MockListeners(hits)
-            
+
         resultStream = StringIO()
         request.write = resultStream.write
 
@@ -175,11 +193,11 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals('field=value', cqlCompose(observer.cqlQuery))
         self.assertEquals(0, hits.slice_start)
         self.assertEquals(10, hits.slice_stop)
-        
+
         self.assertEquals(4, len(observer.writtenRecords))
         self.assertEquals(('0', 'dc', 'xml'), observer.writtenRecords[0])
         self.assertEquals(('0', 'extra', 'xml'), observer.writtenRecords[1])
-        
+
         self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
 <srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <srw:version>1.1</srw:version>
@@ -213,39 +231,39 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
 </srw:echoedSearchRetrieveRequest>
 </srw:searchRetrieveResponse>
 """, resultStream.getvalue())
-        
+
     def testExtraResponseDataHandlerNoHandler(self):
         resultStream = StringIO()
         self.plugin.write = resultStream.write
         self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
         self.assertEquals('' , resultStream.getvalue())
-    
+
     def testExtraResponseDataHandlerNoData(self):
         resultStream = StringIO()
-        
+
         class TestHandler:
             def extraResponseData(self, *args):
                 return []
-        
+
         self.plugin.write = resultStream.write
         self.plugin.addObserver(TestHandler())
         self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
-        
+
         self.assertEquals('' , resultStream.getvalue())
-        
+
     def testExtraResponseDataHandlerWithData(self):
         resultStream = StringIO()
-        
+
         class TestHandler:
             def extraResponseData(self, *args):
                 return ["<someD", "ata/>"]
-        
+
         self.plugin.write = resultStream.write
         self.plugin.addObserver(TestHandler())
         self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
-        
+
         self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , resultStream.getvalue())
-        
+
     def testNextRecordPosition(self):
         request = CallTrace('Request')
         request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
@@ -253,7 +271,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         request.database = 'database'
         hits = MockHits(100)
         observer = MockListeners(hits)
-            
+
         resultStream = StringIO()
         request.write = resultStream.write
 
@@ -262,31 +280,31 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         plugin.process()
         self.assertTrue("<srw:nextRecordPosition>25</srw:nextRecordPosition>" in resultStream.getvalue(), resultStream.getvalue())
 
-        
+
 class MockListeners:
     def __init__(self, executeCQLResult):
         self.executeCQLResult = executeCQLResult
         self.writtenRecords = []
-        
+
     def executeCQL(self, cqlQuery, sortKey, sortDirection):
         self.executeCQLCalled = True
         self.cqlQuery = cqlQuery
         self.sortKey = sortKey
         self.sortDirection = sortDirection
         return self.executeCQLResult
-    
+
     def writeRecord(self, sink, recordId, recordSchema, recordPacking):
         self.writtenRecords.append((recordId, recordSchema, recordPacking))
         sink.write("<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema))
-    
+
 class MockHits:
-    
+
     def __init__(self, size):
         self.size = size
-    
+
     def __len__(self):
         return self.size
-    
+
     def __getslice__(self, start, stop):
         self.slice_start = start
         self.slice_stop = stop
