@@ -117,7 +117,7 @@
 	<!-- 6.2 Copyright and Other Restrictions -->
 	<xs:simpleType name="copyrightAndOtherRestrictionsValues">
 		<xs:restriction base="xs:token">
-			<xs:pattern value=".*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*"/>
+			<xs:pattern value=".*(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa).*"/>
 		</xs:restriction>
 	</xs:simpleType>
 

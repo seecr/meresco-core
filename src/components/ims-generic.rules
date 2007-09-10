@@ -7,7 +7,7 @@ rootTagName='lom'
 defaultNameSpace='http://ltsc.ieee.org/xsd/LOM'
 
 # namespaces for use in XPath expressions in rules
-xPathNs = {
+sourceNsMap = {
 'imsmd': inputNamespace
 }
 

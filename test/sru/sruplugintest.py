@@ -175,6 +175,26 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     <srw:extraRequestData>some extra request data</srw:extraRequestData>
 </srw:echoedSearchRetrieveRequest>""", b.getvalue())
 
+    def testEchoedSearchRetrieveRequestWithoutExtraRequestData(self):
+        request = CallTrace('Request')
+        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
+            'query':['query >= 3']}
+        b = StringIO()
+        request.write = b.write
+        def answer(arg):
+            yield (None)
+        mock = CallTrace('ExtraRequestData')
+        mock.echoedExtraRequestData = answer
+        plugin = SRUPlugin(request)
+        plugin.addObserver(mock)
+        plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
+
+        plugin._writeEchoedSearchRetrieveRequest()
+        self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
+    <srw:version>1.1</srw:version>
+    <srw:query>query &gt;= 3</srw:query>
+</srw:echoedSearchRetrieveRequest>""", b.getvalue())
+
     def testSearchRetrieve(self):
         request = CallTrace('Request')
         request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
