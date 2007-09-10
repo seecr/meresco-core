@@ -27,4 +27,4 @@
 
 from observable import Observable
 from observer import ObserverFunction
-from generatorutils import decorate
+from generatorutils import decorate, compose

@@ -30,6 +30,7 @@ from xml.sax.saxutils import quoteattr, escape
 from cqlparser.cqlparser import parseString as parseCQL
 
 from meresco.framework.observable import Observable
+from meresco.framework.generatorutils import compose
 
 DEFAULT_MAXIMUM_TERMS = 10
 
@@ -57,13 +58,13 @@ class SRUDrillDownAdapter(Observable):
     def extraResponseData(self, webRequest, hits):
         return generatorDecorate(
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
-            flatten(self.all.extraResponseData(webRequest, hits)),
+            compose(self.all.extraResponseData(webRequest, hits)),
             "</dd:drilldown>")
 
     def echoedExtraRequestData(self, arguments):
         return generatorDecorate(
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
-            flatten(self.all.echoedExtraRequestData(arguments)),
+            compose(self.all.echoedExtraRequestData(arguments)),
             "</dd:drilldown>")
 
 

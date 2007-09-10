@@ -182,7 +182,8 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         b = StringIO()
         request.write = b.write
         def answer(arg):
-            yield (None)
+            if False:
+                yield None
         mock = CallTrace('ExtraRequestData')
         mock.echoedExtraRequestData = answer
         plugin = SRUPlugin(request)

@@ -29,7 +29,7 @@ import os
 from xml.sax.saxutils import escape as xmlEscape
 from cStringIO import StringIO
 
-from meresco.framework  import Observable, decorate
+from meresco.framework import Observable, decorate, compose
 from sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 import queryplugin
 from cqlparser.cqlparser import parseString as parseCQL
@@ -224,8 +224,8 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
         for parameterName in ECHOED_PARAMETER_NAMES:
             for value in map(xmlEscape, self._arguments.get(parameterName, [])):
                 self.write('<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals())
-        extraRequestDataGenerator = (chunk for chunk in (response for response in self.all.echoedExtraRequestData(self._arguments)))
-        for chunk in decorate('<srw:extraRequestData>', extraRequestDataGenerator, '</srw:extraRequestData>'):
+
+        for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(self._arguments)), '</srw:extraRequestData>'):
             self.write(chunk)
         self.write('</srw:echoedSearchRetrieveRequest>')
 
