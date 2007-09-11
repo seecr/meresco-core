@@ -25,5 +25,5 @@
 #
 ## end license ##
 from observableserver import ObservableServer
-from observablehttpserver import ObservableHttpServer
+from observablehttpserver import ObservableHttpServer, ObservableHttpServerAdapter
 from pathfilter import PathFilter
