@@ -32,7 +32,7 @@ class StorageComponent(Component):
         self._storage = HierarchicalStorage(Storage(storeDirectory), split = self._split)
 
     def store(self, *args, **kwargs):
-        self.add(*args, **kwargs)
+        return self.add(*args, **kwargs)
 
     def add(self, id, partName, someString, *args, **kwargs):
         sink = self._storage.put((id, partName))

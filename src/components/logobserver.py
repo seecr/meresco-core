@@ -31,10 +31,14 @@ from traceback import print_exc
 
 class LogObserver(object):
     def __init__(self, stream = stdout, printtime = True):
+        self.setStream(stream)
+        self._printtime = printtime
+
+    def setStream(self, stream):
         self._stream = stream
         self.write = self._stream.write
         self.flush = self._stream.flush
-        self._printtime = printtime
+
 
     def _write(self, aString):
         if self._printtime:

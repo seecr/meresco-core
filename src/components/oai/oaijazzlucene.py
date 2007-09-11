@@ -92,6 +92,10 @@ class OaiJazzLucene(Observable):
             sets, prefixes, stamp, unique = parseOaiMeta(data)
         return sets, prefixes, stamp, unique
 
+    def storeOaiInformation(self, *args, **kwargs):
+        self.add(*args, **kwargs)
+
+
     def add(self, id, name, record, *nodes):
         self.any.deletePart(id, 'tombstone')
         sets, prefixes, na, na = self.getPreviousRecord(id)
