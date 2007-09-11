@@ -92,6 +92,7 @@ from xml_generic.lxml_based.crosswalktest import CrosswalkTest
 from xml_generic.lxml_based.crosswalktestbase import CrosswalkTestBase
 from xml_generic.validatetest import ValidateTest
 
+from observablehttpservertest import ObservableHttpServerTest
 if __name__ == '__main__':
         unittest.main()
         os.system('find .. -name "*.pyc" | xargs rm -f')

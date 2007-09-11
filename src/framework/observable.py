@@ -48,6 +48,9 @@ class DeferredMessage:
         self._message = message
 
     def __call__(self, *args, **kwargs):
+        return compose(self._gatherResponses(*args, **kwargs))
+
+    def _gatherResponses(self, *args, **kwargs):
         for observer in self._observers:
             if hasattr(observer, self._message):
                 try:
@@ -71,21 +74,21 @@ class AllMessage(DeferredMessage):
 class AnyMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            return compose(DeferredMessage.__call__(self, *args, **kwargs)).next()
+            return DeferredMessage.__call__(self, *args, **kwargs).next()
         except StopIteration:
             raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
         except:
             exType, exValue, exTraceback = exc_info()
-            raise exType, exValue, exTraceback.tb_next.tb_next # skip myself and compose from traceback
+            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 class DoMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
+            for ignore in DeferredMessage.__call__(self, *args, **kwargs):
                 pass
         except:
             exType, exValue, exTraceback = exc_info()
-            raise exType, exValue, exTraceback.tb_next.tb_next # skip myself and compose from traceback
+            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 
 class Observable(object):

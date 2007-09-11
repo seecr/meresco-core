@@ -24,16 +24,20 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-
+from sys import exc_info
 from types import GeneratorType
 
 def compose(generator):
-    for value in generator:
-        if type(value) == GeneratorType:
-            for nested in compose(value):
-                yield nested
-        else:
-            yield value
+    try:
+        for value in generator:
+            if type(value) == GeneratorType:
+                for nested in compose(value):
+                    yield nested
+            else:
+                yield value
+    except:
+        exType, exValue, exTraceback = exc_info()
+        raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 def decorate(before, generator, after):
     first = generator.next()
