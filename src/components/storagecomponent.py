@@ -27,9 +27,16 @@
 from cq2utils.component import Component
 from storage import HierarchicalStorage, Storage, HierarchicalStorageError
 
+def defaultSplit((id, partName)):
+    result = id.split(':',1)
+    if partName != None:
+        result += [partName + '.xml']
+    return result
+
+
 class StorageComponent(Component):
-    def __init__(self, storeDirectory):
-        self._storage = HierarchicalStorage(Storage(storeDirectory), split = self._split)
+    def __init__(self, storeDirectory, split=defaultSplit):
+        self._storage = HierarchicalStorage(Storage(storeDirectory), split=split)
 
     def store(self, *args, **kwargs):
         return self.add(*args, **kwargs)
@@ -40,12 +47,6 @@ class StorageComponent(Component):
             sink.send(someString)
         finally:
             return sink.close()
-
-    def _split(self, (id, partName)):
-        result = id.split(':',1)
-        if partName != None:
-            result += [partName + '.xml']
-        return result
 
     def deletePart(self, id, partName):
         try:
