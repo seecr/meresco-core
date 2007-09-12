@@ -118,6 +118,3 @@ class BitArrayTest(unittest.TestCase):
     def testCombinedCardinalityCombination(self):
         self.checkCardinalities(self.createSparse, self.createDense)
         self.checkCardinalities(self.createDense, self.createSparse)    
-
-if __name__ == '__main__':
-    unittest.main()

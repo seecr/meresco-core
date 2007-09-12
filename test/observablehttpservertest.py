@@ -26,7 +26,7 @@
 ## end license ##
 from unittest import TestCase
 from random import randint
-from weightless import Reactor, HttpReader
+from weightless import Reactor, HttpReader, VERSION as WlVersion
 from meresco.components.http import ObservableHttpServer, ObservableHttpServerAdapter
 from cq2utils import CallTrace
 from socket import gethostname
@@ -49,7 +49,7 @@ class ObservableHttpServerTest(TestCase):
         while len(mockObserver.calledMethods) < 1:
             reactor.step()
         self.assertEquals('handleRequest', mockObserver.calledMethods[0].name)
-        self.assertEquals({'port': port, 'RequestURI': '/', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v0.1'}, 'Client': ('127.0.0.1', MATCHALL)}, mockObserver.calledMethods[0].kwargs)
+        self.assertEquals({'port': port, 'RequestURI': '/', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v' + WlVersion}, 'Client': ('127.0.0.1', MATCHALL)}, mockObserver.calledMethods[0].kwargs)
         while len(fragments) < 3:
             reactor.step()
         self.assertEquals('abc', ''.join(fragments))

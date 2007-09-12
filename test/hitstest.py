@@ -123,5 +123,3 @@ class MockPyLuceneDocument:
             raise Exception("fieldname %s != document.IDFIELD" % fieldname)
         return "id%i" % self._luceneId
         
-if __name__ == "__main__":
-    unittest.main()
