@@ -32,7 +32,7 @@ class ObservableHttpServerTest(TestCase):
         oldStyleComponent = CallTrace('oldStyleComponent')
         adapter = ObservableHttpServerAdapter()
         adapter.addObserver(oldStyleComponent)
-        result = adapter.handleRequest(port=123, **{'RequestURI': '/?arg=1', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'somehost', 'User-Agent': 'Weightless/v0.1'}, 'Client': ('127.0.0.1', 35623)})
+        result = adapter.handleRequest(port=123, **{'RequestURI': '/?arg=1', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'somehost:12345', 'User-Agent': 'Weightless/v0.1'}, 'Client': ('127.0.0.1', 35623)})
         list(result)
         self.assertEquals('handleRequest', oldStyleComponent.calledMethods[0].name)
         webrequest = oldStyleComponent.calledMethods[0].args[0]
@@ -40,7 +40,7 @@ class ObservableHttpServerTest(TestCase):
         self.assertEquals('GET', webrequest.method)
         self.assertEquals('/?arg=1', webrequest.uri)
         self.assertEquals({'arg': ['1']}, webrequest.args)
-        self.assertEquals({'Host': 'somehost', 'User-Agent': 'Weightless/v0.1'}, webrequest.received_headers)
+        self.assertEquals({'Host': 'somehost:12345', 'User-Agent': 'Weightless/v0.1'}, webrequest.received_headers)
         self.assertEquals('127.0.0.1', webrequest.client.host)
         self.assertEquals('somehost', webrequest.getRequestHostname())
         self.assertEquals(123, webrequest.getHost().port)
@@ -76,10 +76,10 @@ class ObservableHttpServerTest(TestCase):
     def testSetResponseCodeAndHeader(self):
         oldStyleComponent = CallTrace('oldStyleComponent')
         def handleRequest(webrequest):
-            webrequest.setHeader('Content-Type', 'text/xml')
+            webrequest.setHeader('content-type', 'text/xml')
             webrequest.setResponseCode(302)
         oldStyleComponent.handleRequest = handleRequest
         adapter = ObservableHttpServerAdapter()
         adapter.addObserver(oldStyleComponent)
         result = adapter.handleRequest(**{'RequestURI': '/?arg=1', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v0.1'}, 'Client': ('127.0.0.1', 35623)})
-        self.assertEquals('HTTP/1.0 302 Ok\r\nKey: text/xml\r\n\r\n', ''.join(result))
+        self.assertEquals('HTTP/1.0 302 Ok\r\nContent-Type: text/xml\r\n\r\n', ''.join(result))

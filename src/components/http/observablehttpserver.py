@@ -35,13 +35,13 @@ class WebRequest(object):
         self.responseCode = 200
 
     def getRequestHostname(self):
-        return self.headers.get('Host', gethostname())
+        return self.headers.get('Host', gethostname()).split(':')[0]
 
     def setResponseCode(self, code):
         self.responseCode = code
 
     def setHeader(self, key, value):
-        self.headersOut['key'] = value
+        self.headersOut[key] = value
 
     def __str__(self):
         return '\t'.join((self.client.host, self.method, self.uri))
