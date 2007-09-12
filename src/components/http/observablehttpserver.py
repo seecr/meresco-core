@@ -34,7 +34,7 @@ class WebRequest(object):
         self.headersOut = {}
         self.responseCode = 200
 
-    def getRequestHostName(self):
+    def getRequestHostname(self):
         return self.headers.get('Host', gethostname())
 
     def setResponseCode(self, code):

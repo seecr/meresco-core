@@ -4,6 +4,7 @@ from weightless import Reactor, HttpReader
 from meresco.components.http import ObservableHttpServer, ObservableHttpServerAdapter
 from cq2utils import CallTrace
 from socket import gethostname
+from cq2utils import MATCHALL
 
 class ObservableHttpServerTest(TestCase):
     def testOne(self):
@@ -22,7 +23,7 @@ class ObservableHttpServerTest(TestCase):
         while len(mockObserver.calledMethods) < 1:
             reactor.step()
         self.assertEquals('handleRequest', mockObserver.calledMethods[0].name)
-        self.assertEquals({'port': port, 'RequestURI': '/', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v0.1'}}, mockObserver.calledMethods[0].kwargs)
+        self.assertEquals({'port': port, 'RequestURI': '/', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v0.1'}, 'Client': ('127.0.0.1', MATCHALL)}, mockObserver.calledMethods[0].kwargs)
         while len(fragments) < 3:
             reactor.step()
         self.assertEquals('abc', ''.join(fragments))
@@ -41,7 +42,7 @@ class ObservableHttpServerTest(TestCase):
         self.assertEquals({'arg': ['1']}, webrequest.args)
         self.assertEquals({'Host': 'somehost', 'User-Agent': 'Weightless/v0.1'}, webrequest.received_headers)
         self.assertEquals('127.0.0.1', webrequest.client.host)
-        self.assertEquals('somehost', webrequest.getRequestHostName())
+        self.assertEquals('somehost', webrequest.getRequestHostname())
         self.assertEquals(123, webrequest.getHost().port)
 
     def testGetHostNameWithoutHostnameHeader(self):
@@ -51,7 +52,7 @@ class ObservableHttpServerTest(TestCase):
         result = adapter.handleRequest(**{'RequestURI': '/?arg=1', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'User-Agent': 'Weightless/v0.1'}, 'Client': ('127.0.0.1', 35623)})
         list(result)
         webrequest = oldStyleComponent.calledMethods[0].args[0]
-        self.assertEquals(gethostname(), webrequest.getRequestHostName())
+        self.assertEquals(gethostname(), webrequest.getRequestHostname())
 
     def testWriteResponseWithAdapter(self):
         oldStyleComponent = CallTrace('oldStyleComponent')

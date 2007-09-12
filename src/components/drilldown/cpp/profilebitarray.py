@@ -24,9 +24,6 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-#
-# $Id: configurationtest.py 78 2006-05-18 13:20:26Z svn $
-#
 
 from bitarray import DenseBitArray, SparseBitArray
 from random import sample
