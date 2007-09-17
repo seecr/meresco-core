@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -177,7 +177,7 @@ END:VCARD</entity>
 """
         tree = parse(StringIO(xml))
         from lxml.etree import XMLSchema
-        schema = XMLSchema(parse(open('../src/components/xml_generic/schemas-lom/lomCcNbc.xsd')))
+        schema = XMLSchema(parse(open('../meresco/components/xml_generic/schemas-lom/lomCcNbc.xsd')))
         validate = Validate()
         validate.unknown('msg', 'id', 'name', tree)
         schema.validate(tree)

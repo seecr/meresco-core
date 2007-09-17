@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -39,12 +39,23 @@ setup(
         'meresco.components.lucene',
         'meresco.components.oai',
         'meresco.components.sru',
+        'meresco.components.xml_generic',
         'meresco.legacy',
         'meresco.legacy.plugins',
         'meresco.framework'
     ],
     package_data={
-        'meresco.components.oai': ['data/*']
+        'meresco.components': ['*.rules'],
+        'meresco.components.oai': ['data/*'],
+        'meresco.components.xml_generic': [
+            'schemas/*',
+            'schemas-lom/*.xsd',
+            'schemas-lom/common/*',
+            'schemas-lom/examples/*',
+            'schemas-lom/extend/*',
+            'schemas-lom/unique/*',
+            'schemas-lom/vocab/*'
+        ]
     },
     ext_modules=[
         Extension("meresco.components.drilldown.cpp._bitarray", [
