@@ -1,7 +1,9 @@
-python-cqlparser (=1.3)
+python-cqlparser (>=1.3)
 python-lucene (>=2.0.0)
 python-twisted-web
-python-storage (=5.0)
+python-storage (>=5.0)
+python-storage (<<5.1)
 python-amara (=1.2a2)
-python-cq2utils (=4.4.1)
-python-weightless (=0.19)
+python-cq2utils (>=4.4)
+python-weightless (>=0.1)
+python-weightless (<<0.2)
