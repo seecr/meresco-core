@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -262,7 +262,10 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
 
     def addDocuments(self, size):
         for id in range(1,size+1):
-            self.jazz.add('%05d' %id, 'oai_dc', bind_string('<title>The Title %d</title>' %id))
+            self._addRecord(id)
+
+    def _addRecord(self, anId):
+        self.jazz.add('%05d' % anId, 'oai_dc', bind_string('<title>The Title %d</title>' % anId))
 
     def testListAll(self):
         self.addDocuments(1)
@@ -280,3 +283,25 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
         result = self.jazz.oaiSelect(None, 'oai_dc', '%020d' % 1, None, None)
         first = iter(result).next()
         self.assertEquals('00002', first)
+
+    def testListRecordsWithFromAndUntil(self):
+        BooleanQuery.setMaxClauseCount(10) # Cause an early TooManyClauses exception.
+        self.jazz._gettime = lambda: (2007, 9, 24, 14, 27, 53, 0, 267, 0)
+        self._addRecord(1)
+        self.jazz._gettime = lambda: (2007, 9, 23, 14, 27, 53, 0, 267, 0)
+        self._addRecord(2)
+        self.jazz._gettime = lambda: (2007, 9, 22, 14, 27, 53, 0, 267, 0)
+        self._addRecord(3)
+        self.jazz._gettime = lambda: (2007, 9, 21, 14, 27, 53, 0, 267, 0)
+        self._addRecord(4)
+
+        result = list(self.jazz.oaiSelect(None, 'oai_dc', '0', "2007-09-22T00:00:00Z", None))
+        self.assertEquals(3, len(result))
+        result = list(self.jazz.oaiSelect(None, 'oai_dc', '0', "2007-09-22", "2007-09-23"))
+        self.assertEquals(2, len(result))
+
+    def testFixUntil(self):
+        self.assertEquals("2007-09-22T12:33:00Z", self.jazz._fixUntilDate("2007-09-22T12:33:00Z"))
+        self.assertEquals("2007-09-23T00:00:00Z", self.jazz._fixUntilDate("2007-09-22"))
+        self.assertEquals("2008-01-01T00:00:00Z", self.jazz._fixUntilDate("2007-12-31"))
+        self.assertEquals("2004-02-29T00:00:00Z", self.jazz._fixUntilDate("2004-02-28"))

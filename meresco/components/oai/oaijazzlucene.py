@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -26,7 +26,8 @@
 ## end license ##
 
 from StringIO import StringIO
-from time import strftime, gmtime
+from time import strftime, gmtime, strptime, localtime, mktime
+from re import compile
 
 from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
 from cq2utils.xmlutils import findNamespaces
@@ -49,7 +50,7 @@ def createOaiMeta(sets, prefixes, stamp, unique):
     for prefix in prefixes:
         yield '<prefix t:tokenize="false">%s</prefix>' % prefix
     yield   '</prefixes>'
-    yield '<stamp>%s</stamp>' % stamp
+    yield '<stamp t:tokenize="false">%s</stamp>' % stamp
     yield '<unique>%019i</unique>' % unique
     yield '</oaimeta>'
 
@@ -76,9 +77,12 @@ class OaiJazzLucene(Observable):
             aStorage])
         self._numberGenerator = aNumberGenerator
 
+    def _gettime(self):
+        return gmtime()
+
     def updateOaiMeta(self, id, sets, prefixes):
         unique = self._numberGenerator.next()
-        stamp =  strftime('%Y-%m-%dT%H:%M:%SZ', gmtime())
+        stamp =  strftime('%Y-%m-%dT%H:%M:%SZ', self._gettime())
         newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
         metaRecord = ''.join(newOaiMeta)
         self.do.add(id, 'oaimeta', metaRecord)
@@ -129,14 +133,24 @@ class OaiJazzLucene(Observable):
             addRange(query, 'oaimeta.unique', continueAt, None, False)
         if oaiFrom or oaiUntil:
             oaiFrom = oaiFrom or None
-            oaiUntil = oaiUntil or None
-            addRange(query, 'oaimeta.datestamp', oaiFrom, oaiUntil, True)
+            oaiUntil = oaiUntil and self._fixUntilDate(oaiUntil) or None
+            addRange(query, 'oaimeta.stamp', oaiFrom, oaiUntil, True)
         if oaiSet:
             query.add(TermQuery(Term('oaimeta.sets.setSpec', oaiSet)), BooleanClause.Occur.MUST)
+
         return self.any.executeQuery(query, 'oaimeta.unique')
 
     def listAll(self):
         return self.any.executeQuery(MatchAllDocsQuery())
+
+    def _fixUntilDate(self, aString):
+        dateRE = compile('^\d{4}-\d{2}-\d{2}$')
+        result = aString
+        if dateRE.match(aString):
+            dateFromString = strptime(aString, '%Y-%m-%d')
+            datePlusOneDay = localtime(mktime(dateFromString) + 24*3600)
+            result = strftime('%Y-%m-%dT%H:%M:%SZ', datePlusOneDay)
+        return result
 
     def _flattenSetHierarchy(self, sets):
         """"[1:2:3, 1:2:4] => [1, 1:2, 1:2:3, 1:2:4]"""

@@ -1,4 +1,4 @@
-# This file was created automatically by SWIG 1.3.29.
+# This file was created automatically by SWIG 1.3.28.
 # Don't modify this file, modify the SWIG interface instead.
 # This file is compatible with both classic and new-style classes.
 
@@ -27,11 +27,6 @@ def _swig_getattr(self,class_type,name):
     if method: return method(self)
     raise AttributeError,name
 
-def _swig_repr(self):
-    try: strthis = "proxy of " + self.this.__repr__()
-    except: strthis = ""
-    return "<%s.%s; %s >" % (self.__class__.__module__, self.__class__.__name__, strthis,)
-
 import types
 try:
     _object = types.ObjectType
@@ -47,8 +42,11 @@ class DenseBitArray(_object):
     __setattr__ = lambda self, name, value: _swig_setattr(self, DenseBitArray, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, DenseBitArray, name)
-    __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __repr__(self):
+        try: strthis = "at 0x%x" %( self.this, ) 
+        except: strthis = "" 
+        return "<%s.%s; proxy of C++ DenseBitArray instance %s>" % (self.__class__.__module__, self.__class__.__name__, strthis,)
+    def __init__(self, *args):
         this = _bitarray.new_DenseBitArray(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -58,16 +56,18 @@ class DenseBitArray(_object):
     def combinedCardinality(*args): return _bitarray.DenseBitArray_combinedCardinality(*args)
     __swig_destroy__ = _bitarray.delete_DenseBitArray
     __del__ = lambda self : None;
-DenseBitArray_swigregister = _bitarray.DenseBitArray_swigregister
-DenseBitArray_swigregister(DenseBitArray)
+_bitarray.DenseBitArray_swigregister(DenseBitArray)
 
 class SparseBitArray(_object):
     __swig_setmethods__ = {}
     __setattr__ = lambda self, name, value: _swig_setattr(self, SparseBitArray, name, value)
     __swig_getmethods__ = {}
     __getattr__ = lambda self, name: _swig_getattr(self, SparseBitArray, name)
-    __repr__ = _swig_repr
-    def __init__(self, *args): 
+    def __repr__(self):
+        try: strthis = "at 0x%x" %( self.this, ) 
+        except: strthis = "" 
+        return "<%s.%s; proxy of C++ SparseBitArray instance %s>" % (self.__class__.__module__, self.__class__.__name__, strthis,)
+    def __init__(self, *args):
         this = _bitarray.new_SparseBitArray(*args)
         try: self.this.append(this)
         except: self.this = this
@@ -76,8 +76,7 @@ class SparseBitArray(_object):
     def combinedCardinality(*args): return _bitarray.SparseBitArray_combinedCardinality(*args)
     __swig_destroy__ = _bitarray.delete_SparseBitArray
     __del__ = lambda self : None;
-SparseBitArray_swigregister = _bitarray.SparseBitArray_swigregister
-SparseBitArray_swigregister(SparseBitArray)
+_bitarray.SparseBitArray_swigregister(SparseBitArray)
 
 
 
