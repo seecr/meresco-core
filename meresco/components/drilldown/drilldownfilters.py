@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -36,10 +36,10 @@ class DrilldownRequestFieldnameMap(Observable):
         self.reverse = reverse
 
     def drilldown(self, docNumbers, fieldsAndMaximums):
-        translatedFields = ((self.lookup(field), maximum) 
+        translatedFields = ((self.lookup(field), maximum)
             for (field, maximum) in fieldsAndMaximums)
         drilldownResults = self.any.drilldown(docNumbers, translatedFields)
-        return ((self.reverse(field), termCounts) 
+        return ((self.reverse(field), termCounts)
             for field, termCounts in drilldownResults)
 
 class DrilldownRequestFieldFilter(DrilldownRequestFieldnameMap):
@@ -47,7 +47,7 @@ class DrilldownRequestFieldFilter(DrilldownRequestFieldnameMap):
         DrilldownRequestFieldnameMap.__init__(self,
             lambda field: field + TOKEN,
             lambda field: field[:-len(TOKEN)])
-                
+
 class DrilldownUpdateFieldFilter(Observable):
     def __init__(self, listOfFields):
         Observable.__init__(self)
@@ -55,13 +55,13 @@ class DrilldownUpdateFieldFilter(Observable):
 
     def add(self, id, partName, amaraXmlNode):
         for field in self._drilldownFields:
-            nodes = amaraXmlNode.xml_xpath("//%s" % field)
+            nodes = amaraXmlNode.xml_xpath("//%s" % field.replace('.', '/'))
             if nodes:
                 node = nodes[0]
                 newfield = amaraXmlNode.xml_create_element(node.nodeName + TOKEN,
                     content=unicode(node),
                     attributes={(u'teddy:tokenize', unicode(TEDDY_NS)): u'false'})
-                amaraXmlNode.xml_append(newfield)
+                node.parentNode.xml_append(newfield)
         self.do.add(id, partName, amaraXmlNode)
 
     def unknown(self, message, *args, **kwargs):

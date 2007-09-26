@@ -63,34 +63,27 @@ class DrilldownFiltersTest(TestCase):
         self.assertEquals(1, len(node.attributes))
         self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</field_0__untokenized__>', node.xml())
 
-    def testDrilldownUpdateFieldFilter(self):
-        data = binderytools.bind_string("""<xmlfields>
-    <field_0>term_0</field_0>
-    <field_1>term_1</field_1>
-    <field_2>term_2</field_2>
-</xmlfields>""")
+    def testDrilldownUpdateFieldFilterDeep(self):
+        data = binderytools.bind_string("""<level_0><level_1><level_2>term_0</level_2></level_1></level_0>""")
 
-        drilldownUpdateFieldFilter = DrilldownUpdateFieldFilter(['field_0', 'field_1'])
+        drilldownUpdateFieldFilter = DrilldownUpdateFieldFilter(['level_0.level_1.level_2'])
         observer = CallTrace('Observer')
 
         drilldownUpdateFieldFilter.addObserver(observer)
 
-        drilldownUpdateFieldFilter.add("id", "partName", data.xmlfields)
+        drilldownUpdateFieldFilter.add("id", "partName", data.level_0)
 
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals(["id", "partName"], observer.calledMethods[0].arguments[:2])
 
         resultXml = observer.calledMethods[0].arguments[2]
-        self.assertEquals(1, len(resultXml.xml_xpath('field_0')))
-        self.assertEquals(1, len(resultXml.xml_xpath('field_0__untokenized__')))
-        self.assertEquals(1, len(resultXml.xml_xpath('field_1')))
-        self.assertEquals(1, len(resultXml.xml_xpath('field_1__untokenized__')))
-        self.assertEquals(1, len(resultXml.xml_xpath('field_2')))
-        self.assertEquals(0, len(resultXml.xml_xpath('field_2__untokenized__')))
+        self.assertEquals(1, len(resultXml.xml_xpath('/level_0/level_1/level_2')))
+        self.assertEquals(1, len(resultXml.xml_xpath('/level_0/level_1/level_2__untokenized__')))
 
-        node = resultXml.xml_xpath("//field_0__untokenized__")[0]
+        node = resultXml.xml_xpath("/level_0/level_1/level_2__untokenized__")[0]
+
         self.assertEquals(1, len(node.attributes))
-        self.assertEquals('<field_0__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</field_0__untokenized__>', node.xml())
+        self.assertEquals('<level_2__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</level_2__untokenized__>', node.xml())
 
     def testDrilldownRequestFieldFilter(self):
         requestFilter = DrilldownRequestFieldFilter()
