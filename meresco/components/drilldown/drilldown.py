@@ -63,7 +63,7 @@ class Drilldown(object):
             self._docSets[fieldname] = []
             for term, docIds in terms:
                 self._docSets[fieldname].append((term, createDocSet(docIds, self._numDocsInIndex)))
-            self._docSets[fieldname].sort(cmpCardinality)
+            #self._docSets[fieldname].sort(cmpCardinality)
 
     def _docSetForQueryResult(self, docIds):
         sortedDocs = sorted(docIds)

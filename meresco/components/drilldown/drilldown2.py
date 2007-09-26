@@ -29,7 +29,7 @@ from bitmatrix import BitMatrix
 class FieldMatrix(object):
 
 	def __init__(self, terms, numDocsInIndex):
-		self._matrix = BitMatrix(numDocsInIndex, len(list(terms)))
+		self._matrix = BitMatrix(numDocsInIndex)
 		self._row2term = {}
 		for term, docIds in terms:
 			nr = self._matrix.addRow(docIds)
