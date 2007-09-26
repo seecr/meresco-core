@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,7 +25,6 @@
 #
 ## end license ##
 
-import PyLucene
 from meresco.components.drilldown.cpp.bitarray import DenseBitArray, SparseBitArray
 
 DENSE_SPARSE_BREAKING_POINT = 32
@@ -57,6 +56,9 @@ class Drilldown(object):
         return drilldownResults
 
     def loadDocSets(self, rawDocSets, docCount):
+        def cmpCardinality(left, right):
+            return cmp(left[1].cardinality(), right[1].cardinality())
+
         self._numDocsInIndex = docCount
 
         self._docSets = {}
@@ -64,18 +66,11 @@ class Drilldown(object):
             self._docSets[fieldname] = []
             for term, docIds in terms:
                 self._docSets[fieldname].append((term, createDocSet(docIds, self._numDocsInIndex)))
+            self._docSets[fieldname].sort(cmpCardinality)
 
     def _docSetForQueryResult(self, docIds):
         sortedDocs = sorted(docIds)
         return createDocSet(sortedDocs, self._numDocsInIndex)
-
-    def _docSetsForField(self, fieldName):
-        result = self._docSetsForFieldLucene(fieldName)
-        def cmpDescCardinality((term1, docSet1), (term2, docSet2)):
-            return docSet2.cardinality() - docSet1.cardinality()
-
-        result.sort(cmpDescCardinality)
-        return result
 
     def _processField(self, fieldName, drilldownBitArray = None, maximumResults = 0):
         #sort on cardinality, truncate with maximumResults and return smallest cardinality
