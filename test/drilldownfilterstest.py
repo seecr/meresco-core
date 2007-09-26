@@ -41,7 +41,7 @@ class DrilldownFiltersTest(TestCase):
     <field_2>term_2</field_2>
 </xmlfields>""")
 
-        drilldownUpdateFieldFilter = DrilldownUpdateFieldFilter(['field_0', 'field_1'])
+        drilldownUpdateFieldFilter = DrilldownUpdateFieldFilter(['xmlfields.field_0', 'xmlfields.field_1'])
         observer = CallTrace('Observer')
 
         drilldownUpdateFieldFilter.addObserver(observer)
@@ -84,6 +84,29 @@ class DrilldownFiltersTest(TestCase):
 
         self.assertEquals(1, len(node.attributes))
         self.assertEquals('<level_2__untokenized__ xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</level_2__untokenized__>', node.xml())
+
+    def testDrilldownUpdateFieldFilterDeepWithNamespace(self):
+        data = binderytools.bind_string("""<y:level_0 xmlns:y="http://localhost/y" xmlns:x="http://localhost/s"><x:level_1><x:level_2>term_0</x:level_2></x:level_1></y:level_0>""")
+
+        drilldownUpdateFieldFilter = DrilldownUpdateFieldFilter(['level_0.level_1.level_2'])
+        observer = CallTrace('Observer')
+
+        drilldownUpdateFieldFilter.addObserver(observer)
+
+        drilldownUpdateFieldFilter.add("id", "partName", data.level_0)
+
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals(["id", "partName"], observer.calledMethods[0].arguments[:2])
+
+        resultXml = observer.calledMethods[0].arguments[2]
+        self.assertEquals(1, len(resultXml.xml_xpath('/y:level_0/x:level_1/x:level_2')))
+        self.assertEquals(1, len(resultXml.xml_xpath('/y:level_0/x:level_1/x:level_2__untokenized__')), resultXml.xml())
+
+        node = resultXml.xml_xpath("/y:level_0/x:level_1/x:level_2__untokenized__")[0]
+
+        self.assertEquals(1, len(node.attributes))
+        self.assertEquals('<x:level_2__untokenized__ xmlns:x="http://localhost/s" xmlns:teddy="http://www.cq2.nl/teddy" teddy:tokenize="false">term_0</x:level_2__untokenized__>', node.xml())
+
 
     def testDrilldownRequestFieldFilter(self):
         requestFilter = DrilldownRequestFieldFilter()

@@ -27,6 +27,8 @@
 from meresco.framework.observable import Observable
 from meresco.components.xml2document import TEDDY_NS
 
+from amara.bindery import is_element
+
 TOKEN = '__untokenized__'
 
 class DrilldownRequestFieldnameMap(Observable):
@@ -39,8 +41,8 @@ class DrilldownRequestFieldnameMap(Observable):
         translatedFields = ((self.lookup(field), maximum)
             for (field, maximum) in fieldsAndMaximums)
         drilldownResults = self.any.drilldown(docNumbers, translatedFields)
-        return ((self.reverse(field), termCounts)
-            for field, termCounts in drilldownResults)
+        return [(self.reverse(field), termCounts)
+            for field, termCounts in drilldownResults]
 
 class DrilldownRequestFieldFilter(DrilldownRequestFieldnameMap):
     def __init__(self):
@@ -55,14 +57,29 @@ class DrilldownUpdateFieldFilter(Observable):
 
     def add(self, id, partName, amaraXmlNode):
         for field in self._drilldownFields:
-            nodes = amaraXmlNode.xml_xpath("//%s" % field.replace('.', '/'))
-            if nodes:
-                node = nodes[0]
+            node = self._findNode(amaraXmlNode, field)
+            if node:
                 newfield = amaraXmlNode.xml_create_element(node.nodeName + TOKEN,
                     content=unicode(node),
+                    ns=node.namespaceURI,
                     attributes={(u'teddy:tokenize', unicode(TEDDY_NS)): u'false'})
                 node.parentNode.xml_append(newfield)
         self.do.add(id, partName, amaraXmlNode)
 
     def unknown(self, message, *args, **kwargs):
         self.do.unknown(message, *args, **kwargs)
+
+    def _findNode(self, node, nodeName):
+        chunks = nodeName.split('.')
+        localName = chunks[0]
+        if node.localName != localName:
+            return None
+        if len(chunks) == 1:
+            return node
+        else:
+            remainder = '.'.join(chunks[1:])
+            if remainder:
+                for child in filter(lambda x:is_element(x), node.childNodes):
+                    result = self._findNode(child, remainder)
+                    if result:
+                        return result
