@@ -30,11 +30,11 @@ from StringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.drilldown.srudrilldownadapter import SRUDrillDownAdapter, SRUTermDrillDown, SRUFieldDrillDown
+from meresco.components.drilldown.srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown
 
 from cqlparser.cqlcomposer import compose as cqlCompose
 
-class SRUDrillDownAdapterTest(CQ2TestCase):
+class SRUDrilldownAdapterTest(CQ2TestCase):
     
     def testOne(self):
         class MockedImpl:
@@ -42,7 +42,7 @@ class SRUDrillDownAdapterTest(CQ2TestCase):
                 yield "<tag>"
                 yield "something</tag>"
                 
-        adapter = SRUDrillDownAdapter("serverUrl")
+        adapter = SRUDrilldownAdapter("serverUrl")
         adapter.addObservers([MockedImpl(), MockedImpl()])
         result = list(adapter.extraResponseData("ignored_webRequest", "ignored_hits"))
         self.assertEqualsWS([
@@ -51,11 +51,11 @@ class SRUDrillDownAdapterTest(CQ2TestCase):
             '<tag>', 'something</tag>',
             '</dd:drilldown>'], result)
 
-class SRUTermDrillDownTest(CQ2TestCase):
+class SRUTermDrilldownTest(CQ2TestCase):
 
-    def testSRUTermDrillDown(self):
+    def testSRUTermDrilldown(self):
         self._arguments = {"x-term-drilldown": ["field0:1,field1:2,field2:3"]}
-        adapter = SRUTermDrillDown()
+        adapter = SRUTermDrilldown()
         adapter.addObserver(self)
         hits = CallTrace("Hits")
         hits.returnValues['docNumbers'] = "Hits are simply passed"
@@ -75,15 +75,15 @@ class SRUTermDrillDownTest(CQ2TestCase):
         self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
         self.assertEquals("Hits are simply passed", self.processed_hits)
         
-    def testSRUTermDrillDownNoMaximums(self):
+    def testSRUTermDrilldownNoMaximums(self):
         self._arguments = {"x-term-drilldown": ["field0,field1,field2"]}
-        adapter = SRUTermDrillDown()
+        adapter = SRUTermDrilldown()
         adapter.addObserver(self)
         hits = CallTrace("Hits")
         list(adapter.extraResponseData(self, hits))
         self.assertEquals([('field0', 10), ('field1', 10), ('field2', 10)], list(self.processed_tuples))
     
-    def drillDown(self, hits, tuples):
+    def drilldown(self, hits, tuples):
         self.processed_hits = hits
         self.processed_tuples = tuples
         return [
@@ -91,31 +91,31 @@ class SRUTermDrillDownTest(CQ2TestCase):
             ('field1', [('value1_0', 13), ('value1_1', 11)]),
             ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
 
-class SRUFieldDrillDownTest(CQ2TestCase):
+class SRUFieldDrilldownTest(CQ2TestCase):
 
     def testSRUParamsAndXMLOutput(self):
         self._arguments = {"x-field-drilldown": ["term"], 'x-field-drilldown-fields': ['field0,field1'], 'query': ['original']}
-        adapter = SRUFieldDrillDown()
-        adapter.drillDown = self.drillDown
+        adapter = SRUFieldDrilldown()
+        adapter.drilldown = self.drilldown
         
-        self.drillDownCall = None
+        self.drilldownCall = None
         result = adapter.extraResponseData(self, "ignored_hits")
         self.assertEqualsWS("""<dd:field-drilldown>
 <dd:field name="field0">5</dd:field>
 <dd:field name="field1">10</dd:field></dd:field-drilldown>""", "".join(result))
 
-        self.assertEquals(('original', 'term', ['field0', 'field1']), self.drillDownCall)
+        self.assertEquals(('original', 'term', ['field0', 'field1']), self.drilldownCall)
         
-    def drillDown(self, query, term, fields):
-        self.drillDownCall = (query, term, fields)
+    def drilldown(self, query, term, fields):
+        self.drilldownCall = (query, term, fields)
         return [('field0', 5),('field1', 10)]
     
-    def testDrillDown(self):
-        adapter = SRUFieldDrillDown()
+    def testDrilldown(self):
+        adapter = SRUFieldDrilldown()
         observer = CallTrace("Observer")
         observer.returnValues["executeCQL"] = "hits with len 16"
         adapter.addObserver(observer)
-        result = list(adapter.drillDown('original', 'term', ['field0', 'field1']))
+        result = list(adapter.drilldown('original', 'term', ['field0', 'field1']))
         
         self.assertEquals(2, len(observer.calledMethods))
         self.assertEquals("executeCQL(<cqlparser.cqlparser.CQL_QUERY>)", str(observer.calledMethods[0]))

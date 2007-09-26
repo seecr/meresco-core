@@ -49,7 +49,7 @@ def generatorDecorate(before, data, after):
     if beforeWritten:
         yield after
 
-class SRUDrillDownAdapter(Observable):
+class SRUDrilldownAdapter(Observable):
 
     def __init__(self, serverUrl):
         Observable.__init__(self)
@@ -68,7 +68,7 @@ class SRUDrillDownAdapter(Observable):
             "</dd:drilldown>")
 
 
-class SRUTermDrillDown(Observable):
+class SRUTermDrilldown(Observable):
 
     def extraResponseData(self, webRequest, hits):
         def splitTermAndMaximum(s):
@@ -83,9 +83,9 @@ class SRUTermDrillDown(Observable):
         if fieldsAndMaximums == [""]:
             raise StopIteration
 
-        drillDownResults = self.any.drillDown(hits.docNumbers(), fieldMaxTuples)
+        drilldownResults = self.any.drilldown(hits.docNumbers(), fieldMaxTuples)
         yield "<dd:term-drilldown>"
-        for fieldname, termCounts in drillDownResults:
+        for fieldname, termCounts in drilldownResults:
             yield '<dd:navigator name=%s>' % quoteattr(fieldname)
             for term, count in termCounts:
                 yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
@@ -99,7 +99,7 @@ class SRUTermDrillDown(Observable):
             yield argument
             yield "</dd:term-drilldown>"
 
-class SRUFieldDrillDown(Observable):
+class SRUFieldDrilldown(Observable):
 
     def extraResponseData(self, webRequest, hits):
         query = webRequest._arguments.get('query', [''])[0]
@@ -109,26 +109,26 @@ class SRUFieldDrillDown(Observable):
         if not term or fields == [""]:
             raise StopIteration
 
-        drillDownResults = self.drillDown(query, term, fields)
+        drilldownResults = self.drilldown(query, term, fields)
 
         yield "<dd:field-drilldown>"
-        for field, count in drillDownResults:
+        for field, count in drilldownResults:
             yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(str(field)), escape(str(count)))
         yield "</dd:field-drilldown>"
 
-    def drillDown(self, query, term, fields):
+    def drilldown(self, query, term, fields):
         for field in fields:
             hits = self.any.executeCQL(parseCQL('(%s) AND %s=%s' % (query, field, term)))
             yield field, len(hits)
 
     def echoedExtraRequestData(self, arguments):
-        fieldDrillDown = arguments.get('x-field-drilldown', [''])[0]
-        fieldDrillDownFields = arguments.get('x-field-drilldown-fields', [''])[0]
-        if fieldDrillDown:
+        fieldDrilldown = arguments.get('x-field-drilldown', [''])[0]
+        fieldDrilldownFields = arguments.get('x-field-drilldown-fields', [''])[0]
+        if fieldDrilldown:
             yield "<dd:field-drilldown>"
-            yield fieldDrillDown
+            yield fieldDrilldown
             yield "</dd:field-drilldown>"
-        if fieldDrillDownFields:
+        if fieldDrilldownFields:
             yield "<dd:field-drilldown-fields>"
-            yield fieldDrillDownFields
+            yield fieldDrilldownFields
             yield "</dd:field-drilldown-fields>"

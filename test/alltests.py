@@ -42,8 +42,8 @@ from bitarraytest import BitArrayTest
 from bitmatrixtest import BitMatrixTest
 from contextsettest import ContextSetTest
 from documenttest import DocumentTest
-from drilldownfilterstest import DrillDownFiltersTest
-from drilldowntest import DrillDownTest
+from drilldownfilterstest import DrilldownFiltersTest
+from drilldowntest import DrilldownTest
 from fieldcountplugintest import FieldCountPluginTest
 from fields2xmlcomponenttest import Fields2XmlComponentTest
 from generatorutilstest import GeneratorUtilsTest
@@ -57,7 +57,7 @@ from observabletest import ObservableTest
 from rssplugintest import RSSPluginTest
 from rssprofiletest import RSSProfileTest
 
-from sru.srudrilldownadaptertest import SRUDrillDownAdapterTest, SRUTermDrillDownTest, SRUFieldDrillDownTest
+from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.sruplugintest import SRUPluginTest
 from sru.sruquerytest import SRUQueryTest
 from sru.srurecordupdatetest import SRURecordUpdateTest

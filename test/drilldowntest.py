@@ -34,9 +34,9 @@ from lucenerawdocsetstest import addUntokenized
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
-from meresco.components.drilldown.drilldown2 import DrillDown
+from meresco.components.drilldown.drilldown2 import Drilldown
 
-class DrillDownTest(TestCase):
+class DrilldownTest(TestCase):
 
     def setUp(self):
         self._tempdir = gettempdir() + '/testing'
@@ -49,23 +49,23 @@ class DrillDownTest(TestCase):
 
     def testLoadDocSetsNoTerms(self):
         data = [('field_0', [])]
-        drillDown = DrillDown(['field_0'])
-        drillDown.loadDocSets(data, 5)
+        drilldown = Drilldown(['field_0'])
+        drilldown.loadDocSets(data, 5)
 
-        self.assertEquals(['field_0'], drillDown._docSets.keys())
-        self.assertEquals(0, len(drillDown._docSets['field_0']))
+        self.assertEquals(['field_0'], drilldown._docSets.keys())
+        self.assertEquals(0, len(drilldown._docSets['field_0']))
 
     def testLoadDocSets(self):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
-        drillDown = DrillDown(['field_0'])
-        drillDown.loadDocSets(data, 5)
+        drilldown = Drilldown(['field_0'])
+        drilldown.loadDocSets(data, 5)
 
-        self.assertEquals(2, len(drillDown._docSets['field_0']))
-        self.assertEquals(3, dict(drillDown._docSets['field_0'])['term_0'].cardinality())
-        self.assertEquals(1, dict(drillDown._docSets['field_0'])['term_1'].cardinality())
+        self.assertEquals(2, len(drilldown._docSets['field_0']))
+        self.assertEquals(3, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
+        self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_1'].cardinality())
 
-    def testDrillDown(self):
+    def testDrilldown(self):
         addUntokenized(self._luceneIndex, [
             ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
             ('2', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
@@ -73,13 +73,13 @@ class DrillDownTest(TestCase):
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
         convertor = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0', 'field_1'])
-        drillDown = DrillDown(['field_0', 'field_1'])
-        drillDown.loadDocSets(convertor.getDocSets(), convertor.docCount())
+        drilldown = Drilldown(['field_0', 'field_1'])
+        drilldown.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
         queryResults = self._luceneIndex.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
-        drilldownResult = list(drillDown.drillDown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)]))
+        drilldownResult = list(drilldown.drilldown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)]))
 
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)

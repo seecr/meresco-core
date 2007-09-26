@@ -40,21 +40,21 @@ def createDocSet(docs, length):
         result.set(doc)
     return result
 
-class DrillDownException(Exception):
+class DrilldownException(Exception):
     pass
 
-class DrillDown(object):
+class Drilldown(object):
 
-    def __init__(self, drillDownFieldNames):
-        self._drillDownFieldnames = drillDownFieldNames
+    def __init__(self, drilldownFieldNames):
+        self._drilldownFieldnames = drilldownFieldNames
 
-    def drillDown(self, docIds, drillDownFieldnamesAndMaximumResults):
-        drillDownResults = []
+    def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
+        drilldownResults = []
         queryDocSet = self._docSetForQueryResult(docIds)
-        for fieldName, maximumResults in drillDownFieldnamesAndMaximumResults:
-            drillDownResults.append((fieldName,
+        for fieldName, maximumResults in drilldownFieldnamesAndMaximumResults:
+            drilldownResults.append((fieldName,
                     self._processField(fieldName, queryDocSet, maximumResults)))
-        return drillDownResults
+        return drilldownResults
 
     def loadDocSets(self, rawDocSets, docCount):
         self._numDocsInIndex = docCount
@@ -77,7 +77,7 @@ class DrillDown(object):
         result.sort(cmpDescCardinality)
         return result
 
-    def _processField(self, fieldName, drillDownBitArray = None, maximumResults = 0):
+    def _processField(self, fieldName, drilldownBitArray = None, maximumResults = 0):
         #sort on cardinality, truncate with maximumResults and return smallest cardinality
         #if no limit is present return 0
         def sortAndTruncateAndGetMinValueInResult(resultList):
@@ -89,19 +89,19 @@ class DrillDown(object):
             return 0
 
         if not self._docSets.has_key(fieldName):
-            raise DrillDownException("No Docset For Field %s, legal docsets: %s" % (fieldName, self._docSets.keys()))
+            raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldName, self._docSets.keys()))
         result = []
 
-        if not drillDownBitArray:
+        if not drilldownBitArray:
             for term, docSet in self._docSets[fieldName]:
                 result.append((term, docSet.cardinality()))
-        else: #Use drillDownBitArray << This branch is the HOTSPOT >>
+        else: #Use drilldownBitArray << This branch is the HOTSPOT >>
             minValueInResult = 0
             for term, docSet in self._docSets[fieldName]:
                 if docSet.cardinality() < minValueInResult:
                     break
 
-                cardinality = docSet.combinedCardinality(drillDownBitArray)
+                cardinality = docSet.combinedCardinality(drilldownBitArray)
 
                 if cardinality > minValueInResult:
                     result.append((term, cardinality))

@@ -53,7 +53,7 @@ class FieldMatrix(object):
 		for nr, occurences in self._matrix.rowCadinalities():
 			yield self._row2term[nr], MockBitSet(occurences)
 
-class DrillDown(object):
+class Drilldown(object):
 
 	def __init__(self, drilldownFieldnames):
 		self._drilldownFieldnames = drilldownFieldnames
@@ -65,11 +65,11 @@ class DrillDown(object):
 		for fieldname, terms in rawDocSets:
 			self._fieldMatrices[fieldname] = FieldMatrix(terms, docCount)
 
-	def drillDown(self, docIds, drillDownFieldnamesAndMaximumResults):
+	def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
 		queryDocSet = self._docSetForQueryResult(docIds)
-		for fieldName, maximumResults in drillDownFieldnamesAndMaximumResults:
+		for fieldName, maximumResults in drilldownFieldnamesAndMaximumResults:
 			if fieldName not in self._drilldownFieldnames:
-				raise DrillDownException("No Docset For Field %s, legal docsets: %s" % (fieldName, self._drilldownFieldnames))
+				raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldName, self._drilldownFieldnames))
 			yield fieldName, self._fieldMatrices[fieldName].drilldown(queryDocSet, maximumResults)
 
 	def _docSetForQueryResult(self, docIds):
