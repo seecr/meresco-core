@@ -48,12 +48,9 @@ class Drilldown(object):
         self._drilldownFieldnames = drilldownFieldNames
 
     def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
-        drilldownResults = []
         queryDocSet = self._docSetForQueryResult(docIds)
-        for fieldName, maximumResults in drilldownFieldnamesAndMaximumResults:
-            drilldownResults.append((fieldName,
-                    self._processField(fieldName, queryDocSet, maximumResults)))
-        return drilldownResults
+        return [(fieldname, self._processField(fieldname, queryDocSet, maximumResults))
+            for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults]
 
     def loadDocSets(self, rawDocSets, docCount):
         def cmpCardinality(left, right):
