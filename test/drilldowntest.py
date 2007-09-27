@@ -34,7 +34,8 @@ from lucenerawdocsetstest import addUntokenized
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
-from meresco.components.drilldown.drilldown import Drilldown
+from meresco.components.drilldown.drilldown import Drilldown as DrilldownSwig
+from meresco.components.drilldown.drilldown2 import Drilldown as DrilldownPyrex
 
 class DrilldownTest(TestCase):
 
@@ -49,7 +50,7 @@ class DrilldownTest(TestCase):
 
     def testLoadDocSetsNoTerms(self):
         data = [('field_0', [])]
-        drilldown = Drilldown(['field_0'])
+        drilldown = self.createDrilldown(['field_0'])
         drilldown.loadDocSets(data, 5)
 
         self.assertEquals(['field_0'], drilldown._docSets.keys())
@@ -58,7 +59,7 @@ class DrilldownTest(TestCase):
     def testLoadDocSets(self):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
-        drilldown = Drilldown(['field_0'])
+        drilldown = self.createDrilldown(['field_0'])
         drilldown.loadDocSets(data, 5)
 
         self.assertEquals(2, len(drilldown._docSets['field_0']))
@@ -73,7 +74,7 @@ class DrilldownTest(TestCase):
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
         convertor = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0', 'field_1'])
-        drilldown = Drilldown(['field_0', 'field_1'])
+        drilldown = self.createDrilldown(['field_0', 'field_1'])
         drilldown.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
         queryResults = self._luceneIndex.executeQuery(TermQuery(Term("field_1", "inquery")))
@@ -86,3 +87,13 @@ class DrilldownTest(TestCase):
         self.assertEquals(['field_0', 'field_1'], result.keys())
         self.assertEquals([("this is term_0", 2), ("this is term_1", 1)], list(result['field_0']))
         self.assertEquals([("inquery", 3)], list(result['field_1']))
+
+class DrilldownSwigTest(DrilldownTest):
+    def setUp(self):
+        self.createDrilldown = DrilldownSwig
+        DrilldownTest.setUp(self)
+
+class DrilldownPyrexTest(DrilldownTest):
+    def setUp(self):
+        self.createDrilldown = DrilldownPyrex
+        DrilldownTest.setUp(self)

@@ -43,7 +43,7 @@ from bitmatrixtest import BitMatrixTest
 from contextsettest import ContextSetTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
-from drilldowntest import DrilldownTest
+from drilldowntest import DrilldownPyrexTest, DrilldownSwigTest
 from fieldcountplugintest import FieldCountPluginTest
 from fields2xmlcomponenttest import Fields2XmlComponentTest
 from generatorutilstest import GeneratorUtilsTest
