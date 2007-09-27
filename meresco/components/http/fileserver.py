@@ -4,6 +4,9 @@ import magic
 magicCookie = magic.open(magic.MAGIC_MIME)
 magicCookie.load()
 
+import mimetypes
+mimetypes.init()
+
 class FileServer:
     def __init__(self, documentRoot):
         self._documentRoot = documentRoot
@@ -23,12 +26,18 @@ class FileServer:
 </body></html>""" % aRequest.path)
             return
 
-        fp = open(self._filenameFor(aRequest.path))
-        line = fp.readline()
-        magicResult = magicCookie.buffer(line)
-        aRequest.setHeader("Content-Type", magicResult)
+        filename = self._filenameFor(aRequest.path)
+        ext = filename.split(".")[-1]
         try:
-            aRequest.write(line)
+            extension = mimetypes.types_map["."+ext]
+        except KeyError:
+            extension = "text/plain"
+
+        fp = open(filename)
+        #line = fp.readline()
+        #magicResult = magicCookie.buffer(line)
+        aRequest.setHeader("Content-Type", extension)
+        try:
             for line in fp:
                 aRequest.write(line)
         finally:
@@ -36,7 +45,7 @@ class FileServer:
 
 
     def _filenameFor(self, filename):
-        while filename[0] == '/':
+        while filename and filename[0] == '/':
             filename = filename[1:]
         return join(self._documentRoot, filename)
 

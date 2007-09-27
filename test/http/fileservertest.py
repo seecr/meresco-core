@@ -27,6 +27,7 @@ class FileServerTest(TestCase):
     def testFileExists(self):
         server = FileServer(self.directory)
         self.assertFalse(server.fileExists("/filename"))
+        self.assertFalse(server.fileExists("/"))
 
         open(join(self.directory, 'filename'), "w").close()
         self.assertTrue(server.fileExists("/filename"))
