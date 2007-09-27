@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -64,3 +64,16 @@ class LuceneRawDocSetsTest(TestCase):
                 for field, terms in converter.getDocSets()]
         self.assertEquals(2, len(docsets))
         self.assertEquals([('field_0', [(u'this is term_0', [0, 1]), (u'this is term_1', [2]), (u'this is term_2', [3])]), ('field_1', [(u'cannotbefound', [3]), (u'inquery', [0, 1, 2])])], docsets)
+
+    def testListOperatorNotWorkingBug(self):
+        """Some parts of execution may not be deferred using generators. Since they depend on pointers and need to be read immediately before the pointer is shifted."""
+        addUntokenized(self._luceneIndex, [
+            ('1', {'field_0': 'this is term_0'}),
+            ('2', {'field_0': 'this is term_1'})])
+
+        converter = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0'])
+        fieldname, terms = converter.getDocSets().next()
+        listTerms = list(terms)
+        for i, (term, docIds) in enumerate(listTerms):
+            self.assertEquals('this is term_%s' % i, term)
+            self.assertEquals([i], list(docIds))
