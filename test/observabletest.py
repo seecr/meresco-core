@@ -179,7 +179,6 @@ class ObservableTest(unittest.TestCase):
         self.assertEquals("via unknown one", retval)
 
     def testSyntacticSugarIsPreserved(self):
-        """ON PURPOSE BROKEN CHECKIN: testSyntacticSugarIsPreserved.theory() != reality"""
         class WithUnknown(Observable):
             def unknown(self, methodName, *args):
                 return self.all.unknown(methodName, "extra arg", *args)

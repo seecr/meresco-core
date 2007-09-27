@@ -53,8 +53,8 @@ class Drilldown(object):
             for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults]
 
     def loadDocSets(self, rawDocSets, docCount):
-        def cmpCardinality(left, right):
-            return cmp(left[1].cardinality(), right[1].cardinality())
+        def cmpCardinalityReversed(left, right):
+            return cmp(right[1].cardinality(), left[1].cardinality())
 
         self._numDocsInIndex = docCount
 
@@ -63,7 +63,7 @@ class Drilldown(object):
             self._docSets[fieldname] = []
             for term, docIds in terms:
                 self._docSets[fieldname].append((term, createDocSet(docIds, self._numDocsInIndex)))
-            #self._docSets[fieldname].sort(cmpCardinality)
+            self._docSets[fieldname].sort(cmpCardinalityReversed)
 
     def _docSetForQueryResult(self, docIds):
         sortedDocs = sorted(docIds)

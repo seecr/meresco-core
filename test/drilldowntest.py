@@ -34,7 +34,7 @@ from lucenerawdocsetstest import addUntokenized
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
-from meresco.components.drilldown.drilldown2 import Drilldown
+from meresco.components.drilldown.drilldown import Drilldown
 
 class DrilldownTest(TestCase):
 
