@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -48,7 +48,7 @@ class DeferredMessage:
         self._message = message
 
     def __call__(self, *args, **kwargs):
-        return compose(self._gatherResponses(*args, **kwargs))
+        return self._gatherResponses(*args, **kwargs)
 
     def _gatherResponses(self, *args, **kwargs):
         for observer in self._observers:
@@ -69,7 +69,8 @@ class DeferredMessage:
                         raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 class AllMessage(DeferredMessage):
-    pass
+    def __call__(self, *args, **kwargs):
+        return compose(self._gatherResponses(*args, **kwargs))
 
 class AnyMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
@@ -84,7 +85,7 @@ class AnyMessage(DeferredMessage):
 class DoMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            for ignore in DeferredMessage.__call__(self, *args, **kwargs):
+            for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
                 pass
         except:
             exType, exValue, exTraceback = exc_info()

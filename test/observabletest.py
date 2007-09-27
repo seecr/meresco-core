@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -137,6 +137,21 @@ class ObservableTest(unittest.TestCase):
         self.assertEquals([child1], child0._observers)
         self.assertEquals([child2], child1._observers)
 
+    def testAny(self):
+        class A(Observable):
+            def myThing(self):
+                return self.any.myThing()
+
+        class B(Observable):
+            def myThing(self):
+                yield "data"
+
+        a = A()
+        b = B()
+        a.addObserver(b)
+        self.assertEquals(GeneratorType, type(a.any.myThing()))
+        self.assertEquals(["data"], list(a.any.myThing()))
+
     def testAllUnknown(self):
         class Interceptor(Observable):
             def unknown(self, message, *args, **kwargs):
@@ -235,22 +250,29 @@ class ObservableTest(unittest.TestCase):
         self.assertEquals(None, result)
         self.assertTrue(self.done)
 
-    def testNestedAllWithAny(self):
+    # JJ/KvS: wij achten deze test niet nuttig. Wat wordt er hier getest?
+    def xxtestNestedAllWithAny(self):
         class A(Observable):
             def a(this):
-                return this.all.a()
+                return this.any.a()
+
         class B(Observable):
             def a(this):
                 return this.all.a()
         class C(Observable):
             def a(this):
                 return 1
+        class D(Observable):
+            def a(this):
+                return 2
         a = A()
         b = B()
         c = C()
+        d = D()
         a.addObserver(b)
         b.addObserver(c)
-        result = a.any.a()
+        b.addObserver(d)
+        result = a.a()
         self.assertEquals(1, result)
 
     def testFixUpExceptionTraceBack(self):
