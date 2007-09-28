@@ -16,13 +16,11 @@ class FileServerTest(TestCase):
         rmtree(self.directory)
 
     def testServeNoneExistingFile(self):
-        request = WebRequest(port=80, Client=('localhost', 9000), RequestURI="/doesNotExist", Method="GET", Headers={})
-
         fileServer = FileServer(self.directory)
-        fileServer.handleRequest(request)
+        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/doesNotExist", Method="GET", Headers={}))
 
-        self.assertEquals(404, request.responseCode)
-        self.assertTrue("404 Not Found" in ''.join(request.generateResponse()))
+        self.assertTrue("HTTP/1.0 404 Ok" in response, response)
+        self.assertTrue("404 Not Found" in response)
 
     def testFileExists(self):
         server = FileServer(self.directory)
@@ -35,15 +33,12 @@ class FileServerTest(TestCase):
         self.assertFalse(server.fileExists("//etc/shadow"))
 
     def testServeFile(self):
-
-        request = WebRequest(port=80, Client=('localhost', 9000), RequestURI="/someFile", Method="GET", Headers={})
-
         f = open(join(self.directory, 'someFile'), 'w')
         f.write("Some Contents")
         f.close()
 
         fileServer = FileServer(self.directory)
-        fileServer.handleRequest(request)
+        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/someFile", Method="GET", Headers={}))
 
-        self.assertEquals(200, request.responseCode)
-        self.assertTrue("Some Contents" in ''.join(request.generateResponse()))
+        self.assertTrue("HTTP/1.0 200 Ok" in response)
+        self.assertTrue("Some Contents" in response)
