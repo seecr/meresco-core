@@ -34,11 +34,6 @@ from meresco.framework.generatorutils import compose
 
 DEFAULT_MAXIMUM_TERMS = 10
 
-def flatten(generators):
-    for generator in generators:
-        for line in generator:
-            yield line
-
 def generatorDecorate(before, data, after):
     beforeWritten = False
     for d in data:
