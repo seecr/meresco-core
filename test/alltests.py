@@ -98,6 +98,8 @@ from observablehttpservertest import ObservableHttpServerTest
 from http.fileservertest import FileServerTest
 from fieldsplittest import FieldSplitTest
 
+from storageharvestertest import StorageHarvesterTest
+
 if __name__ == '__main__':
         unittest.main()
         os.system('find .. -name "*.pyc" | xargs rm -f')
