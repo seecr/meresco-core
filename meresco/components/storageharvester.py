@@ -28,6 +28,10 @@
 from meresco.framework.observable import Observable
 from meresco.components.storagecomponent import defaultSplit
 
+from storage import HierarchicalStorage, Storage
+
+from cStringIO import StringIO
+
 def defaultJoin(parts):
     id = ":".join(parts[:-1])
     partName = parts[-1][:-1 * len('.xml')]
@@ -35,13 +39,15 @@ def defaultJoin(parts):
 
 class StorageHarvester(Observable):
 
-    def __init__(self, storagedir, split=defaultSplit, join=defaultJoin):
+    def __init__(self, storeDirectory, split=defaultSplit, join=defaultJoin):
         Observable.__init__(self)
         self._storage = HierarchicalStorage(Storage(storeDirectory), split=split , join=join)
+
+    def main(self):
         for id, partName in self._storage:
             file = self._storage.get((id, partName))
-            f = open(file.path)
-            s = ''
+            buffer = StringIO()
             for data in file:
-                s.append(data)
-            self.do.add(id, partName, s)
+                buffer.write(data)
+            self.do.add(id, partName, buffer.getvalue())
+            #KvS?TJ: het is natuurlijk jammer dat we hier getvalue aanroepen -idealiter is het framework stream-gebaseerd, niet  string-gebaseerd
