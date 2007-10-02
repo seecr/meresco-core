@@ -96,7 +96,7 @@ from xml_generic.validatetest import ValidateTest
 
 from observablehttpservertest import ObservableHttpServerTest
 from http.fileservertest import FileServerTest
-
+from fieldsplittest import FieldSplitTest
 
 if __name__ == '__main__':
         unittest.main()

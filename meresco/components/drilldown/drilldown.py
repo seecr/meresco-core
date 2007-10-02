@@ -48,7 +48,7 @@ class Drilldown(object):
         self._drilldownFieldnames = drilldownFieldNames
 
     def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
-        queryDocSet = self._docSetForQueryResult(docIds)
+        queryDocSet = docIds and self._docSetForQueryResult(docIds) or None
         return [(fieldname, self._processField(fieldname, queryDocSet, maximumResults))
             for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults]
 
@@ -84,7 +84,7 @@ class Drilldown(object):
             raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldName, self._docSets.keys()))
         result = []
 
-        if not drilldownBitArray:
+        if not drilldownBitArray: # this whole path is untested
             for term, docSet in self._docSets[fieldName]:
                 result.append((term, docSet.cardinality()))
         else: #Use drilldownBitArray << This branch is the HOTSPOT >>
