@@ -12,7 +12,7 @@ def lower(initials):
     return initials.lower()
 
 def getInitials(firstNames):
-    return "".join([firstName[0].lower() for firstName in firstNames.split(' ')])
+    return "".join([_firstChar(firstName).lower() for firstName in firstNames.split(' ')])
 
 expressions = [
     (lastnameExpr + r', (?P<initials>(?:[A-Za-z]\.)+)\s*(?:|\([a-zA-Z\s]+\))$', removeDots),#A.B.C.  (WhaAAtevaesdf)
@@ -32,17 +32,29 @@ def breakUp(name):
             return lastname, initials, ""
     return None
     
+    
+def dots(s):
+    return "".join([c + "." for c in s])
+
 def _firstChar(s):
     return s and s[0]
 
 def helsing(aTuple):
-    return aTuple[0]
+    return aTuple[0].capitalize()
     
 def helsing_a_v(aTuple):
-    return "%s,%s,%s" % (aTuple[0], _firstChar(aTuple[1]), getInitials(aTuple[2]))
+    prefix = dots(getInitials(aTuple[2]))
+    l = [aTuple[0].capitalize(), dots(_firstChar(aTuple[1])).upper()]
+    if prefix:
+        l.append(prefix)
+    return ", ". join(l)
     
 def helsing_ab_van(aTuple):
-    return ",".join(aTuple).replace(" ", "")
+    prefix = aTuple[2]
+    l = [aTuple[0].capitalize(), dots(aTuple[1]).upper()]
+    if prefix:
+        l.append(prefix)
+    return ", ". join(l)
 
 class NameNormalize(Observable):
     pass
