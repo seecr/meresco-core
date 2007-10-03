@@ -6,13 +6,13 @@ from re import compile
 lastnameExpr = r'^(?P<lastname>[A-Za-z]+)'
 
 def removeDots(initials):
-    return [initial for initial in initials.lower().replace('.','') if initial]
+    return initials.lower().replace('.','')
 
 def lower(initials):
-    return [initial for initial in initials.lower() if initial]
+    return initials.lower()
 
 def getInitials(firstNames):
-    return [firstName[0].lower() for firstName in firstNames.split(' ')]
+    return "".join([firstName[0].lower() for firstName in firstNames.split(' ')])
 
 expressions = [
     (lastnameExpr + r', (?P<initials>(?:[A-Za-z]\.)+)\s*(?:|\([a-zA-Z\s]+\))$', removeDots),#A.B.C.  (WhaAAtevaesdf)
@@ -27,11 +27,22 @@ def breakUp(name):
         m = expression.match(name)
         if m:
             lastname = m.groupdict()['lastname'].lower()
-            print name, '-->', m.groups()
+            #print name, '-->', m.groups()
             initials = initialsPostProcess(m.groupdict()['initials'])
-            #initials = [initial for initial in initials] # voor thijs
-            return lastname, "", initials[0], initials
+            return lastname, initials, ""
     return None
+    
+def _firstChar(s):
+    return s and s[0]
+
+def helsing(aTuple):
+    return aTuple[0]
+    
+def helsing_a_v(aTuple):
+    return "%s,%s,%s" % (aTuple[0], _firstChar(aTuple[1]), getInitials(aTuple[2]))
+    
+def helsing_ab_van(aTuple):
+    return ",".join(aTuple).replace(" ", "")
 
 class NameNormalize(Observable):
     pass
