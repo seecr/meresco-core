@@ -7,15 +7,15 @@ class NameNormalizeTest(TestCase):
 
     def testRewrite(self):
         self.assertEquals(None, breakUp(""))
-        self.assertEquals(("peters", "", "h", ["h"]), breakUp("Peters, H."))
-        self.assertEquals(("peters", "", "h", ["h", "j", "m"]), breakUp("Peters, H.J.M."))
-        self.assertEquals(("peters", "", "h", ["h"]), breakUp("Peters, Hans"))
-        self.assertEquals(("peters", "", "h", ["h"]), breakUp("Peters, H"))
-        self.assertEquals(("peters", "", "h", ["h"]), breakUp("Peters, H. (Hans)"))
-        self.assertEquals(("peters", "", "h", ["h", "j", "m"]), breakUp("Peters, H.J.M. (Hans)"))
-        self.assertEquals(("peters", "", "h", ["h"]), breakUp("Peters, H. (Hans Jan Marie)"))
-        self.assertEquals(("peters", "", "h", ["h", "j", "m"]), breakUp("Peters, HJM"))
-        self.assertEquals(("peters", "", "h", ["h", "j", "m"]), breakUp("Peters, Hans Jan Marie"))
+        self.assertEquals(("peters", "", "h", "h"), breakUp("Peters, H."))
+        self.assertEquals(("peters", "", "h", "hjm"), breakUp("Peters, H.J.M."))
+        self.assertEquals(("peters", "", "h", "h"), breakUp("Peters, Hans"))
+        self.assertEquals(("peters", "", "h", "h"), breakUp("Peters, H"))
+        self.assertEquals(("peters", "", "h", "h"), breakUp("Peters, H. (Hans)"))
+        self.assertEquals(("peters", "", "h", "hjm"), breakUp("Peters, H.J.M. (Hans)"))
+        self.assertEquals(("peters", "", "h", "h"), breakUp("Peters, H. (Hans Jan Marie)"))
+        self.assertEquals(("peters", "", "h", "hjm"), breakUp("Peters, HJM"))
+        self.assertEquals(("peters", "", "h", "hjm"), breakUp("Peters, Hans Jan Marie"))
         
         #self.assertEquals(("peters", "", "j", ["j", "j"]), breakUp("Peters, Jean-Jacques"))
         #self.assertEquals(("peters", "", "j", ["j", "j"]), breakUp("Peters, J.-J"))
@@ -38,38 +38,7 @@ class NameNormalizeTest(TestCase):
 
         #Janssen (13)
 
-creators = """Peters, C.
-Peters, F.G.F.
-
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, H.
-Peters, Hans
-Peters, hans
-
-Peters, H.J.M.
-Peters, H.J.M.
-Peters, H.J.M.
-Peters, H.J.M.
-Peters, H.J.M.
-Peters, H.J.M.
-
-Peters, H.M.J.
-
-Peters, H.J.M.
-Peters, Hans J.M.
-Peters, Hendricus Johannes Maria
-
-Peters, J.A.F.
-Peters, Maarten Jean Valentine
-
-Peters, R.
-Peters, Ron
-"""
+    def testComonent(self):
+        
+        
+        
