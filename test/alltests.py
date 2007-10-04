@@ -99,7 +99,6 @@ from http.fileservertest import FileServerTest
 from fieldsplittest import FieldSplitTest
 
 from storageharvestertest import StorageHarvesterTest
-from namenormalizetest import NameNormalizeTest
 
 if __name__ == '__main__':
         unittest.main()

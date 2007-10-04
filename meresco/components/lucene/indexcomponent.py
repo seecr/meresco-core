@@ -32,9 +32,13 @@ class IndexComponent(Observable):
         Observable.__init__(self)
         self._index = anIndex
 
-    def add(self, id, partName, document):
+    def addDocument(self, id, partName, document):
         self._index.deleteID(id)
         self._index.addToIndex(document)
+
+    def add(self, id, partName, document):
+        """Legacy name"""
+        self.addDocument(id, partName, document)
 
     def delete(self, id):
         self._index.deleteID(id)
