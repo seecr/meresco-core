@@ -55,6 +55,12 @@ class DrilldownUpdateFieldFilter(Observable):
         Observable.__init__(self)
         self._drilldownFields = listOfFields
 
+    def fieldsForField(self, documentField):
+        """Newstyle"""
+        from academicopen.documentdict import DocumentField
+        if documentField.key in self._drilldownFields:
+            yield DocumentField(documentField.key + TOKEN, documentField.value, tokenize=False)
+
     def add(self, id, partName, amaraXmlNode):
         for field in self._drilldownFields:
             node = self._findNode(amaraXmlNode, field)
