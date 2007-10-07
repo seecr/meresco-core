@@ -29,6 +29,10 @@ from xml.sax.saxutils import quoteattr, escape
 
 from meresco.framework.observable import Observable
 from meresco.framework.generatorutils import compose
+from cgi import parse_qs
+from urlparse import urlsplit
+
+from PyLucene import BooleanQuery, BooleanClause, Term, TermQuery
 
 class SimpleXmlServer(Observable):
 
@@ -37,16 +41,16 @@ class SimpleXmlServer(Observable):
         yield "Content-Type: text/xml\r\n"
         yield "\r\n"
 
-        #temp solution:
-        parts = RequestURI.split('?')
-        if len(parts) == 2:
-            fields = parts[1].split('/')
-        if len(parts) != 2 or fields == [""]:
-            raise StopIteration
-
-        fieldMaxTuples = ((s, 0) for s in fields)
-
-        drilldownResults = self.any.drilldown(None, fieldMaxTuples)
+        past, future = self._parseRequestURI(RequestURI)
+        
+        if past:
+            query = self._createLuceneQuery(past)
+            docNumbers = self.any.executeQuery(query).docNumbers()
+        else:
+            docNumbers = None
+        
+        fieldMaxTuples = ((s, 10) for s in future)
+        drilldownResults = self.any.drilldown(docNumbers, fieldMaxTuples)
 
         yield "<termDrilldown>"
         for fieldname, termCounts in drilldownResults:
@@ -59,3 +63,20 @@ class SimpleXmlServer(Observable):
                 yield '</count></term>'
             yield '</field>'
         yield "</termDrilldown>"
+        
+    def _createLuceneQuery(self, args):
+        args = [s.split("=", 1) for s in args]
+        #untokenized hier terug laten komen is een vieze vette hack natuurlijk.
+        termQueries = [TermQuery(Term(field + "__untokenized__", value)) for field, value in args]
+        result = BooleanQuery()
+        for termQuery in termQueries:
+            result.add(termQuery, BooleanClause.Occur.MUST)
+        return result
+
+    def _parseRequestURI(self, RequestURI):
+        scheme, netloc, path, query, fragment = urlsplit(RequestURI)
+        args = parse_qs(query)
+        past = args.get('past', None)
+        future = args['future']
+        return past, future
+    
