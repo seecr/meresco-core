@@ -142,6 +142,21 @@ class LuceneTest(unittest.TestCase):
         hits = self._luceneIndex.query(query)
         self.assertEquals(1, len(hits))
 
+    def testIndexCloses(self):
+        myDocument = Document('1')
+        myDocument.addIndexedField('title', 'een titel')
+        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex = None
+        newIndex = LuceneIndex(self.directoryName)
+        newIndex.addToIndex(myDocument)
+
+    def testDeletionDoesNotRaiseErrors(self):
+        myDocument = Document('1')
+        myDocument.addIndexedField('title', 'een titel')
+        newIndex = LuceneIndex(self.directoryName+'2')
+        newIndex.addToIndex(myDocument)
+        rmtree(self.directoryName+'2')
+        newIndex.__del__()
 
     def testCountField(self):
         self.assertEquals([], self._luceneIndex.countField('title'))
