@@ -76,6 +76,9 @@ class OaiJazzLucene(Observable):
                 ]),
             aStorage])
         self._numberGenerator = aNumberGenerator
+        def close():
+            anIndex.close()
+        self.close = close
 
     def _gettime(self):
         return gmtime()

@@ -60,6 +60,9 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.realjazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index')),
             StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
 
+    def tearDown(self):
+        self.realjazz.close()
+        CQ2TestCase.tearDown(self)
 
     def testAdd(self):
         self.mockedjazz.add(self.id, self.partName, bind_string('<empty/>'))

@@ -55,7 +55,7 @@ class LuceneTest(unittest.TestCase):
         self._luceneIndex = LuceneIndex(self.directoryName)
 
     def tearDown(self):
-        del self._luceneIndex
+        self._luceneIndex.close()
         if os.path.exists(self._tempdir):
             rmtree(self._tempdir)
 
@@ -147,16 +147,11 @@ class LuceneTest(unittest.TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
         self._luceneIndex = None
+        # delete method will close the open index
         newIndex = LuceneIndex(self.directoryName)
         newIndex.addToIndex(myDocument)
+        self._luceneIndex = newIndex
 
-    def testDeletionDoesNotRaiseErrors(self):
-        myDocument = Document('1')
-        myDocument.addIndexedField('title', 'een titel')
-        newIndex = LuceneIndex(self.directoryName+'2')
-        newIndex.addToIndex(myDocument)
-        rmtree(self.directoryName+'2')
-        newIndex.__del__()
 
     def testCountField(self):
         self.assertEquals([], self._luceneIndex.countField('title'))

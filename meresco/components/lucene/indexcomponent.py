@@ -48,3 +48,6 @@ class IndexComponent(Observable):
 
     def numberOfDocuments(self):
         return self._index.docCount()
+
+    def close(self):
+        self._index != None and self._index.close()

@@ -146,7 +146,7 @@ class LuceneIndex:
         queryParser.setDefaultOperator(PyLucene.QueryParser.Operator.AND)
         return queryParser.parse(luceneQueryString)
 
-    def _closeAll(self):
+    def close(self):
         if self.__reader:
             self.__reader.close()
             self.__reader = None
@@ -159,28 +159,24 @@ class LuceneIndex:
 
     def _getWriter(self, createIndex = False):
         if not self.__writer:
-            self._closeAll()
+            self.close()
             self.__writer = PyLucene.IndexWriter(self._directoryName, PyLucene.StandardAnalyzer(), createIndex)
         return self.__writer
 
     def _getSearcher(self):
         if not self.__searcher:
-            self._closeAll()
+            self.close()
             self._searcher = PyLucene.IndexSearcher(self._directoryName)
         return self._searcher
 
     def _getReader(self):
         if not self.__reader:
-            self._closeAll()
+            self.close()
             self.__reader = PyLucene.IndexReader.open(self._directoryName)
         return self.__reader
 
     def __del__(self):
-        try:
-            self._closeAll()
-        except:
-            """Errors in destruction are ignored."""
-            pass
+        self.close()
 
 class TermIter:
     """Deprecated thing for countfield"""

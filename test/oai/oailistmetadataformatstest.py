@@ -93,6 +93,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         </metadataFormat>
   </ListMetadataFormats>""", self.stream.getvalue())
         assertValidString(self.stream.getvalue())
+        jazz.close()
 
     def testListMetadataFormatsNonExistingId(self):
         class Observer:
