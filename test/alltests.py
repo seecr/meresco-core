@@ -36,6 +36,12 @@ for path in glob('../deps.d/*'):
 if os.environ.get('PYTHONPATH', '') == '':
     sys.path.insert(0, "..")
 
+# Compile bitarray stuff for test.
+status = os.system("cd ../meresco/components/drilldown/bitmatrix; python setup.py build_ext --inplace")
+if status:
+  print status
+  raise ImportError()
+
 import unittest
 
 from bitarraytest import BitArrayTest
@@ -96,7 +102,6 @@ from xml_generic.validatetest import ValidateTest
 
 from observablehttpservertest import ObservableHttpServerTest
 from http.fileservertest import FileServerTest
-from fieldsplittest import FieldSplitTest
 
 from storageharvestertest import StorageHarvesterTest
 

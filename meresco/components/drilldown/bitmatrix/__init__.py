@@ -24,13 +24,5 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from os import system
-from os.path import abspath, dirname
-
-if 'trunk/' in abspath(__file__):
-	status = system("cd %s; python setup.py build_ext --inplace" % dirname(__file__))
-	if status:
-		raise ImportError()
-
 from bitmatrix import BitMatrix
 
