@@ -69,5 +69,11 @@ class StorageComponent(Component):
         finally:
             stream.close()
 
+    def yieldRecord(self, id, partName):
+        stream = self._storage.get((id, partName))
+        for data in stream:
+            yield data
+        stream.close()
+
     def getStream(self, id, partName):
         return self._storage.get((id, partName))
