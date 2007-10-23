@@ -132,7 +132,11 @@ class LuceneIndex:
         aDocument.addToIndexWith(self._getWriter())
 
     def optimize(self):
-        self._getWriter().optimize()
+        try:
+            self._getWriter().optimize()
+        finally:
+            self.close()
+        
 
     def docCount(self):
         return self._getReader().numDocs()
@@ -166,8 +170,8 @@ class LuceneIndex:
     def _getSearcher(self):
         if not self.__searcher:
             self.close()
-            self._searcher = PyLucene.IndexSearcher(self._directoryName)
-        return self._searcher
+            self.__searcher = PyLucene.IndexSearcher(self._directoryName)
+        return self.__searcher
 
     def _getReader(self):
         if not self.__reader:

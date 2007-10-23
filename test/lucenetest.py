@@ -32,6 +32,7 @@
 import unittest
 from tempfile import mkdtemp, gettempdir
 import os
+from os.path import isfile, join
 from shutil import rmtree
 import PyLucene
 from meresco.components.lucene.document import Document
@@ -151,6 +152,11 @@ class LuceneTest(unittest.TestCase):
         newIndex = LuceneIndex(self.directoryName)
         newIndex.addToIndex(myDocument)
         self._luceneIndex = newIndex
+
+    def testOptimizeClosesTheWriter(self):
+        lockfile = join(self.directoryName, 'write.lock')
+        self._luceneIndex.optimize()
+        self.assertFalse(isfile(lockfile))
 
 
     def testCountField(self):
