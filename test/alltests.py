@@ -100,6 +100,9 @@ from xml_generic.lxml_based.crosswalktest import CrosswalkTest
 from xml_generic.lxml_based.crosswalktestbase import CrosswalkTestBase
 from xml_generic.validatetest import ValidateTest
 
+from dictionary.transformtest import TransformTest
+from dictionary.xml2dicttest import Xml2DictTest
+
 from observablehttpservertest import ObservableHttpServerTest
 from http.fileservertest import FileServerTest
 
