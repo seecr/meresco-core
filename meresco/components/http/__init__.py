@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -24,6 +24,6 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from observableserver import ObservableServer
+
 from observablehttpserver import ObservableHttpServer, ObservableHttpServerAdapter
 from pathfilter import PathFilter

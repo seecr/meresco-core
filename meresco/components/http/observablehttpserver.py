@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -33,10 +33,10 @@ from socket import gethostname
 
 
 class ObservableHttpServer(Observable):
-    def __init__(self, reactor, port):
+    def __init__(self, reactor, port, timeout=1):
         Observable.__init__(self)
         self._port = port
-        server = HttpServer(reactor, port, self._connect)
+        server = HttpServer(reactor, port, self._connect, timeout=timeout)
 
     def _connect(self, **kwargs):
         return self.all.handleRequest(port=self._port, **kwargs)
