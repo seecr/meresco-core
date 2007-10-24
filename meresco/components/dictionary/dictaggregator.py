@@ -11,3 +11,6 @@ class DictAggregator(Observable):
         #self.all.fieldsForDict(aggregatedDict) - ??? aggregatie naar zichzelf?
         
         self.do.addDocumentDict(id, partName, aggregatedDict)
+
+    def unknown(self, *args, **kwargs):
+        return self.all.unknown(*args, ** kwargs)

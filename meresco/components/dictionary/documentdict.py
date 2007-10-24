@@ -34,3 +34,18 @@ class DocumentField(object):
 
     def __repr__(self):
         return '(%s => %s)' % (repr(self.key), repr(self.value))
+
+def asDict(documentDict):
+    result = {}
+    for documentField in documentDict:
+        value = result.get(documentField.key, [])
+        value.append(documentField.value)
+        result[documentField.key] = value
+    return result
+
+def fromDict(aDictionary):
+    result = DocumentDict()
+    for key,valueList in aDictionary.items():
+        for value in valueList:
+            result.add(key,value)
+    return result

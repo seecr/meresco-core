@@ -20,3 +20,7 @@ class Xml2Dict(Observable):
 
         for child in filter(is_element, aNode.childNodes):
             self._fillDict(child, dd, tagname)
+
+    def unknown(self, *args, **kwargs):
+        return self.all.unknown(*args, ** kwargs)
+        
