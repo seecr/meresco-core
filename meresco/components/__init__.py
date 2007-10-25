@@ -28,6 +28,6 @@
 from logobserver import LogObserver
 from storagecomponent import StorageComponent
 from xml2document import Xml2Document
-from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml
+from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
 
 from crosswalk import Crosswalk

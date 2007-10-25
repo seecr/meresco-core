@@ -26,60 +26,55 @@
 ## end license ##
 
 from meresco.framework.observable import Observable
-from amara import binderytools
+from amara.binderytools import bind_string
+from amara.bindery import is_element
 from lxml.etree import parse, _ElementTree, tostring
 from cStringIO import StringIO
 
-class XmlParseAmara(Observable):
+class Converter(Observable):
+    def unknown(self, msg, *args, **kwargs):
+        newArgs = [self._detectAndConvert(arg) for arg in args]
+        newKwargs = dict((key, self._detectAndConvert(value)) for key, value in kwargs.items())
+        return self.all.unknown(msg, *newArgs, **newKwargs)
 
-    def add(self, id, partName, xmlString):
-        xml = binderytools.bind_string(xmlString)
-        return self.all.add(id, partName, xml.rootNode.childNodes[0])
+    def _detectAndConvert(self, anObject):
+        raise NotImplementedError()
 
-    def unknown(self, *args, **kwargs):
-        return self.all.unknown(*args, **kwargs)
+class XmlParseAmara(Converter):
+    def _detectAndConvert(self, anObject):
+        if str == type(anObject) and anObject.strip().startswith('<') and anObject.strip().endswith('>'):
+            return bind_string(anObject).childNodes[0]
+        return anObject
 
-class XmlPrintAmara(Observable):
+class XmlPrintAmara(Converter):
+    def _detectAndConvert(self, anObject):
+        if is_element(anObject):
+            return anObject.xml()
+        return anObject
 
-    def add(self, id, partName, amaraXmlNode, *args, **kwargs):
-        return self.all.add(id, partName, amaraXmlNode.xml())
+class XmlParseLxml(Converter):
+    def _detectAndConvert(self, anObject):
+        if str == type(anObject) and anObject.strip().startswith('<') and anObject.strip().endswith('>'):
+            return parse(StringIO(anObject))
+        return anObject
 
-    def unknown(self, *args, **kwargs):
-        return self.all.unknown(*args, **kwargs)
-
-class XmlPrintLxml(Observable):
-    def printXml(self, node):
+class XmlPrintLxml(Converter):
+    def _detectAndConvert(self, node):
         if type(node) == _ElementTree:
             return tostring(node, pretty_print = True)
         return node
 
-    def unknown(self, msg, *args, **kwargs):
-        newArgs = [self.printXml(arg) for arg in args]
-        newKwargs = dict((key, self.printXml(value)) for key, value in kwargs.items())
-        return self.all.unknown(msg, *newArgs, **newKwargs)
-
-class Amara2Lxml(Observable):
-
-    def amara2lxml(self, something):
-        if 'amara.bindery.' in str(type(something)):
+class Amara2Lxml(Converter):
+    def _detectAndConvert(self, something):
+        if is_element(something):
             return parse(StringIO(something.xml()))
         return something
 
-    def unknown(self, msg, *args, **kwargs):
-        newArgs = [self.amara2lxml(arg) for arg in args]
-        newKwargs = dict((key, self.amara2lxml(value)) for key, value in kwargs.items())
-        return self.all.unknown(msg, *newArgs, **newKwargs)
-
-class Lxml2Amara(Observable):
-    def lxml2amara(self, arg):
+class Lxml2Amara(Converter):
+    def _detectAndConvert(self, arg):
         if type(arg) == _ElementTree:
-            arg = binderytools.bind_string(tostring(arg)).childNodes[0]
+            arg = bind_string(tostring(arg)).childNodes[0]
         return arg
-
-    def unknown(self, msg, *args, **kwargs):
-        newArgs = [self.lxml2amara(arg) for arg in args]
-        newKwargs = dict((key, self.lxml2amara(value)) for key, value in kwargs.items())
-        return self.all.unknown(msg, *newArgs, **newKwargs)
 
 # backwards compatible
 XmlInflate = XmlParseAmara

@@ -33,17 +33,17 @@ from cq2utils.calltrace import CallTrace
 from amara import binderytools
 from lxml.etree import _ElementTree, tostring, parse
 
-from meresco.components import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml
+from meresco.components import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
 
 class XmlPumpTest(CQ2TestCase):
 
     def testInflate(self):
+        observable = Observable()
         observer = CallTrace('Observer')
-        xmlInflate = XmlParseAmara()
-        xmlInflate.addObserver(observer)
+        observable.addObservers([(XmlParseAmara(), [observer])])
 
         xmlString = """<tag><content>contents</content></tag>"""
-        list(xmlInflate.add("id", "partName", xmlString))
+        observable.do.add("id", "partName", xmlString)
 
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals("add", observer.calledMethods[0].name)
@@ -54,15 +54,15 @@ class XmlPumpTest(CQ2TestCase):
         self.assertEquals('content', xmlNode.content.localName)
 
     def testDeflate(self):
+        observable = Observable()
         observer = CallTrace('Observer')
-        xmlDeflate = XmlPrintAmara()
-        xmlDeflate.addObserver(observer)
+        observable.addObservers([(XmlPrintAmara(), [observer])])
 
         s = """<tag><content>contents</content></tag>"""
-        list(xmlDeflate.add("id", "partName", binderytools.bind_string(s).tag))
+        observable.do.aMethodCall("id", "partName", binderytools.bind_string(s).tag)
 
         self.assertEquals(1, len(observer.calledMethods))
-        self.assertEquals("add", observer.calledMethods[0].name)
+        self.assertEquals("aMethodCall", observer.calledMethods[0].name)
         self.assertEquals(["id", "partName", s], observer.calledMethods[0].arguments)
 
     def testAmara2LXml(self):
@@ -87,10 +87,30 @@ class XmlPumpTest(CQ2TestCase):
         #self.assertEquals("<class 'amara.bindery.root_base'>", str(type(self.amaraNode)))
         self.assertEquals('<a><b>c</b></a>', self.amaraNode.xml())
 
+    def testXmlParseAmaraRespondsToEveryMessage(self):
+        observable = Observable()
+        observer = CallTrace('Observer')
+        observable.addObservers([
+            (XmlParseAmara(),[
+                observer
+            ])
+        ])
+        observable.do.aMethodCall('do not parse this', '<parse>this</parse>')
+
+        self.assertEquals(1, len(observer.calledMethods))
+        method = observer.calledMethods[0]
+        self.assertEquals('aMethodCall', method.name)
+        self.assertEquals(2, len(method.args))
+        self.assertEquals('do not parse this', method.args[0])
+        self.assertEquals('<parse>this</parse>', method.args[1].xml())
+
+       
+
     def testTransparency(self):
         deflate = CallTrace('deflated')
         amara = CallTrace('amara')
         lxml = CallTrace('lxml')
+        lxml2 = CallTrace('lxml2')
         observable = Observable()
         observable.addObservers([
             (XmlParseAmara(), [
@@ -105,14 +125,20 @@ class XmlPumpTest(CQ2TestCase):
                         ])
                     ])
                 ])
+            ]),
+            (XmlParseLxml(), [
+                (XmlPrintLxml(), [
+                    lxml2
+                ]),
             ])
         ])
 
-        observable.do.add('identifier', 'partName', '<?xml version="1.0"?><a><b>c</b></a>')
+        observable.do.something('identifier', 'partName', '<?xml version="1.0"?><a><b>c</b></a>')
 
         self.assertEqualsWS('<a><b>c</b></a>', amara.calledMethods[0].args[2].xml())
         self.assertEqualsWS('<a><b>c</b></a>', deflate.calledMethods[0].args[2])
         self.assertEqualsWS('<a><b>c</b></a>', lxml.calledMethods[0].args[2])
+        self.assertEqualsWS('<a><b>c</b></a>', lxml2.calledMethods[0].args[2])
 
 
         
