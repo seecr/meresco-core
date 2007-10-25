@@ -47,7 +47,7 @@ class CrosswalkTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.crosswalk = Crosswalk('theXmlRecord')
+        self.crosswalk = Crosswalk('theXmlRecord', rulesDir='xml_generic/lxml_based/test_rules')
         self.validate = Validate(['metadata'])
         self.crosswalk.addObserver(self.validate)
         self.observer = CallTrace()
