@@ -46,12 +46,14 @@ def rewrite(pattern, replacement, rules):
     return rules
 
 class Crosswalk(Observable):
-
-    def __init__(self,argumentKeyword, rulesDir=dirname(__file__)):
+    def __init__(self, argumentKeyword_ignored=None, rulesDir=dirname(__file__)):
+        """
+        Crosswalk crosswalks any argument that looks like an Lxml ElementTree
+        - argumentKeyword_ignored is kept for backwardsCompatibility, but it is ignored.
+        """
         Observable.__init__(self)
         self.ruleSet = {}
         self.rulesDir = rulesDir
-        self.argumentKeyword = argumentKeyword
         if rulesDir:
             for fileName in glob(rulesDir + '/*' + EXTENSION):
                 args = {}
@@ -63,11 +65,15 @@ class Crosswalk(Observable):
         globs = {'extend': lambda name: self.readConfig(name, localsDict), 'rewriteRules': rewriteRules}
         execfile(self.rulesDir + '/' + ruleSetName + EXTENSION, globs, localsDict)
 
+    def _detectAndConvert(self, anObject):
+        if type(anObject) == _ElementTree:
+            return self.convert(anObject)
+        return anObject
+
     def unknown(self, method, *args, **kwargs):
-        if self.argumentKeyword in kwargs:
-            kwargs[self.argumentKeyword] = self.convert(kwargs[self.argumentKeyword])
-            return self.all.unknown(method, *args, **kwargs)
-        return (i for i in [])
+        newArgs = [self._detectAndConvert(arg) for arg in args]
+        newKwargs = dict((key, self._detectAndConvert(value)) for key, value in kwargs.items())
+        return self.all.unknown(method, *newArgs, **newKwargs)
 
     def convert(self, lxmlNode):
         nsmap = findNamespaces(lxmlNode)
