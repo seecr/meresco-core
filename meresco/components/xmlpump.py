@@ -30,7 +30,7 @@ from amara import binderytools
 from lxml.etree import parse, _ElementTree, tostring
 from cStringIO import StringIO
 
-class XmlInflate(Observable):
+class XmlParseAmara(Observable):
 
     def add(self, id, partName, xmlString):
         xml = binderytools.bind_string(xmlString)
@@ -39,7 +39,7 @@ class XmlInflate(Observable):
     def unknown(self, *args, **kwargs):
         return self.all.unknown(*args, **kwargs)
 
-class XmlDeflate(Observable):
+class XmlPrintAmara(Observable):
 
     def add(self, id, partName, amaraXmlNode, *args, **kwargs):
         return self.all.add(id, partName, amaraXmlNode.xml())
@@ -73,10 +73,14 @@ class Amara2Lxml(Observable):
 class Lxml2Amara(Observable):
     def lxml2amara(self, arg):
         if type(arg) == _ElementTree:
-            arg = binderytools.bind_string(tostring(arg))
+            arg = binderytools.bind_string(tostring(arg)).childNodes[0]
         return arg
 
     def unknown(self, msg, *args, **kwargs):
         newArgs = [self.lxml2amara(arg) for arg in args]
         newKwargs = dict((key, self.lxml2amara(value)) for key, value in kwargs.items())
         return self.all.unknown(msg, *newArgs, **newKwargs)
+
+# backwards compatible
+XmlInflate = XmlParseAmara
+XmlDeflate = XmlPrintAmara

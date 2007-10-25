@@ -33,13 +33,13 @@ from cq2utils.calltrace import CallTrace
 from amara import binderytools
 from lxml.etree import _ElementTree, tostring, parse
 
-from meresco.components.xmlpump import XmlInflate, XmlDeflate, Amara2Lxml, Lxml2Amara
+from meresco.components import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml
 
 class XmlPumpTest(CQ2TestCase):
 
     def testInflate(self):
         observer = CallTrace('Observer')
-        xmlInflate = XmlInflate()
+        xmlInflate = XmlParseAmara()
         xmlInflate.addObserver(observer)
 
         xmlString = """<tag><content>contents</content></tag>"""
@@ -55,7 +55,7 @@ class XmlPumpTest(CQ2TestCase):
 
     def testDeflate(self):
         observer = CallTrace('Observer')
-        xmlDeflate = XmlDeflate()
+        xmlDeflate = XmlPrintAmara()
         xmlDeflate.addObserver(observer)
 
         s = """<tag><content>contents</content></tag>"""
@@ -84,5 +84,35 @@ class XmlPumpTest(CQ2TestCase):
         lxml2amara.addObserver(Observer())
         lxmlNode = parse(StringIO('<a><b>c</b></a>'))
         list(lxml2amara.unknown('ape', lxmlNode))
-        self.assertEquals("<class 'amara.bindery.root_base'>", str(type(self.amaraNode)))
-        self.assertEquals('<?xml version="1.0" encoding="UTF-8"?>\n<a><b>c</b></a>', self.amaraNode.xml())
+        #self.assertEquals("<class 'amara.bindery.root_base'>", str(type(self.amaraNode)))
+        self.assertEquals('<a><b>c</b></a>', self.amaraNode.xml())
+
+    def testTransparency(self):
+        deflate = CallTrace('deflated')
+        amara = CallTrace('amara')
+        lxml = CallTrace('lxml')
+        observable = Observable()
+        observable.addObservers([
+            (XmlParseAmara(), [
+                amara,
+                (Amara2Lxml(), [
+                    (XmlPrintLxml(), [
+                        lxml
+                    ]),
+                    (Lxml2Amara(), [
+                        (XmlPrintAmara(), [
+                            deflate
+                        ])
+                    ])
+                ])
+            ])
+        ])
+
+        observable.do.add('identifier', 'partName', '<?xml version="1.0"?><a><b>c</b></a>')
+
+        self.assertEqualsWS('<a><b>c</b></a>', amara.calledMethods[0].args[2].xml())
+        self.assertEqualsWS('<a><b>c</b></a>', deflate.calledMethods[0].args[2])
+        self.assertEqualsWS('<a><b>c</b></a>', lxml.calledMethods[0].args[2])
+
+
+        
