@@ -30,6 +30,7 @@ from amara.binderytools import bind_string
 from amara.bindery import is_element
 from lxml.etree import parse, _ElementTree, tostring
 from cStringIO import StringIO
+from re import compile
 
 class Converter(Observable):
     def unknown(self, msg, *args, **kwargs):
@@ -37,32 +38,49 @@ class Converter(Observable):
         newKwargs = dict((key, self._detectAndConvert(value)) for key, value in kwargs.items())
         return self.all.unknown(msg, *newArgs, **newKwargs)
 
-    def _detectAndConvert(self, anObject):
+    def _canConvert(self, anObject):
         raise NotImplementedError()
+    
+    def _convert(self, anObject):
+        raise NotImplementedError()
+    
+    def _detectAndConvert(self, anObject):
+        if self._canConvert(anObject):
+            return self._convert(anObject)
+        return anObject
+    
+
+xmlStringRegexp = compile(r'(?s)^\s*<.*>\s*$')
+def isXmlString(anObject):
+    return str == type(anObject) and xmlStringRegexp.match(anObject)
 
 class XmlParseAmara(Converter):
-    def _detectAndConvert(self, anObject):
-        if str == type(anObject) and anObject.strip().startswith('<') and anObject.strip().endswith('>'):
-            return bind_string(anObject).childNodes[0]
-        return anObject
+    def _canConvert(self, anObject):
+        return isXmlString(anObject)
+            
+    def _convert(self, anObject):
+        return bind_string(anObject).childNodes[0]
 
 class XmlPrintAmara(Converter):
-    def _detectAndConvert(self, anObject):
-        if is_element(anObject):
-            return anObject.xml()
-        return anObject
+    def _canConvert(self, anObject):
+        return is_element(anObject)
+    
+    def _convert(self, anObject):
+        return anObject.xml()
 
 class XmlParseLxml(Converter):
-    def _detectAndConvert(self, anObject):
-        if str == type(anObject) and anObject.strip().startswith('<') and anObject.strip().endswith('>'):
-            return parse(StringIO(anObject))
-        return anObject
+    def _canConvert(self, anObject):
+        return isXmlString(anObject)
+            
+    def _convert(self, anObject):
+        return parse(StringIO(anObject))
 
 class XmlPrintLxml(Converter):
-    def _detectAndConvert(self, node):
-        if type(node) == _ElementTree:
-            return tostring(node, pretty_print = True)
-        return node
+    def _canConvert(self, anObject):
+        return type(anObject) == _ElementTree
+    
+    def _convert(self, anObject):
+        return tostring(anObject, pretty_print = True)
 
 class Amara2Lxml(Converter):
     def _detectAndConvert(self, something):
@@ -71,10 +89,11 @@ class Amara2Lxml(Converter):
         return something
 
 class Lxml2Amara(Converter):
-    def _detectAndConvert(self, arg):
-        if type(arg) == _ElementTree:
-            arg = bind_string(tostring(arg)).childNodes[0]
-        return arg
+    def _canConvert(self, anObject):
+        return type(anObject) == _ElementTree
+    
+    def _convert(self, anObject):
+        return bind_string(tostring(anObject)).childNodes[0]
 
 # backwards compatible
 XmlInflate = XmlParseAmara
