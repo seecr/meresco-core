@@ -12,7 +12,7 @@ class XmlXPath(Observable):
         changeTheseArgs = [(position,arg) for position,arg in enumerate(args) if type(arg) == ElementTreeType]
         changeTheseKwargs = [(key,value) for key,value in kwargs.items() if type(value) == ElementTreeType]
         assert len(changeTheseArgs) + len(changeTheseKwargs) <= 1, 'Can only handle one ElementTree in argument list.'
-        
+
         if changeTheseArgs:
             position, elementTree = changeTheseArgs[0]
             for element in elementTree.xpath(self._xpath, self._namespacesMap):

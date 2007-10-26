@@ -3,7 +3,7 @@ from cq2utils import CQ2TestCase, CallTrace
 from meresco.framework import Observable
 
 from meresco.components import XmlXPath, XmlParseLxml, XmlPrintLxml
-from lxml.etree import parse, ElementTree, _ElementTree as ElementTreeType
+from lxml.etree import parse, ElementTree, _ElementTree as ElementTreeType, tostring
 from StringIO import StringIO
 
 
@@ -107,3 +107,9 @@ class XmlXPathTest(CQ2TestCase):
             self.fail()
         except AssertionError, e:
             self.assertEquals('Can only handle one ElementTree in argument list.', str(e))
+            
+    def testDoNotChangesArgs(self):
+        xmlXPath = XmlXPath('/a')
+        arg = parse(StringIO('<a>a</a>'))
+        xmlXPath.unknown('message', arg)
+        self.assertEquals('<a>a</a>', tostring(arg))
