@@ -46,11 +46,9 @@ def rewrite(pattern, replacement, rules):
     return rules
 
 class Crosswalk(Observable):
-    def __init__(self, argumentKeyword_ignored=None, rulesDir=dirname(__file__)):
-        """
-        Crosswalk crosswalks any argument that looks like an Lxml ElementTree
-        - argumentKeyword_ignored is kept for backwardsCompatibility, but it is ignored.
-        """
+    def __init__(self, argumentKeyword = None, rulesDir=dirname(__file__)):
+        assert argumentKeyword == None, 'Crosswalk converts any argument that looks like an Lxml ElementTree, usage of argumentKeyword is forbidden.'
+
         Observable.__init__(self)
         self.ruleSet = {}
         self.rulesDir = rulesDir

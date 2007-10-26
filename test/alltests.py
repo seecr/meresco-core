@@ -97,7 +97,7 @@ from oai.oaitooltest import OaiToolTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
-from xml_generic.lxml_based.crosswalktestbase import CrosswalkTestBase
+from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
 from xml_generic.validatetest import ValidateTest
 
 from dictionary.transformtest import TransformTest
