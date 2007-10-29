@@ -61,7 +61,8 @@ class XmlXPathTest(CQ2TestCase):
     
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertEqualsWS('<findme xmlns="ns3">Found</findme>', self.observer.calledMethods[0].args[0])
-        
+
+       
     def testXPathWithConditions(self):
         self.createXmlXPath('/root/element[pick="me"]/data', {})
         

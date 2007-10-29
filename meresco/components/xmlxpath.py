@@ -2,11 +2,19 @@
 from meresco.framework import Observable
 from lxml.etree import ElementTree, _ElementTree as ElementTreeType
 
+oftenUsedNamespaces = {
+    'oai_dc': "http://www.openarchives.org/OAI/2.0/oai_dc/",
+    'dc': "http://purl.org/dc/elements/1.1/",
+    'oai': "http://www.openarchives.org/OAI/2.0/",
+    'lom': "http://ltsc.ieee.org/xsd/LOM",
+}
+
 class XmlXPath(Observable):
     def __init__(self, xpath, namespaceMap = {}):
         Observable.__init__(self)
         self._xpath = xpath
-        self._namespacesMap = namespaceMap
+        self._namespacesMap = oftenUsedNamespaces.copy()
+        self._namespacesMap.update(namespaceMap)
 
     def unknown(self, msg, *args, **kwargs):
         changeTheseArgs = [(position,arg) for position,arg in enumerate(args) if type(arg) == ElementTreeType]
