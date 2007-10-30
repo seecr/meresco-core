@@ -1,6 +1,7 @@
 
 from meresco.framework import Observable
-from lxml.etree import ElementTree, _ElementTree as ElementTreeType
+from lxml.etree import ElementTree, _ElementTree as ElementTreeType, parse
+from StringIO import StringIO
 
 oftenUsedNamespaces = {
     'oai_dc': "http://www.openarchives.org/OAI/2.0/oai_dc/",
@@ -10,9 +11,9 @@ oftenUsedNamespaces = {
 }
 
 class XmlXPath(Observable):
-    def __init__(self, xpath, namespaceMap = {}):
+    def __init__(self, xpathList, namespaceMap = {}):
         Observable.__init__(self)
-        self._xpath = xpath
+        self._xpaths = xpathList
         self._namespacesMap = oftenUsedNamespaces.copy()
         self._namespacesMap.update(namespaceMap)
 
@@ -23,17 +24,24 @@ class XmlXPath(Observable):
 
         if changeTheseArgs:
             position, elementTree = changeTheseArgs[0]
-            for element in elementTree.xpath(self._xpath, self._namespacesMap):
-                newTree = ElementTree(element)
+            for newTree in self._findNewTree(elementTree):
                 newArgs = [arg for arg in args]
                 newArgs[position] = newTree
                 yield self.all.unknown(msg, *newArgs, **kwargs)
         elif changeTheseKwargs:
             key, elementTree = changeTheseKwargs[0]
-            for element in elementTree.xpath(self._xpath, self._namespacesMap):
-                newTree = ElementTree(element)
+            for newTree in self._findNewTree(elementTree):
                 newKwargs = kwargs.copy()
                 newKwargs[key] = newTree
                 yield self.all.unknown(msg, *args, **newKwargs)
         else:
             yield self.all.unknown(msg, *args, **kwargs)
+
+    def _findNewTree(self, elementTree):
+        for xpath in self._xpaths:
+            for element in elementTree.xpath(xpath, self._namespacesMap):
+                #to fix root element:
+                buffer = StringIO()
+                ElementTree(element).write(buffer)
+                buffer.seek(0)
+                yield parse(buffer)
