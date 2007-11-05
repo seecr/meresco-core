@@ -31,6 +31,9 @@ class DocumentField(object):
             self.key == other.key and \
             self.value == other.value and \
             self.options == other.options
+            
+    def __hash__(self):
+        return hash(self.key)
 
     def __repr__(self):
         return '(%s => %s)' % (repr(self.key), repr(self.value))
