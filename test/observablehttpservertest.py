@@ -27,6 +27,7 @@
 from unittest import TestCase
 from random import randint
 from weightless import Reactor, HttpReader, VERSION as WlVersion
+from weightless._httpreader import HttpReaderFacade
 from meresco.components.http import ObservableHttpServer, ObservableHttpServerAdapter
 from cq2utils import CallTrace
 from socket import gethostname
@@ -41,15 +42,14 @@ class ObservableHttpServerTest(TestCase):
         mockObserver.returnValues['handleRequest'] = (i for i in 'HTTP/1.0 200 Ok\r\n\r\nabc')
         server.addObserver(mockObserver)
         fragments = []
-        def connect(*args, **kwargs):
-            client.receiveFragment(response)
-        def response(fragment):
-            fragments.append(fragment)
-        client = HttpReader(reactor, 'http://localhost:%d' % port, connect)
+        def send(data):
+            if type(data) == str:
+                fragments.append(data)
+        client = HttpReaderFacade(reactor, 'http://localhost:%d' % port, send)
         while len(mockObserver.calledMethods) < 1:
             reactor.step()
         self.assertEquals('handleRequest', mockObserver.calledMethods[0].name)
-        self.assertEquals({'port': port, 'RequestURI': '/', 'HTTPVersion': '1.0', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v' + WlVersion}, 'Client': ('127.0.0.1', MATCHALL)}, mockObserver.calledMethods[0].kwargs)
+        self.assertEquals({'Body': '', 'port': port, 'RequestURI': '/', 'HTTPVersion': '1.1', 'Method': 'GET','Headers': {'Host': 'localhost', 'User-Agent': 'Weightless/v' + WlVersion}, 'Client': ('127.0.0.1', MATCHALL)}, mockObserver.calledMethods[0].kwargs)
         while len(fragments) < 3:
             reactor.step()
         self.assertEquals('abc', ''.join(fragments))
