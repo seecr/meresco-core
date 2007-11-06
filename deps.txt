@@ -7,4 +7,5 @@ python-amara (=1.2a2)
 python-cq2utils (>=4.4)
 python-weightless (>=0.1)
 python-weightless (<<0.2)
+python-magic
 python-xml
