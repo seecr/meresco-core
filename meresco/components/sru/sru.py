@@ -73,14 +73,21 @@ class Sru(Observable):
         yield XML_HEADER
         try:
             operation, arguments = self._parseArguments(queryArguments)
+            if operation == "searchRetrieve":
+                query = self._createSruQuery(arguments)
+        except SruException, e:
+            yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
+
+        try:
             if operation == "explain":
                 yield self._doExplain(database)
             else:
-                query = self._createSruQuery(arguments)
                 for data in compose(self._doSearchRetrieve(query, arguments)):
                     yield data
-        except SruException, e:
-            yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
+        except Exception, e:
+            yield "Unexpected Exception:\n"
+            yield str(e)
+            raise e
 
     def _parseUri(self, RequestURI):
         Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)
@@ -227,8 +234,26 @@ class Sru(Observable):
             yield self.all.writeRecord(recordId, schema, sruQuery.recordPacking)
             yield '</recordData>'
         yield '</srw:extraRecordData>'
+
+class IetsVanNut(Observable):
+
+    def writeRecord(self, recordId, recordSchema, recordPacking):
+        generator = self.all.write(recordId, recordSchema)
+        if recordPacking == 'xml':
+            for data in generator:
+                yield data
+        elif recordPacking == 'string':
+            for data in generator:
+                yield xmlEscape(data)
+        else:
+            raise Exception("Unknown Record Packing: %s" % recordPacking)
+
 #NOG TE DOEN:
 #eerdere aanroep was self.all.extraResponseData(SELF, hits). luisteraars aanpassen
 #idem voor
 #self.do.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
-#en die naam is ook niet zo fris meer
+#en die naam is ook niet zo fris meer,
+#zie ook "IetsVanNut" en zijn methode "self.all.write" waaruit ook een sink is verdwenen
+
+#HTTP Stuff (zat in stinkAdapter)
+#self.contentType = 'text/xml; charset=utf-8'
