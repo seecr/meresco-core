@@ -27,9 +27,9 @@
 
 import unittest
 #remove at the end...
-from meresco.legacy.plugins.sruplugin import SUCCESS, SRUPlugin, SRUDiagnostic, MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, registerOn
+from meresco.legacy.plugins.sruplugin import SRUPlugin, SRUDiagnostic, MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, registerOn
 
-from meresco.components.sru.sru import Sru
+from meresco.components.sru.sru import Sru, SruException
 
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
@@ -37,14 +37,9 @@ from cq2utils.cq2testcase import CQ2TestCase
 from cqlparser.cqlcomposer import compose as cqlCompose
 import traceback
 
-class SruTest(CQ2TestCase):
+SUCCESS = "SUCCESS"
 
-    #def setUp(self):
-        #CQ2TestCase.setUp(self)
-        #self.request = CallTrace('Request')
-        #self.request.args = {}
-        #self.request.database = 'database'
-        #self.plugin = SRUPlugin(self.request)
+class SruTest(CQ2TestCase):
 
     def testExplain(self):
         component = Sru(host='TEST_SERVER_HOST', port='TEST_SERVER_PORT', description='TEST_SERVER_DESCRIPTION', modifiedDate='TEST_SERVER_DATE')
@@ -84,6 +79,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
 
     def testMandatoryArgumentsSupplied(self):
         error = MANDATORY_PARAMETER_NOT_SUPPLIED
+        self._validate(SUCCESS, {})
         self._validate(error, {'version':['1.1']})
         self._validate(error, {'version':['1.1'], 'query':['']})
         self._validate(SUCCESS, {'version':['1.1'], 'query':['x'], 'operation':['searchRetrieve']})
@@ -114,7 +110,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['1']})
         self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['999999999']})
 
-    def uitgezetteTestValidMaximumRecords(self):
+    def testValidMaximumRecords(self):
         error = UNSUPPORTED_PARAMETER_VALUE
         self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['']})
         self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['A']})
@@ -123,87 +119,101 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['1']})
         self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['99']})
 
-    def uitgezetteTestValidateCQLSyntax(self):
+    def testMaximumMaximumRecords(self):
+        component = Sru('', '', '', '', maximumMaximumRecords=100)
+        try:
+            component._createSruQuery({'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords': ['101']})
+            self.fail()
+        except SruException, e:
+            self.assertEquals(UNSUPPORTED_PARAMETER_VALUE, [e.code, e.message])
+
+    def testValidateCQLSyntax(self):
         error = UNSUPPORTED_PARAMETER_VALUE
         self._validate(SUCCESS, {'version':['1.1'], 'query':['TERM'], 'operation':['searchRetrieve'], 'startRecord':['1']})
         self._validate(QUERY_FEATURE_UNSUPPORTED, {'version':['1.1'], 'query':['TERM1)'], 'operation':['searchRetrieve']})
 
-    def _validate(self, code, arguments):
+    def _validate(self, error, arguments):
         component = Sru('', '', '', '')
-        NO_DETAILS = 2
-        self.assertEquals(code, component._validate(arguments)[:NO_DETAILS])
+        try:
+            operation, arguments = component._parseArguments(arguments)
+            if operation == "searchRetrieve":
+                component._createSruQuery(arguments)
+            if error != SUCCESS:
+                self.fail("Expected error %s but got nothing"  % error)
+        except SruException, e:
+            self.assertEquals(error, [e.code, e.message])
 
-    def uitgezetteTestEchoedSearchRetrieveRequest(self):
-        request = CallTrace('Request')
-        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
-            'query':['query >= 3']}
+    def testEchoedSearchRetrieveRequest(self):
+        arguments = {'version':['1.1'], 'operation':['searchRetrieve'], 'query':['query >= 3']}
+        component = Sru('', '', '', '')
 
-        b = StringIO()
-        request.write = b.write
-        mock = CallTrace('ExtraRequestData')
-
-        plugin = SRUPlugin(request)
-        plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
-
-        plugin._writeEchoedSearchRetrieveRequest()
+        result = "".join(list(component._writeEchoedSearchRetrieveRequest(arguments)))
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
-</srw:echoedSearchRetrieveRequest>""", b.getvalue())
+</srw:echoedSearchRetrieveRequest>""", result)
 
-    def uitgezetteTestEchoedSearchRetrieveRequestWithExtraRequestData(self):
-        request = CallTrace('Request')
-        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
-            'query':['query >= 3']}
-        b = StringIO()
-        request.write = b.write
-        mock = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': 'some extra request data'})
-        plugin = SRUPlugin(request)
-        plugin.addObserver(mock)
-        plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
+    def testEchoedSearchRetrieveRequestWithExtraRequestData(self):
+        arguments = {'version':['1.1'], 'operation':['searchRetrieve'], 'query':['query >= 3']}
+        observer = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': 'some extra request data'})
+        component = Sru('', '', '', '')
+        component.addObserver(observer)
 
-        plugin._writeEchoedSearchRetrieveRequest()
+        result = "".join(list(component._writeEchoedSearchRetrieveRequest(arguments)))
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
     <srw:extraRequestData>some extra request data</srw:extraRequestData>
-</srw:echoedSearchRetrieveRequest>""", b.getvalue())
+</srw:echoedSearchRetrieveRequest>""",result)
 
-    def uitgezetteTestEchoedSearchRetrieveRequestWithoutExtraRequestData(self):
-        request = CallTrace('Request')
-        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
-            'query':['query >= 3']}
-        b = StringIO()
-        request.write = b.write
-        def answer(arg):
-            if False:
-                yield None
-        mock = CallTrace('ExtraRequestData')
-        mock.echoedExtraRequestData = answer
-        plugin = SRUPlugin(request)
-        plugin.addObserver(mock)
-        plugin._writeEchoedExtraRequestData = mock._writeEchoedExtraRequestData
+    def testExtraResponseDataHandlerNoHandler(self):
+        component = Sru('', '', '', '')
+        hits = ["id_%s" % i for i in range(10)]
+        result = "".join(list(component._writeExtraResponseData({}, hits)))
+        self.assertEquals('' , result)
 
-        plugin._writeEchoedSearchRetrieveRequest()
-        self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
-    <srw:version>1.1</srw:version>
-    <srw:query>query &gt;= 3</srw:query>
-</srw:echoedSearchRetrieveRequest>""", b.getvalue())
+    def testExtraResponseDataHandlerNoData(self):
+        class TestHandler:
+            def extraResponseData(self, *args):
+                return []
 
-    def uitgezetteTestSearchRetrieve(self):
-        request = CallTrace('Request')
-        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
-            'query':['field=value'], 'x-recordSchema':['extra']}
-        request.database = 'database'
+        component = Sru('', '', '', '')
+        component.addObserver(TestHandler())
+        hits = ["id_%s" % i for i in range(10)]
+        result = "".join(list(component._writeExtraResponseData({}, hits)))
+        self.assertEquals('' , result)
+
+    def testExtraResponseDataHandlerWithData(self):
+        class TestHandler:
+            def extraResponseData(self, *args):
+                return ["<someD", "ata/>"]
+
+        component = Sru('', '', '', '')
+        component.addObserver(TestHandler())
+        hits = ["id_%s" % i for i in range(10)]
+        result = "".join(list(component._writeExtraResponseData({}, hits)))
+        self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , result)
+
+    def testNextRecordPosition(self):
+        hits = MockHits(100)
+        observer = MockListeners(hits)
+
+        component = Sru('', '', '', '')
+        component.addObserver(observer)
+        result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra&startRecord=10&maximumRecords=15')))
+
+        self.assertTrue("<srw:nextRecordPosition>25</srw:nextRecordPosition>" in result, result)
+
+    def testSearchRetrieve(self):
+        arguments = {'version':['1.1'], 'operation':['searchRetrieve'],  'query':['field=value'], 'x-recordSchema':['extra']}
+        'database'
         hits = MockHits(2)
         observer = MockListeners(hits)
 
-        resultStream = StringIO()
-        request.write = resultStream.write
+        component = Sru('', '', '', '')
+        component.addObserver(observer)
+        result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra')))
 
-        plugin = SRUPlugin(request)
-        plugin.addObserver(observer)
-        plugin.process()
         self.assertTrue(observer.executeCQLCalled)
         self.assertEquals('field=value', cqlCompose(observer.cqlQuery))
         self.assertEquals(0, hits.slice_start)
@@ -245,56 +255,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     <srw:x-recordSchema>extra</srw:x-recordSchema>
 </srw:echoedSearchRetrieveRequest>
 </srw:searchRetrieveResponse>
-""", resultStream.getvalue())
-
-    def uitgezetteTestExtraResponseDataHandlerNoHandler(self):
-        resultStream = StringIO()
-        self.plugin.write = resultStream.write
-        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
-        self.assertEquals('' , resultStream.getvalue())
-
-    def uitgezetteTestExtraResponseDataHandlerNoData(self):
-        resultStream = StringIO()
-
-        class TestHandler:
-            def extraResponseData(self, *args):
-                return []
-
-        self.plugin.write = resultStream.write
-        self.plugin.addObserver(TestHandler())
-        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
-
-        self.assertEquals('' , resultStream.getvalue())
-
-    def uitgezetteTestExtraResponseDataHandlerWithData(self):
-        resultStream = StringIO()
-
-        class TestHandler:
-            def extraResponseData(self, *args):
-                return ["<someD", "ata/>"]
-
-        self.plugin.write = resultStream.write
-        self.plugin.addObserver(TestHandler())
-        self.plugin._writeExtraResponseData(["id_%s" % i for i in range(10)])
-
-        self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , resultStream.getvalue())
-
-    def uitgezetteTestNextRecordPosition(self):
-        request = CallTrace('Request')
-        request.args = {'version':['1.1'], 'operation':['searchRetrieve'],
-            'query':['field=value'], 'x-recordSchema':['extra'], 'startRecord': ['10'], 'maximumRecords': ['15']}
-        request.database = 'database'
-        hits = MockHits(100)
-        observer = MockListeners(hits)
-
-        resultStream = StringIO()
-        request.write = resultStream.write
-
-        plugin = SRUPlugin(request)
-        plugin.addObserver(observer)
-        plugin.process()
-        self.assertTrue("<srw:nextRecordPosition>25</srw:nextRecordPosition>" in resultStream.getvalue(), resultStream.getvalue())
-
+""", result)
 
 class MockListeners:
     def __init__(self, executeCQLResult):
@@ -308,9 +269,9 @@ class MockListeners:
         self.sortDirection = sortDirection
         return self.executeCQLResult
 
-    def writeRecord(self, sink, recordId, recordSchema, recordPacking):
+    def writeRecord(self, recordId, recordSchema, recordPacking):
         self.writtenRecords.append((recordId, recordSchema, recordPacking))
-        sink.write("<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema))
+        yield "<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema)
 
 class MockHits:
 

@@ -1,6 +1,11 @@
 from cgi import parse_qs
 from urlparse import urlsplit
+from xml.sax.saxutils import escape as xmlEscape
 
+from meresco.framework import Observable, decorate, compose
+from meresco.legacy.plugins.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
+
+from cqlparser.cqlparser import parseString as parseCQL
 
 VERSION = '1.1'
 
@@ -33,7 +38,6 @@ DIAGNOSTICS = """<diagnostics>
 
 ECHOED_PARAMETER_NAMES = ['version', 'query', 'startRecord', 'maximumRecords', 'recordPacking', 'recordSchema', 'recordXPath', 'resultSetTTL', 'sortKeys', 'stylesheet', 'x-recordSchema']
 
-SUCCESS = [0, ""]
 GENERAL_SYSTEM_ERROR = [1, "General System Error"]
 SYSTEM_TEMPORARILY_UNAVAILABLE = [2, "System Temporarily Unavailable"]
 UNSUPPORTED_OPERATION = [4, "Unsupported Operation"]
@@ -43,30 +47,40 @@ MANDATORY_PARAMETER_NOT_SUPPLIED = [7, "Mandatory Parameter Not Supplied"]
 UNSUPPORTED_PARAMETER = [8, "Unsupported Parameter"]
 QUERY_FEATURE_UNSUPPORTED = [48, "Query Feature Unsupported"]
 
-class Sru(object):
+class SruException(Exception):
+
+    def __init__(self, (code, message), details="No details available"):
+        Exception.__init__(self)
+        self.code = code
+        self.message = message
+        self.details = details
+
+class Sru(Observable):
     """CAUTION: dit object zuigt langzaam de code over van de sruplugin.py. Idee is dat op termaijn alles is overgenomen in het nieuwe format, en dat je deze dan rechtstreeks in de boom kan hangen. Nog niet alles zit er nu echter in... dus het kan nu nog niet."""
 
-    def __init__(self, host, port, description, modifiedDate):
+    def __init__(self, host, port, description, modifiedDate, defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
+        Observable.__init__(self)
         self._host = host
         self._port = port
         self._description = description
         self._modifiedDate = modifiedDate
+        self._defaultRecordSchema = defaultRecordSchema
+        self._defaultRecordPacking = defaultRecordPacking
+        self._maximumMaximumRecords = maximumMaximumRecords
 
     def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
-        database, command, arguments = self._parseUri(RequestURI)
-        if arguments == {}:
-            arguments = {'version':['1.1'], 'operation':['explain']}
-
-        operation = checkNotUtterGarbage()
-        if explian:
-            yield explain()
-        else:
-            someMoreChecks()
-            query = parseQuery()
-            yield self.doSearchRetrieve()
-
+        database, command, queryArguments = self._parseUri(RequestURI)
         yield XML_HEADER
-        yield self.doExplain(database)
+        try:
+            operation, arguments = self._parseArguments(queryArguments)
+            if operation == "explain":
+                yield self._doExplain(database)
+            else:
+                query = self._createSruQuery(arguments)
+                for data in compose(self._doSearchRetrieve(query, arguments)):
+                    yield data
+        except SruException, e:
+            yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
 
     def _parseUri(self, RequestURI):
         Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)
@@ -74,43 +88,32 @@ class Sru(object):
         arguments = parse_qs(Query)
         return database, command, arguments
 
-    def _basicValidation(self, arguments):
+    def _parseArguments(self, arguments):
+        if arguments == {}:
+            arguments = {'version':['1.1'], 'operation':['explain']}
+
         operation = arguments.get('operation', [None])[0]
 
         if operation == None:
-            return MANDATORY_PARAMETER_NOT_SUPPLIED + ['operation']
+            raise SruException(MANDATORY_PARAMETER_NOT_SUPPLIED, 'operation')
 
         if not operation in SUPPORTED_OPERATIONS:
-            return UNSUPPORTED_OPERATION + [operation]
+            raise SruException(UNSUPPORTED_OPERATION, operation)
 
         for argument in arguments:
             if not (argument in OFFICIAL_REQUEST_PARAMETERS[operation] or argument.startswith('x-')):
-                return UNSUPPORTED_PARAMETER + [argument]
+                raise SruException(UNSUPPORTED_PARAMETER, argument)
 
         for argument in MANDATORY_PARAMETERS[operation]:
             if not argument in arguments:
-                return MANDATORY_PARAMETER_NOT_SUPPLIED + [argument]
+                raise SruException(MANDATORY_PARAMETER_NOT_SUPPLIED, argument)
 
         if not arguments['version'][0] == VERSION:
-            return UNSUPPORTED_VERSION + [arguments['version'][0]]
+            raise SruException(UNSUPPORTED_VERSION, arguments['version'][0])
 
-        return SUCCESS
+        return operation, arguments
 
-    def _validateSearchRetrieve(self, arguments):
-        #try:
-            #dit is ellende:
-            #self.sruQuery = SRUQuery(self._arguments, self.recordSchema, self.recordPacking)
-
-            #nog niet getest
-        #if self.sruQuery.maximumRecords > 100:
-            #return UNSUPPORTED_PARAMETER_VALUE + ['maximumRecords > %s' % 100]
-        #except SRUQueryParameterException, e:
-            #return UNSUPPORTED_PARAMETER_VALUE + [str(e)]
-        #except SRUQueryParseException, e:
-            #return QUERY_FEATURE_UNSUPPORTED + [str(e)]
-        return SUCCESS
-
-    def doExplain(self, database):
+    def _doExplain(self, database):
         version = VERSION
         host = self._host
         port = self._port
@@ -140,3 +143,101 @@ class Sru(object):
         </srw:recordData>
     </srw:record>
 </srw:explainResponse>""" % locals()
+
+    def _createSruQuery(self, arguments):
+        try:
+            sruQuery = SRUQuery(arguments, self._defaultRecordSchema, self._defaultRecordPacking)
+
+            if self._maximumMaximumRecords and sruQuery.maximumRecords > self._maximumMaximumRecords:
+                raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords > %s' % self._maximumMaximumRecords)
+        except SRUQueryParameterException, e:
+            raise SruException(UNSUPPORTED_PARAMETER_VALUE, str(e))
+        except SRUQueryParseException, e:
+            raise SruException(QUERY_FEATURE_UNSUPPORTED, str(e))
+        return sruQuery
+
+    def _writeEchoedSearchRetrieveRequest(self, arguments):
+        yield '<srw:echoedSearchRetrieveRequest>'
+        for parameterName in ECHOED_PARAMETER_NAMES:
+            for value in map(xmlEscape, arguments.get(parameterName, [])):
+                yield '<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals()
+
+        for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(arguments)), '</srw:extraRequestData>'):
+            yield chunk
+        yield '</srw:echoedSearchRetrieveRequest>'
+
+    def _writeExtraResponseData(self, arguments, hits):
+        openingTagWritten = False
+        extraResponses = self.all.extraResponseData(arguments, hits)
+        for response in extraResponses:
+            if not response:
+                continue
+            if not openingTagWritten:
+                yield '<srw:extraResponseData>'
+                openingTagWritten = True
+            for line in response:
+                yield line
+        if openingTagWritten:
+            yield '</srw:extraResponseData>'
+
+    def _doSearchRetrieve(self, sruQuery, arguments):
+        SRU_IS_ONE_BASED = 1
+
+        hits = self.any.executeCQL(parseCQL(sruQuery.query), sruQuery.sortBy,  sruQuery.sortDirection)
+        yield self._startResults(len(hits))
+
+        recordsWritten = 0
+        start = sruQuery.startRecord - SRU_IS_ONE_BASED
+        for recordId in hits[start: start + sruQuery.maximumRecords]:
+            if not recordsWritten:
+                yield '<srw:records>'
+            yield self._writeResult(sruQuery, recordId)
+            recordsWritten += 1
+
+        if recordsWritten:
+            yield '</srw:records>'
+            nextRecordPosition = start + recordsWritten
+            if nextRecordPosition < len(hits):
+                yield '<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % (nextRecordPosition + SRU_IS_ONE_BASED)
+
+        yield self._writeEchoedSearchRetrieveRequest(arguments)
+        yield self._writeExtraResponseData(arguments, hits)
+
+        yield self._endResults()
+
+    def _startResults(self, numberOfRecords):
+        yield RESPONSE_HEADER
+        yield '<srw:version>%s</srw:version>' % VERSION
+        yield '<srw:numberOfRecords>%s</srw:numberOfRecords>' % numberOfRecords
+
+    def _endResults(self):
+        yield RESPONSE_FOOTER
+
+    def _writeResult(self, sruQuery, recordId):
+        yield '<srw:record>'
+        yield '<srw:recordSchema>%s</srw:recordSchema>' % sruQuery.recordSchema
+        yield '<srw:recordPacking>%s</srw:recordPacking>' % sruQuery.recordPacking
+        yield self._writeRecordData(sruQuery, recordId)
+        yield self._writeExtraRecordData(sruQuery, recordId)
+        yield '</srw:record>'
+
+    def _writeRecordData(self, sruQuery, recordId):
+        yield '<srw:recordData>'
+        yield self.all.writeRecord(recordId, sruQuery.recordSchema, sruQuery.recordPacking)
+        yield '</srw:recordData>'
+
+    def _writeExtraRecordData(self, sruQuery, recordId):
+        if not sruQuery.x_recordSchema:
+            yield ''
+
+        yield '<srw:extraRecordData>'
+        for schema in sruQuery.x_recordSchema:
+            yield '<recordData recordSchema="%s">' % xmlEscape(schema)
+            yield self.all.writeRecord(recordId, schema, sruQuery.recordPacking)
+            yield '</recordData>'
+        yield '</srw:extraRecordData>'
+#NOG TE DOEN:
+#eerdere aanroep was self.all.extraResponseData(SELF, hits). luisteraars aanpassen
+#idem voor
+#self.do.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
+#en die naam is ook niet zo fris meer
