@@ -175,7 +175,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     def testExtraResponseDataHandlerNoData(self):
         class TestHandler:
             def extraResponseData(self, *args):
-                return []
+                return (f for f in [])
 
         component = Sru('', '', '', '')
         component.addObserver(TestHandler())
@@ -186,7 +186,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     def testExtraResponseDataHandlerWithData(self):
         class TestHandler:
             def extraResponseData(self, *args):
-                return ["<someD", "ata/>"]
+                return (f for f in ["<someD", "ata/>"])
 
         component = Sru('', '', '', '')
         component.addObserver(TestHandler())

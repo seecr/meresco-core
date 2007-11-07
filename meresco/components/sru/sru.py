@@ -167,18 +167,9 @@ class Sru(Observable):
         yield '</srw:echoedSearchRetrieveRequest>'
 
     def _writeExtraResponseData(self, arguments, hits):
-        openingTagWritten = False
-        extraResponses = self.all.extraResponseData(arguments, hits)
-        for response in extraResponses:
-            if not response:
-                continue
-            if not openingTagWritten:
-                yield '<srw:extraResponseData>'
-                openingTagWritten = True
-            for line in response:
-                yield line
-        if openingTagWritten:
-            yield '</srw:extraResponseData>'
+        return decorate('<srw:extraResponseData>',
+            self.all.extraResponseData(arguments, hits),
+            '</srw:extraResponseData>')
 
     def _doSearchRetrieve(self, sruQuery, arguments):
         SRU_IS_ONE_BASED = 1
