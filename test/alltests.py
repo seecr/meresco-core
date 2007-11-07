@@ -68,6 +68,7 @@ from sru.sruplugintest import SRUPluginTest
 from sru.sruquerytest import SRUQueryTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
 from sru.srwplugintest import SRWPluginTest
+from sru.srutest import SruTest
 from storagecomponenttest import StorageComponentTest
 from teddygrowlservertest import TeddyGrowlServerTest
 from venturitest import VenturiTest

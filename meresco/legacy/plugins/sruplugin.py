@@ -265,6 +265,9 @@ class SRUPlugin(queryplugin.QueryPlugin, Observable):
 </srw:explainResponse>""" % locals())
 
     def process(self):
+        #data = self.any.handleRequest(....)
+        #for stuff in data:
+        #self.write(stuff)
         self.write(self.xmlHeader)
         errorMethod = self.writeErrorDiagnostics
         try:
