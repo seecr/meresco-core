@@ -58,7 +58,7 @@ class SruException(Exception):
 class Sru(Observable):
     """CAUTION: dit object zuigt langzaam de code over van de sruplugin.py. Idee is dat op termaijn alles is overgenomen in het nieuwe format, en dat je deze dan rechtstreeks in de boom kan hangen. Nog niet alles zit er nu echter in... dus het kan nu nog niet."""
 
-    def __init__(self, host, port, description, modifiedDate, defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
+    def __init__(self, host, port, description='Meresco SRU', modifiedDate='1970-01-01T00:00:00Z', defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
         Observable.__init__(self)
         self._host = host
         self._port = port
