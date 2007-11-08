@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -32,6 +32,11 @@ class PathFilter(Observable):
         Observable.__init__(self)
         self._subPath = subPath
 
-    def unknown(self, methodName, aRequest, *args, **kwargs):
-        if aRequest.path.startswith(self._subPath):
-            return self.all.unknown(methodName, aRequest, *args, **kwargs)
+    def handleRequest(self, RequestURI=None, *args, **kwargs):
+        if RequestURI.startswith(self._subPath):
+            return self.all.handleRequest(RequestURI=RequestURI, *args, **kwargs)
+        return (f for f in [])
+
+
+    def unknown(self, methodName, *args, **kwargs):
+        return self.all.unknown(methodName, *args, **kwargs)

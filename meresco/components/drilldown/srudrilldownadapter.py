@@ -50,10 +50,10 @@ class SRUDrilldownAdapter(Observable):
         Observable.__init__(self)
         self.serverUrl = serverUrl
 
-    def extraResponseData(self, webRequest, hits):
+    def extraResponseData(self, arguments, hits):
         return generatorDecorate(
             '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
-            compose(self.all.extraResponseData(webRequest, hits)),
+            compose(self.all.extraResponseData(arguments, hits)),
             "</dd:drilldown>")
 
     def echoedExtraRequestData(self, arguments):
@@ -65,14 +65,14 @@ class SRUDrilldownAdapter(Observable):
 
 class SRUTermDrilldown(Observable):
 
-    def extraResponseData(self, webRequest, hits):
+    def extraResponseData(self, arguments, hits):
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:
                 return l[0], DEFAULT_MAXIMUM_TERMS
             return l[0], int(l[1])
 
-        fieldsAndMaximums = webRequest._arguments.get('x-term-drilldown', [''])[0].split(",")
+        fieldsAndMaximums = arguments.get('x-term-drilldown', [''])[0].split(",")
         fieldMaxTuples = (splitTermAndMaximum(s) for s in fieldsAndMaximums)
 
         if fieldsAndMaximums == [""]:
@@ -96,10 +96,10 @@ class SRUTermDrilldown(Observable):
 
 class SRUFieldDrilldown(Observable):
 
-    def extraResponseData(self, webRequest, hits):
-        query = webRequest._arguments.get('query', [''])[0]
-        term = webRequest._arguments.get('x-field-drilldown', [''])[0]
-        fields = webRequest._arguments.get('x-field-drilldown-fields', [''])[0].split(",")
+    def extraResponseData(self, arguments, hits):
+        query = arguments.get('query', [''])[0]
+        term = arguments.get('x-field-drilldown', [''])[0]
+        fields = arguments.get('x-field-drilldown-fields', [''])[0].split(",")
 
         if not term or fields == [""]:
             raise StopIteration

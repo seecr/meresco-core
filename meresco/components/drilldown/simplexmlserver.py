@@ -38,17 +38,17 @@ class SimpleXmlServer(Observable):
 
     def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
         yield 'HTTP/1.0 200 Ok\r\n'
-        yield "Content-Type: text/xml\r\n"
+        yield "Content-Type: text/xml; charset=utf-8\r\n"
         yield "\r\n"
 
         past, future = self._parseRequestURI(RequestURI)
-        
+
         if past:
             query = self._createLuceneQuery(past)
             docNumbers = self.any.executeQuery(query).docNumbers()
         else:
             docNumbers = None
-        
+
         fieldMaxTuples = ((s, 10) for s in future)
         drilldownResults = self.any.drilldown(docNumbers, fieldMaxTuples)
 
@@ -63,7 +63,7 @@ class SimpleXmlServer(Observable):
                 yield '</count></term>'
             yield '</field>'
         yield "</termDrilldown>"
-        
+
     def _createLuceneQuery(self, args):
         args = [s.split("=", 1) for s in args]
         #untokenized hier terug laten komen is een vieze vette hack natuurlijk.
@@ -79,4 +79,3 @@ class SimpleXmlServer(Observable):
         past = args.get('past', None)
         future = args['future']
         return past, future
-    

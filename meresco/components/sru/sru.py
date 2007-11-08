@@ -86,7 +86,7 @@ class Sru(Observable):
         except Exception, e:
             yield "Unexpected Exception:\n"
             yield str(e)
-            raise e
+            raise
 
     def _parseUri(self, RequestURI):
         Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)
@@ -199,7 +199,6 @@ class Sru(Observable):
 
         yield self._writeEchoedSearchRetrieveRequest(arguments)
         yield self._writeExtraResponseData(arguments, hits)
-
         yield self._endResults()
 
     def _startResults(self, numberOfRecords):

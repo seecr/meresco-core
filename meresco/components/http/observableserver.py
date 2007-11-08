@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,40 +31,40 @@ from twisted.internet import reactor
 from sys import stdout, stderr
 import traceback
 
-class ObservableServer(Observable):
+class ObservableTwistedServer(Observable):
     def __init__(self, port):
         Observable.__init__(self)
         self.port = port
-        
+
     def log(self, something):
         print >> stdout, something
         stdout.flush()
-        
+
     def logError(self):
         print >> stderr, traceback.format_exc()
         stderr.flush()
-    
+
     def run(self):
         class WebRequest(http.Request):
-            
+
             def log(sself, something):
                 self.log(something)
-            
+
             def __str__(inner):
                 return '\t'.join([inner.client.host, inner.method, inner.uri])
-            
+
             def process(sself):
                 try:
                     self.do.handleRequest(sself)
                 except:
                     self.logError()
                 sself.finish()
-                
+
         class WebHTTPChannel(http.HTTPChannel):
             requestFactory = WebRequest
         class Factory(http.HTTPFactory):
             protocol = WebHTTPChannel
-        
+
         factory = Factory()
         reactor.listenTCP(self.port, factory)
         self.log("Ready to rumble at %d\n" % self.port)
