@@ -50,7 +50,6 @@ from contextsettest import ContextSetTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownPyrexTest, DrilldownSwigTest
-from fieldcountplugintest import FieldCountPluginTest
 from fields2xmlcomponenttest import Fields2XmlComponentTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
@@ -60,22 +59,21 @@ from logtest import LogTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from observabletest import ObservableTest
-from rssplugintest import RSSPluginTest
+from observablehttpservertest import ObservableHttpServerTest
 from rssprofiletest import RSSProfileTest
-
-from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
-from sru.sruplugintest import SRUPluginTest
-from sru.sruquerytest import SRUQueryTest
-from sru.srurecordupdatetest import SRURecordUpdateTest
-from sru.srwplugintest import SRWPluginTest
-from sru.srutest import SruTest
 from storagecomponenttest import StorageComponentTest
+from storageharvestertest import StorageHarvesterTest
 from teddygrowlservertest import TeddyGrowlServerTest
 from venturitest import VenturiTest
 from xml2documenttest import Xml2DocumentTest
-from xmlfileplugintest import XMLFilePluginTest
 from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
+
+from http.fileservertest import FileServerTest
+
+from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
+from sru.srurecordupdatetest import SRURecordUpdateTest
+from sru.srutest import SruTest
 
 from legacy.teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
 from legacy.teddyinterfacetest import TeddyInterfaceTest
@@ -83,10 +81,15 @@ from legacy.configurationtest import ConfigurationTest
 from legacy.portaltest import PortalTest
 from legacy.pluginregistrytest import PluginRegistryTest
 
-from oai.oaijazzlucenetest import OaiJazzLuceneTest
-from oai.oaijazzlucenetest import OaiJazzLuceneIntegrationTest
+from legacy.plugins.rssplugintest import RSSPluginTest
+from legacy.plugins.fieldcountplugintest import FieldCountPluginTest
+from legacy.plugins.xmlfileplugintest import XMLFilePluginTest
+from legacy.plugins.sruplugintest import SRUPluginTest
+from legacy.plugins.sruquerytest import SRUQueryTest
+from legacy.plugins.srwplugintest import SRWPluginTest
 
 #from oai.oaicomponenttest import OaiComponentTest
+from oai.oaijazzlucenetest import OaiJazzLuceneTest, OaiJazzLuceneIntegrationTest
 from oai.oaigetrecordtest import OaiGetRecordTest
 from oai.oaiidentifytest import OaiIdentifyTest
 from oai.oailistmetadataformatstest import OaiListMetadataFormatsTest
@@ -104,11 +107,6 @@ from xml_generic.validatetest import ValidateTest
 from dictionary.transformtest import TransformTest
 from dictionary.pushtoroottest import PushToRootTest
 from dictionary.xml2dicttest import Xml2DictTest
-
-from observablehttpservertest import ObservableHttpServerTest
-from http.fileservertest import FileServerTest
-
-from storageharvestertest import StorageHarvesterTest
 
 if __name__ == '__main__':
         unittest.main()

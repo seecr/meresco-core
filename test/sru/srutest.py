@@ -273,6 +273,8 @@ class MockListeners:
         self.writtenRecords.append((recordId, recordSchema, recordPacking))
         yield "<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema)
 
+    yieldRecordForRecordPacking = writeRecord #TODO
+
 class MockHits:
 
     def __init__(self, size):

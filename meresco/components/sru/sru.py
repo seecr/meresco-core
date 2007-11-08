@@ -220,7 +220,7 @@ class Sru(Observable):
 
     def _writeRecordData(self, sruQuery, recordId):
         yield '<srw:recordData>'
-        yield self.all.writeRecord(recordId, sruQuery.recordSchema, sruQuery.recordPacking)
+        yield self.all.yieldRecordForRecordPacking(recordId, sruQuery.recordSchema, sruQuery.recordPacking)
         yield '</srw:recordData>'
 
     def _writeExtraRecordData(self, sruQuery, recordId):
@@ -230,14 +230,14 @@ class Sru(Observable):
         yield '<srw:extraRecordData>'
         for schema in sruQuery.x_recordSchema:
             yield '<recordData recordSchema="%s">' % xmlEscape(schema)
-            yield self.all.writeRecord(recordId, schema, sruQuery.recordPacking)
+            yield self.all.yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking)
             yield '</recordData>'
         yield '</srw:extraRecordData>'
 
-class IetsVanNut(Observable):
+class PossibleXmlEscapeForRecordPacking(Observable):
 
-    def writeRecord(self, recordId, recordSchema, recordPacking):
-        generator = self.all.write(recordId, recordSchema)
+    def yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
+        generator = self.all.yieldRecord(recordId, recordSchema)
         if recordPacking == 'xml':
             for data in generator:
                 yield data

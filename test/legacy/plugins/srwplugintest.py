@@ -33,7 +33,7 @@ from cStringIO import StringIO
 
 from meresco.legacy.plugins.sruplugin import SRUPlugin, GENERAL_SYSTEM_ERROR
 from meresco.legacy.plugins.srwplugin import SRWPlugin, SOAP_VERSIONMISMATCH
-from sru.sruplugintest import MockListeners, MockHits
+from legacy.plugins.sruplugintest import MockListeners, MockHits
 
 soapEnvelope = '<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>'
 
