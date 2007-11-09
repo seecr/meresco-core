@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,37 +31,37 @@ class ContextSet:
         self._dictionary = {}
         self._reverseDictionary = {}
         self._readStream(aStream)
-        
+
     def _readStream(self, aStream):
-        for k,v in [line.strip().split('\t') for line in aStream]:
+        for k,v in [line.strip().split('\t') for line in aStream if line.strip()]:
             if k not in self._dictionary:
                 self._dictionary[k] = v
             if v not in self._reverseDictionary:
                 self._reverseDictionary[v] = k
-            
+
     def match(self, field):
         return '.' in field and field.split('.',1)[0] == self.name and field.split('.',1)[1] in self._dictionary
-    
+
     def reverseMatch(self, field):
         return field in self._reverseDictionary
-            
+
     def lookup(self, field):
         if not self.match(field):
             return field
         return self._dictionary[field.split('.',1)[1]]
-        
+
     def reverseLookup(self, field):
         if not self.reverseMatch(field):
             return field
         return self.name + '.' + self._reverseDictionary[field]
-    
+
 class ContextSetException(Exception):
     pass
 
 class ContextSetList:
     def __init__(self):
         self._contextsets = {}
-        
+
     def lookup(self, field):
         if '.' not in field:
             return field
@@ -72,12 +72,12 @@ class ContextSetList:
         if set.match(field):
             return set.lookup(field)
         raise ContextSetException('Unknown field: ' + field)
-    
+
     def reverseLookup(self, field):
         for set in self._contextsets.values():
             if set.reverseMatch(field):
                 return set.reverseLookup(field)
         return field
-    
+
     def add(self, contextSet):
         self._contextsets[contextSet.name] = contextSet

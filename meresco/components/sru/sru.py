@@ -76,6 +76,7 @@ class Sru(Observable):
                 query = self._createSruQuery(arguments)
         except SruException, e:
             yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
+            raise StopIteration()
 
         try:
             if operation == "explain":
@@ -86,7 +87,7 @@ class Sru(Observable):
         except Exception, e:
             yield "Unexpected Exception:\n"
             yield str(e)
-            raise
+            raise e
 
     def _parseUri(self, RequestURI):
         Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)

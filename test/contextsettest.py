@@ -36,7 +36,8 @@ class ContextSetTest(TestCase):
             "\t".join(["query.field1", "actualfield1"]),
             "\t".join(["field1", "actualfield1"]),
             "\t".join(["field2", "actualfield2"]),
-            "\t".join(["field2", "actualotherfield2"])]))
+            "\t".join(["field2", "actualotherfield2"]),
+            ""]))
         self.set = ContextSet('test', stream)
     
     def testLookup(self):
