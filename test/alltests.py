@@ -74,6 +74,7 @@ from http.fileservertest import FileServerTest
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
 from sru.srutest import SruTest
+from sru.srwtest import SrwTest
 
 from legacy.teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
 from legacy.teddyinterfacetest import TeddyInterfaceTest
