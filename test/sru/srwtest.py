@@ -144,3 +144,11 @@ class SrwTest(CQ2TestCase):
         
         self.assertEqualsWS(soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
         
+
+    def testConstructorVariablesAreUsed(self):
+        request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
+        component = Srw(defaultRecordSchema="DEFAULT_RECORD_SCHEMA", defaultRecordPacking="DEFAULT_RECORD_PACKING")
+        component.addObserver(MockListeners(MockHits(1)))
+        response = "".join(list(component.handleRequest(Body=request)))
+        self.assertTrue("DEFAULT_RECORD_SCHEMA" in response)
+        self.assertTrue("DEFAULT_RECORD_PACKING" in response)

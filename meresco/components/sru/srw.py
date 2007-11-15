@@ -53,9 +53,10 @@ class SoapException(Exception):
 
 class Srw(Observable):
     
-    def __init__(self):
+    def __init__(self, **kwargs):
         Observable.__init__(self)
-        self._sruDelegate = Sru('', '', '')
+        ignored = "SRW Does Not Implement Explain - This Variable Will Not Be Used"
+        self._sruDelegate = Sru(host=ignored, port=ignored, description=ignored, modifiedDate=ignored, **kwargs)
         self._sruDelegate.all = self.all
         self._sruDelegate.any = self.any
         self._sruDelegate.do = self.do
