@@ -59,6 +59,8 @@ class WebRequest(object):
         self.getHost = lambda: host
         self.headersOut = {}
         self.responseCode = 200
+        if kwargs.has_key('Body'):
+            self.content = StringIO(kwargs['Body'])
 
     def getRequestHostname(self):
         return self.headers.get('Host', gethostname()).split(':')[0]

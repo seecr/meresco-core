@@ -1,11 +1,10 @@
-from validate import Validate, ValidateException
 ## begin license ##
 #
 #    Meresco Core is part of Meresco.
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,3 +24,4 @@ from validate import Validate, ValidateException
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from validate import Validate, ValidateException

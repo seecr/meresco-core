@@ -100,7 +100,10 @@ class Sru(Observable):
             arguments = {'version':['1.1'], 'operation':['explain']}
 
         operation = arguments.get('operation', [None])[0]
+        self._validateArguments(operation, arguments)
+        return operation, arguments
 
+    def _validateArguments(self, operation, arguments):
         if operation == None:
             raise SruException(MANDATORY_PARAMETER_NOT_SUPPLIED, 'operation')
 
@@ -117,8 +120,6 @@ class Sru(Observable):
 
         if not arguments['version'][0] == VERSION:
             raise SruException(UNSUPPORTED_VERSION, arguments['version'][0])
-
-        return operation, arguments
 
     def _doExplain(self, database):
         version = VERSION
