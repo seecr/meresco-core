@@ -226,7 +226,7 @@ class Sru(Observable):
 
     def _writeExtraRecordData(self, sruQuery, recordId):
         if not sruQuery.x_recordSchema:
-            yield ''
+            raise StopIteration()
 
         yield '<srw:extraRecordData>'
         for schema in sruQuery.x_recordSchema:

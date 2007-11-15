@@ -29,10 +29,15 @@ from xml.sax.saxutils import escape as xmlEscape
 from amara.binderytools import bind_string
 
 from cq2utils.amaraextension import getElements
+from meresco.framework import Observable, compose
 
 SOAP_XML_URI = "http://schemas.xmlsoap.org/soap/envelope/"
 
-SOAP = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>"""
+SOAP_HEADER = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>"""
+
+SOAP_FOOTER = """</SOAP:Body></SOAP:Envelope>"""
+
+SOAP = SOAP_HEADER + "%s" + SOAP_FOOTER
 
 from meresco.components.sru import Sru
 from meresco.components.sru.sru import SruException, DIAGNOSTICS, UNSUPPORTED_PARAMETER, UNSUPPORTED_OPERATION
@@ -46,25 +51,38 @@ class SoapException(Exception):
     def asSoap(self):
         return """<SOAP:Fault><faultcode>%s</faultcode><faultstring>%s</faultstring></SOAP:Fault>""" % (xmlEscape(self._faultCode), xmlEscape(self._faultString))
 
-class Srw(object):
+class Srw(Observable):
     
     def __init__(self):
+        Observable.__init__(self)
         self._sruDelegate = Sru('', '', '')
+        self._sruDelegate.all = self.all
+        self._sruDelegate.any = self.any
+        self._sruDelegate.do = self.do
     
-    def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, Body='', **kwargs):
-        #yield 'text/xml; charset=utf-8'
+    def handleRequest(self, Body='', **kwargs):
         try:
             arguments = self._soapXmlToArguments(Body)
             operation, arguments = self._sruDelegate._parseArguments(arguments)
             self._srwSpecificValidation(operation, arguments)
-            yield 'Succes!'
+            query = self._sruDelegate._createSruQuery(arguments)
         except SoapException, e:
             yield SOAP % e.asSoap()
             raise StopIteration()
         except SruException, e:
             yield SOAP % DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
             raise StopIteration()
-        
+
+        try:
+            yield SOAP_HEADER
+            for data in compose(self._sruDelegate._doSearchRetrieve(query, arguments)):
+                yield data
+            yield SOAP_FOOTER
+        except Exception, e:
+            yield "Unexpected Exception:\n"
+            yield str(e)
+            raise e
+
     def _soapXmlToArguments(self, body):
         arguments = {}
         try:
