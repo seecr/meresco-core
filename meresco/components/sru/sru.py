@@ -69,6 +69,10 @@ class Sru(Observable):
 
     def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
         database, command, queryArguments = self._parseUri(RequestURI)
+        yield "HTTP/1.0 200 Ok\r\n" + \
+              "Content-Type: text/xml; charset=utf-8\r\n" + \
+              "\r\n"
+
         yield XML_HEADER
         try:
             operation, arguments = self._parseArguments(queryArguments)

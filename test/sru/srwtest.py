@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -32,14 +32,19 @@ from meresco.components.sru.srw import Srw
 
 from srutest import MockListeners, MockHits
 
-soapEnvelope = '<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>'
+httpResponse = """HTTP/1.0 200 Ok
+Content-Type: text/xml; charset=utf-8
+
+%s"""
+
+soapEnvelope = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>"""
 
 echoedSearchRetrieveRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
 <srw:query>%s</srw:query>
 </srw:echoedSearchRetrieveRequest>"""
 
-searchRetrieveResponse = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">\n<srw:version>1.1</srw:version><srw:numberOfRecords>%i</srw:numberOfRecords>%s</srw:searchRetrieveResponse>""" 
+searchRetrieveResponse = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">\n<srw:version>1.1</srw:version><srw:numberOfRecords>%i</srw:numberOfRecords>%s</srw:searchRetrieveResponse>"""
 
 wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-dc</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest)
 
@@ -55,11 +60,11 @@ class SrwTest(CQ2TestCase):
         request = invalidSoapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
 
         response = "".join(list(Srw().handleRequest(Body=request)))
-        self.assertEqualsWS("""<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body><SOAP:Fault><faultcode>SOAP:VersionMismatch</faultcode><faultstring>The processing party found an invalid namespace for the SOAP Envelope element</faultstring></SOAP:Fault></SOAP:Body></SOAP:Envelope>""", response)
-        
-        #TODO:
-        #self.assertEquals(500, e.errorCode)
-                
+        self.assertEqualsWS("""HTTP/1.0 500 Internal Server Error
+Content-Type: text/xml; charset=utf-8
+
+<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/"><SOAP:Body><SOAP:Fault><faultcode>SOAP:VersionMismatch</faultcode><faultstring>The processing party found an invalid namespace for the SOAP Envelope element</faultstring></SOAP:Fault></SOAP:Body></SOAP:Envelope>""", response)
+
     def testMalformedXML(self):
         """Stuff that is not even XML"""
         request = 'This is not even XML'
@@ -70,34 +75,34 @@ class SrwTest(CQ2TestCase):
     def testNonSRUArguments(self):
         """Arguments that are invalid in any SRU implementation"""
         request =  soapEnvelope % SRW_REQUEST % argumentsWithMandatory % """<SRW:illegalParameter>value</SRW:illegalParameter>"""
-    
+
         response = "".join(list(Srw().handleRequest(Body=request)))
-        
-        self.assertEqualsWS(soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>illegalParameter</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
-    
+
+        self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>illegalParameter</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
+
     def testNonSRWArguments(self):
         """Arguments that are part of SRU, but not of SRW (operation (done), stylesheet)
         """
         request =  soapEnvelope % SRW_REQUEST % argumentsWithMandatory % """<SRW:stylesheet>http://example.org/style.xsl</SRW:stylesheet>"""
-    
+
         response = "".join(list(Srw().handleRequest(Body=request)))
-        
-        self.assertEqualsWS(soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>stylesheet</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
-        
-    
+
+        self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>stylesheet</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
+
+
     def testOperationIsIllegal(self):
         request = soapEnvelope % SRW_REQUEST % """<SRW:version>1.1</SRW:version><SRW:operation>explain</SRW:operation>"""
-        
+
         response = "".join(list(Srw().handleRequest(Body=request)))
-        
-        self.assertEqualsWS(soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/4</uri><details>explain</details><message>Unsupported Operation</message></diagnostic></diagnostics>""", response)
-    
+
+        self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/4</uri><details>explain</details><message>Unsupported Operation</message></diagnostic></diagnostics>""", response)
+
     def xxxtestContentType(self):
         ####NOTE (Kvs, 2007-11-15: this is moved out of here to a higher level, but may need to be restored in some form)
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ''
         response = "".join(list(Srw().handleRequest(Body=request)))
         self.assertTrue('text/xml; charset=utf-8' in response, response)
-    
+
     def testNormalOperation(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
         component = Srw()
@@ -106,7 +111,7 @@ class SrwTest(CQ2TestCase):
         #self.assertEquals(['searchRetrieve'], self.plugin._arguments['operation'])
         #self.assertEquals(['1.1'], self.plugin._arguments['version'])
 
-        self.assertEqualsWS(soapEnvelope % wrappedMockAnswer % 'dc.author = "jones" and  dc.title = "smith"', response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % 'dc.author = "jones" and  dc.title = "smith"', response)
 
     def testArgumentsAreNotUnicodeStrings(self):
         """JJ/TJ: unicode strings somehow paralyse server requests.
@@ -117,7 +122,7 @@ class SrwTest(CQ2TestCase):
         arguments = component._soapXmlToArguments(request)
         for key in arguments:
             self.assertTrue(type(key) == str)
-            
+
     def testExampleFromLibraryOffCongressSite(self):
         """Integration test based on http://www.loc.gov/standards/sru/srw/index.html
         spelling error ("recordSchema") corrected
@@ -133,17 +138,17 @@ class SrwTest(CQ2TestCase):
     </SRW:searchRetrieveRequest>
   </SOAP:Body>
 </SOAP:Envelope>"""
-        
+
         component = Srw()
         component.addObserver(MockListeners(MockHits(1)))
         response = "".join(list(component.handleRequest(Body=request)))
-        
+
         echoRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
 <srw:query>dc.author = "jones" and  dc.title = "smith"</srw:query><srw:startRecord>1</srw:startRecord><srw:maximumRecords>10</srw:maximumRecords><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema></srw:echoedSearchRetrieveRequest>"""
-        
-        self.assertEqualsWS(soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
-        
+
+        self.assertEqualsWS(httpResponse % soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
+
 
     def testConstructorVariablesAreUsed(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""

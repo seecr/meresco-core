@@ -64,12 +64,22 @@ class Srw(Observable):
     def handleRequest(self, Body='', **kwargs):
         try:
             arguments = self._soapXmlToArguments(Body)
+        except SoapException, e:
+            #yield http.Response.Status_Line(500)
+            #yield http.Response.Content_Type('text/xml; charset=utf-8')
+            yield "HTTP/1.0 500 Internal Server Error\r\n" + \
+                "Content-Type: text/xml; charset=utf-8\r\n" + \
+                "\r\n"
+            yield SOAP % e.asSoap()
+            raise StopIteration()
+
+        yield "HTTP/1.0 200 Ok\r\n" + \
+              "Content-Type: text/xml; charset=utf-8\r\n" + \
+              "\r\n"
+        try:
             operation, arguments = self._sruDelegate._parseArguments(arguments)
             self._srwSpecificValidation(operation, arguments)
             query = self._sruDelegate._createSruQuery(arguments)
-        except SoapException, e:
-            yield SOAP % e.asSoap()
-            raise StopIteration()
         except SruException, e:
             yield SOAP % DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
             raise StopIteration()

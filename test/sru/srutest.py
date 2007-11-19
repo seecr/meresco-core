@@ -45,7 +45,10 @@ class SruTest(CQ2TestCase):
         component = Sru(host='TEST_SERVER_HOST', port='TEST_SERVER_PORT', description='TEST_SERVER_DESCRIPTION', modifiedDate='TEST_SERVER_DATE')
 
         result = "".join(list(component.handleRequest(RequestURI='/DATABASE/sru')))
-        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+        self.assertEqualsWS("""HTTP/1.0 200 Ok
+Content-Type: text/xml; charset=utf-8
+
+<?xml version="1.0" encoding="UTF-8"?>
 <srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
 xmlns:zr="http://explain.z3950.org/dtd/2.0/">
 <srw:version>1.1</srw:version>
@@ -223,7 +226,10 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals(('0', 'dc', 'xml'), observer.writtenRecords[0])
         self.assertEquals(('0', 'extra', 'xml'), observer.writtenRecords[1])
 
-        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+        self.assertEqualsWS("""HTTP/1.0 200 Ok
+Content-Type: text/xml; charset=utf-8
+
+<?xml version="1.0" encoding="UTF-8"?>
 <srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
 <srw:version>1.1</srw:version>
 <srw:numberOfRecords>2</srw:numberOfRecords>
