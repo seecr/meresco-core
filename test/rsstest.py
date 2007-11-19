@@ -142,27 +142,14 @@ class RssTest(CQ2TestCase):
         self.assertEquals(['42'], newArguments['maximumRecords'])
         self.assertEquals(['SORTKEY'], newArguments['sortKeys'])
 
-    def xxxtestNoSortKeysInProfile(self):
-        self.plugin._profiles['default'].sortKeys = lambda: None
-        self.request.args['query'] = ['aQuery']
+    def testNoSortKeysInProfile(self):
+        rss = Rss(self.profiles)
+        profile = self.profiles['default']
+        profile.sortKeys = lambda: None
 
-        self.plugin.process()
-        sruQuery = self.searchinterface.search_argument
-        self.assertEquals(None, sruQuery.sortBy)
-        self.assertEquals(None, sruQuery.sortDirection)
+        newArguments, recordSchema = rss._parseArguments(profile, {})
 
-    def xxxtestSortKeysAndMaximumRecordsOverridden(self):
-        self.request.args.update({'query': ['aQuery'], 'maximumRecords':['12'], 'sortKeys':['dctitle,,0']})
-
-        self.plugin.process()
-
-        sruQuery = self.searchinterface.search_argument
-        self.assertEquals('aQuery', sruQuery.query)
-        self.assertEquals(1, sruQuery.startRecord)
-        self.assertEquals(12, sruQuery.maximumRecords)
-        self.assertEquals('dctitle', sruQuery.sortBy)
-        self.assertEquals(False, sruQuery.sortDirection)
-
+        self.assertFalse(newArguments.has_key('sortKeys'))
 
     def testSelectOtherProfile(self):
         class OtherProfile(RSSProfile):
