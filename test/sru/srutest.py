@@ -27,9 +27,9 @@
 
 import unittest
 #remove at the end...
-from meresco.legacy.plugins.sruplugin import SRUPlugin, SRUDiagnostic, MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, registerOn
+from meresco.components.sru.sru import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
 
-from meresco.components.sru.sru import Sru, SruException
+from meresco.components.sru import Sru
 
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO

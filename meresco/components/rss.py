@@ -25,12 +25,6 @@
 #
 ## end license ##
 
-#from amara import binderytools
-#from cq2utils.wrappers import wrapp
-#from xml.sax.saxutils import escape as xmlEscape
-#from rssprofile import readProfilesInDirectory
-#from sruquery import SRUQuery, SRUQueryException
-#from xml.sax import SAXParseException
 from xml.sax.saxutils import escape as xmlEscape
 from xml.sax import SAXParseException
 
@@ -42,7 +36,7 @@ from amara.binderytools import bind_string
 from cq2utils.wrappers import wrapp
 
 from meresco.framework import Observable, compose
-from meresco.legacy.plugins.sruquery import SRUQuery, SRUQueryException
+from meresco.components.sru.sruquery import SRUQuery, SRUQueryException
 
 from cqlparser.cqlparser import parseString as parseCQL
 

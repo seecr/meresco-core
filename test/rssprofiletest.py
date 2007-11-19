@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-from meresco.legacy.plugins.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory
+from meresco.components.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory
 from cStringIO import StringIO
 from tempfile import mkdtemp
 from shutil import rmtree
@@ -36,7 +36,7 @@ from amara.binderytools import bind_string
 
 
 TESTRSSProfile = """#
-# General settings for RSS 
+# General settings for RSS
 #
 rss.sortKeys = 'generic4,,1'
 rss.maximumRecords = 15
@@ -52,7 +52,7 @@ channel.title = 'The RSS Title'
 # Item
 #
 def item(document):
-    return [ 
+    return [
         ('title', document.xmlfields.dctitle),
         ('url', 'http://example.org?' + urlencode({'id':document.xmlfields.general.identifier}))
     ]
@@ -66,23 +66,23 @@ XMLDOCUMENT = wrapp(bind_string("""<document>
 </document>""")).document
 
 class RSSProfileTest(unittest.TestCase):
-    
+
     def setUp(self):
         self._directoryname = mkdtemp()
-        
+
     def tearDown(self):
         rmtree(self._directoryname)
-    
+
     def testReadProfile(self):
         self._writeFile('test.rssprofile', TESTRSSProfile)
         profile = RSSProfile(join(self._directoryname, 'test.rssprofile'))
         self.assertEquals('generic4,,1', profile.sortKeys())
         self.assertEquals(15, profile.maximumRecords())
         self.assertEquals({'title':'The RSS Title', 'description':'The Description', 'link':'http://example.org/rss'}, dict(profile.channel().listAttributes()))
-        
+
         result = profile.item(XMLDOCUMENT)
         self.assertEquals({'url':'http://example.org?id=%3CID%3E', 'title':'The title'}, dict(result))
-        
+
     def testProfileEmpty(self):
         self._writeFile("empty", "")
         profile = RSSProfile(join(self._directoryname, "empty"))
@@ -90,7 +90,7 @@ class RSSProfileTest(unittest.TestCase):
         self.assertEquals(15, profile.maximumRecords())
         self.assertEquals([], profile.channel().listAttributes())
         self.assertEquals([], profile.item(XMLDOCUMENT))
-            
+
     def testProfileErrors(self):
         for errorline in ["channel = Bla", "item"]:
             self._writeFile("broken", errorline)
@@ -99,7 +99,7 @@ class RSSProfileTest(unittest.TestCase):
                 self.fail()
             except RSSProfileException:
                 pass
-            
+
     def testReadProfilesInDirectory(self):
         self._writeFile('default.rssprofile', "channel.title='Default'")
         self._writeFile('test1.rssprofile', "channel.title='Test1'")
@@ -107,11 +107,11 @@ class RSSProfileTest(unittest.TestCase):
         self.assertEquals(set(['default','test1']), set(profiles.keys()))
         self.assertEquals('Default', profiles['default'].channel()['title'])
         self.assertEquals('Test1', profiles['test1'].channel()['title'])
-        
+
     def testReadEmptyDirectory(self):
         profiles = readProfilesInDirectory(self._directoryname)
         self.assertEquals({}, profiles)
-        
+
     def _writeFile(self, filename, contents):
         f=open(join(self._directoryname, filename), 'w')
         try:

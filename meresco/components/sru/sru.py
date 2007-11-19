@@ -3,7 +3,7 @@ from urlparse import urlsplit
 from xml.sax.saxutils import escape as xmlEscape
 
 from meresco.framework import Observable, decorate, compose
-from meresco.legacy.plugins.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
+from meresco.components.sru.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 
 from cqlparser.cqlparser import parseString as parseCQL
 

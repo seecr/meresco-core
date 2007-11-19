@@ -55,7 +55,6 @@ from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
-from logtest import LogTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from observabletest import ObservableTest
@@ -76,19 +75,6 @@ from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldow
 from sru.srurecordupdatetest import SRURecordUpdateTest
 from sru.srutest import SruTest
 from sru.srwtest import SrwTest
-
-from legacy.teddyinterfaceconstructortest import TeddyInterfaceConstructorTest
-from legacy.teddyinterfacetest import TeddyInterfaceTest
-from legacy.configurationtest import ConfigurationTest
-from legacy.portaltest import PortalTest
-from legacy.pluginregistrytest import PluginRegistryTest
-
-from legacy.plugins.rssplugintest import RSSPluginTest
-from legacy.plugins.fieldcountplugintest import FieldCountPluginTest
-from legacy.plugins.xmlfileplugintest import XMLFilePluginTest
-from legacy.plugins.sruplugintest import SRUPluginTest
-from legacy.plugins.sruquerytest import SRUQueryTest
-from legacy.plugins.srwplugintest import SRWPluginTest
 
 #from oai.oaicomponenttest import OaiComponentTest
 from oai.oaijazzlucenetest import OaiJazzLuceneTest, OaiJazzLuceneIntegrationTest
