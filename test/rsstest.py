@@ -127,28 +127,20 @@ class RssTest(CQ2TestCase):
 """
         self.assertEqualsWS(ERROR, result)
 
-    def xxxtestMaximumRecordsAndSortKeys(self):
-        component = Rss(self.profiles)
-        observer = CallTrace("observer")
-        observer.returnValues['executeCQL'] = MockHits(1)
-        observer.returnValues['yieldRecord'] = (x for x in ['<x/>'])
+    def testMaximumRecordsAndSortKeys(self):
+        rss = Rss(self.profiles)
 
-        component.addObserver(observer)
-        list(component.handleRequest(RequestURI='/?query=aQuery'))
+        profile = self.profiles['default']
+        newArguments, recordSchema = rss._parseArguments(profile, {})
 
-        self.assertEquals(2, len(observer.calledMethods))
-        self.assertEquals("x", observer.calledMethods[0])
-        self.request.args['query'] = ['aQuery']
+        self.assertEquals(['15'], newArguments['maximumRecords'])
+        self.assertEquals(['sortField,,1'], newArguments['sortKeys'])
 
-        self.plugin.process()
+        profile = self.profiles['default']
+        newArguments, recordSchema = rss._parseArguments(profile, { 'maximumRecords': ['42'], 'sortKeys': ['SORTKEY'] })
 
-        self.assertTrue(self.searchinterface.called)
-        sruQuery = self.searchinterface.search_argument
-        self.assertEquals('aQuery', sruQuery.query)
-        self.assertEquals(1, sruQuery.startRecord)
-        self.assertEquals(15, sruQuery.maximumRecords)
-        self.assertEquals('sortField', sruQuery.sortBy)
-        self.assertEquals(True, sruQuery.sortDirection)
+        self.assertEquals(['42'], newArguments['maximumRecords'])
+        self.assertEquals(['SORTKEY'], newArguments['sortKeys'])
 
     def xxxtestNoSortKeysInProfile(self):
         self.plugin._profiles['default'].sortKeys = lambda: None

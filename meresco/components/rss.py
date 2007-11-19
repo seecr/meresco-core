@@ -66,7 +66,7 @@ class Rss(Observable):
         profile = self._getProfile(arguments)
 
         try:
-            arguments, boxName = self._parseArguments(profile, arguments)
+            arguments, recordSchema = self._parseArguments(profile, arguments)
             query = self._createSruQuery(arguments)
         except BadRequestException, e:
             channel = profile.channel() #if you get this far...
@@ -82,7 +82,7 @@ class Rss(Observable):
             yield '<%(tagname)s>%(value)s</%(tagname)s>' % locals()
 
         #try:
-        for data in compose(self._yieldResults(profile, boxName, query)):
+        for data in compose(self._yieldResults(profile, recordSchema, query)):
             yield data
         #except:
             #print
@@ -105,11 +105,11 @@ class Rss(Observable):
             arguments['sortKeys'] = [profile.sortKeys()]
         if not arguments.has_key('maximumRecords'):
             arguments['maximumRecords'] = [str(profile.maximumRecords())]
-        boxName = profile.boxName()
-        if boxName == '':
-            raise BadRequestException("No rss.boxName specified in rss profile")
+        recordSchema = profile.boxName()
+        if recordSchema == '':
+            raise BadRequestException("No rss.boxName (recordSchema) specified in rss profile")
 
-        return arguments, boxName
+        return arguments, recordSchema
 
     def _createSruQuery(self, arguments):
         try:
@@ -118,7 +118,7 @@ class Rss(Observable):
             raise BadRequestException(e)
         return query
 
-    def _yieldResults(self, profile, boxName, sruQuery):
+    def _yieldResults(self, profile, recordSchema, sruQuery):
         """Bad name, taken from SRU"""
         hits = self.any.executeCQL(parseCQL(sruQuery.query), sruQuery.sortBy,  sruQuery.sortDirection)
 
@@ -126,7 +126,7 @@ class Rss(Observable):
         start = sruQuery.startRecord - SRU_IS_ONE_BASED
 
         for recordId in hits[start: start + sruQuery.maximumRecords]:
-            yield self._yieldResult(profile, boxName, recordId)
+            yield self._yieldResult(profile, recordSchema, recordId)
 
     def _yieldResult(self, profile, recordSchema, recordId):
         s = "".join(self.all.yieldRecord(recordId, recordSchema))
