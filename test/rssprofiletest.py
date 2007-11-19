@@ -26,7 +26,7 @@
 ## end license ##
 
 import unittest
-from meresco.components.rssprofile import RSSProfile, RSSProfileException, readProfilesInDirectory
+from meresco.components.rssprofile import RssProfile, RssProfileException, readProfilesInDirectory
 from cStringIO import StringIO
 from tempfile import mkdtemp
 from shutil import rmtree
@@ -35,11 +35,12 @@ from cq2utils.wrappers import wrapp
 from amara.binderytools import bind_string
 
 
-TESTRSSProfile = """#
+TESTRssProfile = """#
 # General settings for RSS
 #
 rss.sortKeys = 'generic4,,1'
 rss.maximumRecords = 15
+rss.recordSchema = 'recordSchema'
 
 #
 # Channel (header of RSS)
@@ -65,7 +66,7 @@ XMLDOCUMENT = wrapp(bind_string("""<document>
 </xmlfields>
 </document>""")).document
 
-class RSSProfileTest(unittest.TestCase):
+class RssProfileTest(unittest.TestCase):
 
     def setUp(self):
         self._directoryname = mkdtemp()
@@ -74,8 +75,8 @@ class RSSProfileTest(unittest.TestCase):
         rmtree(self._directoryname)
 
     def testReadProfile(self):
-        self._writeFile('test.rssprofile', TESTRSSProfile)
-        profile = RSSProfile(join(self._directoryname, 'test.rssprofile'))
+        self._writeFile('test.rssprofile', TESTRssProfile)
+        profile = RssProfile(join(self._directoryname, 'test.rssprofile'))
         self.assertEquals('generic4,,1', profile.sortKeys())
         self.assertEquals(15, profile.maximumRecords())
         self.assertEquals({'title':'The RSS Title', 'description':'The Description', 'link':'http://example.org/rss'}, dict(profile.channel().listAttributes()))
@@ -83,26 +84,20 @@ class RSSProfileTest(unittest.TestCase):
         result = profile.item(XMLDOCUMENT)
         self.assertEquals({'url':'http://example.org?id=%3CID%3E', 'title':'The title'}, dict(result))
 
-    def testProfileEmpty(self):
-        self._writeFile("empty", "")
-        profile = RSSProfile(join(self._directoryname, "empty"))
-        self.assertEquals(None, profile.sortKeys())
-        self.assertEquals(15, profile.maximumRecords())
-        self.assertEquals([], profile.channel().listAttributes())
-        self.assertEquals([], profile.item(XMLDOCUMENT))
-
     def testProfileErrors(self):
         for errorline in ["channel = Bla", "item"]:
             self._writeFile("broken", errorline)
             try:
-                profile = RSSProfile(join(self._directoryname, "broken"))
+                profile = RssProfile(join(self._directoryname, "broken"))
                 self.fail()
-            except RSSProfileException:
+            except RssProfileException:
                 pass
 
     def testReadProfilesInDirectory(self):
-        self._writeFile('default.rssprofile', "channel.title='Default'")
-        self._writeFile('test1.rssprofile', "channel.title='Test1'")
+        contentsDefault = TESTRssProfile.replace("channel.title = 'The RSS Title'", "channel.title='Default'")
+        contentsTest1 = TESTRssProfile.replace("channel.title = 'The RSS Title'", "channel.title='Test1'")
+        self._writeFile('default.rssprofile', contentsDefault)
+        self._writeFile('test1.rssprofile', contentsTest1)
         profiles = readProfilesInDirectory(self._directoryname)
         self.assertEquals(set(['default','test1']), set(profiles.keys()))
         self.assertEquals('Default', profiles['default'].channel()['title'])
@@ -112,9 +107,21 @@ class RSSProfileTest(unittest.TestCase):
         profiles = readProfilesInDirectory(self._directoryname)
         self.assertEquals({}, profiles)
 
+    def testNoRecordSchema(self):
+        contents = '\n'.join((line for line in TESTRssProfile.split('\n') if not line.startswith('rss.recordSchema')))
+        self._writeFile('default.rssprofile', contents)
+        try:
+            profiles = readProfilesInDirectory(self._directoryname)
+            self.fail()
+        except RssProfileException, e:
+            self.assertTrue('rss.recordSchema' in str(e))
+
+
     def _writeFile(self, filename, contents):
         f=open(join(self._directoryname, filename), 'w')
         try:
             f.write(contents)
         finally:
             f.close()
+
+

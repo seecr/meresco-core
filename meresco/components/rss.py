@@ -99,10 +99,7 @@ class Rss(Observable):
             arguments['sortKeys'] = [profile.sortKeys()]
         if not arguments.has_key('maximumRecords'):
             arguments['maximumRecords'] = [str(profile.maximumRecords())]
-        recordSchema = profile.boxName()
-        if recordSchema == '':
-            raise BadRequestException("No rss.boxName (recordSchema) specified in rss profile")
-
+        recordSchema = profile.recordSchema()
         return arguments, recordSchema
 
     def _createSruQuery(self, arguments):

@@ -59,7 +59,7 @@ from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from observabletest import ObservableTest
 from observablehttpservertest import ObservableHttpServerTest
-from rssprofiletest import RSSProfileTest
+from rssprofiletest import RssProfileTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from teddygrowlservertest import TeddyGrowlServerTest

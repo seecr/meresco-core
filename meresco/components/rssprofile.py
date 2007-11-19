@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -24,7 +24,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-# RSSProfile
+# RssProfile
 from glob import glob
 from os.path import join, basename
 from urllib import urlencode
@@ -35,60 +35,64 @@ def readProfilesInDirectory(directoryName):
     profiles = {}
     for f in glob(join(directoryName, '*.rssprofile')):
         name = basename(f)[:-len('.rssprofile')]
-        profiles[name] = RSSProfile(f)
+        profiles[name] = RssProfile(f)
     return profiles
 
 
-class RSSProfile:
+class RssProfile:
     def __init__(self, filename):
         self._read(filename)
-        
+
     def _read(self, filename):
         self._rss = Setters()
         self._rss.sortKeys = None
         self._rss.maximumRecords = DEFAULT_MAXIMUMRECORDS
-        self._rss.boxName = ''
-        
+        self._rss.recordSchema = ''
+
         self._channel = Setters()
         local = {'rss':self._rss, 'channel': self._channel}
         try:
             execfile(filename, {'__builtins__':{}, 'urlencode': lambda u:urlencode(u, True)}, local)
         except Exception, e:
-            raise RSSProfileException(e)
-        
+            raise RssProfileException(e)
+
         self._item = local.get('item', lambda document: [])
-        
+
+        if not self.recordSchema():
+            raise RssProfileException("No rss.recordSchema specified in rss profile")
+
+
     def maximumRecords(self):
         return self._rss.maximumRecords
-    
+
     def sortKeys(self):
         return self._rss.sortKeys
-    
-    def boxName(self):
-        return self._rss.boxName
-    
+
+    def recordSchema(self):
+        return self._rss.recordSchema
+
     def item(self, document):
         return self._item(document)
-    
+
     def channel(self):
         return self._channel
-    
-class RSSProfileException(Exception):
+
+class RssProfileException(Exception):
     pass
 
 class Setters(object):
     def __init__(self):
         object.__init__(self)
         self._attributes = []
-    
+
     def __setattr__(self, key, value):
         object.__setattr__(self, key, value)
-        if key[0] != '_': 
+        if key[0] != '_':
             self._attributes.append((key, value))
-    
+
     def listAttributes(self):
         return self._attributes
-    
+
     def __getitem__(self, key, default = None):
         return getattr(self, key, default)
-            
+

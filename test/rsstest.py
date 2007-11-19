@@ -29,7 +29,7 @@ from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
 from meresco.components.rss import Rss
-from meresco.components.rssprofile import readProfilesInDirectory, RSSProfile, Setters
+from meresco.components.rssprofile import readProfilesInDirectory, RssProfile, Setters
 
 from sru.srutest import MockListeners, MockHits
 
@@ -52,7 +52,7 @@ RSS = RSS_HEAD % """<description>Test description</description>
 
 RSSPROFILE = """rss.maximumRecords = 15
 rss.sortKeys = 'sortField,,1'
-rss.boxName = 'document'
+rss.recordSchema = 'document'
 channel.description = 'Test description'
 channel.link = 'http://www.example.org'
 channel.title = 'Test title'
@@ -152,7 +152,7 @@ class RssTest(CQ2TestCase):
         self.assertFalse(newArguments.has_key('sortKeys'))
 
     def testSelectOtherProfile(self):
-        class OtherProfile(RSSProfile):
+        class OtherProfile(RssProfile):
             def __init__(self):
                 self._item = lambda document: [
                     ('title', document.xmlfields.dctitle),
@@ -163,7 +163,7 @@ class RssTest(CQ2TestCase):
                 self._channel = Setters()
                 self._rss.maximumRecords = 15
                 self._rss.sortKeys = 'generic4,,1'
-                self._rss.boxName = 'document'
+                self._rss.recordSchema = 'document'
                 self._channel.title = 'Test title'
                 self._channel.link = 'http://www.example.org'
                 self._channel.description = 'Test description'
