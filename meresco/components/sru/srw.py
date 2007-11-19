@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -43,16 +43,16 @@ from meresco.components.sru import Sru
 from meresco.components.sru.sru import SruException, DIAGNOSTICS, UNSUPPORTED_PARAMETER, UNSUPPORTED_OPERATION
 
 class SoapException(Exception):
-    
+
     def __init__(self, faultCode, faultString):
         self._faultCode = faultCode
         self._faultString = faultString
-        
+
     def asSoap(self):
         return """<SOAP:Fault><faultcode>%s</faultcode><faultstring>%s</faultstring></SOAP:Fault>""" % (xmlEscape(self._faultCode), xmlEscape(self._faultString))
 
 class Srw(Observable):
-    
+
     def __init__(self, **kwargs):
         Observable.__init__(self)
         ignored = "SRW Does Not Implement Explain - This Variable Will Not Be Used"
@@ -60,7 +60,7 @@ class Srw(Observable):
         self._sruDelegate.all = self.all
         self._sruDelegate.any = self.any
         self._sruDelegate.do = self.do
-    
+
     def handleRequest(self, Body='', **kwargs):
         try:
             arguments = self._soapXmlToArguments(Body)
@@ -92,7 +92,7 @@ class Srw(Observable):
             raise  SoapException("SOAP:Server.userException", str(e))
         if str(envelope.xmlnsUri) != SOAP_XML_URI:
             raise SoapException("SOAP:VersionMismatch", "The processing party found an invalid namespace for the SOAP Envelope element")
-        
+
         request = envelope.Body.searchRetrieveRequest
         for elem in getElements(request):
             value = arguments.get(str(elem.localName), [])
@@ -100,10 +100,10 @@ class Srw(Observable):
             arguments[str(elem.localName)] = value
         arguments['operation'] = arguments.get('operation', ['searchRetrieve'])
         return arguments
-        
+
     def _srwSpecificValidation(self, operation, arguments):
         if operation != 'searchRetrieve':
             raise SruException(UNSUPPORTED_OPERATION, operation)
         if 'stylesheet' in arguments:
             raise SruException(UNSUPPORTED_PARAMETER, 'stylesheet')
-        
+
