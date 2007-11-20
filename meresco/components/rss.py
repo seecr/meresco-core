@@ -37,6 +37,7 @@ from cq2utils.wrappers import wrapp
 
 from meresco.framework import Observable, compose
 from meresco.components.sru.sruquery import SRUQuery, SRUQueryException
+from meresco.components.http import utils as httputils
 
 from cqlparser.cqlparser import parseString as parseCQL
 
@@ -50,9 +51,7 @@ class Rss(Observable):
         self._profiles = profiles
 
     def handleRequest(self, RequestURI='', **kwargs):
-        yield "HTTP/1.0 200 Ok\r\n" + \
-              "Content-Type: application/rss+xml\r\n" + \
-              "\r\n"
+        yield httputils.okRss
 
         yield """<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel>"""
 

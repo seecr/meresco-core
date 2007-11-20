@@ -19,8 +19,8 @@ class FileServerTest(TestCase):
         fileServer = FileServer(self.directory)
         response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/doesNotExist", Method="GET", Headers={}))
 
-        self.assertTrue("HTTP/1.0 404 Ok" in response, response)
-        self.assertTrue("404 Not Found" in response)
+        self.assertTrue("HTTP/1.0 404 Not Found" in response, response)
+        self.assertTrue("<title>404 Not Found</title>" in response)
 
     def testFileExists(self):
         server = FileServer(self.directory)

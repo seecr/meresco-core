@@ -1,5 +1,7 @@
 from os.path import isfile, join
 
+from meresco.components.http import utils as httputils
+
 import magic
 magicCookie = magic.open(magic.MAGIC_MIME)
 magicCookie.load()
@@ -14,9 +16,7 @@ class FileServer:
     def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
 
         if not self.fileExists(RequestURI):
-            yield 'HTTP/1.0 %s Ok\r\n' % "404"
-            yield "Content-Type: text/html\r\n"
-            yield "\r\n"
+            yield httputils.notFoundHtml
             for line in ['<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">',
 "<html><head>",
 "<title>404 Not Found</title>",
@@ -29,7 +29,7 @@ class FileServer:
                 yield line
             raise StopIteration
 
-        yield 'HTTP/1.0 %s Ok\r\n' % "200"
+        yield 'HTTP/1.0 200 Ok\r\n'
         filename = self._filenameFor(RequestURI)
         ext = filename.split(".")[-1]
         try:

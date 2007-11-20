@@ -4,6 +4,7 @@ from xml.sax.saxutils import escape as xmlEscape
 
 from meresco.framework import Observable, decorate, compose
 from meresco.components.sru.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
+from meresco.components.http import utils as httputils
 
 from cqlparser.cqlparser import parseString as parseCQL
 
@@ -69,9 +70,7 @@ class Sru(Observable):
 
     def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
         database, command, queryArguments = self._parseUri(RequestURI)
-        yield "HTTP/1.0 200 Ok\r\n" + \
-              "Content-Type: text/xml; charset=utf-8\r\n" + \
-              "\r\n"
+        yield httputils.okXml
 
         yield XML_HEADER
         try:
@@ -258,6 +257,3 @@ class PossibleXmlEscapeForRecordPacking(Observable):
 #self.do.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
 #en die naam is ook niet zo fris meer,
 #zie ook "IetsVanNut" en zijn methode "self.all.write" waaruit ook een sink is verdwenen
-
-#HTTP Stuff (zat in stinkAdapter)
-#self.contentType = 'text/xml; charset=utf-8'
