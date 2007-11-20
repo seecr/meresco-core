@@ -240,6 +240,9 @@ class Sru(Observable):
 
 class PossibleXmlEscapeForRecordPacking(Observable):
 
+    def unknown(self, msg, *args, **kwargs):
+        return self.all.unknown(msg, *args, **kwargs)
+
     def yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
         generator = self.all.yieldRecord(recordId, recordSchema)
         if recordPacking == 'xml':
