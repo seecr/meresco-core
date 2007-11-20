@@ -39,11 +39,12 @@ class FileServer:
         yield "Content-Type: %s\r\n" % extension
         yield "\r\n"
 
-        fp = open(filename)
-        for line in fp:
-            yield line
-        fp.close()
-
+        f = open(filename)
+        data = f.read(1024)
+        while data:
+            yield data
+            data = f.read(1024)
+        f.close()
 
     def _filenameFor(self, filename):
         while filename and filename[0] == '/':
@@ -52,3 +53,15 @@ class FileServer:
 
     def fileExists(self, filename):
         return isfile(self._filenameFor(filename))
+
+class StringServer(object):
+    def __init__(self, aString, contentType):
+        self._aString = aString
+        self._contentType = contentType
+
+    def handleRequest(self, *args, **kwargs):
+        yield 'HTTP/1.0 200 Ok\r\n'
+        yield "Content-Type: %s\r\n" % self._contentType
+        yield "\r\n"
+
+        yield self._aString

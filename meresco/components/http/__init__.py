@@ -28,3 +28,4 @@
 from observablehttpserver import ObservableHttpServer, ObservableHttpServerAdapter
 from pathfilter import PathFilter
 from geturl import GetURL
+from fileserver import StringServer
