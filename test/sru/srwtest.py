@@ -97,10 +97,11 @@ Content-Type: text/xml; charset=utf-8
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/4</uri><details>explain</details><message>Unsupported Operation</message></diagnostic></diagnostics>""", response)
 
-    def xxxtestContentType(self):
-        ####NOTE (Kvs, 2007-11-15: this is moved out of here to a higher level, but may need to be restored in some form)
+    def testContentType(self):
+        component = Srw()
+        component.addObserver(MockListeners(MockHits(0)))
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ''
-        response = "".join(list(Srw().handleRequest(Body=request)))
+        response = "".join(list(component.handleRequest(Body=request)))
         self.assertTrue('text/xml; charset=utf-8' in response, response)
 
     def testNormalOperation(self):
