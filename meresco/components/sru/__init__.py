@@ -26,3 +26,4 @@
 ## end license ##
 from srurecordupdate import SRURecordUpdate
 from sru import Sru
+from srw import Srw

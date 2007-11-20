@@ -4,7 +4,6 @@ from os.path import join
 from shutil import rmtree
 from tempfile import mkdtemp
 
-from meresco.components.http.observablehttpserver import WebRequest
 from meresco.components.http.fileserver import FileServer
 
 class FileServerTest(TestCase):
