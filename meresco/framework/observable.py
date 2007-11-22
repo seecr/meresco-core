@@ -110,3 +110,7 @@ class Observable(object):
                 node, branch = node
                 node.addObservers(branch)
             self.addObserver(node)
+
+class Transparant(Observable):
+    def unknown(self, message, *args, **kwargs):
+        return self.all.unknown(message, *args, **kwargs)

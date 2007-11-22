@@ -44,6 +44,7 @@ if status:
 
 import unittest
 
+from accumulatetest import AccumulateTest
 from bitarraytest import BitArrayTest
 from bitmatrixtest import BitMatrixTest
 from contextsettest import ContextSetTest

@@ -35,3 +35,4 @@ from contextset import ContextSetList, ContextSet
 from crosswalk import Crosswalk
 from xmlxpath import XmlXPath
 from rss import Rss
+from accumulate import Accumulate
