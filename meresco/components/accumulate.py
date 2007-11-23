@@ -1,33 +1,48 @@
 from meresco.framework import Observable
 from meresco.components.dictionary import DocumentDict
-from amara.bindery import is_element, root_base
-from amara.binderytools import bind_string, create_document
+
+
+def getIdentifier(*args, **kwargs):
+    return args[0]
+
+def emptyGenerator():
+    if False:
+        yield None
 
 class Accumulate(Observable):
-    def __init__(self, rootTagName):
+
+    def __init__(self, message, combine, getIdentifier=getIdentifier):
         Observable.__init__(self)
-        self._rootTagName = rootTagName
         self._reset()
+        self._message = message
+        self._getIdentifier = getIdentifier
+        self._combine = combine
 
     def _reset(self):
         self._identifier = None
-        doc = create_document()
-        self._rootTag = doc.xml_create_element(unicode(self._rootTagName))
-
-    def add(self, identifier, partName, dataNode):
-        assert is_element(dataNode) and type(dataNode) != root_base, 'Expects amara elements, not amara documents.'
-
-        if self._identifier and self._identifier != identifier:
-            self.do.add(self._identifier, self._rootTagName, self._rootTag)
-            self._reset()
-
-        self._identifier = identifier
-        self._rootTag.xml_append(dataNode)
+        self._collection = []
 
     def finish(self):
         if self._identifier:
-            self.do.add(self._identifier, self._rootTagName, self._rootTag)
-            self._reset()
+            return self._send()
+        return emptyGenerator()
+
+    def _send(self):
+        args, kwargs = self._combine(self._collection)
+        self._reset()
+        return self.all.unknown(self._message, *args, **kwargs)
+
+    def _collect(self, *args, **kwargs):
+        self._collection.append((args, kwargs))
 
     def unknown(self, message, *args, **kwargs):
-        return self.all.unknown(message, *args, ** kwargs)
+        if message == self._message:
+            result = emptyGenerator()
+            identifier = self._getIdentifier(*args, **kwargs)
+            if self._identifier and self._identifier != identifier:
+                result = self._send()
+            self._identifier = identifier
+            self._collect(*args, **kwargs)
+            return result
+        else:
+            return self.all.unknown(message, *args, ** kwargs)

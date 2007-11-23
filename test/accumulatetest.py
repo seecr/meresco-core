@@ -6,16 +6,32 @@ from meresco.components.xml2document import TEDDY_NS
 from meresco.components.dictionary import DocumentDict
 from meresco.components.dictionary.documentdict import fromDict, asDict
 from meresco.components import Accumulate
-from amara.binderytools import bind_string
 from amara.bindery import is_element, root_base
+from amara.binderytools import bind_string, create_document
+from meresco.framework import Observable
 
 class AccumulateTest(TestCase):
+    def createAmaraBasedAccumulate(self, rootTagName):
+        def combine(argumentCollection):
+            doc = create_document()
+            rootTag = doc.xml_create_element(unicode(rootTagName))
+            for args,kwargs in argumentCollection:
+                assert len(args) == 3
+                assert kwargs == {}
+                identifier, partName, dataNode = args
+                rootTag.xml_append(dataNode)
+            return [identifier, rootTagName, rootTag], {}
+        return Accumulate(message = "add", combine = combine)
+
+
     def testMessages(self):
-        accumulate = Accumulate('tagName')
+        startingPoint = Observable()
+        accumulate = self.createAmaraBasedAccumulate('tagName')
         observer = CallTrace("observer")
+        startingPoint.addObserver(accumulate)
         accumulate.addObserver(observer)
-        accumulate.add('identifier', 'data', bind_string('<data>data</data>').data)
-        accumulate.finish()
+        startingPoint.do.add('identifier', 'data', bind_string('<data>data</data>').data)
+        startingPoint.do.finish()
 
         self.assertEquals(1, len(observer.calledMethods))
         method = observer.calledMethods[0]
@@ -29,13 +45,13 @@ class AccumulateTest(TestCase):
         self.assertEquals('<tagName><data>data</data></tagName>', xmlNode.xml())
 
     def testMultipleParts(self):
-        accumulate = Accumulate('tag')
+        accumulate = self.createAmaraBasedAccumulate('tag')
         observer = CallTrace("observer")
         accumulate.addObserver(observer)
 
-        accumulate.add('identifier', 'data', bind_string('<data>data</data>').data)
-        accumulate.add('identifier', 'other', bind_string('<other>data</other>').other)
-        accumulate.finish()
+        list(accumulate.unknown('add', 'identifier', 'data', bind_string('<data>data</data>').data))
+        list(accumulate.unknown('add', 'identifier', 'other', bind_string('<other>data</other>').other))
+        list(accumulate.finish())
 
         self.assertEquals(1, len(observer.calledMethods))
         method = observer.calledMethods[0]
@@ -43,16 +59,18 @@ class AccumulateTest(TestCase):
         self.assertEquals('<tag><data>data</data><other>data</other></tag>', xmlNode.xml())
 
     def testNewIdentifierTriggersSendingOfPrevious(self):
-        accumulate = Accumulate('tag')
+        startingPoint = Observable()
+        accumulate = self.createAmaraBasedAccumulate('tag')
         observer = CallTrace("observer")
         accumulate.addObserver(observer)
+        startingPoint.addObserver(accumulate)
 
-        accumulate.add('one', 'other', bind_string('<other>data1</other>').other)
-        accumulate.add('one', 'data', bind_string('<data>data1</data>').data)
-        accumulate.add('two', 'data', bind_string('<data>data2</data>').data)
+        startingPoint.do.add('one', 'other', bind_string('<other>data1</other>').other)
+        startingPoint.do.add('one', 'data', bind_string('<data>data1</data>').data)
+        startingPoint.do.add('two', 'data', bind_string('<data>data2</data>').data)
         self.assertEquals(1, len(observer.calledMethods))
-        accumulate.add('two', 'other', bind_string('<other>data2</other>').other)
-        accumulate.finish()
+        startingPoint.do.add('two', 'other', bind_string('<other>data2</other>').other)
+        startingPoint.do.finish()
         self.assertEquals(2, len(observer.calledMethods))
         method1 = observer.calledMethods[0]
         method2 = observer.calledMethods[1]
@@ -61,14 +79,3 @@ class AccumulateTest(TestCase):
         self.assertEquals('<tag><other>data1</other><data>data1</data></tag>', xmlNode1.xml())
         self.assertEquals('<tag><data>data2</data><other>data2</other></tag>', xmlNode2.xml())
 
-
-    def testIllegalArguments(self):
-        accumulate = Accumulate('tag')
-        observer = CallTrace("observer")
-        accumulate.addObserver(observer)
-
-        try:
-            accumulate.add('identifier', 'data', bind_string('<amara>root_base</amara>'))
-            self.fail()
-        except AssertionError, e:
-            self.assertEquals('Expects amara elements, not amara documents.', str(e))
