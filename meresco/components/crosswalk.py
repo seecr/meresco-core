@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -29,7 +29,7 @@ from lxml.etree import parse, XMLParser, _ElementTree
 from cq2utils.xmlutils.xmlrewrite import XMLRewrite
 from cq2utils.xmlutils import findNamespaces
 from glob import glob
-from os.path import basename, dirname
+from os.path import basename, dirname, abspath, join
 
 from meresco.framework import Observable
 
@@ -46,7 +46,7 @@ def rewrite(pattern, replacement, rules):
     return rules
 
 class Crosswalk(Observable):
-    def __init__(self, argumentKeyword = None, rulesDir=dirname(__file__)):
+    def __init__(self, argumentKeyword = None, rulesDir=join(abspath(dirname(__file__)), 'rules')):
         assert argumentKeyword == None, 'Crosswalk converts any argument that looks like an Lxml ElementTree, usage of argumentKeyword is forbidden.'
 
         Observable.__init__(self)

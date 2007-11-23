@@ -1,6 +1,6 @@
 extend('utils')
 
-inputNamespace='fake_namespace_for_emerge'
+inputNamespace='http://www.imsglobal.org/xsd/imsmd_v1p2'
 
 rootTagName='lom'
 
@@ -8,7 +8,7 @@ defaultNameSpace='http://ltsc.ieee.org/xsd/LOM'
 
 # namespaces for use in XPath expressions in rules
 sourceNsMap = {
-'imsmd': 'http://www.openarchives.org/OAI/2.0/'
+'imsmd': inputNamespace
 }
 
 rules = [
@@ -84,6 +84,10 @@ rules = [
 ('educational/context/source', 'imsmd:educational/imsmd:context/imsmd:source', ('imsmd:langstring[not(imsmd:value)]',), '%s'),
 ('educational/context/value', 'imsmd:educational/imsmd:context/imsmd:value', ('imsmd:langstring/imsmd:value',), '%s'),
 ('educational/context/value', 'imsmd:educational/imsmd:context/imsmd:value', ('imsmd:langstring[not(imsmd:value)]',), '%s'),
+('educational/interactivityType/source', 'imsmd:educational/imsmd:interactivitytype/imsmd:source', ('imsmd:langstring/imsmd:value',), '%s'),
+('educational/interactivityType/source', 'imsmd:educational/imsmd:interactivitytype/imsmd:source', ('imsmd:langstring[not(imsmd:value)]',), '%s'),
+('educational/interactivityType/value', 'imsmd:educational/imsmd:interactivitytype/imsmd:value', ('imsmd:langstring/imsmd:value',), '%s'),
+('educational/interactivityType/value', 'imsmd:educational/imsmd:interactivitytype/imsmd:value', ('imsmd:langstring[not(imsmd:value)]',), '%s'),
 
 ('rights/cost/source', 'imsmd:rights/imsmd:cost/imsmd:source', ('imsmd:langstring/imsmd:value',), '%s'),
 ('rights/cost/source', 'imsmd:rights/imsmd:cost/imsmd:source', ('imsmd:langstring[not(imsmd:value)]',), '%s'),
@@ -96,8 +100,8 @@ rules = [
 		[('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]),
 ('rights/copyrightAndOtherRestrictions/value', 'imsmd:rights/imsmd:copyrightandotherrestrictions/imsmd:value', ('imsmd:langstring/imsmd:value',), '%s',
 		[('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]),
-('rights/description', 'imsmd:rights/imsmd:description', ('imsmd:langstring/@xml:lang', 'imsmd:langstring',), '<string language="%s">%s</string>'),
-('rights/description', 'imsmd:rights/imsmd:description', ('imsmd:langstring[not(@xml:lang)]',), '<string language="x-none">%s</string>'),
+('rights/description', 'imsmd:rights/imsmd:description[position()=1]', ('imsmd:langstring/@xml:lang', 'imsmd:langstring',), '<string language="%s">%s</string>'),
+('rights/description', 'imsmd:rights/imsmd:description[position()=1]', ('imsmd:langstring[not(@xml:lang)]',), '<string language="x-none">%s</string>'),
 
 ('classification/purpose/source',
 	'imsmd:classification[imsmd:taxonpath/imsmd:source/imsmd:langstring/imsmd:value="NBC"]/imsmd:purpose/imsmd:source',
@@ -123,31 +127,6 @@ rules = [
 #	[('\s*\d+\s*(\w+)', '%s', (str,))])
 ]
 
-
-vocabDict = {
-#for lumc:
-'LOMLOREnetv1p0': 'LORENET',
-'vakgebied': 'discipline',
-'handleiding': 'other',
-'open opdracht': 'exercise',
-'gesloten opdracht': 'exercise',
-'verkennings- en onderzoeks materiaal': 'other',
-'video': 'other',
-# for deltion_nl:
-'http://download.edustandaard.nl/xsd/vdex_context_czp_20060628.xml': 'LOMv1.0',
-'http://download.edustandaard.nl/vdex/vdex_learningresourcetype_czp_20060628.xml':'LOMv1.0',
-'verkennings- en onderzoeksmateriaal': 'other',
-# for ou_nl:
-'gereedschap': 'other',
-# for Triple L:
-'TPPOVOv1.0': 'LOMv1.0',
-'informatiebron': 'other',
-'WO': 'higher education',
-'ja': 'yes', 'nee': 'no',
-'G01': '42',
-'G01.703': '38',
-'evaluatie- en toetsmateriaal':  'exam'
-}
-
+# delete imported stuff
 del rewriteVcard
 del rewriteDate

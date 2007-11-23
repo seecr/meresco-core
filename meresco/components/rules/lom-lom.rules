@@ -18,6 +18,7 @@ rules = [
 ('general/title', 'lom:general/lom:title', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
 ('general/language', 'lom:general/lom:language', ('.',), '%s'),
 ('general/description', 'lom:general/lom:description', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
+('general/description', 'lom:general/lom:description', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
 ('general/keyword', 'lom:general/lom:keyword', ('lom:string/@language', 'lom:string'), '<string language="%s">%s</string>'),
 ('general/aggregationLevel/source', 'lom:general/lom:aggregationLevel/lom:source', ('.',), '%s',),
 ('general/aggregationLevel/value', 'lom:general/lom:aggregationLevel/lom:value', ('.',), '%s',),
@@ -88,17 +89,6 @@ rules = [
 ('classification/keyword', 'lom:classification/lom:keyword', ('lom:string[not(@language)]',), '<string language="x-none">%s</string>'),
 
 ]
-
-vocabDict = {
-'auteur': 'author',
-'LOREnet LOM v1.0': 'LOMv1.0',
-'CZP VO/PO v1.0.1':'LOMv1.0',
-'verkennings- en onderzoeks materiaal': 'other',
-'open opdracht': 'exercise',
-'handleiding': 'other',
-'informatiebron': 'other',
-'evaluatie- en toetsmateriaal':  'exam',
-}
 
 # delete imported stuff
 del rewriteDate
