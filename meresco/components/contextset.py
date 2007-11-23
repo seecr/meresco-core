@@ -67,11 +67,11 @@ class ContextSetList:
             return field
         context = field.split('.')[0]
         if context not in self._contextsets:
-            raise ContextSetException('Unsupported contextset: ' + context)
+            return field
         set = self._contextsets[context]
         if set.match(field):
             return set.lookup(field)
-        raise ContextSetException('Unknown field: ' + field)
+        return field
 
     def reverseLookup(self, field):
         for set in self._contextsets.values():
