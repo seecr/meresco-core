@@ -42,7 +42,7 @@ class Lumberjack:
         thread.setDaemon(True)
         thread.start()
         
-    def unknown(self, methodName, *args):
+    def unknown(self, methodName, *args, **kwargs):
         self.event.set()
             
     def justKeepChopping(self):

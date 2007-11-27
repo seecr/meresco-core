@@ -33,7 +33,7 @@ class GetURL:
     def __init__(self, url):
         self._url = url
 
-    def unknown(self, methodName, *args):
+    def unknown(self, methodName, *args, **kwargs):
         method = lambda: urlopen(self._url).read()
         thread = Thread(target=method)
         #The program exits when only Daemon threads are left.

@@ -44,8 +44,8 @@ class Fields2XmlComponent(Component, Observable):
         
         self.do.add(id, 'xmlfields', root.childNodes[0])
 
-    def unknown(self, methodName, *args):
-        self.do.unknown(methodName, *args)
+    def unknown(self, methodName, *args, **kwargs):
+        self.do.unknown(methodName, *args, **kwargs)
         
     def _fields2Xml(self, originalXml):
         root = create_document(u'xmlfields', attributes={(u'teddy:skip', unicode(TEDDY_NS)): u'true'})
