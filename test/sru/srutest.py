@@ -28,6 +28,7 @@
 import unittest
 #remove at the end...
 from meresco.components.sru.sru import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
+from meresco.framework import compose
 
 from meresco.components.sru import Sru
 
@@ -262,6 +263,24 @@ Content-Type: text/xml; charset=utf-8
 </srw:echoedSearchRetrieveRequest>
 </srw:searchRetrieveResponse>
 """, result)
+
+    def testExceptionInWriteResult(self):
+        class RaisesException(object):
+            def yieldRecordForRecordPacking(self, *args):
+                raise Exception("Test Exception")
+        component = Sru('', '', '', '')
+        component.addObserver(RaisesException())
+        result = "".join(list(compose(component._writeResult(CallTrace("Query"), "ID"))))
+        self.assertTrue("diagnostic" in result)
+
+    def testExceptionInWriteExtraRecordData(self):
+        class RaisesException(object):
+            def extraResponseData(self, *args):
+                raise Exception("Test Exception")
+        component = Sru('', '', '', '')
+        component.addObserver(RaisesException())
+        result = "".join(list(compose(component._writeExtraResponseData("arguments", "hits"))))
+        self.assertTrue("diagnostic" in result)
 
 class MockListeners:
     def __init__(self, executeCQLResult):
