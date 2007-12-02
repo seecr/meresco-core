@@ -28,14 +28,16 @@ RESPONSE_HEADER = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/z
 
 RESPONSE_FOOTER = """</srw:searchRetrieveResponse>"""
 
-DIAGNOSTICS = """<diagnostics>
-  <diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/">
+DIAGNOSTIC = """<diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/">
         <uri>info://srw/diagnostics/1/%s</uri>
         <details>%s</details>
         <message>%s</message>
-    </diagnostic>
+    </diagnostic>"""
+
+DIAGNOSTICS = """<diagnostics>
+%s
 </diagnostics>
-"""
+""" % DIAGNOSTIC
 
 ECHOED_PARAMETER_NAMES = ['version', 'query', 'startRecord', 'maximumRecords', 'recordPacking', 'recordSchema', 'recordXPath', 'resultSetTTL', 'sortKeys', 'stylesheet', 'x-recordSchema']
 
@@ -179,12 +181,21 @@ class Sru(Observable):
 
     def _writeExtraResponseData(self, arguments, hits):
         return decorate('<srw:extraResponseData>',
-            self.all.extraResponseData(arguments, hits),
+            self._extraResponseDataTryExcept(arguments, hits),
             '</srw:extraResponseData>')
+            
+    def _extraResponseDataTryExcept(self, arguments, hits):
+        try:
+            stuffs = compose(self.all.extraResponseData(arguments, hits))
+            for stuff in stuffs:
+                yield stuff
+        except Exception, e:
+            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
 
     def _doSearchRetrieve(self, sruQuery, arguments):
         SRU_IS_ONE_BASED = 1
 
+        #KvS/TJ: volgende 'parseCQL(sruQuery.query)' is natuurlijk beetje jammer, volgende keer dat we hier langskomen: a. in sruquery dat resultaat opslaan en dan b. hier gebruiken.
         hits = self.any.executeCQL(parseCQL(sruQuery.query), sruQuery.sortBy,  sruQuery.sortDirection)
         yield self._startResults(len(hits))
 
@@ -218,8 +229,15 @@ class Sru(Observable):
         yield '<srw:record>'
         yield '<srw:recordSchema>%s</srw:recordSchema>' % sruQuery.recordSchema
         yield '<srw:recordPacking>%s</srw:recordPacking>' % sruQuery.recordPacking
-        yield self._writeRecordData(sruQuery, recordId)
-        yield self._writeExtraRecordData(sruQuery, recordId)
+        try:
+            stuffs = compose(self._writeRecordData(sruQuery, recordId))
+            for stuff in stuffs:
+                yield stuff
+            stuffs = compose(self._writeExtraRecordData(sruQuery, recordId))
+            for stuff in stuffs:
+                yield stuff
+        except Exception, e:
+            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
         yield '</srw:record>'
 
     def _writeRecordData(self, sruQuery, recordId):
@@ -253,10 +271,3 @@ class PossibleXmlEscapeForRecordPacking(Observable):
                 yield xmlEscape(data)
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
-
-#NOG TE DOEN:
-#eerdere aanroep was self.all.extraResponseData(SELF, hits). luisteraars aanpassen
-#idem voor
-#self.do.writeRecord(self, recordId, self.sruQuery.recordSchema, self.sruQuery.recordPacking)
-#en die naam is ook niet zo fris meer,
-#zie ook "IetsVanNut" en zijn methode "self.all.write" waaruit ook een sink is verdwenen
