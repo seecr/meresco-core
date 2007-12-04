@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -33,11 +33,14 @@ from lxml.etree import parse, _ElementTree
 from meresco.components.xml_generic.validate import Validate, ValidateException
 from meresco.framework import Observable
 
+from meresco.components.xml_generic import  __file__ as xml_genericpath
+from os.path import join, dirname, abspath
+
 class ValidateTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.validate = Validate()
+        self.validate = Validate(join(abspath(dirname(xml_genericpath)), 'schemas-lom', 'lomCcNbc.xsd'))
         self.exception = None
         self.args = None
         class Interceptor:
@@ -59,28 +62,6 @@ class ValidateTest(CQ2TestCase):
         except ValidateException:
             pass
         self.assertEquals("<string>:1:ERROR:SCHEMASV:SCHEMAV_CVC_ELT_1: Element '{http://ltsc.ieee.org/xsd/LOM_this_should_not_work}lom': No matching global declaration available for the validation root.", str(self.exception))
-
-    def testAssertValidString(self):
-        s = """<?xml version="1.0" encoding="UTF-8"?>
-<OAI-PMH xmlns="http://www.openarchives.org/OAI/2.0/"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/
-         http://www.openarchives.org/OAI/2.0/OAI-PMH.xsd">
-<responseDate>2007-01-01T00:00:00Z</responseDate>
-<request verb="Identify">url</request>
-<Identify>
-    <repositoryName>The Repository Name</repositoryName>
-    <baseURL>http://base.example.org/url</baseURL>
-    <protocolVersion>2.0</protocolVersion>
-    <adminEmail>info@cq2.nl</adminEmail>
-    <earliestDatestamp>1970-01-01T00:00:00Z</earliestDatestamp>
-    <deletedRecord>no</deletedRecord>
-    <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
-  </Identify>
-</OAI-PMH>"""
-        self.observable.any.callSomething(parse(StringIO(s)))
-        self.assertEquals(None, self.exception)
-        self.assertEquals(_ElementTree, type(self.args[0]))
 
     def testAssertInvalidString(self):
         invalid = '<OAI-PMH/>'

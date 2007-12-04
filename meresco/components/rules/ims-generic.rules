@@ -104,27 +104,25 @@ rules = [
 ('rights/description', 'imsmd:rights/imsmd:description[position()=1]', ('imsmd:langstring[not(@xml:lang)]',), '<string language="x-none">%s</string>'),
 
 ('classification/purpose/source',
-	'imsmd:classification[imsmd:taxonpath/imsmd:source/imsmd:langstring/imsmd:value="NBC"]/imsmd:purpose/imsmd:source',
-	('imsmd:langstring/imsmd:value',), '%s'),
+	'imsmd:classification/imsmd:purpose/imsmd:source',
+	('imsmd:langstring',), '%s'),
 ('classification/purpose/value',
-	'imsmd:classification[imsmd:taxonpath/imsmd:source/imsmd:langstring/imsmd:value="NBC"]/imsmd:purpose/imsmd:value',
-	('imsmd:langstring/imsmd:value',), '%s'),
+	'imsmd:classification/imsmd:purpose/imsmd:value',
+	('imsmd:langstring',), '%s'),
 
 ('classification/taxonPath/source',
-	'imsmd:classification/imsmd:taxonpath[imsmd:source/imsmd:langstring/imsmd:value="NBC"]/imsmd:source',
-	('imsmd:langstring/imsmd:language', 'imsmd:langstring/imsmd:value'), '<string language="%s">%s</string>'),
+	'imsmd:classification/imsmd:taxonpath/imsmd:source',
+	('imsmd:langstring/@xml:lang', 'imsmd:langstring'), '<string language="%s">%s</string>'),
 ('classification/taxonPath/taxon/id',
-	'imsmd:classification/imsmd:taxonpath[imsmd:source/imsmd:langstring/imsmd:value="NBC"]/imsmd:taxon/imsmd:id',
+	'imsmd:classification/imsmd:taxonpath/imsmd:taxon/imsmd:id',
 	('.',), '%s',
-	[('(?:NBC)?(\d+)', '%s')]),
+    [('(.*)', '%s', (str.strip,))]
+	),
 ('classification/taxonPath/taxon/entry',
-	'imsmd:classification/imsmd:taxonpath[imsmd:source/imsmd:langstring/imsmd:value="NBC"]/imsmd:taxon/imsmd:entry',
-	('imsmd:langstring/imsmd:language', 'imsmd:langstring/imsmd:value'), '<string language="%s">%s</string>',
-	[('\s*\d+\s*(\w+)', '%s', (str,))]),
-#('classification/taxonPath/taxon/entry',
-#	'imsmd:classification/imsmd:taxonpath/imsmd:source[imsmd:langstring="NBC"]/../imsmd:taxon/imsmd:entry',
-#	('imsmd:langstring/@xml:lang', 'imsmd:langstring'), '<string language="%s">%s</string>',
-#	[('\s*\d+\s*(\w+)', '%s', (str,))])
+	'imsmd:classification/imsmd:taxonpath/imsmd:taxon/imsmd:entry',
+	('imsmd:langstring/@xml:lang', 'imsmd:langstring'), '<string language="%s">%s</string>',
+    [('(.*)', '%s', (str.strip,))]
+	),
 ]
 
 # delete imported stuff

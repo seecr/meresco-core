@@ -37,8 +37,8 @@ from os import remove
 
 from meresco.components import Crosswalk
 from meresco.components.crosswalk import rewriteRules
-from meresco.components.xml_generic import Validate
-
+from meresco.components.xml_generic import Validate, __file__ as xml_genericpath
+from os.path import join, dirname, abspath
 
 def readRecord(name):
     return open('xml_generic/lxml_based/data/' + name)
@@ -48,7 +48,7 @@ class CrosswalkTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.crosswalk = Crosswalk()
-        self.validate = Validate(['metadata'])
+        self.validate = Validate(join(abspath(dirname(xml_genericpath)), 'schemas-lom', 'lomCcNbc.xsd'))
         self.crosswalk.addObserver(self.validate)
         self.observer = CallTrace()
         self.validate.addObserver(self.observer)
@@ -178,8 +178,7 @@ END:VCARD</entity>
         tree = parse(StringIO(xml))
         from lxml.etree import XMLSchema
         schema = XMLSchema(parse(open('../meresco/components/xml_generic/schemas-lom/lomCcNbc.xsd')))
-        validate = Validate()
-        validate.unknown('msg', 'id', 'name', tree)
+        self.validate.unknown('msg', 'id', 'name', tree)
         schema.validate(tree)
         self.assertEquals(None, schema.error_log.last_error)
 

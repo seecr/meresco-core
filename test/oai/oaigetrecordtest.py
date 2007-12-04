@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,7 +31,6 @@ from mockoaijazz import MockOaiJazz
 
 from meresco.framework import ObserverFunction
 from meresco.components.oai.oaigetrecord import OaiGetRecord
-from meresco.components.xml_generic.validate import assertValidString
 
 from cq2utils.calltrace import CallTrace
 
@@ -73,7 +72,7 @@ class OaiGetRecordTest(OaiTestCase):
         self.assertEqualsWS(self.OAIPMH % """
 <request identifier="oai:ident" metadataPrefix="oai_dc" verb="GetRecord">http://server:9000/path/to/oai</request>
 <error code="idDoesNotExist">The value of the identifier argument is unknown or illegal in this repository.</error>""", self.stream.getvalue())
-        assertValidString(self.stream.getvalue())
+        self.assertValidString(self.stream.getvalue())
 
         self.assertEquals([('oai:ident', 'oai_dc')], notifications)
 

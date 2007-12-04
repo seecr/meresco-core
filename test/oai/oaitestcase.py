@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -27,13 +27,15 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
+from lxml.etree import parse, XMLSchema, XMLSchemaParseError, tostring
 from cq2utils.calltrace import CallTrace
 from meresco.framework.observable import Observable
-from cStringIO import StringIO
-from meresco.components.xml_generic.validate import assertValidString
+from StringIO import StringIO
+from os.path import join, dirname, abspath
+from glob import glob
 
-#from meresco.components.http.oai.oaicomponent import OaiComponent
-#from meresco.components.http.oai.oaisink import OaiSink
+from meresco.components.xml_generic import  __file__ as xml_genericpath
+
 
 class OaiTestCase(CQ2TestCase):
 
@@ -53,14 +55,6 @@ class OaiTestCase(CQ2TestCase):
         self.stream = StringIO()
         self.request.write = self.stream.write
 
-    #def testNotMyVerb(self):
-        #"""All verbs are observers and should only react to their own verb. This is not true for the sink and the umbrella OaiComponent"""
-        #if self.subject.__class__ in [OaiComponent, OaiSink]:
-            #return
-        #self.request.args = {'verb': ['NotMyVerb']}
-        #self.observable.any.unknown('notMyVerb', self.request)
-        #self.assertEquals('', self.stream.getvalue())
-
     def assertBadArgument(self, verb, arguments, additionalMessage = '', errorCode = "badArgument"):
         self.request.args = arguments
 
@@ -73,7 +67,7 @@ class OaiTestCase(CQ2TestCase):
         self.assertTrue(additionalMessage in result, 'Expected "%s" in "%s"' %(additionalMessage, result))
 
         try:
-            assertValidString(result)
+            self.assertValidString(result)
         except Exception, e:
             self.fail("Not a valid string:\n" + result + "\n" + str(e))
 
@@ -86,3 +80,33 @@ class OaiTestCase(CQ2TestCase):
 %s
 </OAI-PMH>"""
 
+    def assertValidString(self, aXmlString):
+        schema = getSchema()
+        tree = parse(StringIO(aXmlString))
+        schema.validate(tree)
+        if schema.error_log:
+            self.fail(schema.error_log.last_error)
+
+schemaLocation = join(abspath(dirname(xml_genericpath)), 'schemas')
+
+rootSchema = '<?xml version="1.0" encoding="utf-8"?><schema targetNamespace="http://www.meresco.org/XML" \
+            xmlns="http://www.w3.org/2001/XMLSchema" \
+            elementFormDefault="qualified">\n' \
+ + '\n'.join('<import namespace="%s" schemaLocation="%s"/>' %
+    (parse(xsd).getroot().get('targetNamespace'), xsd)
+        for xsd in glob(join(schemaLocation,'*.xsd'))) \
++ '</schema>'
+
+schemaXml = parse(StringIO(rootSchema))
+
+schema = None
+
+def getSchema():
+    global schema
+    if not schema:
+        try:
+            schema = XMLSchema(schemaXml)
+        except XMLSchemaParseError, e:
+            print e.error_log.last_error
+            raise
+    return schema

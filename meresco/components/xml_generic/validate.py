@@ -5,7 +5,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -28,7 +28,7 @@
 
 from lxml.etree import parse, XMLSchema, XMLSchemaParseError, _ElementTree, tostring
 from os.path import join, abspath, dirname
-from cStringIO import StringIO
+from StringIO import StringIO
 from glob import glob
 
 from meresco.framework import Observable
@@ -36,54 +36,15 @@ from meresco.framework import Observable
 class ValidateException(Exception):
     pass
 
-schemaLocation = join(abspath(dirname(__file__)), 'schemas')
-
-#targetNamespace="http://www.w3.org/2001/XMLSchema"
-
-rootSchema = '<?xml version="1.0" encoding="utf-8"?><schema targetNamespace="http://www.meresco.org/XML" \
-            xmlns="http://www.w3.org/2001/XMLSchema" \
-            elementFormDefault="qualified">\n' \
- + '\n'.join('<import namespace="%s" schemaLocation="%s"/>' %
-    (parse(xsd).getroot().get('targetNamespace'), xsd)
-        for xsd in glob(join(schemaLocation,'*.xsd'))) \
-+ '</schema>'
-
-schemaXml = parse(StringIO(rootSchema))
-lomSchemaXml = parse(open(join(schemaLocation+"-lom", 'lomCcNbc.xsd')))
-
-schema = None
-lomSchema = None
-
-def getSchema():
-    global schema
-    global lomSchema
-    if not schema:
+class Validate(Observable):
+    def __init__(self, schemaPath):
+        Observable.__init__(self)
         try:
-            lomSchema = XMLSchema(lomSchemaXml)
-            schema = XMLSchema(schemaXml)
+            self._schema = XMLSchema(parse(open(schemaPath)))
         except XMLSchemaParseError, e:
             print e.error_log.last_error
             raise
-    return schema
 
-def validate(aXmlStream):
-    schema = getSchema()
-    tree = parse(aXmlStream)
-    schema.validate(tree)
-    if schema.error_log:
-        return False, schema.error_log.last_error
-    else:
-        return True, ''
-
-def assertValid(aXmlStream):
-    success, message = validate(aXmlStream)
-    if not success:
-        raise AssertionError(message)
-
-def assertValidString(aXmlString):
-    assertValid(StringIO(aXmlString))
-
-class Validate(Observable):
 
     def unknown(self, *args, **kwargs):
         allArguments = list(args) + kwargs.values()
@@ -92,30 +53,11 @@ class Validate(Observable):
                 rootElement = arg.getroot()
                 usedNamespaces = rootElement.nsmap
 
-                # 20070831 - JJ - Workaround.
-                # Apparently there are bug(s) in libxml2 which prevents lxml from validating LOM in combination
-                # with other schema's.
-                validatingSchema = getSchema()
-                if 'http://ltsc.ieee.org/xsd/LOM' in usedNamespaces.values():
-                    validatingSchema = lomSchema
                 toValidate = parse(StringIO(tostring(arg, pretty_print=True)))
-                validatingSchema.validate(toValidate)
-                if validatingSchema.error_log:
-                    exception = ValidateException(validatingSchema.error_log.last_error)
+                self._schema.validate(toValidate)
+                if self._schema.error_log:
+                    exception = ValidateException(self._schema.error_log.last_error)
                     self.do.logException(exception)
                     raise exception
         return self.all.unknown(*args, **kwargs)
 
-if __name__ == '__main__':
-    from sys import argv, exit
-    args = argv[1:]
-    if len(args) != 1:
-        print "Validate a OAI response. "
-        print "Usage: %s <response>" % argv[0]
-        exit(1)
-    success, message = validate(args[0])
-    if success:
-        print "Validation: OK"
-    else:
-        print "Validation: FAILED"
-        print message

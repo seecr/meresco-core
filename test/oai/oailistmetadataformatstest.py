@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -31,7 +31,6 @@ from oaitestcase import OaiTestCase
 from meresco.components.lucene import LuceneIndex
 from meresco.components import StorageComponent
 from meresco.components.oai import OaiListMetadataFormats, OaiJazzLucene
-from meresco.components.xml_generic.validate import assertValidString
 
 class OaiListMetadataFormatsTest(OaiTestCase):
 
@@ -65,7 +64,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
       </metadataNamespace>
    </metadataFormat>
   </ListMetadataFormats>""", self.stream.getvalue())
-        assertValidString(self.stream.getvalue())
+        self.assertValidString(self.stream.getvalue())
 
     def testListMetadataFormatsForIdentifier(self):
         jazz = OaiJazzLucene(
@@ -92,7 +91,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
             <metadataNamespace>http://www.openarchives.org/OAI/2.0/oai_dc/</metadataNamespace>
         </metadataFormat>
   </ListMetadataFormats>""", self.stream.getvalue())
-        assertValidString(self.stream.getvalue())
+        self.assertValidString(self.stream.getvalue())
         jazz.close()
 
     def testListMetadataFormatsNonExistingId(self):
@@ -105,7 +104,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         self.subject.addObserver(Observer())
         self.observable.any.listMetadataFormats(self.request)
         self.assertTrue("""<error code="idDoesNotExist">The value of the identifier argument is unknown or illegal in this repository.</error>""" in self.stream.getvalue())
-        assertValidString(self.stream.getvalue())
+        self.assertValidString(self.stream.getvalue())
 
     def testIllegalArguments(self):
         self.assertBadArgument('listMetadataFormats', {'verb': ['ListMetadataFormats'], 'somethingElse': ['illegal']})

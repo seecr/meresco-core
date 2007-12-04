@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -28,7 +28,6 @@
 from oaitestcase import OaiTestCase
 
 from meresco.components.oai import OaiIdentify
-from meresco.components.xml_generic.validate import assertValidString
 
 class OaiIdentifyTest(OaiTestCase):
 
@@ -52,7 +51,7 @@ class OaiIdentifyTest(OaiTestCase):
     <deletedRecord>persistent</deletedRecord>
     <granularity>YYYY-MM-DDThh:mm:ssZ</granularity>
   </Identify>""", self.stream.getvalue())
-        assertValidString(self.stream.getvalue())
+        self.assertValidString(self.stream.getvalue())
 
     def testIllegalArguments(self):
         self.assertBadArgument('identify', {'verb': ['Identify'], 'metadataPrefix': ['oai_dc']}, 'Argument(s) "metadataPrefix" is/are illegal.')
