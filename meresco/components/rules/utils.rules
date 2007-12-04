@@ -45,6 +45,7 @@ vocabDict = {
 'http://download.edustandaard.nl/xsd/vdex_learningresourcetype_czp.xml': 'LOMv1.0',
 'http://download.edustandaard.nl/vdex/vdex_interactiontype_lomv1p0_20060628.xml': 'LOMv1.0',
 'http://download.edustandaard.nl/vdex/vdex_status_lomv1p0_20060628.xml': 'LOMv1.0',
+'http://download.edustandaard.nl/vdex/vdex_classification_purpose_czp_20060628.xml': 'LOMv1.0',
 'TPv1.0.2': 'LOMv1.0',
 'TPv1.0.2_anders': 'LOMv1.0',
 'TPPOVOv1.0': 'LOMv1.0',

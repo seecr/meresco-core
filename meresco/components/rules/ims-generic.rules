@@ -116,12 +116,12 @@ rules = [
 ('classification/taxonPath/taxon/id',
 	'imsmd:classification/imsmd:taxonpath/imsmd:taxon/imsmd:id',
 	('.',), '%s',
-    [('(.*)', '%s', (str.strip,))]
+    [('(.*)', '%s', (lambda x: str(x).strip(),))]
 	),
 ('classification/taxonPath/taxon/entry',
 	'imsmd:classification/imsmd:taxonpath/imsmd:taxon/imsmd:entry',
 	('imsmd:langstring/@xml:lang', 'imsmd:langstring'), '<string language="%s">%s</string>',
-    [('(.*)', '%s', (str.strip,))]
+    [('(.*)', '%s', (lambda x: str(x).strip(),))]
 	),
 ]
 
