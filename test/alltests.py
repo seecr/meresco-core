@@ -36,17 +36,10 @@ for path in glob('../deps.d/*'):
 if os.environ.get('PYTHONPATH', '') == '':
     sys.path.insert(0, "..")
 
-# Compile bitarray stuff for test.
-status = os.system("cd ../meresco/components/drilldown/bitmatrix; python setup.py build_ext --inplace")
-if status:
-  print status
-  raise ImportError()
-
 import unittest
 
 from accumulatetest import AccumulateTest
 from bitarraytest import BitArrayTest
-from bitmatrixtest import BitMatrixTest
 from contextsettest import ContextSetTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest

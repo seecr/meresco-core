@@ -35,7 +35,6 @@ from lucenerawdocsetstest import addUntokenized
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 from meresco.components.drilldown.drilldown import Drilldown as DrilldownSwig
-from meresco.components.drilldown.drilldown2 import Drilldown as DrilldownPyrex
 
 class DrilldownTest(TestCase):
 
@@ -93,7 +92,3 @@ class DrilldownSwigTest(DrilldownTest):
         self.createDrilldown = DrilldownSwig
         DrilldownTest.setUp(self)
 
-class DrilldownPyrexTest(DrilldownTest):
-    def setUp(self):
-        self.createDrilldown = DrilldownPyrex
-        DrilldownTest.setUp(self)
