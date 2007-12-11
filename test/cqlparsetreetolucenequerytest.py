@@ -23,7 +23,7 @@
 ## end license ##
 from unittest import TestCase
 
-from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery
 
 from cqlparser.cqlparser import parseString as parseCql
 from meresco.components.lucene.cqlparsetreetolucenequery import compose
@@ -38,11 +38,17 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         self.assertConversion(TermQuery(Term("__content__", "2005")), "2005")
 
     def testPhraseOutput(self):
-        self.assertConversion(TermQuery(Term("__content__", "cats dogs")),'"cats dogs"')
+        query = PhraseQuery()
+        query.add(Term("__content__", "cats"))
+        query.add(Term("__content__", "dogs"))
+        self.assertConversion(query,'"cats dogs"')
 
     def testIndexRelationTermOutput(self):
         self.assertConversion(TermQuery(Term("animal", "cats")), 'animal=cats')
-        self.assertConversion(TermQuery(Term("animal", "cats dogs")), 'animal="cats dogs"')
+        query = PhraseQuery()
+        query.add(Term("animal", "cats"))
+        query.add(Term("animal", "dogs"))
+        self.assertConversion(query, 'animal="cats dogs"')
 
     def testBooleanAndTermOutput(self):
         query = BooleanQuery()

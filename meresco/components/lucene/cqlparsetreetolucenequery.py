@@ -21,13 +21,20 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause
-
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery
 
 from cqlparser.cqlparser import parseString, CQL_QUERY, SCOPED_CLAUSE, SEARCH_CLAUSE, BOOLEAN, SEARCH_TERM, INDEX, RELATION, COMPARITOR, MODIFIER, UnsupportedCQL, CQLParseException
 
 class ParseException(Exception):
     pass
+
+def _termOrPhraseQuery(index, listOfTermStrings):
+    if len(listOfTermStrings) == 1:
+        return TermQuery(Term(index, listOfTermStrings[0]))
+    result = PhraseQuery()
+    for term in listOfTermStrings:
+        result.add(Term(index, term))
+    return result
 
 def compose(node): #, ,
     if node.__class__ == CQL_QUERY:
@@ -57,7 +64,7 @@ def compose(node): #, ,
         return node.children()[0]
     if node.__class__ == SEARCH_CLAUSE:
         if len(node.children()) == 1:
-            return TermQuery(Term("__content__", compose(node.children()[0])))
+            return _termOrPhraseQuery("__content__", compose(node.children()[0]))
         if len(node.children()) == 3: #either ( ... ) or a=b
             lhs = compose(node.children()[0])
             if lhs == "(":
@@ -65,7 +72,7 @@ def compose(node): #, ,
             relation, modifier, value = compose(node.children()[1])
             rhs = compose(node.children()[2])
             assert relation == "="
-            query = TermQuery(Term(lhs, rhs))
+            query = _termOrPhraseQuery(lhs, rhs)
             if modifier:
                 assert modifier == "boost"
                 query.setBoost(float(value))
@@ -95,8 +102,8 @@ def compose(node): #, ,
         assert len(node.children()) == 1
         term = compose(node.children()[0])
         if term[0] == '"' == term[-1]:
-            return term[1:-1]
-        return term
+            return [x for x in term[1:-1].split(" ") if x]
+        return [term]
     if node.__class__ == str:
         return node.lower()
     raise Exception("Unknown token " + str(node))
