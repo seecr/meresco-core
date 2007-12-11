@@ -27,9 +27,7 @@
 ## end license ##
 
 from lxml.etree import parse, XMLSchema, XMLSchemaParseError, _ElementTree, tostring
-from os.path import join, abspath, dirname
 from StringIO import StringIO
-from glob import glob
 
 from meresco.framework import Observable
 

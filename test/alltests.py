@@ -62,6 +62,7 @@ from xml2documenttest import Xml2DocumentTest
 from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
 from rsstest import RssTest
+from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 
 from http.fileservertest import FileServerTest
 

@@ -121,10 +121,7 @@ class RssTest(CQ2TestCase):
         result = "".join(list(Rss(self.profiles).handleRequest(RequestURI='/?query=aQuery%29'))) #%29 == ')'
 
         ERROR= RSS_HEAD % """
-<title>ERROR Test title</title>
-<link>http://www.example.org</link>
-<description>An error occurred 'Unexpected token after parsing, check for greediness ([)], cqlparser.cqlparser.CQL_QUERY(cqlparser.cqlparser.SCOPED_CLAUSE(cqlparser.cqlparser.SEARCH_CLAUSE(cqlparser.cqlparser.SEARCH_TERM('aQuery'))))).'</description>
-"""
+<title>ERROR Test title</title><link>http://www.example.org</link><description>An error occurred 'Unexpected token after parsing, check parser for greediness ([)], cqlparser.cqlparser.CQL_QUERY(cqlparser.cqlparser.SCOPED_CLAUSE(cqlparser.cqlparser.SEARCH_CLAUSE(cqlparser.cqlparser.SEARCH_TERM('aQuery'))))).'</description>"""
         self.assertEqualsWS(ERROR, result)
 
     def testMaximumRecordsAndSortKeys(self):
