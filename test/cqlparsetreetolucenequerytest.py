@@ -25,7 +25,8 @@ from unittest import TestCase
 
 from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause
 
-from meresco.components.lucene.cqlparsetreetolucenequery import fromString as cqlToLucene, ParseException
+from cqlparser.cqlparser import parseString as parseCql
+from meresco.components.lucene.cqlparsetreetolucenequery import compose
 
 class CqlParseTreeToLuceneQueryTest(TestCase):
 
@@ -76,7 +77,6 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         query.setBoost(2.0)
         self.assertConversion(query, "title =/boost=2.0 cats")
 
-
     def assertConversion(self, expected, input):
-        result = cqlToLucene(input)
+        result = compose(parseCql(input))
         self.assertEquals(expected, result)

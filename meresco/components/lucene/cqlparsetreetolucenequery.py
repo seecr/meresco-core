@@ -24,7 +24,7 @@
 from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause
 
 
-from cqlparser.cqlparser import parseString, CQL_QUERY, SCOPED_CLAUSE, SEARCH_CLAUSE, BOOLEAN, SEARCH_TERM, INDEX, RELATION, COMPARITOR, UnsupportedCQL, CQLParseException
+from cqlparser.cqlparser import parseString, CQL_QUERY, SCOPED_CLAUSE, SEARCH_CLAUSE, BOOLEAN, SEARCH_TERM, INDEX, RELATION, COMPARITOR, MODIFIER, UnsupportedCQL, CQLParseException
 
 class ParseException(Exception):
     pass
@@ -58,17 +58,32 @@ def compose(node): #, ,
     if node.__class__ == SEARCH_CLAUSE:
         if len(node.children()) == 1:
             return TermQuery(Term("__content__", compose(node.children()[0])))
-        if len(node.children()) == 3:
+        if len(node.children()) == 3: #either ( ... ) or a=b
             lhs = compose(node.children()[0])
-            middle = compose(node.children()[1])
+            if lhs == "(":
+                return compose(node.children()[1])
+            relation, modifier, value = compose(node.children()[1])
             rhs = compose(node.children()[2])
-            if lhs == "(" :
-                return middle
-            assert middle == "="
-            return TermQuery(Term(lhs, rhs))
+            assert relation == "="
+            query = TermQuery(Term(lhs, rhs))
+            if modifier:
+                assert modifier == "boost"
+                query.setBoost(float(value))
+            return query
     if node.__class__ == RELATION:
-        assert len(node.children()) == 1
-        return compose(node.children()[0])
+        if len(node.children()) == 1:
+            return compose(node.children()[0]), '', ''
+        assert len(node.children()) == 2
+        relation = compose(node.children()[0])
+        modifier, value = compose(node.children()[1])
+        return relation, modifier, value
+    if node.__class__ == MODIFIER:
+        assert len(node.children()) == 3
+        name = compose(node.children()[0])
+        comparitor = compose(node.children()[1])
+        assert comparitor == "="
+        value = compose(node.children()[2])
+        return name, value
     if node.__class__ == COMPARITOR:
         assert len(node.children()) == 1
         assert node.children()[0] == '='
@@ -83,13 +98,3 @@ def compose(node): #, ,
             return term[1:-1]
         return term
     return str(node) #dit is het afvalbakkie, waar TERM impliciet inzit
-
-def fromString(aCQLString):
-    try:
-        abstractSyntaxTree = parseString(aCQLString)
-    except UnsupportedCQL, e:
-        raise ParseException('Unsupported query')
-    except CQLParseException, e:
-        raise ParseException('Unsupported query')
-
-    return compose(abstractSyntaxTree)
