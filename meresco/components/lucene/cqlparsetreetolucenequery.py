@@ -97,4 +97,6 @@ def compose(node): #, ,
         if term[0] == '"' == term[-1]:
             return term[1:-1]
         return term
-    return str(node) #dit is het afvalbakkie, waar TERM impliciet inzit
+    if node.__class__ == str:
+        return node.lower()
+    raise Exception("Unknown token " + str(node))

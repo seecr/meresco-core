@@ -32,6 +32,7 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
 
     def testOneTermOutput(self):
         self.assertConversion(TermQuery(Term("__content__", "cat")), "cat")
+        self.assertConversion(TermQuery(Term("__content__", "cat")), "CaT")
 
     def testOneTermOutputWithANumber(self):
         self.assertConversion(TermQuery(Term("__content__", "2005")), "2005")
