@@ -21,34 +21,70 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause
+
+
 from cqlparser.cqlparser import parseString, CQL_QUERY, SCOPED_CLAUSE, SEARCH_CLAUSE, BOOLEAN, SEARCH_TERM, INDEX, RELATION, COMPARITOR, UnsupportedCQL, CQLParseException
 
 class ParseException(Exception):
     pass
 
-def compose(node):
+def compose(node): #, ,
+    if node.__class__ == CQL_QUERY:
+        assert len(node.children()) == 1
+        return compose(node.children()[0])
+    if node.__class__ == SCOPED_CLAUSE:
+        if len(node.children()) == 1:
+            return compose(node.children()[0])
+        if len(node.children()) == 3:
+            lhs = compose(node.children()[0])
+            operator = compose(node.children()[1])
+            rhs = compose(node.children()[2])
+            lhsDict = {
+                "AND": BooleanClause.Occur.MUST,
+                "OR" : BooleanClause.Occur.SHOULD,
+                "NOT": BooleanClause.Occur.MUST
+            }
+            rhsDict = lhsDict.copy()
+            rhsDict["NOT"] = BooleanClause.Occur.MUST_NOT
+            query = BooleanQuery()
+            query.add(lhs, lhsDict[operator])
+            query.add(rhs, rhsDict[operator])
+            return query
+
     if node.__class__ in [INDEX]:
         assert len(node.children()) == 1
         return node.children()[0]
-    if node.__class__ in [SCOPED_CLAUSE, SEARCH_TERM, CQL_QUERY]:
-        return " ".join(map(compose, node.children()))
     if node.__class__ == SEARCH_CLAUSE:
-        return "".join(map(compose, node.children()))
+        if len(node.children()) == 1:
+            return TermQuery(Term("__content__", compose(node.children()[0])))
+        if len(node.children()) == 3:
+            lhs = compose(node.children()[0])
+            middle = compose(node.children()[1])
+            rhs = compose(node.children()[2])
+            if lhs == "(" :
+                return middle
+            assert middle == "="
+            return TermQuery(Term(lhs, rhs))
     if node.__class__ == RELATION:
         assert len(node.children()) == 1
         return compose(node.children()[0])
     if node.__class__ == COMPARITOR:
         assert len(node.children()) == 1
         assert node.children()[0] == '='
-        return ':'
+        return '='
     if node.__class__ == BOOLEAN:
         assert len(node.children()) == 1
         return node.children()[0].upper()
-    return str(node)
+    if node.__class__ == SEARCH_TERM:
+        assert len(node.children()) == 1
+        term = compose(node.children()[0])
+        if term[0] == '"' == term[-1]:
+            return term[1:-1]
+        return term
+    return str(node) #dit is het afvalbakkie, waar TERM impliciet inzit
 
 def fromString(aCQLString):
-    if aCQLString.strip() == '':
-        return ''
     try:
         abstractSyntaxTree = parseString(aCQLString)
     except UnsupportedCQL, e:

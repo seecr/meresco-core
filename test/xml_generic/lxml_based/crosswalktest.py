@@ -62,10 +62,7 @@ class CrosswalkTest(CQ2TestCase):
         self.assertEquals("metadata", arguments[1])
 
     def testValidate(self):
-        try:
-            list(self.validate.unknown('methodname', 'id', 'metadata', parse(readRecord('lom-cc-nbc.xml'))))
-        except Exception, e:
-            self.fail(e)
+        list(self.validate.unknown('methodname', 'id', 'metadata', parse(readRecord('lom-cc-nbc.xml'))))
 
         try:
             list(self.validate.unknown('methodname', 'id', 'metadata', parse(readRecord('imsmd_v1p2-1.xml'))))
@@ -86,7 +83,6 @@ class CrosswalkTest(CQ2TestCase):
         list(self.crosswalk.unknown('add', None, 'metadata', theXmlRecord=parse(readRecord('triple-lrecord.xml'))))
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertFalse('2006-11-28 19:00' in tostring(self.observer.calledMethods[0].kwargs['theXmlRecord']))
-
 
     def testReplacePrefix(self):
         rules = [('classification/taxonPath/taxon/entry', 'imsmd:classification/imsmd:taxonpath/imsmd:taxon/imsmd:entry', ('imsmd:langstring/@xml:lang', 'imsmd:langstring'), '<string language="%s">%s</string>',

@@ -22,64 +22,59 @@
 #
 ## end license ##
 from unittest import TestCase
+
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause
+
 from meresco.components.lucene.cqlparsetreetolucenequery import fromString as cqlToLucene, ParseException
 
 class CqlParseTreeToLuceneQueryTest(TestCase):
 
-	def testEmptyOutput(self):
-		self.assertConversion("")
-		self.assertConversion("", "  \t \n")
+    def testOneTermOutput(self):
+        self.assertConversion(TermQuery(Term("__content__", "cat")), "cat")
 
-	def testOneTermOutput(self):
-		self.assertConversion("cat")
+    def testOneTermOutputWithANumber(self):
+        self.assertConversion(TermQuery(Term("__content__", "2005")), "2005")
 
-	def testOneTermOutputWithANumber(self):
-		self.assertConversion("2005")
+    def testPhraseOutput(self):
+        self.assertConversion(TermQuery(Term("__content__", "cats dogs")),'"cats dogs"')
 
-	def testPhraseOutput(self):
-		self.assertConversion('"cats dogs"')
+    def testIndexRelationTermOutput(self):
+        self.assertConversion(TermQuery(Term("animal", "cats")), 'animal=cats')
+        self.assertConversion(TermQuery(Term("animal", "cats dogs")), 'animal="cats dogs"')
 
-	def testMultipleTermsWithoutRelationAreIllegal(self):
-		self.assertUnsupportedQuery('cats dogs')
-		self.assertUnsupportedQuery('cats AND dogs "mice sheep"')
+    def testBooleanAndTermOutput(self):
+        query = BooleanQuery()
+        query.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.MUST)
+        query.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.MUST)
+        self.assertConversion(query, 'cats AND dogs')
 
-	def testIndexRelationTermOutput(self):
-		self.assertConversion('animal:cats', 'animal=cats')
-		self.assertConversion('generic1:cats', 'generic1=cats')
-		self.assertConversion('animal:"cats dogs"', 'animal="cats dogs"')
+    def testBooleanOrTermOutput(self):
+        query = BooleanQuery()
+        query.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.SHOULD)
+        query.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.SHOULD)
+        self.assertConversion(query, 'cats OR dogs')
 
-	def testBooleanAndTermOutput(self):
-		self.assertConversion('cats AND dogs')
-		self.assertConversion('cats AND "mice sheep"')
+    def testBooleanNotTermOutput(self):
+        query = BooleanQuery()
+        query.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.MUST)
+        query.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.MUST_NOT)
+        self.assertConversion(query, 'cats NOT dogs')
 
-	def testBooleanOrTermOutput(self):
-		self.assertConversion('cats OR dogs')
+    def testBraces(self):
+        self.assertConversion(TermQuery(Term('__content__', 'cats')), '(cats)')
+        innerQuery = BooleanQuery()
+        innerQuery.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.MUST)
+        innerQuery.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.MUST)
+        outerQuery = BooleanQuery()
+        outerQuery.add(innerQuery, BooleanClause.Occur.SHOULD)
+        outerQuery.add(TermQuery(Term('__content__', 'mice')), BooleanClause.Occur.SHOULD)
 
-	def testBooleanNotTermOutput(self):
-		self.assertConversion('cats NOT dogs')
+        self.assertConversion(outerQuery, '(cats AND dogs) OR mice')
 
-	def testBraces(self):
-		self.assertConversion('(cats)')
-		self.assertConversion('(cats AND dogs) OR mice')
-		self.assertConversion('cats AND (dogs OR mice)')
+    def xtestBoost(self):
+        pass
 
-	def testIsPrefixQuery(self):
-		self.assertUnsupportedQuery('>http://blah.org cats NOT dogs')
-		self.assertUnsupportedQuery('cats AND (>http://www.zoo.org dogs)')
-		self.assertUnsupportedQuery('>PREFIX=http://blah.org cats NOT dogs')
 
-	def testRelationQuery(self):
-		self.assertUnsupportedQuery('dc.title any/relevant/rel.CORI "cat fish"')
-
-	def assertUnsupportedQuery(self, query):
-		try:
-			result = cqlToLucene(query)
-			self.fail()
-		except ParseException, e:
-			self.assertEquals('Unsupported query', str(e))
-
-	def assertConversion(self, expected, input = None):
-		if input == None:
-			input = expected
-		result = cqlToLucene(input)
-		self.assertEquals(expected, result)
+    def assertConversion(self, expected, input):
+        result = cqlToLucene(input)
+        self.assertEquals(expected, result)
