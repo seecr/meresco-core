@@ -79,6 +79,8 @@ class Crosswalk(Observable):
             prefix = lxmlNode.getroot().prefix
         else:
             prefix = lxmlNode.prefix
+        if not prefix in nsmap:
+            raise Exception("Prefix '%s' not found in rules, available namespaces: %s" % (prefix, nsmap.keys()))
         namespaceURI = nsmap[prefix]
         rewrite = XMLRewrite(lxmlNode, **self.ruleSet[namespaceURI])
         rewrite.applyRules()

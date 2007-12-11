@@ -58,7 +58,7 @@ class LuceneIndex:
         return Hits(self._getSearcher(), pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
-        return executeQuery(composeLuceneQuery(cqlAbstractSyntaxTree), sortBy, sortDescending)
+        return self.executeQuery(composeLuceneQuery(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def addToIndex(self, aDocument):
         aDocument.validate()

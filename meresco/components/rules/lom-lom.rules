@@ -1,6 +1,6 @@
 extend('utils')
 
-inputNamespace='http://ltsc.ieee.org/xsd/LOM'
+inputNamespace = defaultNameSpace = 'http://ltsc.ieee.org/xsd/LOM'
 
 rootTagName='lom'
 
@@ -98,3 +98,4 @@ two('lom:classification/lom:keyword', ('lom:string[not(@language)]',), '<lom:str
 # delete imported stuff
 del rewriteDate
 del rewriteVcard
+del two
