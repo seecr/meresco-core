@@ -71,8 +71,10 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
 
         self.assertConversion(outerQuery, '(cats AND dogs) OR mice')
 
-    def xtestBoost(self):
-        pass
+    def testBoost(self):
+        query = TermQuery(Term("title", "cats"))
+        query.setBoost(2.0)
+        self.assertConversion(query, "title =/boost=2.0 cats")
 
 
     def assertConversion(self, expected, input):
