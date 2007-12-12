@@ -68,7 +68,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
 
     def testListMetadataFormatsForIdentifier(self):
         jazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir, 'index')),
+            LuceneIndex(join(self.tempdir, 'index'), "Cql Composer is ignored"),
             StorageComponent(join(self.tempdir, 'storage')),
             iter(xrange(99)))
         self.subject.addObserver(jazz)

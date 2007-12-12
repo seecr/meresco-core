@@ -48,7 +48,7 @@ class LuceneTest(CQ2TestCase):
     def setUp(self):
         self._tempdir = gettempdir()+'/testing'
         self.directoryName = os.path.join(self._tempdir, 'lucene-index')
-        self._luceneIndex = LuceneIndex(self.directoryName)
+        self._luceneIndex = LuceneIndex(self.directoryName, 'Poging 1')
 
     def tearDown(self):
         self._luceneIndex.close()
@@ -137,7 +137,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addToIndex(myDocument)
         self._luceneIndex = None
         # delete method will close the open index
-        newIndex = LuceneIndex(self.directoryName)
+        newIndex = LuceneIndex(self.directoryName, 'CQL Composer is ignored')
         newIndex.addToIndex(myDocument)
         self._luceneIndex = newIndex
 

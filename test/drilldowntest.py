@@ -41,7 +41,7 @@ class DrilldownTest(TestCase):
     def setUp(self):
         self._tempdir = gettempdir() + '/testing'
         self._directoryName = os.path.join(self._tempdir, 'lucene-index')
-        self._luceneIndex = LuceneIndex(self._directoryName)
+        self._luceneIndex = LuceneIndex(self._directoryName, 'CQL Composer ignored')
 
     def tearDown(self):
         self._luceneIndex = None
