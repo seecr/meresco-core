@@ -25,23 +25,20 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-#
-# Lucene Test
-#
 
 from tempfile import mkdtemp, gettempdir
 import os
 from os.path import isfile, join
 from shutil import rmtree
 import PyLucene
-from cq2utils import CQ2TestCase
+from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.components.lucene.document import Document
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.lucene.document import IDFIELD
 
-from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, StandardAnalyzer, Term
+from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery
 
 class LuceneTest(CQ2TestCase):
 
@@ -64,8 +61,7 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
 
-        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
-        hits = self._luceneIndex.executeQuery(query)
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(len(hits), 1)
         self.assertEquals(['0123456789'], list(hits))
 
@@ -75,12 +71,10 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een sub titel')
         self._luceneIndex.addToIndex(myDocument)
 
-        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
-        hits = self._luceneIndex.executeQuery(query)
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(len(hits), 1)
 
-        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('sub')
-        hits = self._luceneIndex.executeQuery(query)
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'sub')))
         self.assertEquals(len(hits), 1)
 
     def testAddTwoDocuments(self):
@@ -92,8 +86,7 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
 
-        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
-        hits = self._luceneIndex.executeQuery(query)
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
     def testAddDocumentWithTwoValuesForOneField(self):
@@ -103,8 +96,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addToIndex(myDocument)
 
         def check(value):
-            query = PyLucene.QueryParser('field1', PyLucene.StandardAnalyzer()).parse(value)
-            hits = self._luceneIndex.executeQuery(query)
+            hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', value)))
             self.assertEquals(1, len(hits))
         check('value_1')
         check('value_2')
@@ -122,13 +114,11 @@ class LuceneTest(CQ2TestCase):
         myDocument = Document('2')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
-        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
-        hits = self._luceneIndex.executeQuery(query)
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
         self._luceneIndex.deleteID('1')
-        query = PyLucene.QueryParser('title', PyLucene.StandardAnalyzer()).parse('titel')
-        hits = self._luceneIndex.executeQuery(query)
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(1, len(hits))
 
     def testIndexCloses(self):
@@ -145,3 +135,11 @@ class LuceneTest(CQ2TestCase):
         lockfile = join(self.directoryName, 'write.lock')
         self._luceneIndex.optimize()
         self.assertFalse(isfile(lockfile))
+
+    def testExecuteCQL(self):
+        mockComposer = CallTrace("CQL Composer")
+        mockComposer.returnValues["compose"] = TermQuery(Term('title', 'titel'))
+        index = LuceneIndex(self.directoryName, mockComposer)
+        index.executeCQL("cqlAbstractSyntaxTree")
+        self.assertEquals(1, len(mockComposer.calledMethods))
+        self.assertEquals("cqlAbstractSyntaxTree", mockComposer.calledMethods[0].arguments[0])
