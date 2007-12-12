@@ -36,74 +36,89 @@ def _termOrPhraseQuery(index, listOfTermStrings):
         result.add(Term(index, term))
     return result
 
-def compose(node): #, ,
-    if node.__class__ == CQL_QUERY:
-        assert len(node.children()) == 1
-        return compose(node.children()[0])
-    if node.__class__ == SCOPED_CLAUSE:
-        if len(node.children()) == 1:
-            return compose(node.children()[0])
-        if len(node.children()) == 3:
-            lhs = compose(node.children()[0])
-            operator = compose(node.children()[1])
-            rhs = compose(node.children()[2])
-            lhsDict = {
-                "AND": BooleanClause.Occur.MUST,
-                "OR" : BooleanClause.Occur.SHOULD,
-                "NOT": BooleanClause.Occur.MUST
-            }
-            rhsDict = lhsDict.copy()
-            rhsDict["NOT"] = BooleanClause.Occur.MUST_NOT
-            query = BooleanQuery()
-            query.add(lhs, lhsDict[operator])
-            query.add(rhs, rhsDict[operator])
-            return query
+class Composer(object):
+    def __init__(self, unqualifiedTermFields):
+        self._unqualifiedTermFields = unqualifiedTermFields
 
-    if node.__class__ in [INDEX]:
-        assert len(node.children()) == 1
-        return node.children()[0]
-    if node.__class__ == SEARCH_CLAUSE:
-        if len(node.children()) == 1:
-            return _termOrPhraseQuery("__content__", compose(node.children()[0]))
-        if len(node.children()) == 3: #either ( ... ) or a=b
-            lhs = compose(node.children()[0])
-            if lhs == "(":
-                return compose(node.children()[1])
-            relation, modifier, value = compose(node.children()[1])
-            rhs = compose(node.children()[2])
-            assert relation == "="
-            query = _termOrPhraseQuery(lhs, rhs)
-            if modifier:
-                assert modifier == "boost"
-                query.setBoost(float(value))
-            return query
-    if node.__class__ == RELATION:
-        if len(node.children()) == 1:
-            return compose(node.children()[0]), '', ''
-        assert len(node.children()) == 2
-        relation = compose(node.children()[0])
-        modifier, value = compose(node.children()[1])
-        return relation, modifier, value
-    if node.__class__ == MODIFIER:
-        assert len(node.children()) == 3
-        name = compose(node.children()[0])
-        comparitor = compose(node.children()[1])
-        assert comparitor == "="
-        value = compose(node.children()[2])
-        return name, value
-    if node.__class__ == COMPARITOR:
-        assert len(node.children()) == 1
-        assert node.children()[0] == '='
-        return '='
-    if node.__class__ == BOOLEAN:
-        assert len(node.children()) == 1
-        return node.children()[0].upper()
-    if node.__class__ == SEARCH_TERM:
-        assert len(node.children()) == 1
-        term = compose(node.children()[0])
-        if term[0] == '"' == term[-1]:
-            return [x for x in term[1:-1].split(" ") if x]
-        return [term]
-    if node.__class__ == str:
-        return node.lower()
-    raise Exception("Unknown token " + str(node))
+    def compose(self, node):
+        if node.__class__ == CQL_QUERY:
+            assert len(node.children()) == 1
+            return self.compose(node.children()[0])
+        if node.__class__ == SCOPED_CLAUSE:
+            if len(node.children()) == 1:
+                return self.compose(node.children()[0])
+            if len(node.children()) == 3:
+                lhs = self.compose(node.children()[0])
+                operator = self.compose(node.children()[1])
+                rhs = self.compose(node.children()[2])
+                lhsDict = {
+                    "AND": BooleanClause.Occur.MUST,
+                    "OR" : BooleanClause.Occur.SHOULD,
+                    "NOT": BooleanClause.Occur.MUST
+                }
+                rhsDict = lhsDict.copy()
+                rhsDict["NOT"] = BooleanClause.Occur.MUST_NOT
+                query = BooleanQuery()
+                query.add(lhs, lhsDict[operator])
+                query.add(rhs, rhsDict[operator])
+                return query
+
+        if node.__class__ in [INDEX]:
+            assert len(node.children()) == 1
+            return node.children()[0]
+        if node.__class__ == SEARCH_CLAUSE:
+            if len(node.children()) == 1: #unqualified term
+                unqualifiedRhs = self.compose(node.children()[0])
+                if len(self._unqualifiedTermFields) == 1:
+                    fieldname, boost = self._unqualifiedTermFields[0]
+                    query = _termOrPhraseQuery(fieldname, unqualifiedRhs)
+                    query.setBoost(boost)
+                else:
+                    query = BooleanQuery()
+                    for fieldname, boost in self._unqualifiedTermFields:
+                        subQuery = _termOrPhraseQuery(fieldname, unqualifiedRhs)
+                        subQuery.setBoost(boost)
+                        query.add(subQuery, BooleanClause.Occur.SHOULD)
+                return query
+            if len(node.children()) == 3: #either ( ... ) or a=b
+                lhs = self.compose(node.children()[0])
+                if lhs == "(":
+                    return self.compose(node.children()[1])
+                relation, modifier, value = self.compose(node.children()[1])
+                rhs = self.compose(node.children()[2])
+                assert relation == "="
+                query = _termOrPhraseQuery(lhs, rhs)
+                if modifier:
+                    assert modifier == "boost"
+                    query.setBoost(float(value))
+                return query
+        if node.__class__ == RELATION:
+            if len(node.children()) == 1:
+                return self.compose(node.children()[0]), '', ''
+            assert len(node.children()) == 2
+            relation = self.compose(node.children()[0])
+            modifier, value = self.compose(node.children()[1])
+            return relation, modifier, value
+        if node.__class__ == MODIFIER:
+            assert len(node.children()) == 3
+            name = self.compose(node.children()[0])
+            comparitor = self.compose(node.children()[1])
+            assert comparitor == "="
+            value = self.compose(node.children()[2])
+            return name, value
+        if node.__class__ == COMPARITOR:
+            assert len(node.children()) == 1
+            assert node.children()[0] == '='
+            return '='
+        if node.__class__ == BOOLEAN:
+            assert len(node.children()) == 1
+            return node.children()[0].upper()
+        if node.__class__ == SEARCH_TERM:
+            assert len(node.children()) == 1
+            term = self.compose(node.children()[0])
+            if term[0] == '"' == term[-1]:
+                return [x for x in term[1:-1].split(" ") if x]
+            return [term]
+        if node.__class__ == str:
+            return node.lower()
+        raise Exception("Unknown token " + str(node))

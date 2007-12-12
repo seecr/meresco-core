@@ -30,7 +30,7 @@ from warnings import warn
 import PyLucene
 import xml.sax.saxutils
 
-from meresco.components.lucene.cqlparsetreetolucenequery import compose as composeLuceneQuery
+from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD, CONTENTFIELD
@@ -40,7 +40,7 @@ class LuceneException(Exception):
 
 class LuceneIndex:
 
-    def __init__(self, aDirectoryName):
+    def __init__(self, aDirectoryName, cqlComposer):
         self.__searcher = None
         self.__reader = None
         self.__writer = None
@@ -50,6 +50,7 @@ class LuceneIndex:
         if not PyLucene.IndexReader.indexExists(self._directoryName):
             self._getWriter(createIndex = True)
         self._indexChanged = False
+        self._cqlComposer = cqlComposer
 
     def deleteID(self, anId):
         self._getReader().deleteDocuments(PyLucene.Term(IDFIELD, anId))
@@ -58,7 +59,7 @@ class LuceneIndex:
         return Hits(self._getSearcher(), pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
-        return self.executeQuery(composeLuceneQuery(cqlAbstractSyntaxTree), sortBy, sortDescending)
+        return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def addToIndex(self, aDocument):
         aDocument.validate()

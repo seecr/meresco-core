@@ -26,12 +26,14 @@ from unittest import TestCase
 from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery
 
 from cqlparser.cqlparser import parseString as parseCql
-from meresco.components.lucene.cqlparsetreetolucenequery import compose
+from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 class CqlParseTreeToLuceneQueryTest(TestCase):
 
     def testOneTermOutput(self):
         self.assertConversion(TermQuery(Term("__content__", "cat")), "cat")
+
+    def testRightHandSideIsLowercase(self):
         self.assertConversion(TermQuery(Term("__content__", "cat")), "CaT")
 
     def testOneTermOutputWithANumber(self):
@@ -84,6 +86,22 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         query.setBoost(2.0)
         self.assertConversion(query, "title =/boost=2.0 cats")
 
+    def testUnqualifiedTermFields(self):
+        result = Composer(unqualifiedTermFields=[("field0", 0.2), ("field1", 2.0)]).compose(parseCql("value"))
+
+        query = BooleanQuery()
+        left = TermQuery(Term("field0", "value"))
+        left.setBoost(0.2)
+        query.add(left, BooleanClause.Occur.SHOULD)
+
+        right = TermQuery(Term("field1", "value"))
+        right.setBoost(2.0)
+        query.add(right, BooleanClause.Occur.SHOULD)
+
+        self.assertEquals(query, result)
+
     def assertConversion(self, expected, input):
-        result = compose(parseCql(input))
+        result = Composer(unqualifiedTermFields=[("__content__", 1.0)]).compose(parseCql(input))
         self.assertEquals(expected, result)
+
+
