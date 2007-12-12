@@ -26,14 +26,13 @@
 ## end license ##
 
 import os
-from warnings import warn
 import PyLucene
 import xml.sax.saxutils
 
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 from meresco.components.lucene.hits import Hits
-from meresco.components.lucene.document import IDFIELD, CONTENTFIELD
+from meresco.components.lucene.document import IDFIELD
 
 class LuceneException(Exception):
     pass

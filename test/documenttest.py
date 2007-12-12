@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -26,30 +26,28 @@
 ## end license ##
 
 import unittest
-import meresco.components.lucene.document
-from meresco.components.lucene.document import IDFIELD, CONTENTFIELD, Document, DocumentException
+from cq2utils import CallTrace
+from meresco.components.lucene.document import IDFIELD, Document, DocumentException
 
 class DocumentTest(unittest.TestCase):
 
-    def setUp(self):
-        self._contentField = False
-
-    def testCreation(self):
+    def testEmptyDocumentFails(self):
         d = Document('1')
         self.assertEquals(d.fields(), [IDFIELD])
-
         try:
             d.validate()
             self.fail()
         except DocumentException,e:
             self.assertEquals("Empty document", str(e))
 
+    def testEmptyIdFails(self):
         try:
             d = Document(' ')
             self.fail()
         except DocumentException,e:
             self.assertEquals('Empty ID', str(e))
 
+    def testIdMustBeString(self):
         try:
             d = Document(1234)
             self.fail()
@@ -72,45 +70,13 @@ class DocumentTest(unittest.TestCase):
 
     def testAddField(self):
         d = Document('1234')
-        d.addIndexedField('x', 'y')
-        d.addIndexedField('y', 'x')
+        d.addIndexedField('x', 'a')
+        d.addIndexedField('y', 'b')
         self.assertEquals(d.fields(), [IDFIELD, 'x', 'y'])
-
-        try:
-            d.validate()
-        except DocumentException,e:
-            self.fail()
-
-    def testContentField(self):
-        d = Document('1234')
-        d.addIndexedField('x', 'a')
-        d.addIndexedField('y', 'b')
-        self.assertEquals('a b', d.contentField())
-
-    def testContentFieldDoesNotContainHiddenFields(self):
-        d = Document('1234')
-        d.addIndexedField('x', 'a')
-        d.addIndexedField('__hidden__stuff', 'should remain hidden')
-        d.addIndexedField('y', 'b')
-        self.assertEquals('a b', d.contentField())
-
-
-    def testAddToIndex(self):
-        d = Document('1234')
-        d.addIndexedField('x', 'y')
-        d.addIndexedField('y', 'x')
-        d.addToIndexWith(self)
-
-        self.assertEquals(self._contentField, 'y x')
+        d.validate()
 
     def testReservedFieldName(self):
         d = Document('1234')
-        try:
-            d.addIndexedField(CONTENTFIELD, 'not allowed')
-            self.fail()
-        except DocumentException,e:
-            self.assertEquals('Invalid fieldname: "%s"' % CONTENTFIELD, str(e))
-
         try:
             d.addIndexedField(IDFIELD, 'not allowed')
             self.fail()
@@ -119,11 +85,7 @@ class DocumentTest(unittest.TestCase):
 
     def testAddSameFieldTwice(self):
         d = Document('1234')
-        d.addIndexedField('x', 'y')
-        d.addIndexedField('x', 'x')
-        d.addToIndexWith(self)
-        self.assertEquals(['__id__', 'x', 'x'], d.fields())
-
-    """ self-shunt """
-    def addDocument(self, aDocument):
-        self._contentField = aDocument.getField(CONTENTFIELD).stringValue()
+        d.addIndexedField('x', 'a')
+        d.addIndexedField('x', 'b')
+        d.addToIndexWith(CallTrace("IndexWriter"))
+        self.assertEquals([IDFIELD, 'x', 'x'], d.fields())

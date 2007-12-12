@@ -31,18 +31,18 @@ from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 class CqlParseTreeToLuceneQueryTest(TestCase):
 
     def testOneTermOutput(self):
-        self.assertConversion(TermQuery(Term("__content__", "cat")), "cat")
+        self.assertConversion(TermQuery(Term("unqualified", "cat")), "cat")
 
     def testRightHandSideIsLowercase(self):
-        self.assertConversion(TermQuery(Term("__content__", "cat")), "CaT")
+        self.assertConversion(TermQuery(Term("unqualified", "cat")), "CaT")
 
     def testOneTermOutputWithANumber(self):
-        self.assertConversion(TermQuery(Term("__content__", "2005")), "2005")
+        self.assertConversion(TermQuery(Term("unqualified", "2005")), "2005")
 
     def testPhraseOutput(self):
         query = PhraseQuery()
-        query.add(Term("__content__", "cats"))
-        query.add(Term("__content__", "dogs"))
+        query.add(Term("unqualified", "cats"))
+        query.add(Term("unqualified", "dogs"))
         self.assertConversion(query,'"cats dogs"')
 
     def testIndexRelationTermOutput(self):
@@ -54,30 +54,30 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
 
     def testBooleanAndTermOutput(self):
         query = BooleanQuery()
-        query.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.MUST)
-        query.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.MUST)
+        query.add(TermQuery(Term('unqualified', 'cats')), BooleanClause.Occur.MUST)
+        query.add(TermQuery(Term('unqualified', 'dogs')), BooleanClause.Occur.MUST)
         self.assertConversion(query, 'cats AND dogs')
 
     def testBooleanOrTermOutput(self):
         query = BooleanQuery()
-        query.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.SHOULD)
-        query.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.SHOULD)
+        query.add(TermQuery(Term('unqualified', 'cats')), BooleanClause.Occur.SHOULD)
+        query.add(TermQuery(Term('unqualified', 'dogs')), BooleanClause.Occur.SHOULD)
         self.assertConversion(query, 'cats OR dogs')
 
     def testBooleanNotTermOutput(self):
         query = BooleanQuery()
-        query.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.MUST)
-        query.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.MUST_NOT)
+        query.add(TermQuery(Term('unqualified', 'cats')), BooleanClause.Occur.MUST)
+        query.add(TermQuery(Term('unqualified', 'dogs')), BooleanClause.Occur.MUST_NOT)
         self.assertConversion(query, 'cats NOT dogs')
 
     def testBraces(self):
-        self.assertConversion(TermQuery(Term('__content__', 'cats')), '(cats)')
+        self.assertConversion(TermQuery(Term('unqualified', 'cats')), '(cats)')
         innerQuery = BooleanQuery()
-        innerQuery.add(TermQuery(Term('__content__', 'cats')), BooleanClause.Occur.MUST)
-        innerQuery.add(TermQuery(Term('__content__', 'dogs')), BooleanClause.Occur.MUST)
+        innerQuery.add(TermQuery(Term('unqualified', 'cats')), BooleanClause.Occur.MUST)
+        innerQuery.add(TermQuery(Term('unqualified', 'dogs')), BooleanClause.Occur.MUST)
         outerQuery = BooleanQuery()
         outerQuery.add(innerQuery, BooleanClause.Occur.SHOULD)
-        outerQuery.add(TermQuery(Term('__content__', 'mice')), BooleanClause.Occur.SHOULD)
+        outerQuery.add(TermQuery(Term('unqualified', 'mice')), BooleanClause.Occur.SHOULD)
 
         self.assertConversion(outerQuery, '(cats AND dogs) OR mice')
 
@@ -101,7 +101,7 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         self.assertEquals(query, result)
 
     def assertConversion(self, expected, input):
-        result = Composer(unqualifiedTermFields=[("__content__", 1.0)]).compose(parseCql(input))
+        result = Composer(unqualifiedTermFields=[("unqualified", 1.0)]).compose(parseCql(input))
         self.assertEquals(expected, result)
 
 
