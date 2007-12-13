@@ -24,7 +24,6 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cq2utils.component import Component
 from storage import HierarchicalStorage, Storage, HierarchicalStorageError
 
 def defaultSplit((id, partName)):
@@ -33,7 +32,7 @@ def defaultSplit((id, partName)):
         result += [partName + '.xml']
     return result
 
-class StorageComponent(Component):
+class StorageComponent(object):
     def __init__(self, storeDirectory, split=defaultSplit):
         self._storage = HierarchicalStorage(Storage(storeDirectory), split=split)
 

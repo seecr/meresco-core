@@ -25,12 +25,9 @@
 #
 ## end license ##
 
-from cq2utils.cq2testcase import CQ2TestCase
-
 from meresco.components.logcomponent import LogComponent
-from cq2utils.component import Notification
 from meresco.framework.observable import Observable
-from cq2utils.calltrace import CallTrace
+from cq2utils import CallTrace, CQ2TestCase
 
 class LogComponentTest(CQ2TestCase):
 

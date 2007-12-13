@@ -29,7 +29,6 @@ from StringIO import StringIO
 from time import strftime, gmtime, strptime, localtime, mktime
 from re import compile
 
-from cq2utils.uniquenumbergenerator import UniqueNumberGenerator
 from cq2utils.xmlutils import findNamespaces
 
 from amara.binderytools import bind_string, bind_stream

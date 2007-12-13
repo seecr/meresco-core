@@ -27,11 +27,10 @@
 
 
 from meresco.framework.observable import Observable
-from cq2utils.component import Component, Notification
 from amara import binderytools, create_document
 from xml2document import TEDDY_NS
 
-class Fields2XmlComponent(Component, Observable):
+class Fields2XmlComponent(Observable):
     def __init__(self):
         Observable.__init__(self)
         

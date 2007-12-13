@@ -26,10 +26,8 @@
 ## end license ##
 
 from cStringIO import StringIO
-from cq2utils.cq2testcase import CQ2TestCase
 from meresco.framework.observable import Observable
-from cq2utils.component import Notification
-from cq2utils.calltrace import CallTrace
+from cq2utils import CallTrace, CQ2TestCase
 from amara import binderytools
 from lxml.etree import _ElementTree, tostring, parse
 

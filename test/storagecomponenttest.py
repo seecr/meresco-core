@@ -29,7 +29,6 @@ from cq2utils.cq2testcase import CQ2TestCase
 
 from meresco.components.storagecomponent import StorageComponent
 from storage import HierarchicalStorage, Storage
-from cq2utils.component import Notification
 from cStringIO import StringIO
 from meresco.framework.observable import Observable
  

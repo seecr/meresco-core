@@ -25,15 +25,11 @@
 #
 ## end license ##
 
-from cq2utils.component import Component, Notification
-from meresco.framework.observable import Observable
+from meresco.framework import Observable
 from amara import binderytools
 
 
-class Venturi(Component, Observable):
-    """
-    Will create a new or update an existing document with a notification
-    """
+class Venturi(Observable):
     def __init__(self, venturiName, storage):
         Observable.__init__(self)
         self._storage = storage

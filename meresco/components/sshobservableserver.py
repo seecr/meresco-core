@@ -26,7 +26,6 @@
 ## end license ##
 
 from cq2utils.networking.growlserver import GrowlServer
-from cq2utils.component import Notification
 from cStringIO import StringIO
 from amara.bindery import is_element
 from meresco.framework.observable import Observable
