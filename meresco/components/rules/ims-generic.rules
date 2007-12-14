@@ -1,9 +1,9 @@
 extend('utils')
 
 inputNamespace = 'http://www.imsglobal.org/xsd/imsmd_v1p2'
-defaultNameSpace = 'http://ltsc.ieee.org/xsd/LOM'
+defaultNameSpace =  None #'http://ltsc.ieee.org/xsd/LOM'
 
-rootTagName='lom'
+rootTagName='lom:lom'
 
 # namespaces for use in XPath expressions in rules
 sourceNsMap = {
