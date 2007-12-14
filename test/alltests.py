@@ -39,11 +39,9 @@ if os.environ.get('PYTHONPATH', '') == '':
 import unittest
 
 from accumulatetest import AccumulateTest
-from bitarraytest import BitArrayTest
 from contextsettest import ContextSetTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
-from drilldowntest import DrilldownSwigTest
 from fields2xmlcomponenttest import Fields2XmlComponentTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
