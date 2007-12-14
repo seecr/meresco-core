@@ -25,6 +25,6 @@
 #
 ## end license ##
 from lucenerawdocsets import LuceneRawDocSets
-#from drilldown import Drilldown
+from drilldown import Drilldown
 from srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown
 from drilldownfilters import DrilldownRequestFieldFilter, DrilldownRequestFieldnameMap, DrilldownUpdateFieldFilter
