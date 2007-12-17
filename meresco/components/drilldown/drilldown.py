@@ -1,5 +1,8 @@
 from meresco_extensions.bitmatrix import BitMatrix
 
+class DrillDownException(Exception):
+    pass
+
 class FieldMatrix(object):
 
     def __init__(self, terms, numDocsInIndex):
