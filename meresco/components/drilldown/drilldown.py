@@ -11,7 +11,11 @@ class FieldMatrix(object):
             self._row2term[nr] = term
 
     def drilldown(self, docIds, maxresults = 0):
-        for nr, occurences in self._matrix.combinedRowCardinalities(docIds, maxresults):
+        drilldownResults = self._matrix.combinedRowCardinalities(docIds)
+        drilldownResults.sort()
+        if maxresults > 0:
+            drilldownResults = drilldownResults[:maxresults]
+        for nr, occurences in drilldownResults:
             yield self._row2term[nr], occurences
 
     # below here is for supporting the old test only
