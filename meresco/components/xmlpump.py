@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -40,45 +40,45 @@ class Converter(Observable):
 
     def _canConvert(self, anObject):
         raise NotImplementedError()
-    
+
     def _convert(self, anObject):
         raise NotImplementedError()
-    
+
     def _detectAndConvert(self, anObject):
         if self._canConvert(anObject):
             return self._convert(anObject)
         return anObject
-    
+
 
 xmlStringRegexp = compile(r'(?s)^\s*<.*>\s*$')
 def isXmlString(anObject):
-    return str == type(anObject) and xmlStringRegexp.match(anObject)
+    return type(anObject) == str and xmlStringRegexp.match(anObject)
 
 class XmlParseAmara(Converter):
     def _canConvert(self, anObject):
         return isXmlString(anObject)
-            
+
     def _convert(self, anObject):
         return bind_string(anObject).childNodes[0]
 
 class XmlPrintAmara(Converter):
     def _canConvert(self, anObject):
         return is_element(anObject)
-    
+
     def _convert(self, anObject):
         return anObject.xml()
 
 class XmlParseLxml(Converter):
     def _canConvert(self, anObject):
         return isXmlString(anObject)
-            
+
     def _convert(self, anObject):
         return parse(StringIO(anObject))
 
 class XmlPrintLxml(Converter):
     def _canConvert(self, anObject):
         return type(anObject) == _ElementTree
-    
+
     def _convert(self, anObject):
         return tostring(anObject, pretty_print = True)
 
@@ -91,7 +91,7 @@ class Amara2Lxml(Converter):
 class Lxml2Amara(Converter):
     def _canConvert(self, anObject):
         return type(anObject) == _ElementTree
-    
+
     def _convert(self, anObject):
         return bind_string(tostring(anObject)).childNodes[0]
 

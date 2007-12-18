@@ -87,7 +87,7 @@ class OaiJazzLucene(Observable):
         stamp =  strftime('%Y-%m-%dT%H:%M:%SZ', self._gettime())
         newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
         metaRecord = ''.join(newOaiMeta)
-        self.do.add(id, 'oaimeta', metaRecord)
+        self.do.add(id, 'oaimeta', str(metaRecord))
 
     def getPreviousRecord(self, id):
         sets = set()
