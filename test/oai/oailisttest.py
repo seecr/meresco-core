@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -38,6 +38,22 @@ from meresco.components.oai import OaiList
 from meresco.components.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
 
 from oaitestcase import OaiTestCase
+
+ABOUT_PROVENANCE = """<about>
+<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/provenance
+                      http://www.openarchives.org/OAI/2.0/provenance.xsd">
+
+<originDescription harvestDate="META_HARVESTDATE" altered="true">
+  <baseURL>META_BASEURL</baseURL>
+  <identifier>HEADER_IDENTIFIER</identifier>
+  <datestamp>HEADER_DATESTAMP</datestamp>
+  <metadataNamespace>META_METADATANAMESPACE</metadataNamespace>
+</originDescription>
+
+</provenance>
+</about>"""
 
 class OaiListTest(OaiTestCase):
     def getSubject(self):
@@ -84,6 +100,7 @@ class OaiListTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="id_0&amp;0"/>
     </metadata>
+%s
    </record>
    <record>
     <header>
@@ -93,8 +110,9 @@ class OaiListTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="id_1&amp;1"/>
     </metadata>
+%s
    </record>
- </ListRecords>""", self.stream.getvalue())
+ </ListRecords>""" % (ABOUT_PROVENANCE, ABOUT_PROVENANCE), self.stream.getvalue())
         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
 
     def testListRecordsUsingToken(self):
@@ -172,6 +190,7 @@ class OaiListTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="id_0"/>
     </metadata>
+%s
    </record>
    <record>
     <header status="deleted">
@@ -179,7 +198,7 @@ class OaiListTest(OaiTestCase):
       <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </header>
    </record>
- </ListRecords>""", self.stream.getvalue())
+ </ListRecords>""" % ABOUT_PROVENANCE, self.stream.getvalue())
 
         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
 

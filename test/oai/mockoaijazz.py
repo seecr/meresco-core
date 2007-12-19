@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -58,6 +58,19 @@ class MockOaiJazz:
     def write(self, sink, id, partName):
         if partName == 'oai_dc':
             sink.write('<some:recorddata xmlns:some="http://some.example.org" id="%s"/>' % id.replace('&', '&amp;'))
+        elif partName == 'meta':
+            sink.write("""<meta>
+  <repository>
+    <baseurl>META_BASEURL</baseurl>
+    <harvestdate>META_HARVESTDATE</harvestdate>
+    <metadataNamespace>META_METADATANAMESPACE</metadataNamespace>
+  </repository>
+</meta>""")
+        elif partName == 'header':
+            sink.write("""<header xmlns="http://www.openarchives.org/OAI/2.0/">
+            <identifier>HEADER_IDENTIFIER</identifier>
+            <datestamp>HEADER_DATESTAMP</datestamp>
+        </header>""")
         elif partName == '__stamp__':
             sink.write("""<__stamp__>
     <datestamp>DATESTAMP_FOR_TEST</datestamp>

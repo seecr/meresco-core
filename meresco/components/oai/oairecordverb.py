@@ -4,7 +4,7 @@
 #    Copyright (C) 2007 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007 Seek You Too B.V. (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
-#    Copyright (C) 2007 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #
 #    This file is part of Meresco Core.
@@ -25,17 +25,20 @@
 #
 ## end license ##
 from xml.sax.saxutils import escape as xmlEscape
+from amara.binderytools import bind_string
+from StringIO import StringIO
 
 from meresco.components.oai.oaiverb import OaiVerb
 
 class OaiRecordVerb(OaiVerb):
 
-    def writeRecord(self, webRequest, id, writeBody = True):
+    def writeRecord(self, webRequest, id, writeBody=True):
         isDeletedStr = self.any.isDeleted(id) and ' status="deleted"' or ''
         datestamp = self.any.getDatestamp(id)
         setSpecs = self._getSetSpecs(id)
         if writeBody:
             webRequest.write('<record>')
+
         webRequest.write("""<header %s>
             <identifier>%s</identifier>
             <datestamp>%s</datestamp>
@@ -45,6 +48,31 @@ class OaiRecordVerb(OaiVerb):
             webRequest.write('<metadata>')
             self.any.write(webRequest, id, self._metadataPrefix)
             webRequest.write('</metadata>')
+
+            meta = bind_string(self._getPartFromStorage(id, 'meta')).meta
+            header = bind_string(self._getPartFromStorage(id, 'header')).header
+
+            harvestdate = xmlEscape(str(meta.repository.harvestdate))
+            baseURL = xmlEscape(str(meta.repository.baseurl))
+            identifier = xmlEscape(str(header.identifier))
+            datestamp = xmlEscape(str(header.datestamp))
+            metadataNamespace = xmlEscape(str(meta.repository.metadataNamespace))
+            webRequest.write("""<about>
+<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/provenance
+                      http://www.openarchives.org/OAI/2.0/provenance.xsd">
+
+<originDescription harvestDate="%(harvestdate)s" altered="true">
+  <baseURL>%(baseURL)s</baseURL>
+  <identifier>%(identifier)s</identifier>
+  <datestamp>%(datestamp)s</datestamp>
+  <metadataNamespace>%(metadataNamespace)s</metadataNamespace>
+</originDescription>
+
+</provenance>
+</about>
+""" % locals())
         if writeBody:
             webRequest.write('</record>')
 
@@ -53,3 +81,8 @@ class OaiRecordVerb(OaiVerb):
         if sets:
             return ''.join('<setSpec>%s</setSpec>' % xmlEscape(setSpec) for setSpec in sets)
         return ''
+
+    def _getPartFromStorage(self, anId, aPartname):
+        stream = StringIO()
+        self.any.write(stream, anId, aPartname)
+        return stream.getvalue()

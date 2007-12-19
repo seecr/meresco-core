@@ -96,6 +96,21 @@ class OaiGetRecordTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="oai:ident"/>
     </metadata>
+<about>
+<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/provenance
+                      http://www.openarchives.org/OAI/2.0/provenance.xsd">
+
+<originDescription harvestDate="META_HARVESTDATE" altered="true">
+  <baseURL>META_BASEURL</baseURL>
+  <identifier>HEADER_IDENTIFIER</identifier>
+  <datestamp>HEADER_DATESTAMP</datestamp>
+  <metadataNamespace>META_METADATANAMESPACE</metadataNamespace>
+</originDescription>
+
+</provenance>
+</about>
   </record>
  </GetRecord>""", self.stream.getvalue())
 
