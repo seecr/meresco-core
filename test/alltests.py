@@ -80,6 +80,7 @@ from oai.oailisttest import OaiListTest
 from oai.oaimaintest import OaiMainTest
 from oai.oaisinktest import OaiSinkTest
 from oai.oaitooltest import OaiToolTest
+from oai.oaiprovenancetest import OaiProvenanceTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest

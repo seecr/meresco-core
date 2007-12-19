@@ -39,22 +39,6 @@ from meresco.components.oai.resumptiontoken import resumptionTokenFromString, Re
 
 from oaitestcase import OaiTestCase
 
-ABOUT_PROVENANCE = """<about>
-<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/provenance
-                      http://www.openarchives.org/OAI/2.0/provenance.xsd">
-
-<originDescription harvestDate="META_HARVESTDATE" altered="true">
-  <baseURL>META_BASEURL</baseURL>
-  <identifier>HEADER_IDENTIFIER</identifier>
-  <datestamp>HEADER_DATESTAMP</datestamp>
-  <metadataNamespace>META_METADATANAMESPACE</metadataNamespace>
-</originDescription>
-
-</provenance>
-</about>"""
-
 class OaiListTest(OaiTestCase):
     def getSubject(self):
         oailist = OaiList()
@@ -100,7 +84,6 @@ class OaiListTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="id_0&amp;0"/>
     </metadata>
-%s
    </record>
    <record>
     <header>
@@ -110,10 +93,41 @@ class OaiListTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="id_1&amp;1"/>
     </metadata>
-%s
    </record>
- </ListRecords>""" % (ABOUT_PROVENANCE, ABOUT_PROVENANCE), self.stream.getvalue())
+ </ListRecords>""" , self.stream.getvalue())
         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
+
+    def testListRecordsWithoutProvenance(self):
+        self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
+
+        self.subject.addObserver(MockOaiJazz(
+            selectAnswer=['id_0&0', 'id_1&1'],
+            isAvailableDefault=(True,True),
+            isAvailableAnswer=[
+                (None, 'oai_dc', (True,False)),
+                (None, '__tombstone__', (True, False))]))
+
+        self.observable.any.listRecords(self.request)
+        listRecords = bind_string(self.stream.getvalue()).OAI_PMH.ListRecords
+        about = getattr(listRecords.record[0], 'about', None)
+        self.assertEquals(None, about)
+
+    def testListRecordsWithProvenance(self):
+        self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
+
+        self.subject.showProvenance=True
+        self.subject.addObserver(MockOaiJazz(
+            selectAnswer=['id_0&0', 'id_1&1'],
+            isAvailableDefault=(True,True),
+            isAvailableAnswer=[
+                (None, 'oai_dc', (True,False)),
+                (None, '__tombstone__', (True, False))]))
+
+        self.observable.any.listRecords(self.request)
+        listRecords = bind_string(self.stream.getvalue()).OAI_PMH.ListRecords
+        about = getattr(listRecords.record[0], 'about', None)
+        self.assertNotEqual(None, about)
+
 
     def testListRecordsUsingToken(self):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL', 'SET'))]}
@@ -190,7 +204,6 @@ class OaiListTest(OaiTestCase):
     <metadata>
       <some:recorddata xmlns:some="http://some.example.org" id="id_0"/>
     </metadata>
-%s
    </record>
    <record>
     <header status="deleted">
@@ -198,7 +211,7 @@ class OaiListTest(OaiTestCase):
       <datestamp>DATESTAMP_FOR_TEST</datestamp>
     </header>
    </record>
- </ListRecords>""" % ABOUT_PROVENANCE, self.stream.getvalue())
+ </ListRecords>""", self.stream.getvalue())
 
         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
 

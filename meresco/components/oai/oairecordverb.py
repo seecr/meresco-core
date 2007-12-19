@@ -32,7 +32,7 @@ from meresco.components.oai.oaiverb import OaiVerb
 
 class OaiRecordVerb(OaiVerb):
 
-    def writeRecord(self, webRequest, id, writeBody=True):
+    def writeRecord(self, webRequest, id, writeBody=True, showProvenance=False):
         isDeletedStr = self.any.isDeleted(id) and ' status="deleted"' or ''
         datestamp = self.any.getDatestamp(id)
         setSpecs = self._getSetSpecs(id)
@@ -44,11 +44,13 @@ class OaiRecordVerb(OaiVerb):
             <datestamp>%s</datestamp>
             %s
         </header>""" % (isDeletedStr, xmlEscape(id.encode('utf-8')), datestamp, setSpecs))
+
         if writeBody and not isDeletedStr:
             webRequest.write('<metadata>')
             self.any.write(webRequest, id, self._metadataPrefix)
             webRequest.write('</metadata>')
 
+        if showProvenance:
             meta = bind_string(self._getPartFromStorage(id, 'meta')).meta
             header = bind_string(self._getPartFromStorage(id, 'header')).header
 
