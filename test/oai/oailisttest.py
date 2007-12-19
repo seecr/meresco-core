@@ -108,14 +108,16 @@ class OaiListTest(OaiTestCase):
                 (None, '__tombstone__', (True, False))]))
 
         self.observable.any.listRecords(self.request)
-        listRecords = bind_string(self.stream.getvalue()).OAI_PMH.ListRecords
-        about = getattr(listRecords.record[0], 'about', None)
-        self.assertEquals(None, about)
+        self.assertFalse('<about' in self.stream.getvalue())
 
     def testListRecordsWithProvenance(self):
+        class MockOaiProvenance(object):
+            def provenance(inner, id):
+                yield "PROVENANCE"
+
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.showProvenance=True
+        self.subject.addObserver(MockOaiProvenance())
         self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0&0', 'id_1&1'],
             isAvailableDefault=(True,True),
@@ -124,10 +126,8 @@ class OaiListTest(OaiTestCase):
                 (None, '__tombstone__', (True, False))]))
 
         self.observable.any.listRecords(self.request)
-        listRecords = bind_string(self.stream.getvalue()).OAI_PMH.ListRecords
-        about = getattr(listRecords.record[0], 'about', None)
-        self.assertNotEqual(None, about)
-
+        result = self.stream.getvalue()
+        self.assertTrue('<about>PROVENANCE</about>' in result, result)
 
     def testListRecordsUsingToken(self):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL', 'SET'))]}

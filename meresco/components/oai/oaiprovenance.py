@@ -53,12 +53,25 @@ class OaiProvenance(Observable):
 
     def provenance(self, aRecordId):
         provenanceData = {}
+        cachedData = {}
         for tagName in self._fieldMapping:
-            partname, xpathExpression = self._fieldMapping[tagName]
-            xml = bind_string(self._getPart(aRecordId, partname))
-            result = xml.xml_xpath(xpathExpression)
+            partname, valueFunction = self._fieldMapping[tagName]
+            if not partname in cachedData:
+                cachedData[partname] = self._getPart(aRecordId, partname)
+
+            xml = bind_string(cachedData[partname])
+            result = ''
+            try:
+                result = valueFunction(xml)
+            except AttributeError:
+                pass
+
             if result:
                 provenanceData[tagName] = str(result[0])
+
+        provenanceResult = ''
+        if len(provenanceData) != len(self._fieldMapping):
+            raise StopIteration
         yield PROVENANCE_TEMPLATE % provenanceData
 
     def _getPart(self, recordId, partname):

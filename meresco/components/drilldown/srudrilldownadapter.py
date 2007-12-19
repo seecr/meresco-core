@@ -30,19 +30,9 @@ from xml.sax.saxutils import quoteattr, escape
 from cqlparser.cqlparser import parseString as parseCQL
 
 from meresco.framework.observable import Observable
-from meresco.framework.generatorutils import compose
+from meresco.framework.generatorutils import compose, generatorDecorate
 
 DEFAULT_MAXIMUM_TERMS = 10
-
-def generatorDecorate(before, data, after):
-    beforeWritten = False
-    for d in data:
-        if not beforeWritten:
-            yield before
-            beforeWritten = True
-        yield d
-    if beforeWritten:
-        yield after
 
 class SRUDrilldownAdapter(Observable):
 

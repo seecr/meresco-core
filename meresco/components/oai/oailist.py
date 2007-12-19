@@ -78,7 +78,7 @@ Error and Exception Conditions
     * noRecordsMatch - The combination of the values of the from, until, set and metadataPrefix arguments results in an empty list.
     * noSetHierarchy - The repository does not support sets.
 """
-    def __init__(self, showProvenance=False):
+    def __init__(self):
         OaiRecordVerb.__init__(self, ['ListIdentifiers', 'ListRecords'], {
             'from': 'optional',
             'until': 'optional',
@@ -86,7 +86,6 @@ Error and Exception Conditions
             'resumptionToken': 'exclusive',
             'metadataPrefix': 'required'})
         Observable.__init__(self)
-        self.showProvenance = showProvenance
 
     def listRecords(self, webRequest):
         self.startProcessing(webRequest)
@@ -137,7 +136,7 @@ Error and Exception Conditions
                     self._set))
                 return
 
-            self.writeRecord(webRequest, id, self._verb == "ListRecords", showProvenance=self.showProvenance)
+            self.writeRecord(webRequest, id, self._verb == "ListRecords")
             prevId = id
 
         if self._resumptionToken:

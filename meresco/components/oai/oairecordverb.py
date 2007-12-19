@@ -29,10 +29,11 @@ from amara.binderytools import bind_string
 from StringIO import StringIO
 
 from meresco.components.oai.oaiverb import OaiVerb
+from meresco.framework.generatorutils import generatorDecorate
 
 class OaiRecordVerb(OaiVerb):
 
-    def writeRecord(self, webRequest, id, writeBody=True, showProvenance=False):
+    def writeRecord(self, webRequest, id, writeBody=True):
         isDeletedStr = self.any.isDeleted(id) and ' status="deleted"' or ''
         datestamp = self.any.getDatestamp(id)
         setSpecs = self._getSetSpecs(id)
@@ -50,31 +51,10 @@ class OaiRecordVerb(OaiVerb):
             self.any.write(webRequest, id, self._metadataPrefix)
             webRequest.write('</metadata>')
 
-        if showProvenance:
-            meta = bind_string(self._getPartFromStorage(id, 'meta')).meta
-            header = bind_string(self._getPartFromStorage(id, 'header')).header
+        provenance = self.all.provenance(id)
+        for line in generatorDecorate('<about>', provenance, '</about>'):
+            webRequest.write(line)
 
-            harvestdate = xmlEscape(str(meta.repository.harvestdate))
-            baseURL = xmlEscape(str(meta.repository.baseurl))
-            identifier = xmlEscape(str(header.identifier))
-            datestamp = xmlEscape(str(header.datestamp))
-            metadataNamespace = xmlEscape(str(meta.repository.metadataNamespace))
-            webRequest.write("""<about>
-<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/provenance
-                      http://www.openarchives.org/OAI/2.0/provenance.xsd">
-
-<originDescription harvestDate="%(harvestdate)s" altered="true">
-  <baseURL>%(baseURL)s</baseURL>
-  <identifier>%(identifier)s</identifier>
-  <datestamp>%(datestamp)s</datestamp>
-  <metadataNamespace>%(metadataNamespace)s</metadataNamespace>
-</originDescription>
-
-</provenance>
-</about>
-""" % locals())
         if writeBody:
             webRequest.write('</record>')
 

@@ -31,23 +31,51 @@ from cq2utils.calltrace import CallTrace
 from meresco.framework import Observable
 from meresco.components.oai.oaiprovenance import OaiProvenance
 
+class MockStorage(object):
+    def __init__(self):
+        self.timesCalled = 0
+
+    def write(self, stream, ident, partname):
+        self.timesCalled += 1
+        if partname == 'meta':
+            stream.write("<meta><repository><metadataNamespace>METADATANAMESPACE</metadataNamespace><baseurl>BASEURL</baseurl><harvestDate>HARVESTDATE</harvestDate></repository></meta>")
+        elif partname == 'header':
+            #stream.write("<header><identifier>IDENTIFIER</identifier><datestamp>DATESTAMP</datestamp></header>")
+            stream.write("""<header xmlns="http://www.openarchives.org/OAI/2.0/">
+    <identifier>IDENTIFIER</identifier>
+    <datestamp>DATESTAMP</datestamp>
+
+  </header>""")
+
 class OaiProvenanceTest(CQ2TestCase):
 
-    def testProvenance(self):
-        class MockStorage(object):
-            def write(innerself, stream, ident, partname):
-                if partname == 'meta':
-                    stream.write("<meta><repository><metadataNamespace>METADATANAMESPACE</metadataNamespace><baseurl>BASEURL</baseurl><harvestDate>HARVESTDATE</harvestDate></repository></meta>")
-                elif partname == 'header':
-                    stream.write("<header><identifier>IDENTIFIER</identifier><datestamp>DATESTAMP</datestamp></header>")
-
+    def testCacheStorageResults(self):
         observable = Observable()
         provenance = OaiProvenance({
-            'baseURL':('meta','meta/repository/baseurl'),
-            'harvestDate': ('meta', 'meta/repository/harvestDate'),
-            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace'),
-            'identifier': ('header', 'header/identifier'),
-            'datestamp': ('header', 'header/datestamp'),
+            'baseURL':('meta', lambda node: node.meta.repository.baseurl),
+            'harvestDate': ('meta', lambda node: node.meta.repository.harvestDate),
+            'metadataNamespace': ('meta', lambda node: node.meta.repository.metadataNamespace),
+            'identifier': ('header', lambda node: node.header.identifier),
+            'datestamp': ('header', lambda node: node.header.datestamp),
+            })
+        observable.addObserver(provenance)
+        storage = MockStorage()
+        observer = storage
+        provenance.addObserver(observer)
+
+        self.assertEquals(0, storage.timesCalled)
+        result = ''.join(list(observable.any.provenance("recordId")))
+        self.assertEquals(2, storage.timesCalled)
+
+
+    def testProvenance(self):
+        observable = Observable()
+        provenance = OaiProvenance({
+            'baseURL':('meta', lambda node: node.meta.repository.baseurl),
+            'harvestDate': ('meta', lambda node: node.meta.repository.harvestDate),
+            'metadataNamespace': ('meta', lambda node: node.meta.repository.metadataNamespace),
+            'identifier': ('header', lambda node: node.header.identifier),
+            'datestamp': ('header', lambda node: node.header.datestamp),
             })
         observable.addObserver(provenance)
         observer = MockStorage()
@@ -66,4 +94,20 @@ class OaiProvenanceTest(CQ2TestCase):
   <metadataNamespace>METADATANAMESPACE</metadataNamespace>
 </originDescription>
 </provenance>""")
+
+    def testNoOutputIfValueMissing(self):
+        observable = Observable()
+        provenance = OaiProvenance({
+            'baseURL':('meta', lambda node: node.meta.repository.baseurl),
+            'harvestDate': ('meta', lambda node: node.doesnt.exist),
+            'metadataNamespace': ('meta', lambda node: node.meta.repository.metadataNamespace),
+            'identifier': ('header', lambda node: node.header.identifier),
+            'datestamp': ('header', lambda node: node.header.datestamp),
+            })
+        observable.addObserver(provenance)
+        observer = MockStorage()
+        provenance.addObserver(observer)
+
+        result = ''.join(list(observable.any.provenance("recordId")))
+        self.assertEquals('', result)
 
