@@ -51,6 +51,11 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         query.add(Term("animal", "cats"))
         query.add(Term("animal", "dogs"))
         self.assertConversion(query, 'animal="cats dogs"')
+        self.assertConversion(query, 'animal="catS Dogs"')
+
+    def testIndexRelationExactTermOutput(self):
+        self.assertConversion(TermQuery(Term("animal", "hairy cats")), 'animal exact "hairy cats"')
+        self.assertConversion(TermQuery(Term("animal", "Capital Cats")), 'animal exact "Capital Cats"')
 
     def testBooleanAndTermOutput(self):
         query = BooleanQuery()

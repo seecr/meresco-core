@@ -28,7 +28,10 @@ from cqlparser.cqlparser import parseString, CQL_QUERY, SCOPED_CLAUSE, SEARCH_CL
 class ParseException(Exception):
     pass
 
-def _termOrPhraseQuery(index, listOfTermStrings):
+def _termOrPhraseQuery(index, termString):
+    listOfTermStrings = [termString.lower()]
+    if ' ' in termString:
+        listOfTermStrings = [x.lower() for x in termString.split(" ") if x]
     if len(listOfTermStrings) == 1:
         return TermQuery(Term(index, listOfTermStrings[0]))
     result = PhraseQuery()
@@ -86,8 +89,10 @@ class Composer(object):
                     return self.compose(node.children()[1])
                 relation, modifier, value = self.compose(node.children()[1])
                 rhs = self.compose(node.children()[2])
-                assert relation == "="
-                query = _termOrPhraseQuery(lhs, rhs)
+                if relation == 'exact':
+                    query = TermQuery(Term(lhs, rhs))
+                else:
+                    query = _termOrPhraseQuery(lhs, rhs)
                 if modifier:
                     assert modifier == "boost"
                     query.setBoost(float(value))
@@ -108,17 +113,17 @@ class Composer(object):
             return name, value
         if node.__class__ == COMPARITOR:
             assert len(node.children()) == 1
-            assert node.children()[0] == '='
-            return '='
+            assert node.children()[0] in ['=', 'exact']
+            return node.children()[0]
         if node.__class__ == BOOLEAN:
             assert len(node.children()) == 1
             return node.children()[0].upper()
         if node.__class__ == SEARCH_TERM:
             assert len(node.children()) == 1
             term = self.compose(node.children()[0])
-            if term[0] == '"' == term[-1]:
-                return [x for x in term[1:-1].split(" ") if x]
-            return [term]
+            if term[0] == '"':
+                return term[1:-1] #.replace(r'\"', '"')
+            return term
         if node.__class__ == str:
-            return node.lower()
+            return node
         raise Exception("Unknown token " + str(node))
