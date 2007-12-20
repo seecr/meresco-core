@@ -26,7 +26,7 @@
 ## end license ##
 
 from StringIO import StringIO
-from amara.binderytools import bind_string
+from lxml.etree import parse
 
 from meresco.framework import Observable
 
@@ -47,27 +47,24 @@ PROVENANCE_TEMPLATE = """<provenance xmlns="http://www.openarchives.org/OAI/2.0/
 
 class OaiProvenance(Observable):
 
-    def __init__(self, fieldMapping):
+    def __init__(self, fieldMapping, nsMap={}):
         Observable.__init__(self)
         self._fieldMapping = fieldMapping
+        self._nsMap = nsMap
 
     def provenance(self, aRecordId):
         provenanceData = {}
         cachedData = {}
         for tagName in self._fieldMapping:
-            partname, valueFunction = self._fieldMapping[tagName]
+            partname, xPathExpression = self._fieldMapping[tagName]
             if not partname in cachedData:
                 cachedData[partname] = self._getPart(aRecordId, partname)
 
-            xml = bind_string(cachedData[partname])
-            result = ''
-            try:
-                result = valueFunction(xml)
-            except AttributeError:
-                pass
+            xml = parse(StringIO(cachedData[partname]))
 
+            result = xml.xpath(xPathExpression, self._nsMap)
             if result:
-                provenanceData[tagName] = str(result[0])
+                provenanceData[tagName] = result[0].text
 
         provenanceResult = ''
         if len(provenanceData) != len(self._fieldMapping):

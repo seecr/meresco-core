@@ -52,11 +52,11 @@ class OaiProvenanceTest(CQ2TestCase):
     def testCacheStorageResults(self):
         observable = Observable()
         provenance = OaiProvenance({
-            'baseURL':('meta', lambda node: node.meta.repository.baseurl),
-            'harvestDate': ('meta', lambda node: node.meta.repository.harvestDate),
-            'metadataNamespace': ('meta', lambda node: node.meta.repository.metadataNamespace),
-            'identifier': ('header', lambda node: node.header.identifier),
-            'datestamp': ('header', lambda node: node.header.datestamp),
+            'baseURL':('meta', 'meta/repository/baseurl'),
+            'harvestDate': ('meta', 'meta/repository/harvestDate'),
+            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace'),
+            'identifier': ('header','header/identifier'),
+            'datestamp': ('header', 'header/datestamp'),
             })
         observable.addObserver(provenance)
         storage = MockStorage()
@@ -71,12 +71,12 @@ class OaiProvenanceTest(CQ2TestCase):
     def testProvenance(self):
         observable = Observable()
         provenance = OaiProvenance({
-            'baseURL':('meta', lambda node: node.meta.repository.baseurl),
-            'harvestDate': ('meta', lambda node: node.meta.repository.harvestDate),
-            'metadataNamespace': ('meta', lambda node: node.meta.repository.metadataNamespace),
-            'identifier': ('header', lambda node: node.header.identifier),
-            'datestamp': ('header', lambda node: node.header.datestamp),
-            })
+            'baseURL': ('meta', '/meta/repository/baseurl'),
+            'harvestDate': ('meta', '/meta/repository/harvestDate'),
+            'metadataNamespace': ('meta', '/meta/repository/metadataNamespace'),
+            'identifier': ('header','/oai_dc:header/oai_dc:identifier'),
+            'datestamp': ('header', '/oai_dc:header/oai_dc:datestamp'),
+            }, {'oai_dc': "http://www.openarchives.org/OAI/2.0/"})
         observable.addObserver(provenance)
         observer = MockStorage()
         provenance.addObserver(observer)
@@ -98,11 +98,11 @@ class OaiProvenanceTest(CQ2TestCase):
     def testNoOutputIfValueMissing(self):
         observable = Observable()
         provenance = OaiProvenance({
-            'baseURL':('meta', lambda node: node.meta.repository.baseurl),
-            'harvestDate': ('meta', lambda node: node.doesnt.exist),
-            'metadataNamespace': ('meta', lambda node: node.meta.repository.metadataNamespace),
-            'identifier': ('header', lambda node: node.header.identifier),
-            'datestamp': ('header', lambda node: node.header.datestamp),
+            'baseURL':('meta', 'meta/repository/baseurl'),
+            'harvestDate': ('meta', 'meta/does/not/exist'),
+            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace'),
+            'identifier': ('header','header/identifier'),
+            'datestamp': ('header', 'header/datestamp'),
             })
         observable.addObserver(provenance)
         observer = MockStorage()
