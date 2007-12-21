@@ -1,16 +1,18 @@
-
+import cPickle as pickle
 from os.path import isfile
 
 from meresco.framework import Observable
 
 class Statistics(Observable):
-    def __init__(self, dataFilename, keys):
+    def __init__(self, snapshotFilename, txlogFilename, keys):
         Observable.__init__(self)
-        self._dataFilename = dataFilename
+        self._snapshotFilename = snapshotFilename
+        self._txlogFilename = txlogFilename
         self._keys = keys
         self._data = {}
-
-        if isfile(self._dataFilename):
+        if isfile(self._snapshotFilename):
+            self._initializeFromSnapshot()
+        if isfile(self._txlogFilename):
             self._initializeFromFile()
 
     def unknown(self, message, *args, **kwargs):
@@ -45,7 +47,7 @@ class Statistics(Observable):
             self._updateData(key, logLine)
 
     def _initializeFromFile(self):
-        fp = open(self._dataFilename)
+        fp = open(self._txlogFilename)
 
         try:
             data = (self._stringToDict(line.strip()) for line in fp.readlines())
@@ -55,6 +57,12 @@ class Statistics(Observable):
         finally:
             fp.close()
 
+    def _initializeFromSnapshot(self):
+        snapshotFile = open(self._snapshotFilename, 'rb')
+        try:
+            self._data = pickle.load(snapshotFile)
+        finally:
+            snapshotFile.close()
     def _stringToDict(self, aString):
         return dict((key,value)
             for key,value in (part.split(':',1)
@@ -75,8 +83,15 @@ class Statistics(Observable):
 
     def _logToFile(self, aDictionary):
         line = self._dictToString(aDictionary)
-        fp = open(self._dataFilename, 'a')
+        fp = open(self._txlogFilename, 'a')
         try:
             fp.write(line + "\n")
         finally:
             fp.close()
+
+    def _writeSnapshot(self):
+        snapshotFile = open(self._snapshotFilename, 'wb')
+        try:
+            pickle.dump(self._data, snapshotFile)
+        finally:
+            snapshotFile.close()

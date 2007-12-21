@@ -1,11 +1,11 @@
 from cq2utils import CQ2TestCase
-
+from os.path import isfile
 from meresco.components.statistics import Statistics
 
 class StatisticsTest(CQ2TestCase):
 
     def testStatistics(self):
-        stats = Statistics(self.tempfile, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
         self.assertEquals({
@@ -36,13 +36,13 @@ class StatisticsTest(CQ2TestCase):
         }, stats._data)
 
     def testReadFile(self):
-        fp = open(self.tempfile, 'w')
+        fp = open(self.tempfile+'txlog', 'w')
         try:
             fp.write('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n')
             fp.write('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n')
         finally:
             fp.close()
-        stats = Statistics(self.tempfile, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         self.assertEquals({
             ('date',): {
@@ -60,14 +60,14 @@ class StatisticsTest(CQ2TestCase):
 
     def testWriteFile(self):
         def readlines():
-            fp = open(self.tempfile)
+            fp = open(self.tempfile+'txlog')
             try:
                 lines = fp.readlines()
             finally:
                 fp.close()
             return lines
 
-        stats = Statistics(self.tempfile, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
 
@@ -82,7 +82,7 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n', lines[1])
 
     def testUndefinedFieldValues(self):
-        stats = Statistics(self.tempfile, [('date', 'protocol')])
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date', 'protocol')])
         stats._process({'date':'2007-12-20'})
         self.assertEquals({
             ('date', 'protocol'): {
@@ -91,12 +91,25 @@ class StatisticsTest(CQ2TestCase):
         }, stats._data)
 
     def testStringToDict(self):
-        stats = Statistics('file ignored', 'keys ignored')
+        stats = Statistics('file ignored', 'tx ignored', 'keys ignored')
         self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data'))
         self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data\t'))
         self.assertEquals({'a':'1', 'b':'d:a:t:a'}, stats._stringToDict('a:1\tb:d:a:t:a'))
 
     def testDictToString(self):
-        stats = Statistics('file ignored', 'keys ignored')
+        stats = Statistics('file ignored', 'tx ignored', 'keys ignored')
         self.assertEquals('a:1\tb:data', stats._dictToString({'a':'1', 'b':'data'}))
         self.assertEquals('a:1\tb:data', stats._dictToString({'a':'1', 'b':'data', '':''}))
+
+
+    def testEmptySnapShotState(self):
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('keys',)])
+        self.assertEquals({}, stats._data)
+
+    def testSnapshotState(self):
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('keys',)])
+        stats._process({'keys':'2007-12-20'})
+        stats._writeSnapshot()
+        self.assertTrue(isfile(self.tempfile+'state'))
+        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('keys',)])
+        self.assertEquals({('keys',): {('2007-12-20',): 1}}, stats._data)
