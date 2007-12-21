@@ -34,6 +34,7 @@ class PathFilter(Observable):
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         if RequestURI.startswith(self._subPath):
+            kwargs.get('logLine', {})['path'] = self._subPath
             return self.all.handleRequest(RequestURI=RequestURI, *args, **kwargs)
         return (f for f in [])
 

@@ -7,7 +7,7 @@ class StatisticsTest(CQ2TestCase):
     def testStatistics(self):
         stats = Statistics(self.tempfile, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
-        stats.process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
+        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
         self.assertEquals({
             ('date',): {
                 ('2007-12-20',): 1
@@ -20,7 +20,7 @@ class StatisticsTest(CQ2TestCase):
             }
         }, stats._data)
 
-        stats.process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
+        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
         self.assertEquals({
             ('date',): {
                 ('2007-12-20',): 2
@@ -69,17 +69,26 @@ class StatisticsTest(CQ2TestCase):
 
         stats = Statistics(self.tempfile, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
-        stats.process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
+        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
 
         lines = readlines()
         self.assertEquals(1, len(lines))
         self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
 
-        stats.process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
+        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
         lines = readlines()
         self.assertEquals(2, len(lines))
         self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
         self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n', lines[1])
+
+    def testUndefinedFieldValues(self):
+        stats = Statistics(self.tempfile, [('date', 'protocol')])
+        stats._process({'date':'2007-12-20'})
+        self.assertEquals({
+            ('date', 'protocol'): {
+                ('2007-12-20', '#undefined'): 1,
+            },
+        }, stats._data)
 
     def testStringToDict(self):
         stats = Statistics('file ignored', 'keys ignored')

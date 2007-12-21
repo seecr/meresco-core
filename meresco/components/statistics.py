@@ -1,7 +1,11 @@
+
 from os.path import isfile
 
-class Statistics(object):
+from meresco.framework import Observable
+
+class Statistics(Observable):
     def __init__(self, dataFilename, keys):
+        Observable.__init__(self)
         self._dataFilename = dataFilename
         self._keys = keys
         self._data = {}
@@ -9,13 +13,45 @@ class Statistics(object):
         if isfile(self._dataFilename):
             self._initializeFromFile()
 
+    def unknown(self, message, *args, **kwargs):
+        logLine = {}
+        kwargs['logLine'] = logLine
+        stuffs = self.all.unknown(message, *args, **kwargs)
+        for stuff in stuffs:
+            yield stuff
+        self._process(logLine)
+
+    def show(self):
+        yield "<statistics>"
+        for key in self._keys:
+            yield "<statistic>"
+            yield "<query>"
+            for keyPart in key:
+                yield "<fieldName>%s</fieldName>" % keyPart
+            yield "</query>"
+            data = self._data[key]
+            for value, count in data.items():
+                yield "<result>"
+                for keyPart in value:
+                    yield "<fieldValue>%s</fieldValue>" % keyPart
+                yield "<count>%s</count>" % count
+                yield "</result>"
+            yield "</statistic>"
+        yield "</statistics>"
+
+    def _process(self, logLine):
+        self._logToFile(logLine)
+        for key in self._keys:
+            self._updateData(key, logLine)
+
     def _initializeFromFile(self):
         fp = open(self._dataFilename)
 
         try:
             data = (self._stringToDict(line.strip()) for line in fp.readlines())
-            for item in data:
-                self.process(item)
+            for logLine in data:
+                for key in self._keys:
+                    self._updateData(key, logLine)
         finally:
             fp.close()
 
@@ -28,19 +64,14 @@ class Statistics(object):
         return '\t'.join(key+':'+value
             for key,value in aDictionary.items() if key and value)
 
-    def process(self, data):
-        self._logToFile(data)
-        for key in self._keys:
-            self._updateData(key, data)
+    def _updateData(self, statistic, logLine):
+        if statistic not in self._data:
+            self._data[statistic] = {}
 
-    def _updateData(self, key, data):
-        if key not in self._data:
-            self._data[key] = {}
-
-        valueKey = tuple([data[part] for part in key])
-        if not valueKey in self._data[key]:
-            self._data[key][valueKey] = 0
-        self._data[key][valueKey] += 1
+        fieldValues = tuple([logLine.get(fieldName, "#undefined") for fieldName in statistic])
+        if not fieldValues in self._data[statistic]:
+            self._data[statistic][fieldValues] = 0
+        self._data[statistic][fieldValues] += 1
 
     def _logToFile(self, aDictionary):
         line = self._dictToString(aDictionary)
