@@ -102,7 +102,7 @@ class OaiJazzLucene(Observable):
         self.add(*args, **kwargs)
 
 
-    def add(self, id, name, record):
+    def add(self, id, name, record, *nodes):
         self.any.deletePart(id, 'tombstone')
         sets, prefixes, na, na = self.getPreviousRecord(id)
         prefixes.add(name)
@@ -111,6 +111,13 @@ class OaiJazzLucene(Observable):
             sets.update(str(s) for s in record.setSpec)
             sets = self._flattenSetHierarchy(sets)
             self.updateAllSets(sets)
+
+        for node in nodes:
+            if node.localName == "header" and node.namespaceURI == "http://www.openarchives.org/OAI/2.0/" and getattr(node, 'setSpec', None):
+                sets.update(str(s) for s in node.setSpec)
+                sets = self._flattenSetHierarchy(sets)
+                self.updateAllSets(sets)
+
         self.updateOaiMeta(id, sets, prefixes)
 
     def delete(self, id):
