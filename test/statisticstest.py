@@ -1,64 +1,59 @@
 import cPickle as pickle
-
+from time import time
 from cq2utils import CQ2TestCase
 from os.path import isfile
-from meresco.components.statistics import Statistics
+from meresco.components.statistics import Statistics, Logger
 
 class StatisticsTest(CQ2TestCase):
 
     def testStatistics(self):
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
+        stats._clock = lambda: 0
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
         self.assertEquals({
-            ('date',): {
                 ('2007-12-20',): 1
-            },
-            ('date', 'protocol'): {
+        }, stats.get(0, 1, ('date',)))
+        self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
-            },
-            ('date', 'ip', 'protocol'): {
+        }, stats.get(0, 1, ('date', 'protocol')))
+        self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1
-            }
-        }, stats._data)
+        }, stats.get(0, 1, ('date', 'ip', 'protocol')))
 
+        stats._clock = lambda: 0
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
         self.assertEquals({
-            ('date',): {
                 ('2007-12-20',): 2
-            },
-            ('date', 'protocol'): {
+        }, stats.get(0, 1, ('date',)))
+        self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
                 ('2007-12-20', 'srw'): 1,
-            },
-            ('date', 'ip', 'protocol'): {
+        }, stats.get(0, 1, ('date', 'protocol')))
+        self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1,
                 ('2007-12-20', '127.0.0.1', 'srw'): 1
-            }
-        }, stats._data)
+        }, stats.get(0, 1, ('date', 'ip', 'protocol')))
 
     def testReadTxLog(self):
         fp = open(self.tempdir + '/txlog', 'w')
         try:
-            fp.write('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n')
-            fp.write('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n')
+            fp.write('0\tdate:2007-12-20\tip:127.0.0.1\tprotocol:sru\n')
+            fp.write('0\tdate:2007-12-20\tip:127.0.0.1\tprotocol:srw\n')
         finally:
             fp.close()
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
-
         self.assertEquals({
-            ('date',): {
                 ('2007-12-20',): 2
-            },
-            ('date', 'protocol'): {
+        }, stats.get(0, 1, ('date',)))
+        self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
                 ('2007-12-20', 'srw'): 1,
-            },
-            ('date', 'ip', 'protocol'): {
+        }, stats.get(0, 1, ('date', 'protocol')))
+        self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1,
                 ('2007-12-20', '127.0.0.1', 'srw'): 1
-            }
-        }, stats._data)
+        }, stats.get(0, 1, ('date', 'ip', 'protocol')))
 
     def testWriteTxLog(self):
         def readlines():
@@ -71,26 +66,26 @@ class StatisticsTest(CQ2TestCase):
 
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
+        stats._clock = lambda: 1234
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
 
         lines = readlines()
         self.assertEquals(1, len(lines))
-        self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
+        self.assertEquals('1234\tdate:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
 
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
         lines = readlines()
         self.assertEquals(2, len(lines))
-        self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
-        self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n', lines[1])
+        self.assertEquals('1234\tdate:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
+        self.assertEquals('1234\tdate:2007-12-20\tip:127.0.0.1\tprotocol:srw\n', lines[1])
 
     def testUndefinedFieldValues(self):
         stats = Statistics(self.tempdir, [('date', 'protocol')])
+        stats._clock = lambda: 0
         stats._process({'date':'2007-12-20'})
         self.assertEquals({
-            ('date', 'protocol'): {
                 ('2007-12-20', '#undefined'): 1,
-            },
-        }, stats._data)
+        }, stats.get(0, 1, ('date', 'protocol')))
 
     def testStringToDict(self):
         stats = Statistics('ignored', 'keys ignored')
@@ -109,25 +104,27 @@ class StatisticsTest(CQ2TestCase):
 
     def testSnapshotState(self):
         stats = Statistics(self.tempdir, [('keys',)])
+        stats._clock = lambda: 0
         stats._process({'keys': '2007-12-20'})
         stats._writeSnapshot()
         self.assertTrue(isfile(self.tempdir + '/snapshot'))
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('keys',): {('2007-12-20',): 1}}, stats._data)
+        self.assertEquals({('2007-12-20',): 1}, stats.get(0, 1, ('keys',)))
 
     def testCrashInWriteSnapshotDuringWriteRecovery(self):
         snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {('keys',): {('the old one',): 3}}
+        theOldOne = {'0': {('keys',): {('the old one',): 3}}}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
-        open(self.tempdir + '/txlog', 'w').write('keys:from_log\n')
+        open(self.tempdir + '/txlog', 'w').write('0\tkeys:from_log\n')
 
         snapshotFile = open(self.tempdir + '/snapshot.writing', 'w')
         snapshotFile.write('boom')
         snapshotFile.close()
 
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('keys',): {('the old one',): 3, ('from_log',): 1}}, stats._data)
+        self.assertEquals({('the old one',): 3, ('from_log',): 1}, stats.get(0, 1, ('keys',)))
+        self.assertEquals({('the old one',): 3, ('from_log',): 1}, stats.get(0, 1, ('keys',)))
         self.assertFalse(isfile(self.tempdir + '/snapshot.writing'))
 
     def testCrashInWriteSnapshotAfterWriteRecovery(self):
@@ -151,14 +148,28 @@ class StatisticsTest(CQ2TestCase):
         self.assertFalse(isfile(self.tempdir + '/txlog'))
 
     def testSelfLog(self):
-        from meresco.framework import Observable
-
-        class MyObserver(Observable):
+        class MyObserver(Logger):
             def aMessage(self):
                 self.log(message='newValue')
         stats = Statistics(self.tempdir, [('message',)])
+        stats._clock = lambda: 0
         myObserver = MyObserver()
         stats.addObserver(myObserver)
-
         list(stats.unknown("aMessage"))
-        self.assertEquals({('message',): {('newValue',): 1}}, stats._data)
+        self.assertEquals({('newValue',): 1}, stats.get(0, 1, ('message',)))
+
+    def testCatchErrorsAndCloseTxLog(self):
+        pass
+
+    def testPeriodicSnapshot(self):
+        pass
+
+    def testAccumulateOverTime(self):
+        stats = Statistics(self.tempdir, [('message',)])
+        mocktime = t0 = int(time())
+        stats._clock = lambda: mocktime
+        stats._process({'message': 'A'})
+        #count, max, min, avg, pct99
+        mocktime = t1 = t0 + 1
+        stats._process({'message': 'A'})
+        self.assertEquals({('A',): 2}, stats.get(t0, t1, ('message',)))

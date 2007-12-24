@@ -112,15 +112,6 @@ class Observable(object):
                 node.addObservers(branch)
             self.addObserver(node)
 
-    def log(self, **kwargs):
-        from inspect import currentframe
-        frame = currentframe()
-        while frame:
-            if "__log__" in frame.f_locals:
-                frame.f_locals["__log__"].update(kwargs)
-                break
-            frame = frame.f_back
-
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):
         return self.all.unknown(message, *args, **kwargs)
