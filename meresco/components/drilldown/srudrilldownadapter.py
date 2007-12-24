@@ -34,23 +34,30 @@ from meresco.framework.generatorutils import compose, generatorDecorate
 
 DEFAULT_MAXIMUM_TERMS = 10
 
+DRILLDOWN_HEADER = """<dd:drilldown
+    xmlns:dd="http://namespace.meresco.org/drilldown"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://namespace.meresco.org/drilldown http://namespace.drilldown.org/xsd/drilldown.xsd">"""
+DRILLDOWN_FOOTER = "</dd:drilldown>"
+
 class SRUDrilldownAdapter(Observable):
 
-    def __init__(self, serverUrl):
+    def __init__(self, serverUrl = None):
         Observable.__init__(self)
-        self.serverUrl = serverUrl
+        if serverUrl != None:
+            raise Exception('The use of serverUrl is outdated. Please change your Application is DNA.')
 
     def extraResponseData(self, arguments, hits):
         return generatorDecorate(
-            '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
+            DRILLDOWN_HEADER,
             compose(self.all.extraResponseData(arguments, hits)),
-            "</dd:drilldown>")
+            DRILLDOWN_FOOTER)
 
     def echoedExtraRequestData(self, arguments):
         return generatorDecorate(
-            '<dd:drilldown xmlns:dd="%s/xsd/drilldown.xsd">' % self.serverUrl,
+            DRILLDOWN_HEADER,
             compose(self.all.echoedExtraRequestData(arguments)),
-            "</dd:drilldown>")
+            DRILLDOWN_FOOTER)
 
 
 class SRUTermDrilldown(Observable):

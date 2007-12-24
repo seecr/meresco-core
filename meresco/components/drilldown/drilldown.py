@@ -15,7 +15,7 @@ class FieldMatrix(object):
 
     def drilldown(self, docIds, maxresults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(docIds)
-        drilldownResults.sort()
+        drilldownResults.sort(lambda (x1,y1),(x2,y2):cmp(y2,y1))
         if maxresults > 0:
             drilldownResults = drilldownResults[:maxresults]
         for nr, occurences in drilldownResults:

@@ -30,7 +30,7 @@ from StringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.drilldown.srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown
+from meresco.components.drilldown.srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown, DRILLDOWN_HEADER
 
 from cqlparser.cqlcomposer import compose as cqlCompose
 
@@ -42,11 +42,11 @@ class SRUDrilldownAdapterTest(CQ2TestCase):
                 yield "<tag>"
                 yield "something</tag>"
 
-        adapter = SRUDrilldownAdapter("serverUrl")
+        adapter = SRUDrilldownAdapter()
         adapter.addObservers([MockedImpl(), MockedImpl()])
         result = list(adapter.extraResponseData("ignored_webRequest", "ignored_hits"))
         self.assertEqualsWS([
-            '<dd:drilldown xmlns:dd="serverUrl/xsd/drilldown.xsd">',
+            DRILLDOWN_HEADER,
             '<tag>', 'something</tag>',
             '<tag>', 'something</tag>',
             '</dd:drilldown>'], result)

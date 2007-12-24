@@ -68,7 +68,7 @@ class DrilldownTest(TestCase):
     def testDrilldown(self):
         addUntokenized(self._luceneIndex, [
             ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
-            ('2', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+            ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
@@ -84,6 +84,6 @@ class DrilldownTest(TestCase):
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)
         self.assertEquals(['field_0', 'field_1'], result.keys())
-        self.assertEquals([("this is term_0", 2), ("this is term_1", 1)], list(result['field_0']))
+        self.assertEquals([("this is term_1", 2), ("this is term_0", 1)], list(result['field_0']))
         self.assertEquals([("inquery", 3)], list(result['field_1']))
 

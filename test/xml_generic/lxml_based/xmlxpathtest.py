@@ -148,3 +148,24 @@ class XmlXPathTest(CQ2TestCase):
         self.assertEqualsWS('<b><d>two</d></b>', allResults[1])
         self.assertEqualsWS('<c>one</c>', allResults[2])
         
+    def testTestWithCondition(self):
+        self.createXmlXPath(['/a/*[not(self::b) and not(self::c)]'], {})
+
+        self.observable.do.test('<a><b>zero</b><c>one</c><d>two</d></a>')
+
+        self.assertEquals(1, len(self.observer.calledMethods))
+        allResults = []
+        for method in self.observer.calledMethods:
+            allResults.append(method.args[0])
+        self.assertEqualsWS('<d>two</d>', allResults[0])
+    
+    def testTestWithConditionAndNS(self):
+        self.createXmlXPath(['/a:a/*[not(self::a:b) and not(self::a:c)]'], {"a":"aSpace"})
+
+        self.observable.do.test('<z:a xmlns:z="aSpace"><z:b>zero</z:b><z:c>one</z:c><z:d>two</z:d></z:a>')
+
+        self.assertEquals(1, len(self.observer.calledMethods))
+        allResults = []
+        for method in self.observer.calledMethods:
+            allResults.append(method.args[0])
+        self.assertEqualsWS('<d>two</d>', allResults[0])
