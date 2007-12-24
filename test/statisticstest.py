@@ -1,3 +1,5 @@
+import cPickle as pickle
+
 from cq2utils import CQ2TestCase
 from os.path import isfile
 from meresco.components.statistics import Statistics
@@ -5,7 +7,7 @@ from meresco.components.statistics import Statistics
 class StatisticsTest(CQ2TestCase):
 
     def testStatistics(self):
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
+        stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
         self.assertEquals({
@@ -35,14 +37,14 @@ class StatisticsTest(CQ2TestCase):
             }
         }, stats._data)
 
-    def testReadFile(self):
-        fp = open(self.tempfile+'txlog', 'w')
+    def testReadTxLog(self):
+        fp = open(self.tempdir + '/txlog', 'w')
         try:
             fp.write('date:2007-12-20\tip:127.0.0.1\tprotocol:sru\n')
             fp.write('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n')
         finally:
             fp.close()
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
+        stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         self.assertEquals({
             ('date',): {
@@ -58,16 +60,16 @@ class StatisticsTest(CQ2TestCase):
             }
         }, stats._data)
 
-    def testWriteFile(self):
+    def testWriteTxLog(self):
         def readlines():
-            fp = open(self.tempfile+'txlog')
+            fp = open(self.tempdir + '/txlog')
             try:
                 lines = fp.readlines()
             finally:
                 fp.close()
             return lines
 
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
+        stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
 
@@ -82,7 +84,7 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals('date:2007-12-20\tip:127.0.0.1\tprotocol:srw\n', lines[1])
 
     def testUndefinedFieldValues(self):
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('date', 'protocol')])
+        stats = Statistics(self.tempdir, [('date', 'protocol')])
         stats._process({'date':'2007-12-20'})
         self.assertEquals({
             ('date', 'protocol'): {
@@ -91,25 +93,61 @@ class StatisticsTest(CQ2TestCase):
         }, stats._data)
 
     def testStringToDict(self):
-        stats = Statistics('file ignored', 'tx ignored', 'keys ignored')
+        stats = Statistics('ignored', 'keys ignored')
         self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data'))
         self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data\t'))
         self.assertEquals({'a':'1', 'b':'d:a:t:a'}, stats._stringToDict('a:1\tb:d:a:t:a'))
 
     def testDictToString(self):
-        stats = Statistics('file ignored', 'tx ignored', 'keys ignored')
+        stats = Statistics('ignored', 'keys ignored')
         self.assertEquals('a:1\tb:data', stats._dictToString({'a':'1', 'b':'data'}))
         self.assertEquals('a:1\tb:data', stats._dictToString({'a':'1', 'b':'data', '':''}))
 
-
     def testEmptySnapShotState(self):
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('keys',)])
+        stats = Statistics(self.tempdir, [('keys',)])
         self.assertEquals({}, stats._data)
 
     def testSnapshotState(self):
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('keys',)])
-        stats._process({'keys':'2007-12-20'})
+        stats = Statistics(self.tempdir, [('keys',)])
+        stats._process({'keys': '2007-12-20'})
         stats._writeSnapshot()
-        self.assertTrue(isfile(self.tempfile+'state'))
-        stats = Statistics(self.tempfile+'state', self.tempfile+'txlog', [('keys',)])
+        self.assertTrue(isfile(self.tempdir + '/snapshot'))
+        stats = Statistics(self.tempdir, [('keys',)])
         self.assertEquals({('keys',): {('2007-12-20',): 1}}, stats._data)
+
+    def testCrashInWriteSnapshotDuringWriteRecovery(self):
+        snapshotFile = open(self.tempdir + '/snapshot', 'wb')
+        theOldOne = {('keys',): {('the old one',): 3}}
+        pickle.dump(theOldOne, snapshotFile)
+        snapshotFile.close()
+        open(self.tempdir + '/txlog', 'w').write('keys:from_log\n')
+
+        snapshotFile = open(self.tempdir + '/snapshot.writing', 'w')
+        snapshotFile.write('boom')
+        snapshotFile.close()
+
+        stats = Statistics(self.tempdir, [('keys',)])
+        self.assertEquals({('keys',): {('the old one',): 3, ('from_log',): 1}}, stats._data)
+        self.assertFalse(isfile(self.tempdir + '/snapshot.writing'))
+
+    def testCrashInWriteSnapshotAfterWriteRecovery(self):
+        snapshotFile = open(self.tempdir + '/snapshot', 'wb')
+        theOldOne = {('keys',): {('the old one',): 3}}
+        pickle.dump(theOldOne, snapshotFile)
+        snapshotFile.close()
+
+        open(self.tempdir + '/txlog', 'w').write('keys:should_not_appear\n')
+
+        snapshotFile = open(self.tempdir + '/snapshot.writing.done', 'w')
+        theNewOne = {('keys',): {('the new one',): 3}}
+        pickle.dump(theNewOne, snapshotFile)
+        snapshotFile.close()
+
+        stats = Statistics(self.tempdir, [('keys')])
+        self.assertEquals(theNewOne, stats._data)
+        self.assertFalse(isfile(self.tempdir + '/snapshot.writing.done'))
+        self.assertTrue(isfile(self.tempdir + '/snapshot'))
+        self.assertEquals(theNewOne, pickle.load(open(self.tempdir + '/snapshot')))
+        self.assertFalse(isfile(self.tempdir + '/txlog'))
+
+

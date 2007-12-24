@@ -1,19 +1,19 @@
 import cPickle as pickle
-from os.path import isfile
+from os import rename, remove
+from os.path import isfile, join
 
 from meresco.framework import Observable
 
 class Statistics(Observable):
-    def __init__(self, snapshotFilename, txlogFilename, keys):
+    def __init__(self, path, keys):
         Observable.__init__(self)
-        self._snapshotFilename = snapshotFilename
-        self._txlogFilename = txlogFilename
+        self._path = path
+        self._snapshotFilename = join(self._path, 'snapshot')
+        self._txlogFilename = join(self._path, 'txlog')
+        self._txlogFileFP = None
         self._keys = keys
         self._data = {}
-        if isfile(self._snapshotFilename):
-            self._initializeFromSnapshot()
-        if isfile(self._txlogFilename):
-            self._initializeFromFile()
+        self._readState()
 
     def unknown(self, message, *args, **kwargs):
         logLine = {}
@@ -46,6 +46,37 @@ class Statistics(Observable):
         for key in self._keys:
             self._updateData(key, logLine)
 
+    def _readState(self):
+        if isfile(self._snapshotFilename + ".writing"):
+            self._writeSnapshotRollback()
+        if isfile(self._snapshotFilename + ".writing.done"):
+            self._writeSnapshotCommit()
+        if isfile(self._snapshotFilename):
+            self._initializeFromSnapshot()
+        if isfile(self._txlogFilename):
+            self._initializeFromFile()
+
+    def _writeSnapshot(self):
+        self._writeSnapshotPrepare()
+        self._writeSnapshotCommit()
+
+    def _writeSnapshotPrepare(self):
+        snapshotFile = open(self._snapshotFilename + '.writing', 'wb')
+        try:
+            pickle.dump(self._data, snapshotFile)
+        finally:
+            snapshotFile.close()
+        rename(self._snapshotFilename + '.writing', self._snapshotFilename + '.writing.done')
+
+    def _writeSnapshotCommit(self):
+        if isfile(self._txlogFilename):
+            remove(self._txlogFilename)
+            self._txlogFileFP = None
+        rename(self._snapshotFilename + '.writing.done', self._snapshotFilename)
+
+    def _writeSnapshotRollback(self):
+        remove(self._snapshotFilename + ".writing")
+
     def _initializeFromFile(self):
         fp = open(self._txlogFilename)
 
@@ -63,6 +94,7 @@ class Statistics(Observable):
             self._data = pickle.load(snapshotFile)
         finally:
             snapshotFile.close()
+
     def _stringToDict(self, aString):
         return dict((key,value)
             for key,value in (part.split(':',1)
@@ -81,17 +113,14 @@ class Statistics(Observable):
             self._data[statistic][fieldValues] = 0
         self._data[statistic][fieldValues] += 1
 
+    def _txlogFile(self):
+        if not self._txlogFileFP:
+            self._txlogFileFP = open(self._txlogFilename, 'a')
+        return self._txlogFileFP
+
     def _logToFile(self, aDictionary):
         line = self._dictToString(aDictionary)
-        fp = open(self._txlogFilename, 'a')
-        try:
-            fp.write(line + "\n")
-        finally:
-            fp.close()
+        fp = self._txlogFile()
+        fp.write(line + "\n")
+        fp.flush()
 
-    def _writeSnapshot(self):
-        snapshotFile = open(self._snapshotFilename, 'wb')
-        try:
-            pickle.dump(self._data, snapshotFile)
-        finally:
-            snapshotFile.close()
