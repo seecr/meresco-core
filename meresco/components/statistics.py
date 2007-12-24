@@ -16,12 +16,11 @@ class Statistics(Observable):
         self._readState()
 
     def unknown(self, message, *args, **kwargs):
-        logLine = {}
-        kwargs['logLine'] = logLine
+        __log__ = {}
         stuffs = self.all.unknown(message, *args, **kwargs)
         for stuff in stuffs:
             yield stuff
-        self._process(logLine)
+        self._process(__log__)
 
     def show(self):
         yield "<statistics>"
@@ -107,7 +106,6 @@ class Statistics(Observable):
     def _updateData(self, statistic, logLine):
         if statistic not in self._data:
             self._data[statistic] = {}
-
         fieldValues = tuple([logLine.get(fieldName, "#undefined") for fieldName in statistic])
         if not fieldValues in self._data[statistic]:
             self._data[statistic][fieldValues] = 0

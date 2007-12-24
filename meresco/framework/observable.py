@@ -27,6 +27,8 @@
 from sys import exc_info
 from generatorutils import compose
 
+frame2log = {}
+
 class Defer:
     def __init__(self, observable, defereeType):
         self._observable = observable
@@ -91,7 +93,6 @@ class DoMessage(DeferredMessage):
             exType, exValue, exTraceback = exc_info()
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
-
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
@@ -110,6 +111,15 @@ class Observable(object):
                 node, branch = node
                 node.addObservers(branch)
             self.addObserver(node)
+
+    def log(self, **kwargs):
+        from inspect import currentframe
+        frame = currentframe()
+        while frame:
+            if "__log__" in frame.f_locals:
+                frame.f_locals["__log__"].update(kwargs)
+                break
+            frame = frame.f_back
 
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):

@@ -143,11 +143,22 @@ class StatisticsTest(CQ2TestCase):
         pickle.dump(theNewOne, snapshotFile)
         snapshotFile.close()
 
-        stats = Statistics(self.tempdir, [('keys')])
+        stats = Statistics(self.tempdir, [('keys',)])
         self.assertEquals(theNewOne, stats._data)
         self.assertFalse(isfile(self.tempdir + '/snapshot.writing.done'))
         self.assertTrue(isfile(self.tempdir + '/snapshot'))
         self.assertEquals(theNewOne, pickle.load(open(self.tempdir + '/snapshot')))
         self.assertFalse(isfile(self.tempdir + '/txlog'))
 
+    def testSelfLog(self):
+        from meresco.framework import Observable
 
+        class MyObserver(Observable):
+            def aMessage(self):
+                self.log(message='newValue')
+        stats = Statistics(self.tempdir, [('message',)])
+        myObserver = MyObserver()
+        stats.addObserver(myObserver)
+
+        list(stats.unknown("aMessage"))
+        self.assertEquals({('message',): {('newValue',): 1}}, stats._data)
