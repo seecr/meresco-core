@@ -63,6 +63,7 @@ from xslicetest import XSliceTest
 from rsstest import RssTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from statisticstest import StatisticsTest
+from statisticsxmltest import StatisticsXmlTest
 
 from http.fileservertest import FileServerTest
 
