@@ -87,6 +87,15 @@ class StatisticsTest(CQ2TestCase):
                 ('2007-12-20', '#undefined'): 1,
         }, stats.get(0, 1, ('date', 'protocol')))
 
+    def testGetTimeOnly(self):
+        stats = Statistics(self.tempdir, [('anything',)])
+
+        stats._clock = lambda: 0
+        stats._process({'anything':'value'})
+        self.assertEquals({
+                None: 1
+        }, stats.get(0, 1))
+
     def testStringToDict(self):
         stats = Statistics('ignored', 'keys ignored')
         self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data'))

@@ -36,16 +36,20 @@ class Statistics(Observable):
             yield response
         self._process(__log__)
 
-    def get(self, t0, t1, key):
+    def get(self, t0, t1, key=None):
         result = {}
         for t, data in self._data.items():
             if int(t) >= t0 and int(t) <= t1:
-               if key in data:
+                if key in data:
                     for term, count in data[key].items():
                         if term in result:
                             result[term] += count
                         else:
                             result[term] = count
+                if key == None:
+                    if not None in result:
+                        result[None] = 0
+                    result[None] += 1
         return result
 
     def show(self):
