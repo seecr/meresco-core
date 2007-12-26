@@ -21,12 +21,12 @@ class StatisticsXml(object):
     def _query(self, beginDay, endDay, key):
         yield "<statistic>"
         yield "<query>"
-        yield self._list(key, "fieldName")
+        yield self._list(key, "key")
         yield "</query>"
         data = self._statistics.get(beginDay, endDay, key)
         for value, count in data.items():
             yield "<result>"
-            yield self._list(value, "fieldValue")
+            yield self._list(value, "value")
             yield "<count>%s</count>" % count
             yield "</result>"
         yield "</statistic>"
