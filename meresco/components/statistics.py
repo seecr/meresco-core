@@ -52,25 +52,6 @@ class Statistics(Observable):
                     result[None] += 1
         return result
 
-    def show(self):
-        yield "<statistics>"
-        for key in self._keys:
-            yield "<statistic>"
-            yield "<query>"
-            for keyPart in key:
-                yield "<fieldName>%s</fieldName>" % keyPart
-            yield "</query>"
-            from time import time
-            data = self.get(0, time() + 1, key)
-            for value, count in data.items():
-                yield "<result>"
-                for keyPart in value:
-                    yield "<fieldValue>%s</fieldValue>" % keyPart
-                yield "<count>%s</count>" % count
-                yield "</result>"
-            yield "</statistic>"
-        yield "</statistics>"
-
     def _clock(self):
         return int(time())
 
