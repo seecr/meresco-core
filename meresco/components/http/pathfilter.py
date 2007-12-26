@@ -26,15 +26,17 @@
 ## end license ##
 
 from meresco.framework.observable import Observable
+from meresco.components.statistics import Logger
 
-class PathFilter(Observable):
+class PathFilter(Observable, Logger):
     def __init__(self, subPath):
         Observable.__init__(self)
+        Logger.__init__(self)
         self._subPath = subPath
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         if RequestURI.startswith(self._subPath):
-            kwargs.get('logLine', {})['path'] = self._subPath
+            self.log(path=self._subPath)
             return self.all.handleRequest(RequestURI=RequestURI, *args, **kwargs)
         return (f for f in [])
 

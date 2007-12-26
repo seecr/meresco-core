@@ -27,8 +27,6 @@
 from sys import exc_info
 from generatorutils import compose
 
-frame2log = {}
-
 class Defer:
     def __init__(self, observable, defereeType):
         self._observable = observable

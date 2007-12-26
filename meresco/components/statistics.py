@@ -56,7 +56,8 @@ class Statistics(Observable):
             for keyPart in key:
                 yield "<fieldName>%s</fieldName>" % keyPart
             yield "</query>"
-            data = self._data[key]
+            from time import time
+            data = self.get(0, time() + 1, key)
             for value, count in data.items():
                 yield "<result>"
                 for keyPart in value:
