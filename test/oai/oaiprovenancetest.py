@@ -27,6 +27,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
+from StringIO import StringIO
 
 from meresco.framework import Observable
 from meresco.components.oai.oaiprovenance import OaiProvenance
@@ -35,13 +36,12 @@ class MockStorage(object):
     def __init__(self):
         self.timesCalled = 0
 
-    def write(self, stream, ident, partname):
+    def getStream(self, ident, partname):
         self.timesCalled += 1
         if partname == 'meta':
-            stream.write("<meta><repository><metadataNamespace>METADATANAMESPACE</metadataNamespace><baseurl>BASEURL</baseurl><harvestDate>HARVESTDATE</harvestDate></repository></meta>")
+            return StringIO("<meta><repository><metadataNamespace>METADATANAMESPACE</metadataNamespace><baseurl>BASEURL</baseurl><harvestDate>HARVESTDATE</harvestDate></repository></meta>")
         elif partname == 'header':
-            #stream.write("<header><identifier>IDENTIFIER</identifier><datestamp>DATESTAMP</datestamp></header>")
-            stream.write("""<header xmlns="http://www.openarchives.org/OAI/2.0/">
+            return StringIO("""<header xmlns="http://www.openarchives.org/OAI/2.0/">
     <identifier>IDENTIFIER</identifier>
     <datestamp>DATESTAMP</datestamp>
 
@@ -52,11 +52,11 @@ class OaiProvenanceTest(CQ2TestCase):
     def testCacheStorageResults(self):
         observable = Observable()
         provenance = OaiProvenance({
-            'baseURL':('meta', 'meta/repository/baseurl'),
-            'harvestDate': ('meta', 'meta/repository/harvestDate'),
-            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace'),
-            'identifier': ('header','header/identifier'),
-            'datestamp': ('header', 'header/datestamp'),
+            'baseURL':('meta', 'meta/repository/baseurl/text()'),
+            'harvestDate': ('meta', 'meta/repository/harvestDate/text()'),
+            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace/text()'),
+            'identifier': ('header','header/identifier/text()'),
+            'datestamp': ('header', 'header/datestamp/text()'),
             })
         observable.addObserver(provenance)
         storage = MockStorage()
@@ -71,11 +71,11 @@ class OaiProvenanceTest(CQ2TestCase):
     def testProvenance(self):
         observable = Observable()
         provenance = OaiProvenance({
-            'baseURL': ('meta', '/meta/repository/baseurl'),
-            'harvestDate': ('meta', '/meta/repository/harvestDate'),
-            'metadataNamespace': ('meta', '/meta/repository/metadataNamespace'),
-            'identifier': ('header','/oai_dc:header/oai_dc:identifier'),
-            'datestamp': ('header', '/oai_dc:header/oai_dc:datestamp'),
+            'baseURL': ('meta', '/meta/repository/baseurl/text()'),
+            'harvestDate': ('meta', '/meta/repository/harvestDate/text()'),
+            'metadataNamespace': ('meta', '/meta/repository/metadataNamespace/text()'),
+            'identifier': ('header','/oai_dc:header/oai_dc:identifier/text()'),
+            'datestamp': ('header', '/oai_dc:header/oai_dc:datestamp/text()'),
             }, {'oai_dc': "http://www.openarchives.org/OAI/2.0/"})
         observable.addObserver(provenance)
         observer = MockStorage()

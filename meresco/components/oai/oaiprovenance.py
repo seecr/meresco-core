@@ -29,6 +29,7 @@ from StringIO import StringIO
 from lxml.etree import parse
 
 from meresco.framework import Observable
+from meresco.components import XmlCompose
 
 
 PROVENANCE_TEMPLATE = """<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
@@ -45,33 +46,10 @@ PROVENANCE_TEMPLATE = """<provenance xmlns="http://www.openarchives.org/OAI/2.0/
 </provenance>
 """
 
-class OaiProvenance(Observable):
-
+class OaiProvenance(XmlCompose):
     def __init__(self, fieldMapping, nsMap={}):
-        Observable.__init__(self)
-        self._fieldMapping = fieldMapping
-        self._nsMap = nsMap
+        XmlCompose.__init__(self, PROVENANCE_TEMPLATE, fieldMapping, nsMap)
 
     def provenance(self, aRecordId):
-        provenanceData = {}
-        cachedData = {}
-        for tagName in self._fieldMapping:
-            partname, xPathExpression = self._fieldMapping[tagName]
-            if not partname in cachedData:
-                cachedData[partname] = self._getPart(aRecordId, partname)
-
-            xml = parse(StringIO(cachedData[partname]))
-
-            result = xml.xpath(xPathExpression, self._nsMap)
-            if result:
-                provenanceData[tagName] = result[0].text
-
-        provenanceResult = ''
-        if len(provenanceData) != len(self._fieldMapping):
-            raise StopIteration
-        yield PROVENANCE_TEMPLATE % provenanceData
-
-    def _getPart(self, recordId, partname):
-        stream = StringIO()
-        self.any.write(stream, recordId, partname)
-        return stream.getvalue()
+        return self.compose(aRecordId)
+        

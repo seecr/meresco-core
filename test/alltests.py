@@ -40,6 +40,7 @@ import unittest
 
 from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
+from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
@@ -52,18 +53,16 @@ from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from observabletest import ObservableTest
 from observablehttpservertest import ObservableHttpServerTest
-from rssprofiletest import RssProfileTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
+from rsstest import RssTest
+from statisticstest import StatisticsTest
+from statisticsxmltest import StatisticsXmlTest
 from teddygrowlservertest import TeddyGrowlServerTest
 from venturitest import VenturiTest
 from xml2documenttest import Xml2DocumentTest
 from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
-from rsstest import RssTest
-from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
-from statisticstest import StatisticsTest
-from statisticsxmltest import StatisticsXmlTest
 
 from http.fileservertest import FileServerTest
 
@@ -87,6 +86,7 @@ from oai.resumptiontokentest import ResumptionTokenTest
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
 from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
+from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
 
 from dictionary.transformtest import TransformTest
