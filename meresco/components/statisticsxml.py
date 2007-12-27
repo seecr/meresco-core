@@ -14,16 +14,39 @@ class StatisticsXml(object):
         beginDay = self._parseDay(arguments.get("beginDay", ["1970-01-01"])[0])
         endDay = self._parseDay(arguments.get("endDay", ["2030-12-31"])[0], endDay=True)
         key = arguments.get("key", None)
+        if not key:
+            return self._listKeys()
         if key:
             key = tuple(key)
         return compose(self._query(beginDay, endDay, key))
 
+    def _htmlHeader(self):
+        return "HTTP/1.0 200 Ok\r\nContent-Type: text/xml\r\n\r\n"
+
+    def _listKeys(self):
+        yield self._htmlHeader()
+
+        yield "<queries>"
+        for keys in self._statistics.listKeys():
+            yield "<query>"
+            for key in keys:
+                yield "<key>%s</key>" % key
+            yield "</query>"
+        yield "</queries>"
+
     def _query(self, beginDay, endDay, key):
+        yield self._htmlHeader()
+
+        try:
+            data = self._statistics.get(beginDay, endDay, key)
+        except KeyError, e:
+            yield "<error>Unknown key: %s</error>" % str(key)
+            raise StopIteration
+
         yield "<statistic>"
         yield "<query>"
         yield self._list(key, "key")
         yield "</query>"
-        data = self._statistics.get(beginDay, endDay, key)
         for value, count in data.items():
             yield "<result>"
             yield self._list(value, "value")

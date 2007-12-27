@@ -36,7 +36,12 @@ class Statistics(Observable):
             yield response
         self._process(__log__)
 
-    def get(self, t0, t1, key=None):
+    def listKeys(self):
+        return self._keys
+
+    def get(self, t0, t1, key):
+        if key not in self._keys:
+            raise KeyError('%s not in %s' % (key, self._keys))
         result = {}
         for t, data in self._data.items():
             if int(t) >= t0 and int(t) <= t1:
@@ -46,10 +51,6 @@ class Statistics(Observable):
                             result[term] += count
                         else:
                             result[term] = count
-                if key == None:
-                    if not None in result:
-                        result[None] = 0
-                    result[None] += 1
         return result
 
     def _clock(self):

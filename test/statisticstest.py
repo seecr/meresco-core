@@ -87,15 +87,6 @@ class StatisticsTest(CQ2TestCase):
                 ('2007-12-20', '#undefined'): 1,
         }, stats.get(0, 1, ('date', 'protocol')))
 
-    def testGetTimeOnly(self):
-        stats = Statistics(self.tempdir, [('anything',)])
-
-        stats._clock = lambda: 0
-        stats._process({'anything':'value'})
-        self.assertEquals({
-                None: 1
-        }, stats.get(0, 1))
-
     def testStringToDict(self):
         stats = Statistics('ignored', 'keys ignored')
         self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data'))
@@ -182,3 +173,30 @@ class StatisticsTest(CQ2TestCase):
         mocktime = t1 = t0 + 1
         stats._process({'message': 'A'})
         self.assertEquals({('A',): 2}, stats.get(t0, t1, ('message',)))
+
+    def testListKeys(self):
+        stats = Statistics(self.tempdir, [('message',), ('ape', 'nut')])
+        self.assertEquals([('message',), ('ape', 'nut')], stats.listKeys())
+
+    def testEmptyDataForKey(self):
+        stats = Statistics(self.tempdir, [('message',)])
+        retval = stats.get(0, 1, ('message',))
+        self.assertEquals({}, retval)
+
+    def testObligatoryKey(self):
+        stats = Statistics(self.tempdir, [('message',), ('message', 'submessage')])
+        stats._clock = lambda: 0
+        stats._process({'message': 'A', 'submessage': 'B'})
+        retval = stats.get(0, 1, ('message',))
+        self.assertTrue(retval)
+
+        retval = stats.get(0, 1, ('message', 'submessage'))
+        self.assertTrue(retval)
+
+        try:
+            stats.get(0, 1, ('not specified',))
+            self.fail('must not accept unspecified key')
+        except KeyError:
+            pass
+
+
