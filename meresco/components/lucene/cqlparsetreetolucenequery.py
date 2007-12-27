@@ -39,91 +39,111 @@ def _termOrPhraseQuery(index, termString):
         result.add(Term(index, term))
     return result
 
-class Composer(object):
+class CqlVisitor(object):
+    def __init__(self, root):
+        self._root = root
+
+    def visit(self):
+        return self._root.accept(self)
+
+    def visitCQL_QUERY(self, node):
+        if node.__class__ == CQL_QUERY:
+            assert len(node.children()) == 1
+            return node.children()[0].accept(self)
+
+    def visitSCOPED_CLAUSE(self, node):
+        if len(node.children()) == 1:
+            return node.children()[0].accept(self)
+        if len(node.children()) == 3:
+            lhs = node.children()[0].accept(self)
+            operator = node.children()[1].accept(self)
+            rhs = node.children()[2].accept(self)
+            lhsDict = {
+                "AND": BooleanClause.Occur.MUST,
+                "OR" : BooleanClause.Occur.SHOULD,
+                "NOT": BooleanClause.Occur.MUST
+            }
+            rhsDict = lhsDict.copy()
+            rhsDict["NOT"] = BooleanClause.Occur.MUST_NOT
+            query = BooleanQuery()
+            query.add(lhs, lhsDict[operator])
+            query.add(rhs, rhsDict[operator])
+            return query
+
+    def visitINDEX(self, node):
+        assert len(node.children()) == 1
+        return node.children()[0]
+
+    def visitRELATION(self, node):
+        if len(node.children()) == 1:
+            return node.children()[0].accept(self), '', ''
+        assert len(node.children()) == 2
+        relation = node.children()[0].accept(self)
+        modifier, value = node.children()[1].accept(self)
+        return relation, modifier, value
+
+    def visitMODIFIER(self, node):
+        assert len(node.children()) == 3
+        name = node.children()[0]
+        comparitor = node.children()[1]
+        assert comparitor == "="
+        value = node.children()[2]
+        return name, value
+
+    def visitCOMPARITOR(self, node):
+        assert len(node.children()) == 1
+        assert node.children()[0] in ['=', 'exact']
+        return node.children()[0]
+
+    def visitBOOLEAN(self, node):
+        assert len(node.children()) == 1
+        return node.children()[0].upper()
+
+    def visitSEARCH_TERM(self, node):
+        assert len(node.children()) == 1
+        term = str(node.children()[0])
+        if term[0] == '"':
+            return term[1:-1] #.replace(r'\"', '"')
+        return term
+
+class CqlAst2LuceneVisitor(CqlVisitor):
+    def __init__(self, unqualifiedTermFields, node):
+        CqlVisitor.__init__(self, node)
+        self._unqualifiedTermFields = unqualifiedTermFields
+
+    def visitSEARCH_CLAUSE(self, node):
+        if len(node.children()) == 1: #unqualified term
+            unqualifiedRhs = node.children()[0].accept(self)
+            if len(self._unqualifiedTermFields) == 1:
+                fieldname, boost = self._unqualifiedTermFields[0]
+                query = _termOrPhraseQuery(fieldname, unqualifiedRhs)
+                query.setBoost(boost)
+            else:
+                query = BooleanQuery()
+                for fieldname, boost in self._unqualifiedTermFields:
+                    subQuery = _termOrPhraseQuery(fieldname, unqualifiedRhs)
+                    subQuery.setBoost(boost)
+                    query.add(subQuery, BooleanClause.Occur.SHOULD)
+            return query
+        if len(node.children()) == 3: #either ( ... ) or a=b
+            if node.children()[0] == "(":
+                return node.children()[1].accept(self)
+            lhs = node.children()[0].accept(self)
+            relation, modifier, value = node.children()[1].accept(self)
+            rhs = node.children()[2].accept(self)
+            if relation == 'exact':
+                query = TermQuery(Term(lhs, rhs))
+            else:
+                query = _termOrPhraseQuery(lhs, rhs)
+            if modifier:
+                assert modifier == "boost"
+                query.setBoost(float(value))
+            return query
+
+class Composer:
     def __init__(self, unqualifiedTermFields):
         self._unqualifiedTermFields = unqualifiedTermFields
 
     def compose(self, node):
-        if node.__class__ == CQL_QUERY:
-            assert len(node.children()) == 1
-            return self.compose(node.children()[0])
-        if node.__class__ == SCOPED_CLAUSE:
-            if len(node.children()) == 1:
-                return self.compose(node.children()[0])
-            if len(node.children()) == 3:
-                lhs = self.compose(node.children()[0])
-                operator = self.compose(node.children()[1])
-                rhs = self.compose(node.children()[2])
-                lhsDict = {
-                    "AND": BooleanClause.Occur.MUST,
-                    "OR" : BooleanClause.Occur.SHOULD,
-                    "NOT": BooleanClause.Occur.MUST
-                }
-                rhsDict = lhsDict.copy()
-                rhsDict["NOT"] = BooleanClause.Occur.MUST_NOT
-                query = BooleanQuery()
-                query.add(lhs, lhsDict[operator])
-                query.add(rhs, rhsDict[operator])
-                return query
+        return CqlAst2LuceneVisitor(self._unqualifiedTermFields, node).visit()
 
-        if node.__class__ in [INDEX]:
-            assert len(node.children()) == 1
-            return node.children()[0]
-        if node.__class__ == SEARCH_CLAUSE:
-            if len(node.children()) == 1: #unqualified term
-                unqualifiedRhs = self.compose(node.children()[0])
-                if len(self._unqualifiedTermFields) == 1:
-                    fieldname, boost = self._unqualifiedTermFields[0]
-                    query = _termOrPhraseQuery(fieldname, unqualifiedRhs)
-                    query.setBoost(boost)
-                else:
-                    query = BooleanQuery()
-                    for fieldname, boost in self._unqualifiedTermFields:
-                        subQuery = _termOrPhraseQuery(fieldname, unqualifiedRhs)
-                        subQuery.setBoost(boost)
-                        query.add(subQuery, BooleanClause.Occur.SHOULD)
-                return query
-            if len(node.children()) == 3: #either ( ... ) or a=b
-                lhs = self.compose(node.children()[0])
-                if lhs == "(":
-                    return self.compose(node.children()[1])
-                relation, modifier, value = self.compose(node.children()[1])
-                rhs = self.compose(node.children()[2])
-                if relation == 'exact':
-                    query = TermQuery(Term(lhs, rhs))
-                else:
-                    query = _termOrPhraseQuery(lhs, rhs)
-                if modifier:
-                    assert modifier == "boost"
-                    query.setBoost(float(value))
-                return query
-        if node.__class__ == RELATION:
-            if len(node.children()) == 1:
-                return self.compose(node.children()[0]), '', ''
-            assert len(node.children()) == 2
-            relation = self.compose(node.children()[0])
-            modifier, value = self.compose(node.children()[1])
-            return relation, modifier, value
-        if node.__class__ == MODIFIER:
-            assert len(node.children()) == 3
-            name = self.compose(node.children()[0])
-            comparitor = self.compose(node.children()[1])
-            assert comparitor == "="
-            value = self.compose(node.children()[2])
-            return name, value
-        if node.__class__ == COMPARITOR:
-            assert len(node.children()) == 1
-            assert node.children()[0] in ['=', 'exact']
-            return node.children()[0]
-        if node.__class__ == BOOLEAN:
-            assert len(node.children()) == 1
-            return node.children()[0].upper()
-        if node.__class__ == SEARCH_TERM:
-            assert len(node.children()) == 1
-            term = self.compose(node.children()[0])
-            if term[0] == '"':
-                return term[1:-1] #.replace(r'\"', '"')
-            return term
-        if node.__class__ == str:
-            return node
-        raise Exception("Unknown token " + str(node))

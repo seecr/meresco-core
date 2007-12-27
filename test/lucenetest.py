@@ -37,6 +37,9 @@ from meresco.components.lucene.document import Document
 
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.lucene.document import IDFIELD
+from meresco.components.lucene.cqlparsetreetolucenequery import Composer
+
+from cqlparser import parseString
 
 from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery
 
@@ -45,7 +48,7 @@ class LuceneTest(CQ2TestCase):
     def setUp(self):
         self._tempdir = gettempdir()+'/testing'
         self.directoryName = os.path.join(self._tempdir, 'lucene-index')
-        self._luceneIndex = LuceneIndex(self.directoryName, 'Poging 1')
+        self._luceneIndex = LuceneIndex(self.directoryName, Composer({}))
 
     def tearDown(self):
         self._luceneIndex.close()
@@ -143,3 +146,17 @@ class LuceneTest(CQ2TestCase):
         index.executeCQL("cqlAbstractSyntaxTree")
         self.assertEquals(1, len(mockComposer.calledMethods))
         self.assertEquals("cqlAbstractSyntaxTree", mockComposer.calledMethods[0].arguments[0])
+
+    def testLoggingCQL(self):
+        def logShunt(**dict):
+            self.dict = dict
+        self._luceneIndex.log = logShunt
+
+        self._luceneIndex.executeCQL(parseString("term"))
+        self.assertEquals({'terms': ['term']}, self.dict)
+
+        self._luceneIndex.executeCQL(parseString("field=term"))
+        self.assertEquals({'terms': ['field=term']}, self.dict)
+
+        self._luceneIndex.executeCQL(parseString("field=term AND ape=nut"))
+        self.assertEquals({'terms': ['ape=nut', 'field=term']}, self.dict)

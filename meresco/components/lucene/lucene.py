@@ -30,14 +30,16 @@ import PyLucene
 import xml.sax.saxutils
 
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
+from meresco.components.lucene.loggingcomposer import LoggingComposer
 
 from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
+from meresco.components.statistics import Logger
 
 class LuceneException(Exception):
     pass
 
-class LuceneIndex:
+class LuceneIndex(Logger):
 
     def __init__(self, aDirectoryName, cqlComposer):
         self.__searcher = None
@@ -58,6 +60,15 @@ class LuceneIndex:
         return Hits(self._getSearcher(), pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
+        loggingComposer = LoggingComposer({})
+        loggingComposer.compose(cqlAbstractSyntaxTree)
+        queries = loggingComposer.getQueries()
+        logLine = []
+        for field in sorted(queries.keys()):
+            for term in sorted(queries[field]):
+                logLine.append('%s=%s' % (field, term))
+        self.log(terms=logLine)
+
         return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def addToIndex(self, aDocument):
