@@ -25,7 +25,7 @@ from unittest import TestCase
 
 from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery
 
-from cqlparser.cqlparser import parseString as parseCql
+from cqlparser import parseString as parseCql
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 class CqlParseTreeToLuceneQueryTest(TestCase):
