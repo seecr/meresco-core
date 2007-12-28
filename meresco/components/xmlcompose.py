@@ -4,13 +4,13 @@ from lxml.etree import parse
 from xml.sax.saxutils import escape as xmlEscape
 
 class XmlCompose(Observable):
-    def __init__(self, template, fieldMapping, nsMap={}):
+    def __init__(self, template, nsMap, **fieldMapping):
         Observable.__init__(self)
         self._template = template
-        self._fieldMapping = fieldMapping
         self._nsMap = nsMap
+        self._fieldMapping = fieldMapping
     
-    def compose(self, aRecordId):
+    def getRecord(self, aRecordId):
         data = {}
         cachedRecord = {}
         for tagName, values in self._fieldMapping.items():

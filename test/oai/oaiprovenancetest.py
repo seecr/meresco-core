@@ -32,56 +32,43 @@ from StringIO import StringIO
 from meresco.framework import Observable
 from meresco.components.oai.oaiprovenance import OaiProvenance
 
-class MockStorage(object):
-    def __init__(self):
-        self.timesCalled = 0
-
-    def getStream(self, ident, partname):
-        self.timesCalled += 1
-        if partname == 'meta':
-            return StringIO("<meta><repository><metadataNamespace>METADATANAMESPACE</metadataNamespace><baseurl>BASEURL</baseurl><harvestDate>HARVESTDATE</harvestDate></repository></meta>")
-        elif partname == 'header':
-            return StringIO("""<header xmlns="http://www.openarchives.org/OAI/2.0/">
-    <identifier>IDENTIFIER</identifier>
-    <datestamp>DATESTAMP</datestamp>
-
-  </header>""")
-
 class OaiProvenanceTest(CQ2TestCase):
 
     def testCacheStorageResults(self):
         observable = Observable()
-        provenance = OaiProvenance({
-            'baseURL':('meta', 'meta/repository/baseurl/text()'),
-            'harvestDate': ('meta', 'meta/repository/harvestDate/text()'),
-            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace/text()'),
-            'identifier': ('header','header/identifier/text()'),
-            'datestamp': ('header', 'header/datestamp/text()'),
-            })
+        provenance = OaiProvenance(
+            nsMap = {},
+            baseURL = ('meta', 'meta/repository/baseurl/text()'),
+            harvestDate = ('meta', 'meta/repository/harvestDate/text()'),
+            metadataNamespace = ('meta', 'meta/repository/metadataNamespace/text()'),
+            identifier = ('header','header/identifier/text()'),
+            datestamp = ('header', 'header/datestamp/text()')
+        )
         observable.addObserver(provenance)
         storage = MockStorage()
         observer = storage
         provenance.addObserver(observer)
 
         self.assertEquals(0, storage.timesCalled)
-        result = ''.join(list(observable.any.provenance("recordId")))
+        result = ''.join(list(observable.any.getRecord("recordId")))
         self.assertEquals(2, storage.timesCalled)
 
 
     def testProvenance(self):
         observable = Observable()
-        provenance = OaiProvenance({
-            'baseURL': ('meta', '/meta/repository/baseurl/text()'),
-            'harvestDate': ('meta', '/meta/repository/harvestDate/text()'),
-            'metadataNamespace': ('meta', '/meta/repository/metadataNamespace/text()'),
-            'identifier': ('header','/oai_dc:header/oai_dc:identifier/text()'),
-            'datestamp': ('header', '/oai_dc:header/oai_dc:datestamp/text()'),
-            }, {'oai_dc': "http://www.openarchives.org/OAI/2.0/"})
+        provenance = OaiProvenance(
+            nsMap = {'oai_dc': "http://www.openarchives.org/OAI/2.0/"},
+            baseURL = ('meta', '/meta/repository/baseurl/text()'),
+            harvestDate = ('meta', '/meta/repository/harvestDate/text()'),
+            metadataNamespace = ('meta', '/meta/repository/metadataNamespace/text()'),
+            identifier = ('header','/oai_dc:header/oai_dc:identifier/text()'),
+            datestamp = ('header', '/oai_dc:header/oai_dc:datestamp/text()')
+        )
         observable.addObserver(provenance)
         observer = MockStorage()
         provenance.addObserver(observer)
 
-        result = ''.join(list(observable.any.provenance("recordId")))
+        result = ''.join(list(observable.any.getRecord("recordId")))
         self.assertEqualsWS(result, """<provenance xmlns="http://www.openarchives.org/OAI/2.0/provenance"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/provenance
@@ -97,17 +84,33 @@ class OaiProvenanceTest(CQ2TestCase):
 
     def testNoOutputIfValueMissing(self):
         observable = Observable()
-        provenance = OaiProvenance({
-            'baseURL':('meta', 'meta/repository/baseurl'),
-            'harvestDate': ('meta', 'meta/does/not/exist'),
-            'metadataNamespace': ('meta', 'meta/repository/metadataNamespace'),
-            'identifier': ('header','header/identifier'),
-            'datestamp': ('header', 'header/datestamp'),
-            })
+        provenance = OaiProvenance(
+            nsMap = {},
+            baseURL = ('meta', 'meta/repository/baseurl'),
+            harvestDate = ('meta', 'meta/does/not/exist'),
+            metadataNamespace = ('meta', 'meta/repository/metadataNamespace'),
+            identifier = ('header','header/identifier'),
+            datestamp = ('header', 'header/datestamp')
+        )
         observable.addObserver(provenance)
         observer = MockStorage()
         provenance.addObserver(observer)
 
-        result = ''.join(list(observable.any.provenance("recordId")))
+        result = ''.join(list(observable.any.getRecord("recordId")))
         self.assertEquals('', result)
+
+class MockStorage(object):
+    def __init__(self):
+        self.timesCalled = 0
+
+    def getStream(self, ident, partname):
+        self.timesCalled += 1
+        if partname == 'meta':
+            return StringIO("<meta><repository><metadataNamespace>METADATANAMESPACE</metadataNamespace><baseurl>BASEURL</baseurl><harvestDate>HARVESTDATE</harvestDate></repository></meta>")
+        elif partname == 'header':
+            return StringIO("""<header xmlns="http://www.openarchives.org/OAI/2.0/">
+    <identifier>IDENTIFIER</identifier>
+    <datestamp>DATESTAMP</datestamp>
+
+  </header>""")
 

@@ -9,17 +9,17 @@ from meresco.components import XmlCompose
 class XmlComposeTest(TestCase):
     def testOne(self):
         observable = Observable()
-        xmlcompose = XmlCompose(template = """<template><one>%(one)s</one><two>%(two)s</two></template>""",
-        fieldMapping =  {
-            'one': ('partname1', '/ns1:one/ns1:tag/text()'),
-            'two': ('partname2', '/two/tag/@name'),
-            },
-        nsMap = {'ns1': "http://namespaces.org/ns1"})
+        xmlcompose = XmlCompose(
+            template = """<template><one>%(one)s</one><two>%(two)s</two></template>""",
+            nsMap = {'ns1': "http://namespaces.org/ns1"},
+            one = ('partname1', '/ns1:one/ns1:tag/text()'),
+            two = ('partname2', '/two/tag/@name')
+        )
         observable.addObserver(xmlcompose)
         observer = MockStorage()
         xmlcompose.addObserver(observer)
 
-        result = ''.join(list(observable.any.compose("recordId")))
+        result = ''.join(list(observable.any.getRecord("recordId")))
         self.assertEqualsWS(result, """<template><one>1</one><two>&lt;one&gt;</two></template>""")
 
 class MockStorage(object):

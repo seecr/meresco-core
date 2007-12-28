@@ -47,9 +47,16 @@ PROVENANCE_TEMPLATE = """<provenance xmlns="http://www.openarchives.org/OAI/2.0/
 """
 
 class OaiProvenance(XmlCompose):
-    def __init__(self, fieldMapping, nsMap={}):
-        XmlCompose.__init__(self, PROVENANCE_TEMPLATE, fieldMapping, nsMap)
+    def __init__(self, nsMap, baseURL, harvestDate, metadataNamespace, identifier, datestamp):
+        XmlCompose.__init__(self,
+            PROVENANCE_TEMPLATE,
+            nsMap,
+            baseURL=baseURL,
+            harvestDate=harvestDate,
+            metadataNamespace=metadataNamespace,
+            identifier=identifier,
+            datestamp=datestamp)
 
     def provenance(self, aRecordId):
-        return self.compose(aRecordId)
+        return self.getRecord(aRecordId)
         
