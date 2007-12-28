@@ -53,8 +53,6 @@ class Rss(Observable):
         self._link = link
         self._sortKeys = sruArgs.get('sortKeys', None)
         self._maximumRecords = sruArgs.get('maximumRecords', 10)
-        self._recordSchema = sruArgs.get('recordSchema', None)
-        self._x_recordSchema = sruArgs.get('x_recordSchema', sruArgs.get('x-recordSchema', []))
 
     def handleRequest(self, RequestURI='', **kwargs):
         yield httputils.okRss
@@ -69,8 +67,6 @@ class Rss(Observable):
             sruQueryArguments = {
                 'query': [query],
                 'maximumRecords': [str(maximumRecords)],
-                'recordSchema': [self._recordSchema],
-                'x-recordSchema': self._x_recordSchema
             }
             if sortKeys != None:
                 sruQueryArguments['sortKeys'] = [sortKeys]
@@ -100,7 +96,4 @@ class Rss(Observable):
         start = sruQuery.startRecord - SRU_IS_ONE_BASED
 
         for recordId in hits[start: start + sruQuery.maximumRecords]:
-            yield self.any.getRssItem(recordId)
-            yield '<item>'
-            yield self.any.yieldRecord(recordId)
-            yield '</item>'
+            yield self.any.getRecord(recordId)
