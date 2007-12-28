@@ -36,5 +36,5 @@ def assertLinkTemplate(linkTemplate, linkFields):
     try:
         linkTemplate % dict(((k,'value') for k in linkFields.keys()))
     except KeyError, e:
-        givenArguments = len(linkFields) + len(['self', 'template', 'nsMap', 'title', 'description'])
+        givenArguments = len(linkFields) + len(['self', 'nsMap', 'title', 'description', 'linkTemplate'])
         raise TypeError("__init__() takes at least %s arguments (%s given, missing %s)" % (givenArguments + 1, givenArguments, str(e)))
