@@ -2,7 +2,7 @@ import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
 from os.path import isfile
-from meresco.components.statistics import Statistics, Logger
+from meresco.components.statistics import Statistics, Logger, combinations
 
 class StatisticsTest(CQ2TestCase):
 
@@ -10,7 +10,7 @@ class StatisticsTest(CQ2TestCase):
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         stats._clock = lambda: 0
-        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
+        stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['sru']})
         self.assertEquals({
                 ('2007-12-20',): 1
         }, stats.get(0, 1, ('date',)))
@@ -22,7 +22,7 @@ class StatisticsTest(CQ2TestCase):
         }, stats.get(0, 1, ('date', 'ip', 'protocol')))
 
         stats._clock = lambda: 0
-        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
+        stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['srw']})
         self.assertEquals({
                 ('2007-12-20',): 2
         }, stats.get(0, 1, ('date',)))
@@ -38,8 +38,8 @@ class StatisticsTest(CQ2TestCase):
     def testReadTxLog(self):
         fp = open(self.tempdir + '/txlog', 'w')
         try:
-            fp.write('0\tdate:2007-12-20\tip:127.0.0.1\tprotocol:sru\n')
-            fp.write('0\tdate:2007-12-20\tip:127.0.0.1\tprotocol:srw\n')
+            fp.write("0\t{'date':['2007-12-20'],'ip':['127.0.0.1'],'protocol':['sru']}\n")
+            fp.write("0\t{'date':['2007-12-20'],'ip':['127.0.0.1'],'protocol':['srw']}\n")
         finally:
             fp.close()
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
@@ -67,36 +67,25 @@ class StatisticsTest(CQ2TestCase):
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
         stats._clock = lambda: 1234
-        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'sru'})
+        stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['sru']})
 
         lines = readlines()
         self.assertEquals(1, len(lines))
-        self.assertEquals('1234\tdate:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
+        self.assertEquals("1234\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['sru']}\n", lines[0])
 
-        stats._process({'date':'2007-12-20', 'ip':'127.0.0.1', 'protocol':'srw'})
+        stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['srw']})
         lines = readlines()
         self.assertEquals(2, len(lines))
-        self.assertEquals('1234\tdate:2007-12-20\tip:127.0.0.1\tprotocol:sru\n', lines[0])
-        self.assertEquals('1234\tdate:2007-12-20\tip:127.0.0.1\tprotocol:srw\n', lines[1])
+        self.assertEquals("1234\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['sru']}\n", lines[0])
+        self.assertEquals("1234\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['srw']}\n", lines[1])
 
     def testUndefinedFieldValues(self):
         stats = Statistics(self.tempdir, [('date', 'protocol')])
         stats._clock = lambda: 0
-        stats._process({'date':'2007-12-20'})
+        stats._process({'date':['2007-12-20']})
         self.assertEquals({
                 ('2007-12-20', '#undefined'): 1,
         }, stats.get(0, 1, ('date', 'protocol')))
-
-    def testStringToDict(self):
-        stats = Statistics('ignored', 'keys ignored')
-        self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data'))
-        self.assertEquals({'a':'1', 'b':'data'}, stats._stringToDict('a:1\tb:data\t'))
-        self.assertEquals({'a':'1', 'b':'d:a:t:a'}, stats._stringToDict('a:1\tb:d:a:t:a'))
-
-    def testDictToString(self):
-        stats = Statistics('ignored', 'keys ignored')
-        self.assertEquals('a:1\tb:data', stats._dictToString({'a':'1', 'b':'data'}))
-        self.assertEquals('a:1\tb:data', stats._dictToString({'a':'1', 'b':'data', '':''}))
 
     def testEmptySnapShotState(self):
         stats = Statistics(self.tempdir, [('keys',)])
@@ -105,7 +94,7 @@ class StatisticsTest(CQ2TestCase):
     def testSnapshotState(self):
         stats = Statistics(self.tempdir, [('keys',)])
         stats._clock = lambda: 0
-        stats._process({'keys': '2007-12-20'})
+        stats._process({'keys': ['2007-12-20']})
         stats._writeSnapshot()
         self.assertTrue(isfile(self.tempdir + '/snapshot'))
         stats = Statistics(self.tempdir, [('keys',)])
@@ -116,7 +105,7 @@ class StatisticsTest(CQ2TestCase):
         theOldOne = {'0': {('keys',): {('the old one',): 3}}}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
-        open(self.tempdir + '/txlog', 'w').write('0\tkeys:from_log\n')
+        open(self.tempdir + '/txlog', 'w').write("0\t{'keys': ['from_log']}\n")
 
         snapshotFile = open(self.tempdir + '/snapshot.writing', 'w')
         snapshotFile.write('boom')
@@ -157,6 +146,18 @@ class StatisticsTest(CQ2TestCase):
         stats.addObserver(myObserver)
         list(stats.unknown("aMessage"))
         self.assertEquals({('newValue',): 1}, stats.get(0, 1, ('message',)))
+
+    def testSelfLogMultipleValuesForSameKey(self):
+        class MyObserver(Logger):
+            def aMessage(self):
+                self.log(message='value1')
+                self.log(message='value2')
+        stats = Statistics(self.tempdir, [('message',)])
+        stats._clock = lambda: 0
+        myObserver = MyObserver()
+        stats.addObserver(myObserver)
+        list(stats.unknown("aMessage"))
+        self.assertEquals({('value1',): 1, ('value2',) : 1}, stats.get(0, 1, ('message',)))
 
     def testCatchErrorsAndCloseTxLog(self):
         pass
@@ -199,4 +200,22 @@ class StatisticsTest(CQ2TestCase):
         except KeyError:
             pass
 
+    def testFlattenValuesNothingToDo(self):
+        fieldValues = ([1], [2], [5])
+        fieldValuesList = combinations(fieldValues[0], fieldValues[1:])
+        self.assertEquals([(1,2,5)], list(fieldValuesList))
 
+    def testFlattenValues(self):
+        fieldValues = ([1], [2,3], [4,5])
+        fieldValuesList = combinations(fieldValues[0], fieldValues[1:])
+        self.assertEquals([(1,2,4),(1,2,5),(1,3,4),(1,3,5)], list(fieldValuesList))
+
+    def testFlattenValues1(self):
+        fieldValues = ([1,2], [3,4,5])
+        fieldValuesList = combinations(fieldValues[0], fieldValues[1:])
+        self.assertEquals([(1,3), (1,4), (1,5), (2,3), (2,4), (2,5)], list(fieldValuesList))
+
+    def testFlattenValues2(self):
+        fieldValues = ([1,2], [3,4], [9])
+        fieldValuesList = combinations(fieldValues[0], fieldValues[1:])
+        self.assertEquals([(1,3,9),(1,4,9),(2,3,9),(2,4,9)], list(fieldValuesList))

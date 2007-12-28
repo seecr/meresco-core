@@ -5,12 +5,24 @@ from inspect import currentframe
 from time import time
 from meresco.framework import Observable
 
+def combinations(head, tail):
+    for value in head:
+        if not tail:
+            yield (value,)
+        else:
+            for trailer in combinations(tail[0], tail[1:]):
+                yield (value,) + trailer
+
 class Logger(object):
     def log(self, **kwargs):
         frame = currentframe().f_back
         while frame:
             if "__log__" in frame.f_locals:
-                frame.f_locals["__log__"].update(kwargs)
+                var = frame.f_locals["__log__"]
+                for key, value in kwargs.items():
+                    if not key in var:
+                        var[key] = []
+                    var[key].append(value)
                 return
             frame = frame.f_back
 
@@ -68,10 +80,12 @@ class Statistics(Observable):
         data = self._data[t]
         if statistic not in data:
             data[statistic] = {}
-        fieldValues = tuple([logLine.get(fieldName, "#undefined") for fieldName in statistic])
-        if not fieldValues in data[statistic]:
-            data[statistic][fieldValues] = 0
-        data[statistic][fieldValues] += 1
+        fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
+        fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
+        for fieldValues in fieldValuesCombos:
+            if not fieldValues in data[statistic]:
+                data[statistic][fieldValues] = 0
+            data[statistic][fieldValues] += 1
 
     def _readState(self):
         if isfile(self._snapshotFilename + ".writing"):
@@ -108,10 +122,9 @@ class Statistics(Observable):
         txfile = open(self._txlogFileName, 'r')
         try:
             for logLine in txfile:
-                t, logData = logLine.split('\t', 1)
-                data = self._stringToDict(logData.strip())
+                t, dictString = logLine.strip().split('\t')
                 for key in self._keys:
-                    self._updateData(t, key, data)
+                    self._updateData(t, key, eval(dictString))
         finally:
             txfile.close()
 
@@ -122,22 +135,13 @@ class Statistics(Observable):
         finally:
             snapshotFile.close()
 
-    def _stringToDict(self, aString):
-        return dict((key,value)
-            for key,value in (part.split(':',1)
-                for part in aString.split('\t') if part))
-
-    def _dictToString(self, aDictionary):
-        return '\t'.join(key+':'+value
-            for key,value in aDictionary.items() if key and value)
-
     def _txlog(self):
         if not self._txlogFile:
             self._txlogFile = open(self._txlogFileName, 'a')
         return self._txlogFile
 
     def _logTx(self, t, aDictionary):
-        line = str(t) + '\t' + self._dictToString(aDictionary)
+        line = str(t) + '\t' + repr(aDictionary)
         fp = self._txlog()
         fp.write(line + "\n")
         fp.flush()

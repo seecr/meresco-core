@@ -143,20 +143,20 @@ class LuceneTest(CQ2TestCase):
         mockComposer = CallTrace("CQL Composer")
         mockComposer.returnValues["compose"] = TermQuery(Term('title', 'titel'))
         index = LuceneIndex(self.directoryName, mockComposer)
-        index.executeCQL("cqlAbstractSyntaxTree")
+        astTree = CallTrace("ASTTree")
+        index.executeCQL(astTree)
         self.assertEquals(1, len(mockComposer.calledMethods))
-        self.assertEquals("cqlAbstractSyntaxTree", mockComposer.calledMethods[0].arguments[0])
+        self.assertEquals(astTree, mockComposer.calledMethods[0].arguments[0])
 
     def testLoggingCQL(self):
         def logShunt(**dict):
             self.dict = dict
         self._luceneIndex.log = logShunt
-
         self._luceneIndex.executeCQL(parseString("term"))
-        self.assertEquals({'terms': ['term']}, self.dict)
-
+        self.assertEquals({'clause': 'term'}, self.dict)
         self._luceneIndex.executeCQL(parseString("field=term"))
-        self.assertEquals({'terms': ['field=term']}, self.dict)
-
-        self._luceneIndex.executeCQL(parseString("field=term AND ape=nut"))
-        self.assertEquals({'terms': ['ape=nut', 'field=term']}, self.dict)
+        self.assertEquals({'clause': 'field = term'}, self.dict)
+        self._luceneIndex.executeCQL(parseString("field =/boost=1.1 term"))
+        self.assertEquals({'clause': 'field =boost1.1 term'}, self.dict)
+        self._luceneIndex.executeCQL(parseString("field exact term"))
+        self.assertEquals({'clause': 'field exact term'}, self.dict)
