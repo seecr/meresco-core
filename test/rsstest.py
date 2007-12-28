@@ -27,6 +27,8 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
+from amara.binderytools import bind_string
+from urllib import urlencode
 
 from meresco.components.rss import Rss
 
@@ -58,10 +60,8 @@ class RssTest(CQ2TestCase):
             title = 'Test title',
             description = 'Test description',
             link = 'http://www.example.org',
-            recordSchema = 'dc',
             sortKeys = 'date,,1',
             maximumRecords = '15',
-            x_recordSchema = ['one', 'two']
         )
         rss.addObserver(observer)
 
@@ -69,20 +69,18 @@ class RssTest(CQ2TestCase):
         self.assertEqualsWS(RSS % '', result)
 
     def testOneResult(self):
-        def yieldRecord(recordId):
-            yield '<title>Test Title</title><link>Test Identifier</link><description>Test Description</description>'
+        def getRecord(recordId):
+            yield '<item><title>Test Title</title><link>Test Identifier</link><description>Test Description</description></item>'
 
         listeners = MockListeners(MockHits(1))
-        listeners.yieldRecord = yieldRecord
+        listeners.getRecord = getRecord
 
         rss = Rss(
             title = 'Test title',
             description = 'Test description',
             link = 'http://www.example.org',
-            recordSchema = 'dc',
             sortKeys = 'date,,1',
             maximumRecords = '15',
-            x_recordSchema = ['one', 'two']
         )
         rss.addObserver(listeners)
 
@@ -93,91 +91,53 @@ class RssTest(CQ2TestCase):
         <description>Test Description</description>
         </item>""", result)
 
-    def xxxtestWriteResultWithXmlEscaping(self):
-        def yieldRecord(recordId, recordSchema):
-            yield '<document><xmlfields><dctitle>&amp;&lt;&gt;</dctitle></xmlfields></document>'
-
-        listeners = MockListeners(MockHits(1))
-        listeners.yieldRecord = yieldRecord
-
-        component = Rss(
+    def testError(self):
+        rss = Rss(
             title = 'Test title',
             description = 'Test description',
             link = 'http://www.example.org',
-            recordSchema = 'dc',
-            sortKeys = 'date,,1',
-            maximumRecords = '15',
-            x_recordSchema = ['one', 'two']
         )
-        component.addObserver(listeners)
+        result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery%29'))) #%29 == ')'
 
-        result = "".join(list(component.handleRequest()))
-        self.assertEqualsWS(RSS % """<item>
-        <title>&amp;&lt;&gt;</title>
-        <link></link>
-        <description></description>
-        </item>""", result)
+        xml = bind_string(result[result.index("<?xml"):])
+        self.assertEquals('ERROR Test title', str(xml.rss.channel.title))
+        self.assertTrue('''An error occurred 'Unexpected token after parsing, check parser for greediness''' in str(xml.rss.channel.description), str(xml.rss.channel.description))
 
-    def xxxtestError(self):
-        result = "".join(list(Rss(self.profiles).handleRequest(RequestURI='/?query=aQuery%29'))) #%29 == ')'
+    def assertMaxAndSort(self, maximumRecords, sortKey, sortDirection, rssArgs, sruArgs):
+        rss = Rss(
+            title = 'Test title',
+            description = 'Test description',
+            link = 'http://www.example.org',
+            **rssArgs
+        )
+        recordIds = []
+        def getRecord(recordId):
+            recordIds.append(recordId)
+            return '<item/>'
+        queryResponder = MockListeners(MockHits(100))
+        queryResponder.getRecord = getRecord
+        rss.addObserver(queryResponder)
+        
+        result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery&' + urlencode(sruArgs))))
+        
+        self.assertEquals(sortKey, queryResponder.sortKey)
+        self.assertEquals(sortDirection, queryResponder.sortDirection)
+        self.assertEquals(maximumRecords, len(recordIds))
 
-        ERROR= RSS_HEAD % """
-<title>ERROR Test title</title><link>http://www.example.org</link><description>An error occurred 'Unexpected token after parsing, check parser for greediness ([)], cqlparser.cqlparser.CQL_QUERY(cqlparser.cqlparser.SCOPED_CLAUSE(cqlparser.cqlparser.SEARCH_CLAUSE(cqlparser.cqlparser.SEARCH_TERM('aQuery'))))).'</description>"""
-        self.assertEqualsWS(ERROR, result)
+    def testMaxAndSort(self):
+        self.assertMaxAndSort(10, None, None, rssArgs={}, sruArgs={})
+        self.assertMaxAndSort(15, None, None, rssArgs={'maximumRecords':'15'}, sruArgs={})
+        self.assertMaxAndSort(20, None, None, rssArgs={'maximumRecords':'15'}, sruArgs={'maximumRecords':'20'})
+        self.assertMaxAndSort(20, None, None, rssArgs={}, sruArgs={'maximumRecords':'20'})
 
-    def xxxtestMaximumRecordsAndSortKeys(self):
-        rss = Rss(self.profiles)
+        self.assertMaxAndSort(10, 'sortable', True, rssArgs={'sortKeys':'sortable,,1'}, sruArgs={})
+        self.assertMaxAndSort(10, 'othersortable', False, rssArgs={'sortKeys':'sortable,,1'}, sruArgs={'sortKeys':'othersortable,,0'})
+        self.assertMaxAndSort(10, 'othersortable', False, rssArgs={}, sruArgs={'sortKeys':'othersortable,,0'})
+        
+        
 
-        profile = self.profiles['default']
-        newArguments, recordSchema = rss._parseArguments(profile, {})
-
-        self.assertEquals(['15'], newArguments['maximumRecords'])
-        self.assertEquals(['sortField,,1'], newArguments['sortKeys'])
-
-        profile = self.profiles['default']
-        newArguments, recordSchema = rss._parseArguments(profile, { 'maximumRecords': ['42'], 'sortKeys': ['SORTKEY'] })
-
-        self.assertEquals(['42'], newArguments['maximumRecords'])
-        self.assertEquals(['SORTKEY'], newArguments['sortKeys'])
-
-    def xxxtestNoSortKeysInProfile(self):
-        rss = Rss(self.profiles)
-        profile = self.profiles['default']
-        profile.sortKeys = lambda: None
-
-        newArguments, recordSchema = rss._parseArguments(profile, {})
-
-        self.assertFalse(newArguments.has_key('sortKeys'))
-
-    def xxxtestSelectOtherProfile(self):
-        class OtherProfile(RssProfile):
-            def __init__(self):
-                self._item = lambda document: [
-                    ('title', document.xmlfields.dctitle),
-                    ('link', document.xmlfields.identifier),
-                    ('description', document.xmlfields.dcdescription)
-                ]
-                self._rss = Setters()
-                self._channel = Setters()
-                self._rss.maximumRecords = 15
-                self._rss.sortKeys = 'generic4,,1'
-                self._rss.recordSchema = 'document'
-                self._channel.title = 'Test title'
-                self._channel.link = 'http://www.example.org'
-                self._channel.description = 'Test description'
-
-        profile = OtherProfile()
-        profile._channel.extraTitle = 'Other'
-        profile._item = lambda x: [('title', 'othertitle')]
-
-        component = Rss(self.profiles)
-        component.addObserver(MockListeners(MockHits(0)))
-        component._profiles['otherprofile'] = profile
-
-        result = "".join(list(component.handleRequest(RequestURI='/?query=aQuery&x-rss-profile=otherprofile')))
-
-        self.assertTrue("""<extraTitle>Other</extraTitle>""" in result)
-
+        
+        
     def testContentType(self):
         listeners = MockListeners(MockHits(0))
         rss = Rss(title = 'Title', description = 'Description', link = 'Link')
@@ -185,10 +145,5 @@ class RssTest(CQ2TestCase):
 
         result = "".join(list(rss.handleRequest()))
         self.assertTrue('Content-Type: application/rss+xml' in result, result)
-
-    def xxxtestProfileDefaultsToDefault(self):
-        component = Rss(self.profiles)
-        profile = component._getProfile({'x-rss-profile': ['nonExistingProfile']})
-        self.assertEquals(self.profiles['default'], profile)
 
 
