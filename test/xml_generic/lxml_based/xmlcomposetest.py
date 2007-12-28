@@ -22,6 +22,30 @@ class XmlComposeTest(TestCase):
         result = ''.join(list(observable.any.getRecord("recordId")))
         self.assertEqualsWS(result, """<template><one>1</one><two>&lt;one&gt;</two></template>""")
 
+    def testModuloThing(self):
+        class SubXmlCompose(XmlCompose):
+            def createRecord(self, aDictionary):
+                return '|'.join([
+                    aDictionary['one'],
+                    aDictionary['two'].upper(),
+                    aDictionary['three'].swapcase()
+                ])
+        observable = Observable()
+        xmlcompose = SubXmlCompose(
+            template = None,
+            nsMap = {},
+            one = ('partname3', '/root/one/text()'),
+            two = ('partname3', '/root/two/text()'),
+            three = ('partname3', '/root/three/text()'),
+        )
+        observable.addObserver(xmlcompose)
+        observer = MockStorage()
+        xmlcompose.addObserver(observer)
+
+        result = ''.join(list(observable.any.getRecord("recordId")))
+        self.assertEqualsWS(result, """One|TWO|thrEE""")
+
+    
 class MockStorage(object):
     def __init__(self):
         self.timesCalled = 0
@@ -32,3 +56,6 @@ class MockStorage(object):
             return StringIO("""<one xmlns="http://namespaces.org/ns1"><tag>1</tag><tag>2</tag><escaped>&amp;</escaped></one>""")
         elif partname == 'partname2':
             return StringIO("""<two><tag name="&lt;one&gt;">one</tag><tag name="&quot;two'">two</tag></two>""")
+        elif partname == 'partname3':
+            return StringIO("""<root><one>One</one><two>TWo</two><three>THRee</three></root>""")
+        

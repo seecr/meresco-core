@@ -20,10 +20,13 @@ class XmlCompose(Observable):
             xml = cachedRecord[partname]
             result = xml.xpath(xPathExpression, self._nsMap)
             if result:
-                data[tagName] = xmlEscape(result[0])
+                data[tagName] = result[0]
+        yield self.createRecord(data)
+
+    def createRecord(self, data):
         if len(data) != len(self._fieldMapping):
             raise StopIteration
-        yield self._template % data
+        return self._template % dict(((k, xmlEscape(v)) for k,v in data.items()))
 
     def _getPart(self, recordId, partname):
         return parse(self.any.getStream(recordId, partname))

@@ -134,10 +134,6 @@ class RssTest(CQ2TestCase):
         self.assertMaxAndSort(10, 'othersortable', False, rssArgs={'sortKeys':'sortable,,1'}, sruArgs={'sortKeys':'othersortable,,0'})
         self.assertMaxAndSort(10, 'othersortable', False, rssArgs={}, sruArgs={'sortKeys':'othersortable,,0'})
         
-        
-
-        
-        
     def testContentType(self):
         listeners = MockListeners(MockHits(0))
         rss = Rss(title = 'Title', description = 'Description', link = 'Link')

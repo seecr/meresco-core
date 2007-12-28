@@ -56,6 +56,7 @@ from observablehttpservertest import ObservableHttpServerTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from rsstest import RssTest
+from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
 from statisticsxmltest import StatisticsXmlTest
 from teddygrowlservertest import TeddyGrowlServerTest
