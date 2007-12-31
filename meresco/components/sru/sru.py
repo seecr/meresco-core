@@ -90,6 +90,8 @@ class Sru(Observable):
                 for data in compose(self._doSearchRetrieve(query, arguments)):
                     yield data
         except Exception, e:
+            from traceback import print_exc
+            print_exc()
             yield "Unexpected Exception:\n"
             yield str(e)
             raise e
@@ -183,7 +185,7 @@ class Sru(Observable):
         return decorate('<srw:extraResponseData>',
             self._extraResponseDataTryExcept(arguments, hits),
             '</srw:extraResponseData>')
-            
+
     def _extraResponseDataTryExcept(self, arguments, hits):
         try:
             stuffs = compose(self.all.extraResponseData(arguments, hits))

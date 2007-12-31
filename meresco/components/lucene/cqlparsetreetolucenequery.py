@@ -42,8 +42,8 @@ class CqlAst2LuceneVisitor(CqlVisitor):
 
     def visitSCOPED_CLAUSE(self, node):
         clause = CqlVisitor.visitSCOPED_CLAUSE(self, node)
-        if not type(clause) == tuple:
-            return clause
+        if len(clause) == 1:
+            return clause[0]
         lhs, operator, rhs = clause
         lhsDict = {
             "AND": BooleanClause.Occur.MUST,
@@ -58,8 +58,9 @@ class CqlAst2LuceneVisitor(CqlVisitor):
         return query
 
     def visitSEARCH_CLAUSE(self, node):
-        if len(node.children()) == 1: #unqualified term
-            unqualifiedRhs = node.children()[0].accept(self)
+        results = CqlVisitor.visitSEARCH_CLAUSE(self, node)
+        if len(results) == 1:
+            ((unqualifiedRhs,),) = results
             if len(self._unqualifiedTermFields) == 1:
                 fieldname, boost = self._unqualifiedTermFields[0]
                 query = _termOrPhraseQuery(fieldname, unqualifiedRhs)
@@ -71,25 +72,29 @@ class CqlAst2LuceneVisitor(CqlVisitor):
                     subQuery.setBoost(boost)
                     query.add(subQuery, BooleanClause.Occur.SHOULD)
             return query
-        if len(node.children()) == 3: #either ( ... ) or a=b
-            if node.children()[0] == "(":
-                return node.children()[1].accept(self)
-            lhs = node.children()[0].accept(self)
-            relation, modifier, value = node.children()[1].accept(self)
-            rhs = node.children()[2].accept(self)
-            if relation == 'exact':
-                query = TermQuery(Term(lhs, rhs))
+        if len(results) == 3: #either "(" cqlQuery ")" or index relation searchTerm
+            (((left,),), ((middle,),), (right,)) = results
+            if left == "(":
+                return middle
+            if relation in ['==', 'exact']:
+                self.query = TermQuery(Term(left, right))
             else:
-                query = _termOrPhraseQuery(lhs, rhs)
-            if modifier:
-                assert modifier == "boost"
-                query.setBoost(float(value))
-            return query
+                self.query = _termOrPhraseQuery(left, right)
+            CqlVisitor.visitRELATION(self, middle)
+            return self.query
+
+    def visitRELATION(self, node):
+        if len(node.children()) == 1:
+            return
+        if len(node.children()) == 3:
+            relation, modifier, value = node.children()
+            self.query.setBoost(float(value))
 
 class Composer:
     def __init__(self, unqualifiedTermFields):
         self._unqualifiedTermFields = unqualifiedTermFields
 
     def compose(self, node):
-        return CqlAst2LuceneVisitor(self._unqualifiedTermFields, node).visit()
+        (result,) = CqlAst2LuceneVisitor(self._unqualifiedTermFields, node).visit()
+        return result
 

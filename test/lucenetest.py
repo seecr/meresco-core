@@ -160,3 +160,8 @@ class LuceneTest(CQ2TestCase):
         self.assertEquals({'clause': 'field =boost1.1 term'}, self.dict)
         self._luceneIndex.executeCQL(parseString("field exact term"))
         self.assertEquals({'clause': 'field exact term'}, self.dict)
+        self._luceneIndex.executeCQL(parseString("term1 AND term2"))
+        self.assertEquals({'clause': 'term'}, self.dict)
+        self._luceneIndex.executeCQL(parseString("(term)"))
+        self.assertEquals({'clause': 'term'}, self.dict)
+
