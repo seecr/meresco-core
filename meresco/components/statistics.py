@@ -49,6 +49,7 @@ class Statistics(Observable):
         for response in responses:
             yield response
         self._process(__log__)
+        self._snapshotIfNeeded()
 
     def listKeys(self):
         return self._keys
