@@ -219,3 +219,29 @@ class StatisticsTest(CQ2TestCase):
         fieldValues = ([1,2], [3,4], [9])
         fieldValuesList = combinations(fieldValues[0], fieldValues[1:])
         self.assertEquals([(1,3,9),(1,4,9),(2,3,9),(2,4,9)], list(fieldValuesList))
+        
+    def testSnapshotsTiming(self):
+        snapshots = []
+        def shuntWriteSnapshot():
+            snapshots.append('a snapshot')
+            stats._lastSnapshot = stats._clock() #needed because overwritten
+        
+        stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')], snapshotInterval=3600)
+        stats._writeSnapshot = shuntWriteSnapshot
+        stats._clock = lambda: 0
+        stats._readState() #must be done again after the clock is shunted
+
+        stats._snapshotIfNeeded()
+        self.assertEquals(0, len(snapshots))
+        
+        stats._clock = lambda: 3599
+        stats._snapshotIfNeeded()
+        self.assertEquals(0, len(snapshots))
+
+        stats._clock = lambda: 3600
+        stats._snapshotIfNeeded()
+        self.assertEquals(1, len(snapshots))
+
+        stats._clock = lambda: 3601
+        stats._snapshotIfNeeded()
+        self.assertEquals(1, len(snapshots))

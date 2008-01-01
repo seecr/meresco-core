@@ -27,13 +27,15 @@ class Logger(object):
             frame = frame.f_back
 
 class Statistics(Observable):
-    def __init__(self, path, keys):
+    def __init__(self, path, keys, snapshotInterval=3600):
         Observable.__init__(self)
         self._path = path
         self._snapshotFilename = join(self._path, 'snapshot')
         self._txlogFileName = join(self._path, 'txlog')
         self._txlogFile = None
         self._keys = keys
+        self._snapshotInterval = snapshotInterval
+        self._lastSnapshot = 0
         self._data = {}
         self._readState()
 
@@ -96,10 +98,12 @@ class Statistics(Observable):
             self._initializeFromSnapshot()
         if isfile(self._txlogFileName):
             self._initializeFromTxLog()
+        self._lastSnapshot = self._clock()
 
     def _writeSnapshot(self):
         self._prepareSnapshot()
         self._commitSnapshot()
+        self._lastSnapshot = self._clock()
 
     def _prepareSnapshot(self):
         snapshotFile = open(self._snapshotFilename + '.writing', 'wb')
@@ -146,3 +150,6 @@ class Statistics(Observable):
         fp.write(line + "\n")
         fp.flush()
 
+    def _snapshotIfNeeded(self):
+        if self._clock() >= self._lastSnapshot + self._snapshotInterval:
+            self._writeSnapshot()
