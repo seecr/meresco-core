@@ -252,55 +252,39 @@ class StatisticsTest(CQ2TestCase):
 
     def testStatisticsAggregatorAdd(self):
         aggregator = Aggregator()
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 0)
 
-        aggregator.add("value")
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value")
         self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
         self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0, 0))))
         self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0))))
 
     def testStatisticsAggregatorAddTwiceSameTime(self):
         aggregator = Aggregator()
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 0)
-
-        aggregator.add("value0")
-        aggregator.add("value1")
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value0")
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value1")
         self.assertEquals(["value0", "value1"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
 
     def testStatisticsAggregatorAddTwiceNewTime(self):
         aggregator = Aggregator()
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 0)
-        aggregator.add("value0")
-
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 1)
-        aggregator.add("value1")
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value0")
+        aggregator._addAt((2000, 1, 1, 0, 0, 1), "value1")
 
         self.assertEquals(["value0"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
         self.assertEquals(["value1"], list(aggregator.get((2000, 1, 1, 0, 0, 1))))
 
     def testStatisticsAggregatorAggregates(self):
         aggregator = Aggregator()
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 0)
-        aggregator.add("value00")
-
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 1)
-        aggregator.add("value01")
-
-        aggregator._clock = lambda: (2000, 1, 1, 0, 1, 0)
-        aggregator.add("value10")
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
+        aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
+        aggregator._addAt((2000, 1, 1, 0, 1, 0), "value10")
 
         self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
 
     def testStatisticsAggregatorAggregatesRecursivelyWithSkippedLevel(self):
         aggregator = Aggregator()
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 0)
-        aggregator.add("value00")
-
-        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 1)
-        aggregator.add("value01")
-
-        aggregator._clock = lambda: (2000, 1, 1, 1, 0, 0)
-        aggregator.add("value10")
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
+        aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
+        aggregator._addAt((2000, 1, 1, 1, 0, 0), "value10")
 
         self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._values)
 

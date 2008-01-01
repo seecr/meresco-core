@@ -204,10 +204,11 @@ class Aggregator(object):
         self._root = AggregatorNode()
 
     def add(self, data):
-        self._root.add(self._clock(), data)
+        self._addAt(gmtime()[:6], data)
+
+    def _addAt(self, time, data):
+        self._root.add(time, data)
 
     def get(self, fromTime):
         return compose(self._root.get(fromTime))
 
-    def _clock(self):
-        return gmtime()[:6]
