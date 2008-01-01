@@ -60,7 +60,7 @@ class CqlAst2LuceneVisitor(CqlVisitor):
     def visitSEARCH_CLAUSE(self, node):
         results = CqlVisitor.visitSEARCH_CLAUSE(self, node)
         if len(results) == 1:
-            ((unqualifiedRhs,),) = results
+            (unqualifiedRhs,) = results
             if len(self._unqualifiedTermFields) == 1:
                 fieldname, boost = self._unqualifiedTermFields[0]
                 query = _termOrPhraseQuery(fieldname, unqualifiedRhs)
@@ -73,22 +73,30 @@ class CqlAst2LuceneVisitor(CqlVisitor):
                     query.add(subQuery, BooleanClause.Occur.SHOULD)
             return query
         if len(results) == 3: #either "(" cqlQuery ")" or index relation searchTerm
-            (((left,),), ((middle,),), (right,)) = results
+            ((left,), middle, right) = results
             if left == "(":
                 return middle
+
+            relation, boost = middle
+
             if relation in ['==', 'exact']:
-                self.query = TermQuery(Term(left, right))
+                query = TermQuery(Term(left, right))
             else:
-                self.query = _termOrPhraseQuery(left, right)
-            CqlVisitor.visitRELATION(self, middle)
-            return self.query
+                query = _termOrPhraseQuery(left, right)
+
+            query.setBoost(boost)
+            return query
 
     def visitRELATION(self, node):
-        if len(node.children()) == 1:
-            return
-        if len(node.children()) == 3:
-            relation, modifier, value = node.children()
-            self.query.setBoost(float(value))
+        results = CqlVisitor.visitRELATION(self, node)
+        if len(results) == 1:
+            relation = results[0]
+            boost = 1.0
+        else:
+            (relation, ((modifier, comparitor, value), )) = results
+            boost = float(value)
+        return relation, boost
+
 
 class Composer:
     def __init__(self, unqualifiedTermFields):

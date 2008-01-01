@@ -118,7 +118,7 @@ class SRUFieldDrilldownTest(CQ2TestCase):
         result = list(adapter.drilldown('original', 'term', ['field0', 'field1']))
 
         self.assertEquals(2, len(observer.calledMethods))
-        self.assertEquals("executeCQL(<class cqlparser.cqlparser.CQL_QUERY>)", str(observer.calledMethods[0]))
+        self.assertEquals("executeCQL(<class CQL_QUERY>)", str(observer.calledMethods[0]))
         self.assertEquals("(original) and field0=term",  cqlCompose(observer.calledMethods[0].arguments[0]))
         self.assertEquals([("field0", 16), ("field1", 16)], result)
 
