@@ -75,7 +75,7 @@ class CqlAst2LuceneVisitor(CqlVisitor):
         if len(results) == 3: #either "(" cqlQuery ")" or index relation searchTerm
             ((left,), middle, right) = results
             if left == "(":
-                return middle
+                return middle[0]
 
             relation, boost = middle
 

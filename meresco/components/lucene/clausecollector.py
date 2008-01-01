@@ -30,12 +30,17 @@ class ClauseCollector(CqlVisitor):
         self._logger = logger
 
     def visitSCOPED_CLAUSE(self, node):
-        result = CqlVisitor.visitSCOPED_CLAUSE(self, node)
+        result = CqlVisitor.visitSCOPED_CLAUSE(self, node)[0]
         if len(result) == 1:
             self._logger(clause = result[0])
         else:
-            self._logger(clause = ' '.join(result))
+            if result[0] == "(":
+                return result[1]
+            self._logger(clause = "%s %s %s" % (result[0][0], result[1], result[2]))
         return result
 
     def visitRELATION(self, node):
-        return ''.join(CqlVisitor.visitRELATION(self, node))
+        result = CqlVisitor.visitRELATION(self, node)
+        if len(result) == 1:
+            return result[0]
+        return "%s%s%s" % (result[0], result[1][0][0], result[1][0][2])
