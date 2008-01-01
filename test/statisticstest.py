@@ -2,7 +2,7 @@ import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
 from os.path import isfile
-from meresco.components.statistics import Statistics, Logger, combinations
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator
 
 class StatisticsTest(CQ2TestCase):
 
@@ -219,13 +219,13 @@ class StatisticsTest(CQ2TestCase):
         fieldValues = ([1,2], [3,4], [9])
         fieldValuesList = combinations(fieldValues[0], fieldValues[1:])
         self.assertEquals([(1,3,9),(1,4,9),(2,3,9),(2,4,9)], list(fieldValuesList))
-        
+
     def testSnapshotsTiming(self):
         snapshots = []
         def shuntWriteSnapshot():
             snapshots.append('a snapshot')
             stats._lastSnapshot = stats._clock() #needed because overwritten
-        
+
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')], snapshotInterval=3600)
         stats._writeSnapshot = shuntWriteSnapshot
         stats._clock = lambda: 0
@@ -233,7 +233,7 @@ class StatisticsTest(CQ2TestCase):
 
         stats._snapshotIfNeeded()
         self.assertEquals(0, len(snapshots))
-        
+
         stats._clock = lambda: 3599
         stats._snapshotIfNeeded()
         self.assertEquals(0, len(snapshots))
@@ -245,3 +245,15 @@ class StatisticsTest(CQ2TestCase):
         stats._clock = lambda: 3601
         stats._snapshotIfNeeded()
         self.assertEquals(1, len(snapshots))
+
+    def testErikEnKlaas(self):
+        aggregator = Aggregator()
+        aggregator._clock = lambda: (2000, 1, 1, 0, 0, 0)
+        self.assertEquals([], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
+
+        aggregator.add("value")
+        self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
+        self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0, 0))))
+        self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0))))
+
+

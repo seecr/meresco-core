@@ -3,7 +3,7 @@ from os import rename, remove
 from os.path import isfile, join
 from inspect import currentframe
 from time import time
-from meresco.framework import Observable
+from meresco.framework import Observable, compose
 
 def combinations(head, tail):
     for value in head:
@@ -154,3 +154,44 @@ class Statistics(Observable):
     def _snapshotIfNeeded(self):
         if self._clock() >= self._lastSnapshot + self._snapshotInterval:
             self._writeSnapshot()
+
+class AggregatorNode(object):
+    def __init__(self):
+        self._values = []
+        self._children = {}
+
+    def add(self, l, data):
+        if len(l) == 0:
+            self._values.append(data)
+        else:
+            head, tail = l[0], l[1:]
+            if not head in self._children:
+                self._children[head] = AggregatorNode()
+            self._children[head].add(tail, data)
+
+    def get(self, l):
+        if len(l) == 0:
+            for value in self._values:
+                yield value
+            for child in self._children.values():
+                yield child.get(l)
+            raise StopIteration
+        head, tail = l[0], l[1:]
+        if not head in self._children:
+            raise StopIteration
+        yield self._children[head].get(tail)
+
+
+class Aggregator(object):
+
+    def __init__(self):
+        self._root = AggregatorNode()
+
+    def add(self, data):
+        self._root.add(self._clock(), data)
+
+    def get(self, fromTime):
+        return compose(self._root.get(fromTime))
+
+    def _clock(self):
+        return gmtime()[:6]
