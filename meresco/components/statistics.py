@@ -159,6 +159,16 @@ class AggregatorNode(object):
     def __init__(self):
         self._values = []
         self._children = {}
+        self._last = None
+        self._aggregated = False
+
+    def _aggregate(self):
+        if self._aggregated:
+            return
+        for child in self._children.values():
+            child._aggregate()
+            self._values.extend(child._values)
+        self._aggregated = True
 
     def add(self, l, data):
         if len(l) == 0:
@@ -168,6 +178,9 @@ class AggregatorNode(object):
             if not head in self._children:
                 self._children[head] = AggregatorNode()
             self._children[head].add(tail, data)
+            if self._last != None and self._last != head:
+                self._children[self._last]._aggregate()
+            self._last = head
 
     def get(self, l):
         if len(l) == 0:
@@ -180,6 +193,9 @@ class AggregatorNode(object):
         if not head in self._children:
             raise StopIteration
         yield self._children[head].get(tail)
+
+    def __repr__(self):
+        return "AggregatorNode (%s, %s)" % (self._values, self._children)
 
 
 class Aggregator(object):
