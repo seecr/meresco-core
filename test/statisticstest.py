@@ -2,7 +2,7 @@ import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
 from os.path import isfile
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException
 
 class StatisticsTest(CQ2TestCase):
 
@@ -279,6 +279,9 @@ class StatisticsTest(CQ2TestCase):
         aggregator._addAt((2000, 1, 1, 0, 1, 0), "value10")
 
         self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
+        self.assertEquals(["value00"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
+        self.assertEquals(["value01"], list(aggregator.get((2000, 1, 1, 0, 0, 1))))
+        self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
 
     def testStatisticsAggregatorAggregatesRecursivelyWithSkippedLevel(self):
         aggregator = Aggregator()
@@ -286,7 +289,25 @@ class StatisticsTest(CQ2TestCase):
         aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
         aggregator._addAt((2000, 1, 1, 1, 0, 0), "value10")
 
+        self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
         self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._values)
 
+        self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
+        self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0))))
 
+    def testStatisticsAggregatorTossesOldStuff(self):
+        aggregator = Aggregator()
+        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
+        aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
+        aggregator._addAt((2000, 1, 1, 0, 1, 0), "value10")
+        aggregator._addAt((2000, 1, 1, 0, 2, 0), "value20")
+        try:
+            self.assertEquals(["value00"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
+            self.fail()
+        except AggregatorException, e:
+            pass
+        self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
+
+    def testStatisticsAggregatorTossAroundTheCorner(self):
+        pass
 

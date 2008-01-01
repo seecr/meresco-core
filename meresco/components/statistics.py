@@ -155,6 +155,9 @@ class Statistics(Observable):
         if self._clock() >= self._lastSnapshot + self._snapshotInterval:
             self._writeSnapshot()
 
+class AggregatorException(Exception):
+    pass
+
 class AggregatorNode(object):
     def __init__(self):
         self._values = []
@@ -165,7 +168,7 @@ class AggregatorNode(object):
     def _aggregate(self):
         if self._aggregated:
             return
-        for child in self._children.values():
+        for nr, child in self._children.items():
             child._aggregate()
             self._values.extend(child._values)
         self._aggregated = True
@@ -186,8 +189,9 @@ class AggregatorNode(object):
         if len(l) == 0:
             for value in self._values:
                 yield value
-            for child in self._children.values():
-                yield child.get(l)
+            if not self._aggregated:
+                for nr, child in self._children.items():
+                    yield child.get(l)
             raise StopIteration
         head, tail = l[0], l[1:]
         if not head in self._children:
