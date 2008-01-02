@@ -239,23 +239,20 @@ class AggregatorNode(object):
         fromHead, fromTail = fromTime[0], fromTime[1:]
         untilHead, untilTail = untilTime[0], untilTime[1:]
         for digit, child in self._children.items():
-            if digit >= fromHead and \
-                ((fromTail and digit <= untilHead) or (not fromTail and digit < untilHead)):
-                if digit == fromHead:
-                    useFrom = fromTail
-                else: #digit > fromHead
-                    if not fromTail:
+            if len(fromTime) == 1:
+                if digit >= fromHead and digit < untilHead:
+                    child.get(result, [], [])
+            else:
+                if digit >= fromHead and digit <= untilHead:
+                    if digit == fromHead:
                         useFrom = fromTail
-                    else:
+                    else: #digit > fromHead
                         useFrom = BEGIN[-1 * len(fromTail):]
-                if digit == untilHead:
-                    useUntil = untilTail
-                else: #digit < untilHead
-                    if not untilTail:
+                    if digit == untilHead:
                         useUntil = untilTail
-                    else:
+                    else: #digit < untilHead
                         useUntil = END[-1 * len(untilTail):]
-                child.get(result, useFrom, useUntil)
+                    child.get(result, useFrom, useUntil)
 
         return result
 
