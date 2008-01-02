@@ -1,3 +1,4 @@
+# coding: utf-8
 from cq2utils import CQ2TestCase as TestCase
 
 from meresco.components.rssitem import RssItem
@@ -64,6 +65,21 @@ class RssItemTest(TestCase):
         except TypeError, e:
             self.assertEquals("__init__() takes at least 6 arguments (5 given, missing 'notMentioned')", str(e))
 
+    def testUnicodeInData(self):
+        item = RssItem(
+            nsMap = {},
+            title = ('part1', '/dc/title/text()'),
+            description = ('partWithUnicode', '/dc/description/text()'),
+            linkTemplate = 'http://www.example.org/%(recordType)s',
+            recordType = ('part2', '/meta/type/text()')
+        )
+        item.addObserver(MockStorage())
+        result = "".join(list(item.getRecord('aap')))
+        self.assertEqualsWS("""<item>
+    <title>Title</title>
+    <description>“</description>
+    <link>http://www.example.org/Type</link>
+</item>""", result)
 
 class MockStorage(object):
     def getStream(self, id, partname):
@@ -71,7 +87,9 @@ class MockStorage(object):
             return StringIO('<dc><title>Title</title><description>Description</description></dc>')
         elif partname == 'part2':
             return StringIO('<meta><upload><id>12(34)</id></upload><type>Type</type></meta>')
-        if partname == 'partNoDescription':
+        elif partname == 'partNoDescription':
             return StringIO('<dc><title>Title</title></dc>')
+        elif partname == 'partWithUnicode':
+            return StringIO('<dc><title>Title</title><description>&#8220;</description></dc>')
 
             

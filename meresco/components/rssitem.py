@@ -30,7 +30,7 @@ class RssItem(XmlCompose):
             'description': xmlEscape(dataDictionary.get('description', '')),
             'title': xmlEscape(dataDictionary.get('title', ''))
         }
-        return RSS_TEMPLATE % rssData
+        return str(RSS_TEMPLATE % rssData)
 
 def assertLinkTemplate(linkTemplate, linkFields):
     try:

@@ -20,7 +20,7 @@ class XmlCompose(Observable):
             xml = cachedRecord[partname]
             result = xml.xpath(xPathExpression, self._nsMap)
             if result:
-                data[tagName] = result[0]
+                data[tagName] = str(result[0])
         yield self.createRecord(data)
 
     def createRecord(self, data):
