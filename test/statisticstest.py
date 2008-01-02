@@ -276,38 +276,33 @@ class StatisticsTest(CQ2TestCase):
         aggregator = Aggregator()
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
         aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
-        aggregator._addAt((2000, 1, 1, 0, 1, 0), "value10")
+        aggregator._addAt((2000, 1, 1, 0, 1, 0), "should not yet trigger")
 
-        self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
+        self.assertEquals([], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
         self.assertEquals(["value00"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
-        self.assertEquals(["value01"], list(aggregator.get((2000, 1, 1, 0, 0, 1))))
+
+        aggregator._addAt((2000, 1, 1, 0, 2, 0), "trigger")
+        self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
+        try:
+            list(aggregator.get((2000, 1, 1, 0, 0, 0)))
+            self.fail()
+        except AggregatorException:
+            pass
         self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
 
     def testStatisticsAggregatorAggregatesRecursivelyWithSkippedLevel(self):
         aggregator = Aggregator()
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
         aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
-        aggregator._addAt((2000, 1, 1, 1, 0, 0), "value10")
+        aggregator._addAt((2000, 1, 1, 1, 0, 0), "should not yet trigger")
 
-        self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._values)
+        aggregator._addAt((2000, 1, 1, 2, 0, 0), "trigger")
         self.assertEquals(["value00", "value01"], aggregator._root._children[2000]._children[1]._children[1]._children[0]._values)
-
-        self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
+        try:
+            list(aggregator.get((2000, 1, 1, 0, 0)))
+            self.fail()
+        except AggregatorException:
+            pass
         self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0))))
 
-    def testStatisticsAggregatorTossesOldStuff(self):
-        aggregator = Aggregator()
-        aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
-        aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
-        aggregator._addAt((2000, 1, 1, 0, 1, 0), "value10")
-        aggregator._addAt((2000, 1, 1, 0, 2, 0), "value20")
-        try:
-            self.assertEquals(["value00"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
-            self.fail()
-        except AggregatorException, e:
-            pass
-        self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
-
-    def testStatisticsAggregatorTossAroundTheCorner(self):
-        pass
 

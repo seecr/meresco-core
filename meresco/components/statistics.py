@@ -159,66 +159,63 @@ class AggregatorException(Exception):
     pass
 
 class AggregatorNode(object):
-    def __init__(self, lastLasts):
-        self._lastLasts = lastLasts
+    def __init__(self, aggregationQueues):
         self._values = []
         self._children = {}
         self._last = None
         self._aggregated = False
-        self._cleared = False
+        self._aggregationQueues = aggregationQueues
 
-    def _clear(self):
-        self._values = []
-        self._cleared = True
-
-    def _aggregate(self, depth):
+    def _aggregate(self):
         if self._aggregated:
             return
-        if self._lastLasts[depth]:
-            self._lastLasts[depth]._clear()
-            self._lastLasts[depth] = None
-
         for nr, child in self._children.items():
-            child._aggregate(depth + 1)
+            child._aggregate()
             self._values.extend(child._values)
         self._aggregated = True
-        self._lastLasts[depth] = self
 
-    def add(self, l, data, depth):
-        if len(l) == 0:
+    def add(self, time, data, depth):
+        if len(time) == 0:
             self._values.append(data)
         else:
-            head, tail = l[0], l[1:]
+            head, tail = time[0], time[1:]
             if not head in self._children:
-                self._children[head] = AggregatorNode(self._lastLasts)
+                self._children[head] = AggregatorNode(self._aggregationQueues)
             self._children[head].add(tail, data, depth + 1)
-            if self._last != None and self._last != head:
-                self._children[self._last]._aggregate(depth + 1)
-            self._last = head
+            current = self._children[head]
+            q = self._aggregationQueues[depth]
+            if current not in q:
+                q.append(current)
+            if len(q) >= 3:
+                toDo = q[0]
+                q.remove(toDo)
+                toDo._aggregate()
 
-    def get(self, l):
-        if len(l) == 0:
-            if self._cleared:
-                raise AggregatorException('too precise')
+    def get(self, time):
+        if len(time) == 0:
             for value in self._values:
                 yield value
             if not self._aggregated:
                 for nr, child in self._children.items():
-                    yield child.get(l)
+                    yield child.get(time)
             raise StopIteration
-        head, tail = l[0], l[1:]
+        if self._aggregated:
+            raise AggregatorException('too precise')
+        head, tail = time[0], time[1:]
         if not head in self._children:
             raise StopIteration
         yield self._children[head].get(tail)
 
-    def __repr__(self):
+    def __reprdd__(self):
+        return
         return "AggregatorNode (%s, %s)" % (self._values, self._children)
 
 
 class Aggregator(object):
 
     def __init__(self):
-        self._root = AggregatorNode([None] * 7)
+        self._aggregationQueues = [[], [], [], [], [], [], []]
+        self._root = AggregatorNode(self._aggregationQueues)
 
     def add(self, data):
         self._addAt(gmtime()[:6], data)
