@@ -13,26 +13,26 @@ class StatisticsTest(CQ2TestCase):
         stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['sru']})
         self.assertEquals({
                 ('2007-12-20',): 1
-        }, stats.get(('date',), (1970,)))
+        }, stats.get(('date',), ()))
         self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
-        }, stats.get(('date', 'protocol'), (1970,)))
+        }, stats.get(('date', 'protocol')))
         self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1
-        }, stats.get(('date', 'ip', 'protocol'), (1970,)))
+        }, stats.get(('date', 'ip', 'protocol')))
 
         stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['srw']})
         self.assertEquals({
                 ('2007-12-20',): 2
-        }, stats.get(('date',), (1970,)))
+        }, stats.get(('date',)))
         self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
                 ('2007-12-20', 'srw'): 1,
-        }, stats.get(('date', 'protocol'), (1970,)))
+        }, stats.get(('date', 'protocol')))
         self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1,
                 ('2007-12-20', '127.0.0.1', 'srw'): 1
-        }, stats.get(('date', 'ip', 'protocol'), (1970,)))
+        }, stats.get(('date', 'ip', 'protocol')))
 
     def testReadTxLog(self):
         fp = open(self.tempdir + '/txlog', 'w')
@@ -44,15 +44,15 @@ class StatisticsTest(CQ2TestCase):
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
         self.assertEquals({
                 ('2007-12-20',): 2
-        }, stats.get(('date',), (1970,)))
+        }, stats.get(('date',)))
         self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
                 ('2007-12-20', 'srw'): 1,
-        }, stats.get(('date', 'protocol'), (1970,)))
+        }, stats.get(('date', 'protocol')))
         self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1,
                 ('2007-12-20', '127.0.0.1', 'srw'): 1
-        }, stats.get(('date', 'ip', 'protocol'), (1970,)))
+        }, stats.get(('date', 'ip', 'protocol')))
 
     def testWriteTxLog(self):
         def readlines():
@@ -84,7 +84,7 @@ class StatisticsTest(CQ2TestCase):
         stats._process({'date':['2007-12-20']})
         self.assertEquals({
                 ('2007-12-20', '#undefined'): 1,
-        }, stats.get(('date', 'protocol'), (1970,)))
+        }, stats.get(('date', 'protocol')))
 
     def testSnapshotState(self):
         stats = Statistics(self.tempdir, [('keys',)])
@@ -93,7 +93,7 @@ class StatisticsTest(CQ2TestCase):
         stats._writeSnapshot()
         self.assertTrue(isfile(self.tempdir + '/snapshot'))
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('2007-12-20',): 1}, stats.get(('keys',), (1970,)))
+        self.assertEquals({('2007-12-20',): 1}, stats.get(('keys',)))
 
     def testCrashInWriteSnapshotDuringWriteRecovery(self):
         stats = Statistics(self.tempdir, [('keys',)])
@@ -107,7 +107,7 @@ class StatisticsTest(CQ2TestCase):
         snapshotFile.close()
 
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('the old one',): 1, ('from_log',): 1}, stats.get(('keys',), (1970,)))
+        self.assertEquals({('the old one',): 1, ('from_log',): 1}, stats.get(('keys',)))
 
         self.assertFalse(isfile(self.tempdir + '/snapshot.writing'))
 
@@ -140,7 +140,7 @@ class StatisticsTest(CQ2TestCase):
         myObserver = MyObserver()
         stats.addObserver(myObserver)
         list(stats.unknown("aMessage"))
-        self.assertEquals({('newValue',): 1}, stats.get(('message',), (1970,)))
+        self.assertEquals({('newValue',): 1}, stats.get(('message',)))
 
     def testSelfLogMultipleValuesForSameKey(self):
         class MyObserver(Logger):
@@ -152,12 +152,9 @@ class StatisticsTest(CQ2TestCase):
         myObserver = MyObserver()
         stats.addObserver(myObserver)
         list(stats.unknown("aMessage"))
-        self.assertEquals({('value1',): 1, ('value2',) : 1}, stats.get(('message',), (1970,)))
+        self.assertEquals({('value1',): 1, ('value2',) : 1}, stats.get(('message',)))
 
     def testCatchErrorsAndCloseTxLog(self):
-        pass
-
-    def testPeriodicSnapshot(self):
         pass
 
     def testAccumulateOverTime(self):
@@ -176,21 +173,21 @@ class StatisticsTest(CQ2TestCase):
 
     def testEmptyDataForKey(self):
         stats = Statistics(self.tempdir, [('message',)])
-        retval = stats.get(('message',), (1970,))
+        retval = stats.get(('message',))
         self.assertEquals({}, retval)
 
     def testObligatoryKey(self):
         stats = Statistics(self.tempdir, [('message',), ('message', 'submessage')])
         stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'message': 'A', 'submessage': 'B'})
-        retval = stats.get(('message',), (1970,))
+        retval = stats.get(('message',))
         self.assertTrue(retval)
 
-        retval = stats.get(('message', 'submessage'), (1970,))
+        retval = stats.get(('message', 'submessage'))
         self.assertTrue(retval)
 
         try:
-            stats.get(('not specified',), (1970,))
+            stats.get(('not specified',))
             self.fail('must not accept unspecified key')
         except KeyError:
             pass

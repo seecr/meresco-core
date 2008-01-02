@@ -2,7 +2,7 @@ import cPickle as pickle
 from os import rename, remove
 from os.path import isfile, join
 from inspect import currentframe
-from time import time, gmtime
+from time import mktime, gmtime
 from meresco.framework import Observable, compose
 
 def combinations(head, tail):
@@ -69,7 +69,7 @@ class Statistics(Observable):
         self._txlogFile = None
         self._keys = keys
         self._snapshotInterval = snapshotInterval
-        self._lastSnapshot = 0
+        self._lastSnapshot = (1970, 1, 1, 0, 0, 0)
         self._data = Aggregator(Top100sFactory())
         self._readState()
 
@@ -88,14 +88,16 @@ class Statistics(Observable):
     def listKeys(self):
         return self._keys
 
-    def get(self, t0, t1, statisticId):
+    def get(self, statisticId, t0=None, t1=None):
+        if not t0:
+            t0 = ()
         if statisticId not in self._keys:
             raise KeyError('%s not in %s' % (statisticId, self._keys))
-        return dict(self._data.get(gmtime(t0)[:6], gmtime(t1)[:6]).getTop100(statisticId))
+        return dict(self._data.get(t0, t1).getTop100(statisticId))
         #opruimen: dict staat hier even voor de tests
 
     def _clock(self):
-        return int(time())
+        return gmtime()[:6]
 
     def _process(self, logLine):
         t = self._clock()
@@ -107,7 +109,7 @@ class Statistics(Observable):
         fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
         fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
         for fieldValues in fieldValuesCombos:
-            self._data._addAt(gmtime(float(t))[:6], (statistic, fieldValues))
+            self._data._addAt(t, (statistic, fieldValues))
 
     def _readState(self):
         if isfile(self._snapshotFilename + ".writing"):
@@ -148,7 +150,7 @@ class Statistics(Observable):
             for logLine in txfile:
                 t, dictString = logLine.strip().split('\t')
                 for key in self._keys:
-                    self._updateData(t, key, eval(dictString))
+                    self._updateData(eval(t), key, eval(dictString))
         finally:
             txfile.close()
 
@@ -170,8 +172,11 @@ class Statistics(Observable):
         fp.write(line + "\n")
         fp.flush()
 
+    def _tm(self, sixTuple):
+        return mktime(sixTuple + (0,0,0))
+
     def _snapshotIfNeeded(self):
-        if self._clock() >= self._lastSnapshot + self._snapshotInterval:
+        if self._tm(self._clock()) >= self._tm(self._lastSnapshot) + self._snapshotInterval:
             self._writeSnapshot()
 
 class AggregatorException(Exception):
@@ -244,21 +249,6 @@ class AggregatorNode(object):
                     child.get(result, useFrom, useUntil)
         return result
 
-
-    def oldget(self, result, fromTime, untilTime):
-        if len(time) == 0:
-            self._xxxFactory.doExtend(result, self._values)
-            if not self._aggregated:
-                for nr, child in self._children.items():
-                    child.get(result, time)
-            return result
-        if self._aggregated:
-            raise AggregatorException('too precise')
-        head, tail = time[0], time[1:]
-        if not head in self._children:
-            return result
-        return self._children[head].get(result, tail)
-
 class Aggregator(object):
 
     def __init__(self, xxxFactory):
@@ -275,6 +265,7 @@ class Aggregator(object):
     def get(self, fromTime, untilTime=None):
         if untilTime == None:
             untilTime = list(fromTime[:])
-            untilTime[-1] += 1
+            if fromTime:
+                untilTime[-1] += 1
             untilTime = tuple(untilTime)
         return self._root.get(self._xxxFactory.doInit(), fromTime, untilTime)
