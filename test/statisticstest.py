@@ -9,51 +9,50 @@ class StatisticsTest(CQ2TestCase):
     def testStatistics(self):
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['sru']})
         self.assertEquals({
                 ('2007-12-20',): 1
-        }, stats.get(0, 1, ('date',)))
+        }, stats.get(('date',), (1970,)))
         self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
-        }, stats.get(0, 1, ('date', 'protocol')))
+        }, stats.get(('date', 'protocol'), (1970,)))
         self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1
-        }, stats.get(0, 1, ('date', 'ip', 'protocol')))
+        }, stats.get(('date', 'ip', 'protocol'), (1970,)))
 
-        stats._clock = lambda: 0
         stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['srw']})
         self.assertEquals({
                 ('2007-12-20',): 2
-        }, stats.get(0, 1, ('date',)))
+        }, stats.get(('date',), (1970,)))
         self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
                 ('2007-12-20', 'srw'): 1,
-        }, stats.get(0, 1, ('date', 'protocol')))
+        }, stats.get(('date', 'protocol'), (1970,)))
         self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1,
                 ('2007-12-20', '127.0.0.1', 'srw'): 1
-        }, stats.get(0, 1, ('date', 'ip', 'protocol')))
+        }, stats.get(('date', 'ip', 'protocol'), (1970,)))
 
     def testReadTxLog(self):
         fp = open(self.tempdir + '/txlog', 'w')
         try:
-            fp.write("0\t{'date':['2007-12-20'],'ip':['127.0.0.1'],'protocol':['sru']}\n")
-            fp.write("0\t{'date':['2007-12-20'],'ip':['127.0.0.1'],'protocol':['srw']}\n")
+            fp.write("(1970, 1, 1, 0, 0, 0)\t{'date':['2007-12-20'],'ip':['127.0.0.1'],'protocol':['sru']}\n")
+            fp.write("(1970, 1, 1, 0, 0, 0)\t{'date':['2007-12-20'],'ip':['127.0.0.1'],'protocol':['srw']}\n")
         finally:
             fp.close()
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
         self.assertEquals({
                 ('2007-12-20',): 2
-        }, stats.get(0, 1, ('date',)))
+        }, stats.get(('date',), (1970,)))
         self.assertEquals({
                 ('2007-12-20', 'sru'): 1,
                 ('2007-12-20', 'srw'): 1,
-        }, stats.get(0, 1, ('date', 'protocol')))
+        }, stats.get(('date', 'protocol'), (1970,)))
         self.assertEquals({
                 ('2007-12-20', '127.0.0.1', 'sru'): 1,
                 ('2007-12-20', '127.0.0.1', 'srw'): 1
-        }, stats.get(0, 1, ('date', 'ip', 'protocol')))
+        }, stats.get(('date', 'ip', 'protocol'), (1970,)))
 
     def testWriteTxLog(self):
         def readlines():
@@ -66,49 +65,49 @@ class StatisticsTest(CQ2TestCase):
 
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')])
 
-        stats._clock = lambda: 1234
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['sru']})
 
         lines = readlines()
         self.assertEquals(1, len(lines))
-        self.assertEquals("1234\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['sru']}\n", lines[0])
+        self.assertEquals("(1970, 1, 1, 0, 0, 0)\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['sru']}\n", lines[0])
 
         stats._process({'date':['2007-12-20'], 'ip':['127.0.0.1'], 'protocol':['srw']})
         lines = readlines()
         self.assertEquals(2, len(lines))
-        self.assertEquals("1234\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['sru']}\n", lines[0])
-        self.assertEquals("1234\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['srw']}\n", lines[1])
+        self.assertEquals("(1970, 1, 1, 0, 0, 0)\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['sru']}\n", lines[0])
+        self.assertEquals("(1970, 1, 1, 0, 0, 0)\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['srw']}\n", lines[1])
 
     def testUndefinedFieldValues(self):
         stats = Statistics(self.tempdir, [('date', 'protocol')])
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'date':['2007-12-20']})
         self.assertEquals({
                 ('2007-12-20', '#undefined'): 1,
-        }, stats.get(0, 1, ('date', 'protocol')))
+        }, stats.get(('date', 'protocol'), (1970,)))
 
     def testSnapshotState(self):
         stats = Statistics(self.tempdir, [('keys',)])
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'keys': ['2007-12-20']})
         stats._writeSnapshot()
         self.assertTrue(isfile(self.tempdir + '/snapshot'))
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('2007-12-20',): 1}, stats.get(0, 1, ('keys',)))
+        self.assertEquals({('2007-12-20',): 1}, stats.get(('keys',), (1970,)))
 
     def testCrashInWriteSnapshotDuringWriteRecovery(self):
         stats = Statistics(self.tempdir, [('keys',)])
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'keys': ['the old one']})
         stats._writeSnapshot()
-        open(self.tempdir + '/txlog', 'w').write("0\t{'keys': ['from_log']}\n")
+        open(self.tempdir + '/txlog', 'w').write("(1970, 1, 1, 0, 0, 0)\t{'keys': ['from_log']}\n")
 
         snapshotFile = open(self.tempdir + '/snapshot.writing', 'w')
         snapshotFile.write('boom')
         snapshotFile.close()
 
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('the old one',): 1, ('from_log',): 1}, stats.get(0, 1, ('keys',)))
+        self.assertEquals({('the old one',): 1, ('from_log',): 1}, stats.get(('keys',), (1970,)))
 
         self.assertFalse(isfile(self.tempdir + '/snapshot.writing'))
 
@@ -137,11 +136,11 @@ class StatisticsTest(CQ2TestCase):
             def aMessage(self):
                 self.log(message='newValue')
         stats = Statistics(self.tempdir, [('message',)])
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         myObserver = MyObserver()
         stats.addObserver(myObserver)
         list(stats.unknown("aMessage"))
-        self.assertEquals({('newValue',): 1}, stats.get(0, 1, ('message',)))
+        self.assertEquals({('newValue',): 1}, stats.get(('message',), (1970,)))
 
     def testSelfLogMultipleValuesForSameKey(self):
         class MyObserver(Logger):
@@ -149,11 +148,11 @@ class StatisticsTest(CQ2TestCase):
                 self.log(message='value1')
                 self.log(message='value2')
         stats = Statistics(self.tempdir, [('message',)])
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         myObserver = MyObserver()
         stats.addObserver(myObserver)
         list(stats.unknown("aMessage"))
-        self.assertEquals({('value1',): 1, ('value2',) : 1}, stats.get(0, 1, ('message',)))
+        self.assertEquals({('value1',): 1, ('value2',) : 1}, stats.get(('message',), (1970,)))
 
     def testCatchErrorsAndCloseTxLog(self):
         pass
@@ -163,13 +162,13 @@ class StatisticsTest(CQ2TestCase):
 
     def testAccumulateOverTime(self):
         stats = Statistics(self.tempdir, [('message',)])
-        t0 = int(time())
+        t0 = (1970, 1, 1, 0, 0, 0)
         stats._clock = lambda: t0
         stats._process({'message': 'A'})
         #count, max, min, avg, pct99
-        t1 = t0 + 1
+        t1 = (1970, 1, 1, 0, 0, 1)
         stats._process({'message': 'A'})
-        self.assertEquals({('A',): 2}, stats.get(t0, t1 + 1, ('message',)))
+        self.assertEquals({('A',): 2}, stats.get(('message',), (1970, 1, 1, 0, 0, 0), (1970, 1, 1, 0, 0, 2)))
 
     def testListKeys(self):
         stats = Statistics(self.tempdir, [('message',), ('ape', 'nut')])
@@ -177,21 +176,21 @@ class StatisticsTest(CQ2TestCase):
 
     def testEmptyDataForKey(self):
         stats = Statistics(self.tempdir, [('message',)])
-        retval = stats.get(0, 1, ('message',))
+        retval = stats.get(('message',), (1970,))
         self.assertEquals({}, retval)
 
     def testObligatoryKey(self):
         stats = Statistics(self.tempdir, [('message',), ('message', 'submessage')])
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'message': 'A', 'submessage': 'B'})
-        retval = stats.get(0, 1, ('message',))
+        retval = stats.get(('message',), (1970,))
         self.assertTrue(retval)
 
-        retval = stats.get(0, 1, ('message', 'submessage'))
+        retval = stats.get(('message', 'submessage'), (1970,))
         self.assertTrue(retval)
 
         try:
-            stats.get(0, 1, ('not specified',))
+            stats.get(('not specified',), (1970,))
             self.fail('must not accept unspecified key')
         except KeyError:
             pass
@@ -224,21 +223,21 @@ class StatisticsTest(CQ2TestCase):
 
         stats = Statistics(self.tempdir, [('date',), ('date', 'protocol'), ('date', 'ip', 'protocol')], snapshotInterval=3600)
         stats._writeSnapshot = shuntWriteSnapshot
-        stats._clock = lambda: 0
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._readState() #must be done again after the clock is shunted
 
         stats._snapshotIfNeeded()
         self.assertEquals(0, len(snapshots))
 
-        stats._clock = lambda: 3599
+        stats._clock = lambda: (1970, 1, 1, 0, 59, 58)
         stats._snapshotIfNeeded()
         self.assertEquals(0, len(snapshots))
 
-        stats._clock = lambda: 3600
+        stats._clock = lambda: (1970, 1, 1, 1, 0, 0)
         stats._snapshotIfNeeded()
         self.assertEquals(1, len(snapshots))
 
-        stats._clock = lambda: 3601
+        stats._clock = lambda: (1970, 1, 1, 1, 0, 1)
         stats._snapshotIfNeeded()
         self.assertEquals(1, len(snapshots))
 
