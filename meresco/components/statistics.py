@@ -26,27 +26,27 @@ class Logger(object):
                 return
             frame = frame.f_back
 
-class Data(object):
+class Top100s(object):
     def __init__(self, data=None):
         if not data:
             data = {}
         self._data = data
 
-    def inc(self, statistic, fieldValues, value=1):
-        if not statistic in self._data:
-            self._data[statistic] = {}
-        if not fieldValues in self._data[statistic]:
-            self._data[statistic][fieldValues] = 0
-        self._data[statistic][fieldValues] += value
+    def inc(self, statisticId, occurrence, count=1):
+        if not statisticId in self._data:
+            self._data[statisticId] = {}
+        if not occurrence in self._data[statisticId]:
+            self._data[statisticId][occurrence] = 0
+        self._data[statisticId][occurrence] += count
 
-    def get(self, statistic):
-        return self._data.get(statistic, {}).items()
+    def getTop100(self, statisticId):
+        return self._data.get(statisticId, {}).items()
 
-    def keys(self):
+    def statisticIds(self):
         return self._data.keys()
 
     def __eq__(self, other):
-        return isinstance(other, Data) and other._data == self._data
+        return other.__class__ == self.__class__ and other._data == self._data
 
 class DataFactory(object):
 
@@ -95,7 +95,7 @@ class Statistics(Observable):
         result = {}
         for t, data in self._data.items():
             if int(t) >= t0 and int(t) <= t1:
-                for term, count in data.get(key):
+                for term, count in data.getTop100(key):
                     if term in result:
                         result[term] += count
                     else:
@@ -113,7 +113,7 @@ class Statistics(Observable):
 
     def _updateData(self, t, statistic, logLine):
         if not t in self._data:
-            self._data[t] = Data()
+            self._data[t] = Top100s()
         data = self._data[t]
         fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
         fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
@@ -221,7 +221,46 @@ class AggregatorNode(object):
                 q.remove(toDo)
                 toDo._aggregate()
 
-    def get(self, result, time):
+    def get(self, result, fromTime, untilTime):
+        BEGIN = (0, 0, 0, 0, 0, 0)
+        END = (9999, 9999, 9999, 9999, 9999, 9999)
+
+        assert len(fromTime) == len(untilTime), (fromTime, untilTime)
+        if len(fromTime) == 0:
+            self._xxxFactory.doExtend(result, self._values)
+            if not self._aggregated:
+                for digit, child in self._children.items():
+                    child.get(result, fromTime, untilTime)
+            return result
+
+        if self._aggregated:
+            raise AggregatorException('too precise')
+
+        fromHead, fromTail = fromTime[0], fromTime[1:]
+        untilHead, untilTail = untilTime[0], untilTime[1:]
+        for digit, child in self._children.items():
+            if digit >= fromHead and \
+                ((fromTail and digit <= untilHead) or (not fromTail and digit < untilHead)):
+                if digit == fromHead:
+                    useFrom = fromTail
+                else: #digit > fromHead
+                    if not fromTail:
+                        useFrom = fromTail
+                    else:
+                        useFrom = BEGIN[-1 * len(fromTail):]
+                if digit == untilHead:
+                    useUntil = untilTail
+                else: #digit < untilHead
+                    if not untilTail:
+                        useUntil = untilTail
+                    else:
+                        useUntil = END[-1 * len(untilTail):]
+                child.get(result, useFrom, useUntil)
+
+        return result
+
+
+    def oldget(self, result, fromTime, untilTime):
         if len(time) == 0:
             self._xxxFactory.doExtend(result, self._values)
             if not self._aggregated:
@@ -248,5 +287,9 @@ class Aggregator(object):
     def _addAt(self, time, data):
         self._root.add(time, data, 0)
 
-    def get(self, fromTime):
-        return self._root.get(self._xxxFactory.doInit(), fromTime)
+    def get(self, fromTime, untilTime=None):
+        if untilTime == None:
+            untilTime = list(fromTime[:])
+            untilTime[-1] += 1
+            untilTime = tuple(untilTime)
+        return self._root.get(self._xxxFactory.doInit(), fromTime, untilTime)

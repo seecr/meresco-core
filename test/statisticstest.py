@@ -2,7 +2,7 @@ import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
 from os.path import isfile
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Data
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s
 
 class StatisticsTest(CQ2TestCase):
 
@@ -102,7 +102,7 @@ class StatisticsTest(CQ2TestCase):
 
     def testCrashInWriteSnapshotDuringWriteRecovery(self):
         snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {'0': Data({('keys',): {('the old one',): 3}})}
+        theOldOne = {'0': Top100s({('keys',): {('the old one',): 3}})}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
         open(self.tempdir + '/txlog', 'w').write("0\t{'keys': ['from_log']}\n")
@@ -118,14 +118,14 @@ class StatisticsTest(CQ2TestCase):
 
     def testCrashInWriteSnapshotAfterWriteRecovery(self):
         snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {'0': Data({('keys',): {('the old one',): 3}})}
+        theOldOne = {'0': Top100s({('keys',): {('the old one',): 3}})}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
 
         open(self.tempdir + '/txlog', 'w').write('keys:should_not_appear\n')
 
         snapshotFile = open(self.tempdir + '/snapshot.writing.done', 'w')
-        theNewOne = {'0': Data({('keys',): {('the new one',): 3}})}
+        theNewOne = {'0': Top100s({('keys',): {('the new one',): 3}})}
         pickle.dump(theNewOne, snapshotFile)
         snapshotFile.close()
 
@@ -271,6 +271,7 @@ class StatisticsTest(CQ2TestCase):
 
         self.assertEquals(["value0"], aggregator.get((2000, 1, 1, 0, 0, 0)))
         self.assertEquals(["value1"], aggregator.get((2000, 1, 1, 0, 0, 1)))
+        self.assertEquals(["value0", "value1"], aggregator.get((2000, 1, 1, 0, 0, 0), (2000, 1, 1, 0, 0, 2)))
 
     def testStatisticsAggregatorAggregates(self):
         aggregator = Aggregator(ListFactory())
