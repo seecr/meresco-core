@@ -27,7 +27,23 @@ class Logger(object):
             frame = frame.f_back
 
 class Data(object):
-    pass
+    def __init__(self, data=None):
+        if not data:
+            data = {}
+        self._data = data
+
+    def inc(self, statistic, fieldValues):
+        if not statistic in self._data:
+            self._data[statistic] = {}
+        if not fieldValues in self._data[statistic]:
+            self._data[statistic][fieldValues] = 0
+        self._data[statistic][fieldValues] += 1
+
+    def get(self, statistic):
+        return self._data.get(statistic, {}).items()
+
+    def __eq__(self, other):
+        return isinstance(other, Data) and other._data == self._data
 
 class Statistics(Observable):
     def __init__(self, path, keys, snapshotInterval=3600):
@@ -63,12 +79,11 @@ class Statistics(Observable):
         result = {}
         for t, data in self._data.items():
             if int(t) >= t0 and int(t) <= t1:
-                if key in data: #"('ip' , 'path'
-                    for term, count in data[key].items(): # ('123.123.123.1', '/sadfdasf', 45
-                        if term in result:
-                            result[term] += count
-                        else:
-                            result[term] = count
+                for term, count in data.get(key):
+                    if term in result:
+                        result[term] += count
+                    else:
+                        result[term] = count
         return result
 
     def _clock(self):
@@ -84,14 +99,10 @@ class Statistics(Observable):
         if not t in self._data:
             self._data[t] = Data()
         data = self._data[t]
-        if statistic not in data:
-            data[statistic] = {} #data[('ip', 'path')] = {('1.1.1.1', '/'): 3}
         fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
         fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
         for fieldValues in fieldValuesCombos:
-            if not fieldValues in data[statistic]:
-                data[statistic][fieldValues] = 0
-            data[statistic][fieldValues] += 1  #data.add(statistic, fieldValues) # add ('ip',), ('12.12.12.12',)
+            data.inc(statistic, fieldValues)
 
     def _readState(self):
         if isfile(self._snapshotFilename + ".writing"):

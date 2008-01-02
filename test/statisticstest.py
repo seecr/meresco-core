@@ -2,7 +2,7 @@ import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
 from os.path import isfile
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Data
 
 class StatisticsTest(CQ2TestCase):
 
@@ -102,7 +102,7 @@ class StatisticsTest(CQ2TestCase):
 
     def testCrashInWriteSnapshotDuringWriteRecovery(self):
         snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {'0': {('keys',): {('the old one',): 3}}}
+        theOldOne = {'0': Data({('keys',): {('the old one',): 3}})}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
         open(self.tempdir + '/txlog', 'w').write("0\t{'keys': ['from_log']}\n")
@@ -118,14 +118,14 @@ class StatisticsTest(CQ2TestCase):
 
     def testCrashInWriteSnapshotAfterWriteRecovery(self):
         snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {('keys',): {('the old one',): 3}}
+        theOldOne = {'0': Data({('keys',): {('the old one',): 3}})}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
 
         open(self.tempdir + '/txlog', 'w').write('keys:should_not_appear\n')
 
         snapshotFile = open(self.tempdir + '/snapshot.writing.done', 'w')
-        theNewOne = {('keys',): {('the new one',): 3}}
+        theNewOne = {'0': Data({('keys',): {('the new one',): 3}})}
         pickle.dump(theNewOne, snapshotFile)
         snapshotFile.close()
 
