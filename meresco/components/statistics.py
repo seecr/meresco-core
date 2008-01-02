@@ -32,18 +32,34 @@ class Data(object):
             data = {}
         self._data = data
 
-    def inc(self, statistic, fieldValues):
+    def inc(self, statistic, fieldValues, value=1):
         if not statistic in self._data:
             self._data[statistic] = {}
         if not fieldValues in self._data[statistic]:
             self._data[statistic][fieldValues] = 0
-        self._data[statistic][fieldValues] += 1
+        self._data[statistic][fieldValues] += value
 
     def get(self, statistic):
         return self._data.get(statistic, {}).items()
 
+    def keys(self):
+        return self._data.keys()
+
     def __eq__(self, other):
         return isinstance(other, Data) and other._data == self._data
+
+class DataFactory(object):
+
+    def doInit(self):
+        return Data()
+
+    def doAdd(self, data, (statistic, fieldValues)):
+        data.inc(statistic, fieldValues)
+
+    def doExtend(self, data0, data1):
+        for statistic in data1.keys():
+            for term, count in data1.get(statistic):
+                data0.inc(statistic, term, count)
 
 class Statistics(Observable):
     def __init__(self, path, keys, snapshotInterval=3600):
@@ -205,26 +221,26 @@ class AggregatorNode(object):
                 q.remove(toDo)
                 toDo._aggregate()
 
-    def get(self, time):
+    def get(self, result, time):
         if len(time) == 0:
-            for value in self._values:
-                yield value
+            self._xxxFactory.doExtend(result, self._values)
             if not self._aggregated:
                 for nr, child in self._children.items():
-                    yield child.get(time)
-            raise StopIteration
+                    child.get(result, time)
+            return result
         if self._aggregated:
             raise AggregatorException('too precise')
         head, tail = time[0], time[1:]
         if not head in self._children:
-            raise StopIteration
-        yield self._children[head].get(tail)
+            return result
+        return self._children[head].get(result, tail)
 
 class Aggregator(object):
 
     def __init__(self, xxxFactory):
         self._aggregationQueues = [[], [], [], [], [], [], []]
         self._root = AggregatorNode(xxxFactory, self._aggregationQueues)
+        self._xxxFactory = xxxFactory
 
     def add(self, data):
         self._addAt(gmtime()[:6], data)
@@ -233,15 +249,4 @@ class Aggregator(object):
         self._root.add(time, data, 0)
 
     def get(self, fromTime):
-        return compose(self._root.get(fromTime))
-
-class ListFactory(object):
-
-    def doInit(self):
-        return []
-
-    def doAdd(self, values, value):
-        values.append(value)
-
-    def doExtend(self, values0, values1):
-        values0.extend(values1)
+        return self._root.get(self._xxxFactory.doInit(), fromTime)
