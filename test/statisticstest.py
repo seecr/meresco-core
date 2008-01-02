@@ -87,10 +87,6 @@ class StatisticsTest(CQ2TestCase):
                 ('2007-12-20', '#undefined'): 1,
         }, stats.get(0, 1, ('date', 'protocol')))
 
-    def testEmptySnapShotState(self):
-        stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({}, stats._data)
-
     def testSnapshotState(self):
         stats = Statistics(self.tempdir, [('keys',)])
         stats._clock = lambda: 0
@@ -101,10 +97,10 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals({('2007-12-20',): 1}, stats.get(0, 1, ('keys',)))
 
     def testCrashInWriteSnapshotDuringWriteRecovery(self):
-        snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {'0': Top100s({('keys',): {('the old one',): 3}})}
-        pickle.dump(theOldOne, snapshotFile)
-        snapshotFile.close()
+        stats = Statistics(self.tempdir, [('keys',)])
+        stats._clock = lambda: 0
+        stats._process({'keys': ['the old one']})
+        stats._writeSnapshot()
         open(self.tempdir + '/txlog', 'w').write("0\t{'keys': ['from_log']}\n")
 
         snapshotFile = open(self.tempdir + '/snapshot.writing', 'w')
@@ -112,8 +108,8 @@ class StatisticsTest(CQ2TestCase):
         snapshotFile.close()
 
         stats = Statistics(self.tempdir, [('keys',)])
-        self.assertEquals({('the old one',): 3, ('from_log',): 1}, stats.get(0, 1, ('keys',)))
-        self.assertEquals({('the old one',): 3, ('from_log',): 1}, stats.get(0, 1, ('keys',)))
+        self.assertEquals({('the old one',): 1, ('from_log',): 1}, stats.get(0, 1, ('keys',)))
+
         self.assertFalse(isfile(self.tempdir + '/snapshot.writing'))
 
     def testCrashInWriteSnapshotAfterWriteRecovery(self):
@@ -167,13 +163,13 @@ class StatisticsTest(CQ2TestCase):
 
     def testAccumulateOverTime(self):
         stats = Statistics(self.tempdir, [('message',)])
-        mocktime = t0 = int(time())
-        stats._clock = lambda: mocktime
+        t0 = int(time())
+        stats._clock = lambda: t0
         stats._process({'message': 'A'})
         #count, max, min, avg, pct99
-        mocktime = t1 = t0 + 1
+        t1 = t0 + 1
         stats._process({'message': 'A'})
-        self.assertEquals({('A',): 2}, stats.get(t0, t1, ('message',)))
+        self.assertEquals({('A',): 2}, stats.get(t0, t1 + 1, ('message',)))
 
     def testListKeys(self):
         stats = Statistics(self.tempdir, [('message',), ('ape', 'nut')])

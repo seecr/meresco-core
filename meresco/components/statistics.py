@@ -2,7 +2,7 @@ import cPickle as pickle
 from os import rename, remove
 from os.path import isfile, join
 from inspect import currentframe
-from time import time
+from time import time, gmtime
 from meresco.framework import Observable, compose
 
 def combinations(head, tail):
@@ -48,18 +48,17 @@ class Top100s(object):
     def __eq__(self, other):
         return other.__class__ == self.__class__ and other._data == self._data
 
-class DataFactory(object):
-
+class Top100sFactory(object):
     def doInit(self):
-        return Data()
+        return Top100s()
 
-    def doAdd(self, data, (statistic, fieldValues)):
-        data.inc(statistic, fieldValues)
+    def doAdd(self, top100s, (statistic, fieldValues)):
+        top100s.inc(statistic, fieldValues)
 
-    def doExtend(self, data0, data1):
-        for statistic in data1.keys():
-            for term, count in data1.get(statistic):
-                data0.inc(statistic, term, count)
+    def doExtend(self, left, right):
+        for id in right.statisticIds():
+            for occurrence, count in right.getTop100(id):
+                left.inc(id, occurrence, count)
 
 class Statistics(Observable):
     def __init__(self, path, keys, snapshotInterval=3600):
@@ -71,7 +70,7 @@ class Statistics(Observable):
         self._keys = keys
         self._snapshotInterval = snapshotInterval
         self._lastSnapshot = 0
-        self._data = {}
+        self._data = Aggregator(Top100sFactory())
         self._readState()
 
     def __del__(self):
@@ -89,18 +88,11 @@ class Statistics(Observable):
     def listKeys(self):
         return self._keys
 
-    def get(self, t0, t1, key):
-        if key not in self._keys:
-            raise KeyError('%s not in %s' % (key, self._keys))
-        result = {}
-        for t, data in self._data.items():
-            if int(t) >= t0 and int(t) <= t1:
-                for term, count in data.getTop100(key):
-                    if term in result:
-                        result[term] += count
-                    else:
-                        result[term] = count
-        return result
+    def get(self, t0, t1, statisticId):
+        if statisticId not in self._keys:
+            raise KeyError('%s not in %s' % (statisticId, self._keys))
+        return dict(self._data.get(gmtime(t0)[:6], gmtime(t1)[:6]).getTop100(statisticId))
+        #opruimen: dict staat hier even voor de tests
 
     def _clock(self):
         return int(time())
@@ -112,13 +104,10 @@ class Statistics(Observable):
             self._updateData(t, key, logLine)
 
     def _updateData(self, t, statistic, logLine):
-        if not t in self._data:
-            self._data[t] = Top100s()
-        data = self._data[t]
         fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
         fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
         for fieldValues in fieldValuesCombos:
-            data.inc(statistic, fieldValues)
+            self._data._addAt(gmtime(float(t))[:6], (statistic, fieldValues))
 
     def _readState(self):
         if isfile(self._snapshotFilename + ".writing"):
@@ -253,7 +242,6 @@ class AggregatorNode(object):
                     else: #digit < untilHead
                         useUntil = END[-1 * len(untilTail):]
                     child.get(result, useFrom, useUntil)
-
         return result
 
 
