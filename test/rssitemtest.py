@@ -20,6 +20,7 @@ class RssItemTest(TestCase):
     <title>Title</title>
     <description>Description</description>
     <link>http://example.org/show?recordId=12%2834%29&amp;type=Type</link>
+    <guid>http://example.org/show?recordId=12%2834%29&amp;type=Type</guid>
 </item>""", result)
 
     def testNoDescription(self):
@@ -35,6 +36,7 @@ class RssItemTest(TestCase):
     <title>Title</title>
     <description></description>
     <link>http://www.example.org/</link>
+    <guid>http://www.example.org/</guid>
 </item>""", result)
 
     def testPartOfLinkTemplateNotFound(self):
@@ -51,6 +53,7 @@ class RssItemTest(TestCase):
     <title>Title</title>
     <description></description>
     <link></link>
+    <guid></guid>
 </item>""", result)
         
     def testPartOfLinkTemplateNotConfigured(self):
@@ -79,6 +82,7 @@ class RssItemTest(TestCase):
     <title>Title</title>
     <description>“</description>
     <link>http://www.example.org/Type</link>
+    <guid>http://www.example.org/Type</guid>
 </item>""", result)
 
 class MockStorage(object):

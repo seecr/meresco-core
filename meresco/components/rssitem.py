@@ -7,6 +7,7 @@ RSS_TEMPLATE = """<item>
     <title>%(title)s</title>
     <description>%(description)s</description>
     <link>%(link)s</link>
+    <guid>%(link)s</guid>
 </item>"""
 
 class RssItem(XmlCompose):
