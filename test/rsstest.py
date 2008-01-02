@@ -101,7 +101,7 @@ class RssTest(CQ2TestCase):
 
         xml = bind_string(result[result.index("<?xml"):])
         self.assertEquals('ERROR Test title', str(xml.rss.channel.title))
-        self.assertTrue('''An error occurred 'Unexpected token after parsing, check parser for greediness''' in str(xml.rss.channel.description), str(xml.rss.channel.description))
+        self.assertTrue('''An error occurred 'Unexpected token after parsing''' in str(xml.rss.channel.description), str(xml.rss.channel.description))
 
     def testErrorNoQuery(self):
         rss = Rss(
