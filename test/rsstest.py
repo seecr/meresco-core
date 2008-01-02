@@ -65,7 +65,7 @@ class RssTest(CQ2TestCase):
         )
         rss.addObserver(observer)
 
-        result = "".join(list(rss.handleRequest()))
+        result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery')))
         self.assertEqualsWS(RSS % '', result)
 
     def testOneResult(self):
@@ -84,7 +84,7 @@ class RssTest(CQ2TestCase):
         )
         rss.addObserver(listeners)
 
-        result = "".join(list(rss.handleRequest()))
+        result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery')))
         self.assertEqualsWS(RSS % """<item>
         <title>Test Title</title>
         <link>Test Identifier</link>
@@ -102,6 +102,19 @@ class RssTest(CQ2TestCase):
         xml = bind_string(result[result.index("<?xml"):])
         self.assertEquals('ERROR Test title', str(xml.rss.channel.title))
         self.assertTrue('''An error occurred 'Unexpected token after parsing, check parser for greediness''' in str(xml.rss.channel.description), str(xml.rss.channel.description))
+
+    def testErrorNoQuery(self):
+        rss = Rss(
+            title = 'Test title',
+            description = 'Test description',
+            link = 'http://www.example.org',
+        )
+        result = "".join(list(rss.handleRequest(RequestURI='/')))
+
+        xml = bind_string(result[result.index("<?xml"):])
+        self.assertEquals('ERROR Test title', str(xml.rss.channel.title))
+        self.assertTrue('''An error occurred 'MANDATORY parameter 'query' not supplied or empty''' in str(xml.rss.channel.description), str(xml.rss.channel.description))
+        
 
     def assertMaxAndSort(self, maximumRecords, sortKey, sortDirection, rssArgs, sruArgs):
         rss = Rss(

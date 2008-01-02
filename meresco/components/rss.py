@@ -63,7 +63,8 @@ class Rss(Observable):
             sortKeys = arguments.get('sortKeys', [self._sortKeys])[0]
             maximumRecords = arguments.get('maximumRecords', [self._maximumRecords])[0]
             query = arguments.get('query', [''])[0]
-
+            if not query:
+                raise SRUQueryException("MANDATORY parameter 'query' not supplied or empty")
             sruQueryArguments = {
                 'query': [query],
                 'maximumRecords': [str(maximumRecords)],
