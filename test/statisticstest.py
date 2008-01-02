@@ -247,11 +247,11 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals(1, len(snapshots))
 
     def testStatisticsAggregatorEmpty(self):
-        aggregator = Aggregator()
+        aggregator = Aggregator(ListFactory())
         self.assertEquals([], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
 
     def testStatisticsAggregatorAdd(self):
-        aggregator = Aggregator()
+        aggregator = Aggregator(ListFactory())
 
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value")
         self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
@@ -259,13 +259,13 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals(["value"], list(aggregator.get((2000, 1, 1, 0))))
 
     def testStatisticsAggregatorAddTwiceSameTime(self):
-        aggregator = Aggregator()
+        aggregator = Aggregator(ListFactory())
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value0")
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value1")
         self.assertEquals(["value0", "value1"], list(aggregator.get((2000, 1, 1, 0, 0, 0))))
 
     def testStatisticsAggregatorAddTwiceNewTime(self):
-        aggregator = Aggregator()
+        aggregator = Aggregator(ListFactory())
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value0")
         aggregator._addAt((2000, 1, 1, 0, 0, 1), "value1")
 
@@ -273,7 +273,7 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals(["value1"], list(aggregator.get((2000, 1, 1, 0, 0, 1))))
 
     def testStatisticsAggregatorAggregates(self):
-        aggregator = Aggregator()
+        aggregator = Aggregator(ListFactory())
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
         aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
         aggregator._addAt((2000, 1, 1, 0, 1, 0), "should not yet trigger")
@@ -291,7 +291,7 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0, 0))))
 
     def testStatisticsAggregatorAggregatesRecursivelyWithSkippedLevel(self):
-        aggregator = Aggregator()
+        aggregator = Aggregator(ListFactory())
         aggregator._addAt((2000, 1, 1, 0, 0, 0), "value00")
         aggregator._addAt((2000, 1, 1, 0, 0, 1), "value01")
         aggregator._addAt((2000, 1, 1, 1, 0, 0), "should not yet trigger")
@@ -305,4 +305,12 @@ class StatisticsTest(CQ2TestCase):
             pass
         self.assertEquals(["value00", "value01"], list(aggregator.get((2000, 1, 1, 0))))
 
+
+class ListFactory(object):
+    def doInit(self):
+        return []
+    def doAdd(self, values, value):
+        values.append(value)
+    def doExtend(self, values0, values1):
+        values0.extend(values1)
 

@@ -26,6 +26,9 @@ class Logger(object):
                 return
             frame = frame.f_back
 
+class Data(object):
+    pass
+
 class Statistics(Observable):
     def __init__(self, path, keys, snapshotInterval=3600):
         Observable.__init__(self)
@@ -60,8 +63,8 @@ class Statistics(Observable):
         result = {}
         for t, data in self._data.items():
             if int(t) >= t0 and int(t) <= t1:
-                if key in data:
-                    for term, count in data[key].items():
+                if key in data: #"('ip' , 'path'
+                    for term, count in data[key].items(): # ('123.123.123.1', '/sadfdasf', 45
                         if term in result:
                             result[term] += count
                         else:
@@ -79,16 +82,16 @@ class Statistics(Observable):
 
     def _updateData(self, t, statistic, logLine):
         if not t in self._data:
-            self._data[t] = {}
+            self._data[t] = Data()
         data = self._data[t]
         if statistic not in data:
-            data[statistic] = {}
+            data[statistic] = {} #data[('ip', 'path')] = {('1.1.1.1', '/'): 3}
         fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
         fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
         for fieldValues in fieldValuesCombos:
             if not fieldValues in data[statistic]:
                 data[statistic][fieldValues] = 0
-            data[statistic][fieldValues] += 1
+            data[statistic][fieldValues] += 1  #data.add(statistic, fieldValues) # add ('ip',), ('12.12.12.12',)
 
     def _readState(self):
         if isfile(self._snapshotFilename + ".writing"):
@@ -159,28 +162,28 @@ class AggregatorException(Exception):
     pass
 
 class AggregatorNode(object):
-    def __init__(self, aggregationQueues):
-        self._values = []
-        self._children = {}
-        self._last = None
-        self._aggregated = False
+    def __init__(self, xxxFactory, aggregationQueues):
+        self._xxxFactory = xxxFactory
         self._aggregationQueues = aggregationQueues
+        self._values = self._xxxFactory.doInit()
+        self._children = {}
+        self._aggregated = False
 
     def _aggregate(self):
         if self._aggregated:
             return
         for nr, child in self._children.items():
             child._aggregate()
-            self._values.extend(child._values)
+            self._xxxFactory.doExtend(self._values, child._values)
         self._aggregated = True
 
     def add(self, time, data, depth):
         if len(time) == 0:
-            self._values.append(data)
+            self._xxxFactory.doAdd(self._values, data)
         else:
             head, tail = time[0], time[1:]
             if not head in self._children:
-                self._children[head] = AggregatorNode(self._aggregationQueues)
+                self._children[head] = AggregatorNode(self._xxxFactory, self._aggregationQueues)
             self._children[head].add(tail, data, depth + 1)
             current = self._children[head]
             q = self._aggregationQueues[depth]
@@ -206,16 +209,11 @@ class AggregatorNode(object):
             raise StopIteration
         yield self._children[head].get(tail)
 
-    def __reprdd__(self):
-        return
-        return "AggregatorNode (%s, %s)" % (self._values, self._children)
-
-
 class Aggregator(object):
 
-    def __init__(self):
+    def __init__(self, xxxFactory):
         self._aggregationQueues = [[], [], [], [], [], [], []]
-        self._root = AggregatorNode(self._aggregationQueues)
+        self._root = AggregatorNode(xxxFactory, self._aggregationQueues)
 
     def add(self, data):
         self._addAt(gmtime()[:6], data)
@@ -226,3 +224,13 @@ class Aggregator(object):
     def get(self, fromTime):
         return compose(self._root.get(fromTime))
 
+class ListFactory(object):
+
+    def doInit(self):
+        return []
+
+    def doAdd(self, values, value):
+        values.append(value)
+
+    def doExtend(self, values0, values1):
+        values0.extend(values1)
