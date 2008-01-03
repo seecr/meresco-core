@@ -54,9 +54,15 @@ def consolidate(data, collapseBefore=(0,0,0,0,0,0)):
     for time, data in _groupbytime(data, collapseBefore):
         yield time, _merge(data)
 
+class GranularityException(Exception): pass
+
 def select(data, start, until):
+    def selectUntil((time, observations)):
+        if len(time) < len(start) and not _commonPrefix(time, start) == ():
+            raise GranularityException((time, start))
+        return time < start
     return takewhile(lambda (time, observations): time < until,
-                    dropwhile(lambda (time, observations): time < start,
+                    dropwhile(selectUntil,
                         data))
 
 class TestConsolidate(TestCase):
@@ -80,6 +86,19 @@ class TestConsolidate(TestCase):
         self.assertEquals([(t0,(observation0, (value1, 2))) ], exampledata)
         self.assertEquals([(t0,((('a','b'),3), (('c','d'), 2))) ], exampledata)
         self.assertEquals([((1,2,3),((('a','b'),3),(('c','d'),2)))], exampledata)
+
+    def testGetTooPreciseStats(self):
+        data = [
+            ((1,2,3),((('c','c'),1),)),
+            ((2,3,4,1),((('a','b'),1),)),
+            ((3,4,5,2,3),((('c','c'),1),)),
+            ((4,5,6,4,5,6),((('a','b'),1),)),
+        ]
+        try:
+            list(select(data, start=(1,2,3,4), until=(3,4,6)))
+            self.fail()
+        except GranularityException:
+            pass
 
     def testGetStatistics(self):
         data = [
