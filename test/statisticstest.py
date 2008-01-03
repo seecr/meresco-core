@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -106,12 +106,13 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals("(1970, 1, 1, 0, 0, 0)\t{'date': ['2007-12-20'], 'ip': ['127.0.0.1'], 'protocol': ['srw']}\n", lines[1])
 
     def testUndefinedFieldValues(self):
-        stats = Statistics(self.tempdir, [('date', 'protocol')])
-        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats = Statistics(self.tempdir, [('protocol',)])
         stats._process({'date':['2007-12-20']})
-        self.assertEquals({
-                ('2007-12-20', '#undefined'): 1,
-        }, stats.get(('date', 'protocol')))
+        self.assertEquals({}, stats.get(('protocol',)))
+
+        stats = Statistics(self.tempdir, [('date', 'protocol')])
+        stats._process({'date':['2007-12-20']})
+        self.assertEquals({}, stats.get(('date', 'protocol')))
 
     def testSnapshotState(self):
         stats = Statistics(self.tempdir, [('keys',)])

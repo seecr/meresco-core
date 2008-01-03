@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -134,7 +134,11 @@ class Statistics(Observable):
             self._updateData(t, key, logLine)
 
     def _updateData(self, t, statistic, logLine):
-        fieldValuesList = tuple(logLine.get(fieldName, ["#undefined"]) for fieldName in statistic)
+        fieldValuesList = []
+        for fieldName in statistic:
+            if not fieldName in logLine:
+                return
+            fieldValuesList.append(logLine[fieldName])
         fieldValuesCombos = combinations(fieldValuesList[0], fieldValuesList[1:])
         for fieldValues in fieldValuesCombos:
             self._data._addAt(t, (statistic, fieldValues))
