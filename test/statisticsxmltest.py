@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -39,6 +39,13 @@ class StatisticsXmlTest(CQ2TestCase):
         self.assertEquals((2007, 1, 1, 0), s._parseTime('2007-01-01T00'))
         self.assertEquals((2007, 1, 1, 0, 0), s._parseTime('2007-01-01T00:00'))
         self.assertEquals((2007, 1, 1, 0 , 0, 0), s._parseTime('2007-01-01T00:00:00Z'))
+
+    def testParseNonsense(self):
+        s = StatisticsXml('ignored')
+        result = s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')
+        self.assertTrue("<error>Invalid Time Format" in result)
+        result = s.handleRequest(RequestURI='http://localhost/statistics?maxResults=garbage')
+        self.assertTrue("<error>maxResults must be number" in result)
 
     def testParseArguments(self):
         shuntedQuery = []

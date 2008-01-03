@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -38,13 +38,19 @@ class StatisticsXml(object):
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         arguments = self._parseArguments(RequestURI)
-        fromTime = arguments.get("fromTime", None)
-        if fromTime:
-            fromTime = self._parseTime(fromTime[0])
-        toTime = arguments.get("toTime", None)
-        if toTime:
-            toTime = self._parseTime(toTime[0])
-        maxResults = int(arguments.get("maxResults", [0])[0])
+        try:
+            fromTime = arguments.get("fromTime", None)
+            if fromTime:
+                fromTime = self._parseTime(fromTime[0])
+            toTime = arguments.get("toTime", None)
+            if toTime:
+                toTime = self._parseTime(toTime[0])
+        except ValueError:
+            return self._htmlHeader() + "<error>Invalid Time Format. Times must be of the format 1970-01-01T00:00:00Z or any shorter subpart.</error>"
+        try:
+            maxResults = int(arguments.get("maxResults", [0])[0])
+        except ValueError:
+            return self._htmlHeader() + "<error>maxResults must be number.</error>"
         key = arguments.get("key", None)
         if not key:
             return self._listKeys()
