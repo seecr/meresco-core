@@ -38,15 +38,19 @@ class StatisticsXml(object):
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         arguments = self._parseArguments(RequestURI)
-        beginDay = self._parseDay(arguments.get("beginDay", ["1970-01-01"])[0])
-        endDay = self._parseDay(arguments.get("endDay", ["2030-12-31"])[0], endDay=True)
+        fromTime = arguments.get("fromTime", None)
+        if fromTime:
+            fromTime = self._parseTime(fromTime[0])
+        toTime = arguments.get("toTime", None)
+        if toTime:
+            toTime = self._parseTime(toTime[0])
         maxResults = int(arguments.get("maxResults", [0])[0])
         key = arguments.get("key", None)
         if not key:
             return self._listKeys()
         if key:
             key = tuple(key)
-        return compose(self._query(beginDay, endDay, key, maxResults))
+        return compose(self._query(fromTime, toTime, key, maxResults))
 
     def _htmlHeader(self):
         return "HTTP/1.0 200 Ok\r\nContent-Type: text/xml\r\n\r\n"
@@ -62,11 +66,11 @@ class StatisticsXml(object):
             yield "</query>"
         yield "</queries>"
 
-    def _query(self, beginDay, endDay, key, maxResults):
+    def _query(self, fromTime, toTime, key, maxResults):
         yield self._htmlHeader()
 
         try:
-            data = self._statistics.get(beginDay, endDay, key).items()
+            data = self._statistics.get(key, fromTime, toTime).items()
         except KeyError, e:
             yield "<error>Unknown key: %s</error>" % str(key)
             raise StopIteration
@@ -83,7 +87,7 @@ class StatisticsXml(object):
             yield "<count>%s</count>" % count
             yield "</result>"
         yield "</statistic>"
-        
+
     def _sortedMaxed(self, data, maxResults):
         def cmp((leftValue, leftCount), (rightValue, rightCount)):
             if not leftCount == rightCount:
@@ -103,14 +107,11 @@ class StatisticsXml(object):
         arguments = parse_qs(Query)
         return arguments
 
-    def _parseDay(self, s, endDay=False):
-        year = int(s[:4])
-        mon = int(s[5:7])
-        day = int(s[8:10])
-        hour = endDay and 23 or 0
-        min = endDay and 59 or 0
-        sec = endDay and 59 or 0
-        return int(mktime((year, mon, day, hour, min, sec, 0, -1, 0))) + self._correctForLocalTime()
+    def _parseTime(self, s):
+        result = []
+        list = [(0, 4), (5, 7), (8, 10), (11, 13), (14, 16), (17, 19)]
+        for (l, r) in list:
+            if len(s) >= r:
+                result.append((int(s[l:r])))
+        return tuple(result)
 
-    def _correctForLocalTime(self):
-        return -1 * int(mktime((1970, 1,  1, 0, 0, 0, 0, -1, 0)))

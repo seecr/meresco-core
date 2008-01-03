@@ -65,9 +65,10 @@ class Top100s(object):
         if not occurrence in self._data[statisticId]:
             self._data[statisticId][occurrence] = 0
         self._data[statisticId][occurrence] += count
+        self._data[statisticId] = dict(self.getTop100(statisticId))
 
     def getTop100(self, statisticId):
-        return self._data.get(statisticId, {}).items()
+        return sorted(self._data.get(statisticId, {}).items())[:100]
 
     def statisticIds(self):
         return self._data.keys()
@@ -223,6 +224,7 @@ class AggregatorNode(object):
         for nr, child in self._children.items():
             child._aggregate()
             self._xxxFactory.doExtend(self._values, child._values)
+        self._children = {}
         self._aggregated = True
 
     def add(self, time, data, depth):
@@ -275,6 +277,9 @@ class AggregatorNode(object):
                         useUntil = END[-1 * len(untilTail):]
                     child.get(result, useFrom, useUntil)
         return result
+
+    def __repr__(self):
+        return "\nAggregatorNode Children:\n%s \nvalues:%s\n" % (self._children, self._values)
 
 class Aggregator(object):
 

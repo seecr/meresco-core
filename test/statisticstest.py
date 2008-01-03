@@ -309,6 +309,7 @@ class StatisticsTest(CQ2TestCase):
         except AggregatorException:
             pass
         self.assertEquals(["value00", "value01"], aggregator.get((2000, 1, 1, 0, 0)))
+        self.assertEquals({}, aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._children)
 
     def testStatisticsAggregatorAggregatesRecursivelyWithSkippedLevel(self):
         aggregator = Aggregator(ListFactory())

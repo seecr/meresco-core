@@ -31,23 +31,28 @@ from meresco.components.statistics import Statistics
 
 class StatisticsXmlTest(CQ2TestCase):
 
-    def testParseDay(self):
-        self.assertEquals(1167609600, StatisticsXml('ignored')._parseDay('2007-01-01'))
-        self.assertEquals(1167609600 + 24 * 60 * 60 - 1, StatisticsXml('ignored')._parseDay('2007-01-01', endDay=True))
+    def testParseTime(self):
+        s = StatisticsXml('ignored')
+        self.assertEquals((2007,), s._parseTime('2007'))
+        self.assertEquals((2007, 1), s._parseTime('2007-01'))
+        self.assertEquals((2007, 1, 1), s._parseTime('2007-01-01'))
+        self.assertEquals((2007, 1, 1, 0), s._parseTime('2007-01-01T00'))
+        self.assertEquals((2007, 1, 1, 0, 0), s._parseTime('2007-01-01T00:00'))
+        self.assertEquals((2007, 1, 1, 0 , 0, 0), s._parseTime('2007-01-01T00:00:00Z'))
 
     def testParseArguments(self):
         shuntedQuery = []
         def shuntQuery(*args):
             while shuntedQuery: shuntedQuery.pop()
             shuntedQuery.append(args)
-            
+
         def check(expected, query):
             statisticsxml = StatisticsXml('ignored')
             statisticsxml._query = shuntQuery
             statisticsxml.handleRequest(RequestURI='http://localhost/statistics?' + query)
             self.assertEquals([expected], shuntedQuery)
-        check((0, 86399, ('aKey',), 0), 'key=aKey&beginDay=1970-01-01&endDay=1970-01-01')
-        check((0, 86399, ('aKey', 'key2'), 12), 'key=aKey&key=key2&beginDay=1970-01-01&endDay=1970-01-01&maxResults=12')
+        check(((1970, 1, 1), (1970, 1, 2), ('aKey',), 0), 'key=aKey&fromTime=1970-01-01&toTime=1970-01-02')
+        check(((1970, 1, 1), (1970, 1, 2), ('aKey', 'key2'), 12), 'key=aKey&key=key2&fromTime=1970-01-01&toTime=1970-01-02&maxResults=12')
 
     def testEmptyDataIntegration(self):
         stats = StatisticsXml(Statistics(self.tempdir, [('a',), ('a','b','c')]))
@@ -61,7 +66,7 @@ class StatisticsXmlTest(CQ2TestCase):
 
         result = stats.handleRequest(RequestURI="http://localhost/statistics?key=a&key=b&key=d")
         self.assertEquals(stats._htmlHeader() + """<error>Unknown key: ('a', 'b', 'd')</error>""", ''.join(result))
-        
+
     def testSortedMaxed(self):
         statisticsxml = StatisticsXml('ignored')
         result = statisticsxml._sortedMaxed([('one', 1), ('big', 100), ('not in result', 0)], 2)
