@@ -1,4 +1,4 @@
-from meresco_extensions.bitmatrix import BitMatrix
+from bitmatrix import BitMatrix
 
 class DrillDownException(Exception):
     pass
@@ -28,7 +28,7 @@ class FieldMatrix(object):
         class MockBitSet:
             def __init__(self, occurences): self._occurences = occurences
             def cardinality(self): return self._occurences
-        for nr, occurences in self._matrix.rowCadinalities():
+        for nr, occurences in self._matrix.rowCardinalities():
             yield self._row2term[nr], MockBitSet(occurences)
 
 class Drilldown(object):
