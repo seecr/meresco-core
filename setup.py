@@ -26,28 +26,23 @@
 #
 ## end license ##
 from distutils.core import setup
-from distutils.extension import Extension
-from Pyrex.Distutils import build_ext
 
 setup(
     name='meresco',
     packages=[
         'meresco',
         'meresco.components',
+        'meresco.components.dictionary',
         'meresco.components.drilldown',
-        'meresco.components.drilldown.cpp',
         'meresco.components.http',
         'meresco.components.lucene',
         'meresco.components.oai',
         'meresco.components.sru',
         'meresco.components.xml_generic',
-        'meresco.legacy',
-        'meresco.legacy.plugins',
-        'meresco.framework'
+        'meresco.framework',
     ],
     package_data={
-        'meresco.components': ['*.rules'],
-        'meresco.components.oai': ['data/*'],
+        'meresco.components.rules': ['*.rules'],
         'meresco.components.xml_generic': [
             'schemas/*',
             'schemas-lom/*.xsd',
@@ -58,16 +53,13 @@ setup(
             'schemas-lom/vocab/*'
         ]
     },
-    ext_modules=[
-        Extension("meresco.components.drilldown.cpp._bitarray", [
-		"meresco/components/drilldown/cpp/bitarray_wrap.cxx",
-		"meresco/components/drilldown/cpp/BitArray.cpp"]
-		),
-        Extension("meresco.components.drilldown.bitmatrix", [
-		"meresco/components/drilldown/bitmatrix/bitmatrix.pyx",
-		"meresco/components/drilldown/bitmatrix/bitmatrix_misc.c"],
-        extra_compile_args = ['-O3']
-		)
-    ],
-    cmdclass = {'build_ext': build_ext}
+    version='%VERSION%',
+    url='http://www.meresco.org',
+    author='Seek You Too',
+    author_email='info@cq2.nl',
+    description='Meresco Core is an open-source library containing components to build searchengines, repositories and archives.',
+    long_description='Meresco Core is an open-source library containing components to build searchengines, repositories and archives.',
+    license='GNU Public License',
+    platforms='all',
+
 )
