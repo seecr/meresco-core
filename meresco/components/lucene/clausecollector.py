@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -36,15 +36,16 @@ class ClauseCollector(CqlVisitor):
     def visitSCOPED_CLAUSE(self, node):
         result = CqlVisitor.visitSCOPED_CLAUSE(self, node)[0]
         if len(result) == 1:
-            self._logger(clause = result[0])
+            self._logger(clause = result[0].lower())
         else:
             if result[0] == "(":
                 return result[1]
-            self._logger(clause = "%s %s %s" % (result[0][0], result[1], result[2]))
+            self._logger(clause = "%s %s %s" % (result[0][0], result[1], result[2].lower()))
         return result
 
     def visitRELATION(self, node):
         result = CqlVisitor.visitRELATION(self, node)
         if len(result) == 1:
             return result[0]
-        return "%s%s%s" % (result[0], result[1][0][0], result[1][0][2])
+        relation, ((modifier, comparitor, value),) = result
+        return "%s/%s%s%s" % (relation, modifier, comparitor, value)

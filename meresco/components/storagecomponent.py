@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -25,7 +25,6 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from storage import HierarchicalStorage, Storage, HierarchicalStorageError
 
 def defaultSplit((id, partName)):
     result = id.split(':',1)
@@ -34,8 +33,10 @@ def defaultSplit((id, partName)):
     return result
 
 class StorageComponent(object):
-    def __init__(self, storeDirectory, split=defaultSplit):
-        self._storage = HierarchicalStorage(Storage(storeDirectory), split=split)
+    def __init__(self, storage): #storeDirectory, split=defaultSplit): <= zo was't
+        if isinstance(storage, str):
+            raise Exception("Deprecated..., 1st param of StorageComponent should be a HierarchicalStorage, not a string")
+        self._storage = storage
 
     def store(self, *args, **kwargs):
         return self.add(*args, **kwargs)
@@ -48,10 +49,8 @@ class StorageComponent(object):
             return sink.close()
 
     def deletePart(self, id, partName):
-        try:
+        if (id, partName) in self._storage:
             self._storage.delete((id, partName))
-        except HierarchicalStorageError, ignored:
-            pass
 
     def isAvailable(self, id, partName):
         """returns (hasId, hasPartName)"""

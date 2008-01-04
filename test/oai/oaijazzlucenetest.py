@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -41,7 +41,8 @@ from meresco.components.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
 from meresco.components.lucene.document import Document
 from meresco.components.lucene.lucene import LuceneIndex
-from meresco.components import StorageComponent
+from meresco.components.storagecomponent import StorageComponent, defaultSplit
+from storage import Storage, HierarchicalStorage
 
 
 FIELDS = binderytools.bind_string("""<xmlfields xmlns:teddy="%s">
@@ -58,8 +59,10 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.id = "id"
         self.partName = "xmlfields"
         self.document = Xml2Document()._create(self.id, FIELDS)
-        self.realjazz = OaiJazzLucene(LuceneIndex(join(self.tempdir,'index'), "Cql Composer is ignored"),
-            StorageComponent(join(self.tempdir,'storage')), iter(xrange(99)))
+        self.realjazz = OaiJazzLucene(
+            LuceneIndex(join(self.tempdir,'index'), "Cql Composer is ignored"),
+            StorageComponent(HierarchicalStorage(Storage(join(self.tempdir,'storage')), split = defaultSplit)),
+            iter(xrange(99)))
 
     def tearDown(self):
         self.realjazz.close()
@@ -261,7 +264,7 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self._luceneIndex = LuceneIndex(join(self.tempdir, "lucene-index"), 'Cql Composer is ignored')
-        self._storage = StorageComponent(join(self.tempdir, 'storage'))
+        self._storage = StorageComponent(HierarchicalStorage(Storage(join(self.tempdir,'storage')), split = defaultSplit))
         self.jazz = OaiJazzLucene(self._luceneIndex, self._storage, iter(xrange(9999)))
 
     def addDocuments(self, size):
