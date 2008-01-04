@@ -31,6 +31,8 @@ from urlparse import urlsplit
 from time import mktime
 from meresco.framework import compose
 
+from meresco.components.statistics import AggregatorException
+
 class StatisticsXml(object):
 
     def __init__(self, statistics):
@@ -79,6 +81,9 @@ class StatisticsXml(object):
             data = self._statistics.get(key, fromTime, toTime).items()
         except KeyError, e:
             yield "<error>Unknown key: %s</error>" % str(key)
+            raise StopIteration
+        except AggregatorException, e:
+            yield "<error>Statistics Aggregation Exception: %s</error>" % str(e)
             raise StopIteration
         if maxResults:
             data = self._sortedMaxed(data, maxResults)

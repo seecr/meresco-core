@@ -249,40 +249,39 @@ class AggregatorNode(object):
                 toDo._aggregate()
 
     def get(self, result, fromTime, untilTime):
-        BEGIN = (0, 0, 0, 0, 0, 0)
-        END = (9999, 9999, 9999, 9999, 9999, 9999)
-
-        assert len(fromTime) == len(untilTime), (fromTime, untilTime)
-        if len(fromTime) == 0:
+        if not fromTime and not untilTime:
             self._xxxFactory.doExtend(result, self._values)
             if not self._aggregated:
                 for digit, child in self._children.items():
-                    child.get(result, fromTime, untilTime)
+                    child.get(result, [], [])
             return result
 
         if self._aggregated:
             raise AggregatorException('too precise')
 
-        fromHead, fromTail = fromTime[0], fromTime[1:]
-        untilHead, untilTail = untilTime[0], untilTime[1:]
         for digit, child in self._children.items():
-            if len(fromTime) == 1:
-                if digit >= fromHead and digit < untilHead:
-                    child.get(result, [], [])
-            else:
-                if digit >= fromHead and digit <= untilHead:
-                    if digit == fromHead:
-                        useFrom = fromTail
-                    else: #digit > fromHead
-                        useFrom = BEGIN[-1 * len(fromTail):]
-                    if digit == untilHead:
-                        useUntil = untilTail
-                    else: #digit < untilHead
-                        useUntil = END[-1 * len(untilTail):]
-                    child.get(result, useFrom, useUntil)
+            left = fromTime
+            if fromTime:
+                if digit < fromTime[0]:
+                    continue
+                elif digit == fromTime[0]:
+                    left = fromTime[1:]
+                else:
+                    left = []
+
+            right = untilTime
+            if untilTime:
+                if digit > untilTime[0]:
+                    continue
+                elif digit == untilTime[0]:
+                    right = untilTime[1:]
+                else:
+                    right = []
+
+            child.get(result, left, right)
         return result
 
-    def __repr__(self):
+    def __resssssspr__(self):
         return "\nAggregatorNode Children:\n%s \nvalues:%s\n" % (self._children, self._values)
 
 class Aggregator(object):
@@ -298,10 +297,5 @@ class Aggregator(object):
     def _addAt(self, time, data):
         self._root.add(time, data, 0)
 
-    def get(self, fromTime, untilTime=None):
-        if untilTime == None:
-            untilTime = list(fromTime[:])
-            if fromTime:
-                untilTime[-1] += 1
-            untilTime = tuple(untilTime)
+    def get(self, fromTime=(), untilTime=()):
         return self._root.get(self._xxxFactory.doInit(), fromTime, untilTime)

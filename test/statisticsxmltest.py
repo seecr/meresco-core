@@ -79,4 +79,22 @@ class StatisticsXmlTest(CQ2TestCase):
         result = statisticsxml._sortedMaxed([('one', 1), ('big', 100), ('not in result', 0)], 2)
         self.assertEquals([('big', 100), ('one', 1)], result)
 
+    def testCurrentDateInResponse(self):
+        statisticsxml = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
+        result = ''.join(statisticsxml.handleRequest(RequestURI="http://localhost/statistics"))
+        self.assertEquals(
+            """HTTP/1.0 200 Ok
+Content-Type: text/xml
+
+<?xml version="1.0" encoding="utf-8" ?><statistics xmlns="http://meresco.org/statistics">
+<header>
+  <date>2008-01-04T09:20:13Z</date>
+  <
+</header>
+<observations>
+  <observation>
+    <value>a</value>
+    <occurrence>1</occurrence>
+  <observations""",
+            result)
 
