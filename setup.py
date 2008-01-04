@@ -42,7 +42,7 @@ setup(
         'meresco.framework',
     ],
     package_data={
-        'meresco.components.rules': ['*.rules'],
+        'meresco.components': ['rules/*.rules'],
         'meresco.components.xml_generic': [
             'schemas/*',
             'schemas-lom/*.xsd',
