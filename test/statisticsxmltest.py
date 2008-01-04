@@ -74,14 +74,14 @@ class StatisticsXmlTest(CQ2TestCase):
     def testInvalidKey(self):
         stats = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
         result = stats.handleRequest(RequestURI="http://localhost/statistics?key=nonExisting")
-        self.assertEquals(stats._htmlHeader() + """<error>Unknown key: ('nonExisting',)</error>""", ''.join(result))
+        self.assertTrue("""<error>Unknown key: ('nonExisting',)</error>""" in ''.join(result))
 
         result = stats.handleRequest(RequestURI="http://localhost/statistics?key=a&key=b&key=d")
-        self.assertEquals(stats._htmlHeader() + """<error>Unknown key: ('a', 'b', 'd')</error>""", ''.join(result))
+        self.assertTrue("""<error>Unknown key: ('a', 'b', 'd')</error>""" in ''.join(result))
 
-    def testSortedMaxed(self):
+    def testSorted(self):
         statisticsxml = StatisticsXml('ignored')
-        result = statisticsxml._sortedMaxed([('one', 1), ('big', 100), ('not in result', 0)], 2)
+        result = statisticsxml._sorted([('one', 1), ('big', 100)])
         self.assertEquals([('big', 100), ('one', 1)], result)
 
     def testResponseFormat(self):

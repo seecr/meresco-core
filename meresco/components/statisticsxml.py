@@ -40,22 +40,27 @@ class StatisticsXml(object):
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         yield self._htmlHeader()
+        yield "<statistics><header>%s" % self._serverTime()
         arguments = self._parseArguments(RequestURI)
 
         try:
             fromTime = arguments.get("fromTime", None)
             if fromTime:
+                yield "<fromTime>%s</fromTime>" % fromTime[0]
                 fromTime = self._parseTime(fromTime[0])
             toTime = arguments.get("toTime", None)
             if toTime:
+                yield "<toTime>%s</toTime>" % fromTime[0]
                 toTime = self._parseTime(toTime[0])
         except ValueError:
-            yield "<error>Invalid Time Format. Times must be of the format 1970-01-01T00:00:00Z or any shorter subpart.</error>"
+            yield "</header><error>Invalid Time Format. Times must be of the format 1970-01-01T00:00:00Z or any shorter subpart.</error></statistics>"
             raise StopIteration
         try:
+            if "maxResults" in arguments:
+                yield "<maxResults>%s</maxResults>" % arguments["maxResults"][0]
             maxResults = int(arguments.get("maxResults", [0])[0])
         except ValueError:
-            yield "<error>maxResults must be number.</error>"
+            yield "</header><error>maxResults must be number.</error></statistics>"
             raise StopIteration
         key = arguments.get("key", None)
         if not key:
@@ -70,7 +75,7 @@ class StatisticsXml(object):
         return """HTTP/1.0 200 Ok\r\nContent-Type: text/xml\r\n\r\n<?xml version="1.0" encoding="utf-8" ?>"""
 
     def _listKeys(self):
-        yield "<statistics><header>%s</header><availableKeys>" % self._serverTime()
+        yield "</header><availableKeys>"
         for keys in self._statistics.listKeys():
             yield "<key>"
             for key in keys:
@@ -79,22 +84,19 @@ class StatisticsXml(object):
         yield "</availableKeys></statistics>"
 
     def _query(self, fromTime, toTime, key, maxResults):
-
         try:
             data = self._statistics.get(key, fromTime, toTime).items()
         except KeyError, e:
-            yield "<error>Unknown key: %s</error>" % str(key)
+            yield "</header><error>Unknown key: %s</error></statistics>" % str(key)
             raise StopIteration
         except AggregatorException, e:
-            yield "<error>Statistics Aggregation Exception: %s</error>" % str(e)
+            yield "</header><error>Statistics Aggregation Exception: %s</error></statistics>" % str(e)
             raise StopIteration
-        if maxResults:
-            data = self._sortedMaxed(data, maxResults)
 
-        yield "<header>"
-        yield self._serverTime()
-        #fromTime
-        #toTime
+        data = self._sorted(data)
+        if maxResults:
+            data = data[:maxResults]
+
         yield "<key>"
         yield self._list(key, "keyElement")
         yield "</key>"
@@ -105,14 +107,14 @@ class StatisticsXml(object):
             yield self._list(value, "value")
             yield "<occurrences>%s</occurrences>" % count
             yield "</observation>"
-        yield "</observations>"
+        yield "</observations></statistics>"
 
-    def _sortedMaxed(self, data, maxResults):
+    def _sorted(self, data):
         def cmp((leftValue, leftCount), (rightValue, rightCount)):
             if not leftCount == rightCount:
                 return rightCount - leftCount
-            return rightValue - leftValue
-        return sorted(data, cmp=cmp)[:maxResults]
+            return rightValue > leftValue
+        return sorted(data, cmp=cmp)
 
     def _list(self, list, tagName):
         if not list:
