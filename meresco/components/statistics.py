@@ -116,9 +116,7 @@ class Statistics(Observable):
     def listKeys(self):
         return self._keys
 
-    def get(self, statisticId, t0=None, t1=None):
-        if not t0:
-            t0 = ()
+    def get(self, statisticId, t0=(), t1=()):
         if statisticId not in self._keys:
             raise KeyError('%s not in %s' % (statisticId, self._keys))
         return dict(self._data.get(t0, t1).getTop100(statisticId))
@@ -248,8 +246,8 @@ class AggregatorNode(object):
                 q.remove(toDo)
                 toDo._aggregate()
 
-    def get(self, result, fromTime, untilTime):
-        if not fromTime and not untilTime:
+    def get(self, result, fromTime, toTime):
+        if not fromTime and not toTime:
             self._xxxFactory.doExtend(result, self._values)
             if not self._aggregated:
                 for digit, child in self._children.items():
@@ -257,7 +255,7 @@ class AggregatorNode(object):
             return result
 
         if self._aggregated:
-            raise AggregatorException('too precise')
+            raise AggregatorException(fromTime, toTime)
 
         for digit, child in self._children.items():
             left = fromTime
@@ -269,12 +267,12 @@ class AggregatorNode(object):
                 else:
                     left = []
 
-            right = untilTime
-            if untilTime:
-                if digit > untilTime[0]:
+            right = toTime
+            if toTime:
+                if digit > toTime[0]:
                     continue
-                elif digit == untilTime[0]:
-                    right = untilTime[1:]
+                elif digit == toTime[0]:
+                    right = toTime[1:]
                 else:
                     right = []
 
@@ -297,5 +295,14 @@ class Aggregator(object):
     def _addAt(self, time, data):
         self._root.add(time, data, 0)
 
-    def get(self, fromTime=(), untilTime=()):
-        return self._root.get(self._xxxFactory.doInit(), fromTime, untilTime)
+    def get(self, fromTime=(), toTime=()):
+        try:
+            return self._root.get(self._xxxFactory.doInit(), fromTime, toTime)
+        except AggregatorException, e:
+            nice = ["everything", "years", "months", "days", "hours", "minutes", "seconds"]
+            s = []
+            if e.args[0]:
+                s.append("fromTime has been accumulated to '%s'." % nice[len(fromTime) - len(e.args[0])])
+            if e.args[1]:
+                s.append("toTime has been accumulated to '%s'." % nice[len(toTime) - len(e.args[1])])
+            raise AggregatorException("; ".join(s))

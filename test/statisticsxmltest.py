@@ -42,29 +42,34 @@ class StatisticsXmlTest(CQ2TestCase):
 
     def testParseNonsense(self):
         s = StatisticsXml('ignored')
-        result = s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')
-        self.assertTrue("<error>Invalid Time Format" in result)
-        result = s.handleRequest(RequestURI='http://localhost/statistics?maxResults=garbage')
-        self.assertTrue("<error>maxResults must be number" in result)
+        s._listKeys = lambda: []
+
+        xx = s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')
+        result = "".join(list(s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')))
+        self.assertTrue("<error>Invalid Time Format" in result, result)
+        result = "".join(list(s.handleRequest(RequestURI='http://localhost/statistics?maxResults=garbage')))
+        self.assertTrue("<error>maxResults must be number" in result, result)
 
     def testParseArguments(self):
         shuntedQuery = []
         def shuntQuery(*args):
             while shuntedQuery: shuntedQuery.pop()
             shuntedQuery.append(args)
+            return ""
 
         def check(expected, query):
             statisticsxml = StatisticsXml('ignored')
+            statisticsxml._listKeys = lambda: []
             statisticsxml._query = shuntQuery
-            statisticsxml.handleRequest(RequestURI='http://localhost/statistics?' + query)
+            list(statisticsxml.handleRequest(RequestURI='http://localhost/statistics?' + query))
             self.assertEquals([expected], shuntedQuery)
         check(((1970, 1, 1), (1970, 1, 2), ('aKey',), 0), 'key=aKey&fromTime=1970-01-01&toTime=1970-01-02')
         check(((1970, 1, 1), (1970, 1, 2), ('aKey', 'key2'), 12), 'key=aKey&key=key2&fromTime=1970-01-01&toTime=1970-01-02&maxResults=12')
 
-    def testEmptyDataIntegration(self):
+    def testNoKeysGivenReturnsKeys(self):
         stats = StatisticsXml(Statistics(self.tempdir, [('a',), ('a','b','c')]))
-        result = stats.handleRequest('uri')
-        self.assertEquals(stats._htmlHeader() + '<queries><query><key>a</key></query><query><key>a</key><key>b</key><key>c</key></query></queries>', ''.join(result))
+        result = "".join(list(stats.handleRequest('uri')))
+        self.assertTrue("""<availableKeys><key><keyElement>a</keyElement></key><key><keyElement>a</keyElement><keyElement>b</keyElement><keyElement>c</keyElement></key></availableKeys></statistics>""" in result, result)
 
     def testInvalidKey(self):
         stats = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
@@ -79,22 +84,13 @@ class StatisticsXmlTest(CQ2TestCase):
         result = statisticsxml._sortedMaxed([('one', 1), ('big', 100), ('not in result', 0)], 2)
         self.assertEquals([('big', 100), ('one', 1)], result)
 
-    def testCurrentDateInResponse(self):
+    def testResponseFormat(self):
         statisticsxml = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
-        result = ''.join(statisticsxml.handleRequest(RequestURI="http://localhost/statistics"))
-        self.assertEquals(
-            """HTTP/1.0 200 Ok
-Content-Type: text/xml
+        result = ''.join(list(statisticsxml.handleRequest(RequestURI="http://localhost/statistics")))
+        self.assertTrue("""HTTP/1.0 200 Ok""" in result, result)
+        self.assertTrue("""<?xml""" in result, result)
+        self.assertTrue("""<statistics""" in result, result)
+        self.assertTrue("""<serverTime""" in result, result)
 
-<?xml version="1.0" encoding="utf-8" ?><statistics xmlns="http://meresco.org/statistics">
-<header>
-  <date>2008-01-04T09:20:13Z</date>
-  <
-</header>
-<observations>
-  <observation>
-    <value>a</value>
-    <occurrence>1</occurrence>
-  <observations""",
-            result)
+
 

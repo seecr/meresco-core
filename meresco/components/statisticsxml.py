@@ -28,7 +28,7 @@
 from cgi import parse_qs
 from urlparse import urlsplit
 
-from time import mktime
+from time import mktime, gmtime
 from meresco.framework import compose
 
 from meresco.components.statistics import AggregatorException
@@ -39,7 +39,9 @@ class StatisticsXml(object):
         self._statistics = statistics
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
+        yield self._htmlHeader()
         arguments = self._parseArguments(RequestURI)
+
         try:
             fromTime = arguments.get("fromTime", None)
             if fromTime:
@@ -48,34 +50,35 @@ class StatisticsXml(object):
             if toTime:
                 toTime = self._parseTime(toTime[0])
         except ValueError:
-            return self._htmlHeader() + "<error>Invalid Time Format. Times must be of the format 1970-01-01T00:00:00Z or any shorter subpart.</error>"
+            yield "<error>Invalid Time Format. Times must be of the format 1970-01-01T00:00:00Z or any shorter subpart.</error>"
+            raise StopIteration
         try:
             maxResults = int(arguments.get("maxResults", [0])[0])
         except ValueError:
-            return self._htmlHeader() + "<error>maxResults must be number.</error>"
+            yield "<error>maxResults must be number.</error>"
+            raise StopIteration
         key = arguments.get("key", None)
         if not key:
-            return self._listKeys()
-        if key:
+            for stuff in self._listKeys():
+                yield stuff
+        else:
             key = tuple(key)
-        return compose(self._query(fromTime, toTime, key, maxResults))
+            for stuff in compose(self._query(fromTime, toTime, key, maxResults)):
+                yield stuff
 
     def _htmlHeader(self):
-        return "HTTP/1.0 200 Ok\r\nContent-Type: text/xml\r\n\r\n"
+        return """HTTP/1.0 200 Ok\r\nContent-Type: text/xml\r\n\r\n<?xml version="1.0" encoding="utf-8" ?>"""
 
     def _listKeys(self):
-        yield self._htmlHeader()
-
-        yield "<queries>"
+        yield "<statistics><header>%s</header><availableKeys>" % self._serverTime()
         for keys in self._statistics.listKeys():
-            yield "<query>"
+            yield "<key>"
             for key in keys:
-                yield "<key>%s</key>" % key
-            yield "</query>"
-        yield "</queries>"
+                yield "<keyElement>%s</keyElement>" % key
+            yield "</key>"
+        yield "</availableKeys></statistics>"
 
     def _query(self, fromTime, toTime, key, maxResults):
-        yield self._htmlHeader()
 
         try:
             data = self._statistics.get(key, fromTime, toTime).items()
@@ -88,16 +91,21 @@ class StatisticsXml(object):
         if maxResults:
             data = self._sortedMaxed(data, maxResults)
 
-        yield "<statistic>"
-        yield "<query>"
-        yield self._list(key, "key")
-        yield "</query>"
+        yield "<header>"
+        yield self._serverTime()
+        #fromTime
+        #toTime
+        yield "<key>"
+        yield self._list(key, "keyElement")
+        yield "</key>"
+        yield "</header>"
+        yield "<observations>"
         for value, count in data:
-            yield "<result>"
+            yield "<observation>"
             yield self._list(value, "value")
-            yield "<count>%s</count>" % count
-            yield "</result>"
-        yield "</statistic>"
+            yield "<occurrences>%s</occurrences>" % count
+            yield "</observation>"
+        yield "</observations>"
 
     def _sortedMaxed(self, data, maxResults):
         def cmp((leftValue, leftCount), (rightValue, rightCount)):
@@ -117,6 +125,9 @@ class StatisticsXml(object):
         Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)
         arguments = parse_qs(Query)
         return arguments
+
+    def _serverTime(self):
+        return "<serverTime>%02d-%02d-%02dT%02d:%02d:%02dZ</serverTime>""" % gmtime()[:6]
 
     def _parseTime(self, s):
         result = []

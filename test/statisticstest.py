@@ -312,28 +312,42 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals(["value00", "value01"], aggregator.get((2000, 1, 1, 0, 0), (2000, 1, 1, 0, 0)))
         self.assertEquals({}, aggregator._root._children[2000]._children[1]._children[1]._children[0]._children[0]._children)
 
+    def testAggregatorRealDataExample(self):
+        aggregator = Aggregator(ListFactory())
+        aggregator._addAt((2007, 11, 15), "a") # t/m nov zijn geaggregeerd
+        aggregator._addAt((2007, 12, 15), "b") # dec heeft alle dagen nog
+        aggregator._addAt((2008,  1,  1), "c") # want we zijn nu bij "de derde maand"
+
+        aggregator.get((2007, 12, 15))
+        try:
+            aggregator.get((2007, 11, 15))
+            self.fail("Should raise 'too precise' for 11.15")
+        except AggregatorException:
+            pass
+        result = aggregator.get((2007, 11))
+        self.assertEquals(set(["a", "b", "c"]), set(result))
+
     def testAggregatorPrecisionErrors(self):
         aggregator = Aggregator(ListFactory())
         aggregator._addAt((2000, 0, 0, 0, 0, 0), "a")
-        aggregator._addAt((2000, 0, 0, 0, 0, 1), "b")
-        aggregator._addAt((2001, 0, 0, 0, 0, 0), "c")
-        aggregator._addAt((2002, 0, 0, 0, 0, 0), "d") #triggers aggregation of 2000
-        aggregator._addAt((2003, 3, 3, 3, 3, 3), "e") #triggers aggregation of 2001
+        aggregator._addAt((2001, 0, 0, 0, 0, 0), "b")
+        aggregator._addAt((2002, 0, 0, 0, 0, 0), "c") #triggers aggregation of 2000
+        aggregator._addAt((2003, 3, 3, 3, 3, 3), "d") #triggers aggregation of 2001
 
         try:
             aggregator.get((2000, 1, 1, 0, 0, 0), (2002, 1, 1, 0, 0, 1))
             self.fail("Should raise 'too precise' for 2000")
-        except AggregatorException:
-            pass
+        except AggregatorException, e:
+            self.assertEquals("fromTime has been accumulated to 'years'.", str(e))
 
         try:
             aggregator.get((1999, 1, 1, 0, 0, 0), (2001, 1, 1, 0, 0, 1))
             self.fail("Should raise 'too precise' for 2001")
-        except AggregatorException:
-            pass
+        except AggregatorException, e:
+            self.assertEquals("toTime has been accumulated to 'years'.", str(e))
 
         result = aggregator.get((1999, 1, 1, 0, 0, 0), (2002, 0, 0, 0, 0, 1))
-        self.assertEquals(["a", "b", "c", "d"], result)
+        self.assertEquals(["a", "b", "c"], result)
 
 
     def testStatisticsAggregatorAggregatesRecursivelyWithSkippedLevel(self):
