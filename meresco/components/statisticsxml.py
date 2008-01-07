@@ -50,7 +50,7 @@ class StatisticsXml(object):
                 fromTime = self._parseTime(fromTime[0])
             toTime = arguments.get("toTime", None)
             if toTime:
-                yield "<toTime>%s</toTime>" % fromTime[0]
+                yield "<toTime>%s</toTime>" % toTime[0]
                 toTime = self._parseTime(toTime[0])
         except ValueError:
             yield "</header><error>Invalid Time Format. Times must be of the format 1970-01-01T00:00:00Z or any shorter subpart.</error></statistics>"
