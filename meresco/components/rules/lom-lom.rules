@@ -37,16 +37,18 @@ two('lom:lifeCycle/lom:status/lom:value', ('.',), '%s',),
 two('lom:lifeCycle/lom:contribute/lom:role/lom:source', ('.',), '%s',),
 two('lom:lifeCycle/lom:contribute/lom:role/lom:value', ('.',), '%s',),
 
-two('lom:lifeCycle/lom:contribute/lom:entity', ('.',), '%s', rewriteVcard),
-two('lom:lifeCycle/lom:contribute/lom:date', ('lom:dateTime',), '<lom:dateTime>%s</lom:dateTime>', rewriteDate),
+two('lom:lifeCycle/lom:contribute/lom:entity', ('.',), '%s', [normalizeVcardRules]),
+two('lom:lifeCycle/lom:contribute/lom:date', ('lom:dateTime',), '<lom:dateTime>%s</lom:dateTime>', [normalizeDateRules]),
 
 two('lom:metaMetadata/lom:metadataSchema', ('.',), '%s'),
 two('lom:metaMetadata/lom:contribute/lom:role/lom:source', ('.',), '%s',),
 two('lom:metaMetadata/lom:contribute/lom:role/lom:value', ('.',), '%s'),
-two('lom:metaMetadata/lom:contribute/lom:entity', ('.',), '%s', rewriteVcard),
-two('lom:metaMetadata/lom:contribute/lom:date', ('lom:dateTime',), '<lom:dateTime>%s</lom:dateTime>', rewriteDate),
+two('lom:metaMetadata/lom:contribute/lom:entity', ('.',), '%s', [normalizeVcardRules]),
+two('lom:metaMetadata/lom:contribute/lom:date', ('lom:dateTime',), '<lom:dateTime>%s</lom:dateTime>', [normalizeDateRules]),
 
-two('lom:technical/lom:format', ('.',), '%s',  [('^$', 'application/octet-stream', (str,))]),
+two('lom:technical/lom:format', ('.',), '%s',  [
+    [('^$', 'application/octet-stream', (str,))]
+]),
 two('lom:technical/lom:location', ('.',), '%s'),
 
 two('lom:educational/lom:learningResourceType/lom:source', ('.',), '%s'),
@@ -59,11 +61,11 @@ two('lom:rights/lom:cost/lom:value', ('.',), '%s'),
 
 two('lom:rights/lom:copyrightAndOtherRestrictions/lom:source', ('.',), '%s'),
 two('lom:rights/lom:copyrightAndOtherRestrictions/lom:value', ('.',), '%s',
-		[('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]),
+        [('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]),
 two('lom:rights/lom:description', ('lom:string/@language', 'lom:string'), '<lom:string language="%s">%s</lom:string>'),
 
-two('lom:annotation/lom:entity', ('.',), '%s', rewriteVcard),
-two('lom:annotation/lom:date', ('lom:dateTime',), '<lom:dateTime>%s</lom:dateTime>', rewriteDate),
+two('lom:annotation/lom:entity', ('.',), '%s', [normalizeVcardRules]),
+two('lom:annotation/lom:date', ('lom:dateTime',), '<lom:dateTime>%s</lom:dateTime>', [normalizeDateRules]),
 two('lom:annotation/lom:description', ('lom:string/@language', 'lom:string'), '<lom:string language="%s">%s</lom:string>'),
 two('lom:annotation/lom:description', ('lom:string[not(@language)]',), '<lom:string language="x-none">%s</lom:string>'),
 
@@ -71,21 +73,28 @@ two('lom:annotation/lom:description', ('lom:string[not(@language)]',), '<lom:str
 ('lom:classification/lom:purpose/lom:value', 'lom:classification[lom:taxonPath/lom:source/lom:string="NBC"]/lom:purpose/lom:value', 	('.',), '%s'),
 
 ('lom:classification/lom:taxonPath/lom:source',
-	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:source',
-	('lom:langstring/lom:language', 'lom:langstring/lom:value'),
-	'<lom:string language="%s">%s</lom:string>'),
+    'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:source',
+    ('lom:langstring/lom:language', 'lom:langstring/lom:value'),
+    '<lom:string language="%s">%s</lom:string>'),
+
 ('lom:classification/lom:taxonPath/lom:taxon/lom:id',
-	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:id',
-	('.',), '%s',
-	[('(?:NBC)?(\d+)', '%s', (int, '%02d',))]),
+    'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:id',
+    ('.',), '%s', [
+        [('(?:NBC)?(\d+)', '%s', (int, '%02d',))]
+    ]),
+    
 ('lom:classification/lom:taxonPath/lom:taxon/lom:entry',
-	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:entry',
-	('lom:string/@language', 'lom:string'), '<lom:string language="%s">%s</lom:string>',
-	[('\s*\d+\s*(\w+)', '%s', (str,))]),
+    'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:entry',
+    ('lom:string/@language', 'lom:string'), '<lom:string language="%s">%s</lom:string>', [
+        [('\s*\d+\s*(\w+)', '%s', (str,))],
+        [('\s*\d+\s*(\w+)', '%s', (str,))]
+    ]),
+    
 ('lom:classification/lom:taxonPath/lom:taxon/lom:entry',
-	'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:entry',
-	('lom:string[not(@language)]',), '<lom:string language="x-none">%s</lom:string>',
-	[('\s*\d+\s*(\w+)', '%s', (str,))]),
+    'lom:classification/lom:taxonPath[lom:source/lom:string="NBC"]/lom:taxon/lom:entry',
+    ('lom:string[not(@language)]',), '<lom:string language="x-none">%s</lom:string>', [
+        [('\s*\d+\s*(\w+)', '%s', (str,))]
+    ]),
 
 two('lom:classification/lom:description', ('lom:string/@language', 'lom:string'), '<lom:string language="%s">%s</lom:string>'),
 two('lom:classification/lom:description', ('lom:string[not(@language)]',), '<lom:string language="x-none">%s</lom:string>'),
@@ -96,6 +105,6 @@ two('lom:classification/lom:keyword', ('lom:string[not(@language)]',), '<lom:str
 ]
 
 # delete imported stuff
-del rewriteDate
-del rewriteVcard
+del normalizeDateRules
+del normalizeVcardRules
 del two
