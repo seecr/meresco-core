@@ -37,8 +37,11 @@ class StorageComponentTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.storage = HierarchicalStorage(Storage(self.tempdir), split = lambda x:x)
-        self.storageComponent = StorageComponent(HierarchicalStorage(Storage(self.tempdir), split = defaultSplit))
+        self.storage = HierarchicalStorage(
+            Storage(self.tempdir, revisionControl=True), split = lambda x:x)
+        self.storageComponent = StorageComponent(
+            HierarchicalStorage(
+                Storage(self.tempdir, revisionControl=True), split = defaultSplit))
 
     def testAdd(self):
         old,new = self.storageComponent.add("id_0", "partName", "The contents of the part")
