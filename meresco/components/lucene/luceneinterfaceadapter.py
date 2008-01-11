@@ -28,7 +28,7 @@
 
 from meresco.framework import Observable
 
-class IndexComponent(Observable):
+class LuceneInterfaceAdapter(Observable):
     def __init__(self, anIndex):
         Observable.__init__(self)
         self._index = anIndex

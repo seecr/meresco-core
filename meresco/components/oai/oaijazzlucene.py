@@ -38,7 +38,7 @@ from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term,
 
 from meresco.framework import Observable
 from meresco.components import Xml2Document, XmlParseAmara
-from meresco.components.lucene import IndexComponent
+from meresco.components.lucene import LuceneInterfaceAdapter
 
 def createOaiMeta(sets, prefixes, stamp, unique):
     yield '<oaimeta xmlns:t="http://www.cq2.nl/teddy">'
@@ -72,7 +72,7 @@ class OaiJazzLucene(Observable):
         self.addObservers([
             (XmlParseAmara(), [
                 (Xml2Document(), [
-                    IndexComponent(anIndex)])
+                    LuceneInterfaceAdapter(anIndex)])
                 ]),
             aStorage])
         self._numberGenerator = aNumberGenerator
