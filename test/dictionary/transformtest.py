@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -35,11 +35,15 @@ import unittest
 class TransformTest(unittest.TestCase):
 
     def testBasicBehavior(self):
+        observer = CallTrace("observer")
         transform = Transform('some.source', 'target', CleanSplit(';'))
-        self.assertEquals([
-            DocumentField('target', 'some'),
-            DocumentField('target', 'thing')],
-            list(transform.fieldsForField(DocumentField('some.source', 'some;thing'))))
+        transform.addObserver(observer)
+        transform.addField(DocumentField('some.source', 'some;thing'))
+        self.assertEquals(2, len(observer.calledMethods))
+
+        self.assertEquals(DocumentField('target', 'some'), observer.calledMethods[0].arguments[0])
+        self.assertEquals(DocumentField('target', 'thing'), observer.calledMethods[1].arguments[0])
+
 
     def testYears(self):
         self.assertEquals([], years('garbage'))

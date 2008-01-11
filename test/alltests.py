@@ -92,7 +92,7 @@ from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
 
 from dictionary.transformtest import TransformTest
-from dictionary.pushtoroottest import PushToRootTest
+from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
 from dictionary.xml2dicttest import Xml2DictTest
 
 if __name__ == '__main__':

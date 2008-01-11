@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -38,10 +38,10 @@ class Transform(Observable):
         self.targetFieldname = targetFieldname
         self.transformer = transformer
 
-    def fieldsForField(self, documentField):
+    def addField(self, documentField):
         if self.sourceFieldname == documentField.key:
             for part in self.transformer(documentField.value):
-                yield DocumentField(self.targetFieldname, part)
+                self.do.addField(DocumentField(self.targetFieldname, part))
 
 class CleanSplit:
     def __init__(self, separator):

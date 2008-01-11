@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -25,23 +25,24 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.components.dictionary.pushtoroot import PushToRoot
+from meresco.components.dictionary.alldotsplittedprefixes import AllDotSplittedPrefixes
 from meresco.components.dictionary import Transform, DocumentField
 
 from cq2utils import CallTrace
 
 import unittest
 
-class PushToRootTest(unittest.TestCase):
+class AllDotSplittedPrefixesTest(unittest.TestCase):
 
     def testBasicBehavior(self):
-        pushToRoot = PushToRoot()
-        result = set(pushToRoot.fieldsForField(DocumentField('root.zero.one.two', 'field contents', additionalParam="propagated")))
-        self.assertEquals(DocumentField('a', 'a', x="a"), DocumentField('a', 'a', x='a'))
-        self.assertEquals(set([
-            DocumentField('root', 'field contents', additionalParam="propagated"),
-            DocumentField('root.zero', 'field contents', additionalParam="propagated"),
-            DocumentField('root.zero.one', 'field contents', additionalParam="propagated"),
-            DocumentField('root.zero.one.two', 'field contents', additionalParam="propagated")]),
-            result)
+        component = AllDotSplittedPrefixes()
+        observer = CallTrace()
+        component.addObserver(observer)
+        component.addField(DocumentField('root.zero.one', 'field contents', additionalParam="propagated"))
+        self.assertEquals(3, len(observer.calledMethods))
+
+        self.assertEquals(DocumentField('root', 'field contents', additionalParam="propagated"), observer.calledMethods[0].arguments[0])
+        self.assertEquals(DocumentField('root.zero', 'field contents', additionalParam="propagated"), observer.calledMethods[1].arguments[0])
+        self.assertEquals(DocumentField('root.zero.one', 'field contents', additionalParam="propagated"), observer.calledMethods[2].arguments[0])
+
 
