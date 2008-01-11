@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -26,15 +26,14 @@
 #
 ## end license ##
 from meresco.components.lucene.document import Document as LuceneDocument
-from meresco.framework import Observable
+from meresco.framework import Transparant
 
-class Dict2Doc(Observable):
-    
-    def addDocumentDict(self, id, partName, documentDict):
+class Dict2Doc(Transparant):
+
+    def addDocumentDict(self, id, documentDict):
         luceneDocument = LuceneDocument(id)
         for documentField in documentDict:
             luceneDocument.addIndexedField(documentField.key, documentField.value, documentField.options.get('tokenize', True))
-        return self.all.add(id, partName, luceneDocument)
+        return self.all.add(id, "partnames are ignored", luceneDocument)
 
-    def unknown(self, *args, **kwargs):
-        return self.all.unknown(*args, ** kwargs)
+

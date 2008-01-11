@@ -38,11 +38,11 @@ class TransformTest(unittest.TestCase):
         observer = CallTrace("observer")
         transform = Transform('some.source', 'target', CleanSplit(';'))
         transform.addObserver(observer)
-        transform.addField(DocumentField('some.source', 'some;thing'))
+        transform.addField("id", DocumentField('some.source', 'some;thing'))
         self.assertEquals(2, len(observer.calledMethods))
 
-        self.assertEquals(DocumentField('target', 'some'), observer.calledMethods[0].arguments[0])
-        self.assertEquals(DocumentField('target', 'thing'), observer.calledMethods[1].arguments[0])
+        self.assertEquals(DocumentField('target', 'some'), observer.calledMethods[0].arguments[1])
+        self.assertEquals(DocumentField('target', 'thing'), observer.calledMethods[1].arguments[1])
 
 
     def testYears(self):

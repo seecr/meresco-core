@@ -25,32 +25,14 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from meresco.components.dictionary import DocumentDict
+from meresco.framework import Transparant
 
-from meresco.framework.observable import Observable
-from meresco.components.dictionary import DocumentField
+class DictToFields(Transparant):
 
-import re
+    def addDocumentDict(self, id, documentDict):
+        for field in documentDict:
+            self.do.addField(id, field)
 
-class Transform(Observable):
-    def __init__(self, sourceFieldname, targetFieldname, transformer):
-        Observable.__init__(self)
-        self.sourceFieldname = sourceFieldname
-        self.targetFieldname = targetFieldname
-        self.transformer = transformer
-
-    def addField(self, id, documentField):
-        if self.sourceFieldname == documentField.key:
-            for part in self.transformer(documentField.value):
-                self.do.addField(id, DocumentField(self.targetFieldname, part))
-
-class CleanSplit:
-    def __init__(self, separator):
-        self.separator = separator
-
-    def __call__(self, s):
-        return [part.strip() for part in s.split(self.separator)]
-
-def years(s):
-    yearRe = re.compile('\d{4}')
-    return yearRe.findall(s)
-
+    def unknown(self, *args, **kwargs):
+        return self.all.unknown(*args, ** kwargs)

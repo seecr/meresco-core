@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -38,12 +38,16 @@ def emptyGenerator():
 
 class Accumulate(Observable):
 
-    def __init__(self, message, combine, getIdentifier=getIdentifier):
+    def __init__(self, message, combine, getIdentifier=getIdentifier, outMessage=None):
         Observable.__init__(self)
         self._reset()
         self._message = message
         self._getIdentifier = getIdentifier
         self._combine = combine
+        if outMessage:
+            self._outMessage = outMessage
+        else:
+            self._outMessage = message
 
     def _reset(self):
         self._identifier = None
@@ -57,7 +61,7 @@ class Accumulate(Observable):
     def _send(self):
         args, kwargs = self._combine(self._collection)
         self._reset()
-        return self.all.unknown(self._message, *args, **kwargs)
+        return self.all.unknown(self._outMessage, *args, **kwargs)
 
     def _collect(self, *args, **kwargs):
         self._collection.append((args, kwargs))

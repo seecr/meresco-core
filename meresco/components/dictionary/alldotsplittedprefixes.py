@@ -26,16 +26,16 @@
 #
 ## end license ##
 
-from meresco.framework.observable import Observable
+from meresco.framework.observable import Transparant
 from meresco.components.dictionary import DocumentField
 
 import re
 
-class AllDotSplittedPrefixes(Observable):
+class AllDotSplittedPrefixes(Transparant):
 
-    def addField(self, documentField):
+    def addField(self, id, documentField):
         for newFieldname in self._splitFieldname(documentField.key):
-            self.do.addField(DocumentField(newFieldname, documentField.value, **documentField.options))
+            self.do.addField(id, DocumentField(newFieldname, documentField.value, **documentField.options))
 
     def _splitFieldname(self, fieldname):
         parts = fieldname.split(".")

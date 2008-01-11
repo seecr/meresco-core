@@ -38,11 +38,11 @@ class AllDotSplittedPrefixesTest(unittest.TestCase):
         component = AllDotSplittedPrefixes()
         observer = CallTrace()
         component.addObserver(observer)
-        component.addField(DocumentField('root.zero.one', 'field contents', additionalParam="propagated"))
+        component.addField("id", DocumentField('root.zero.one', 'field contents', additionalParam="propagated"))
         self.assertEquals(3, len(observer.calledMethods))
 
-        self.assertEquals(DocumentField('root', 'field contents', additionalParam="propagated"), observer.calledMethods[0].arguments[0])
-        self.assertEquals(DocumentField('root.zero', 'field contents', additionalParam="propagated"), observer.calledMethods[1].arguments[0])
-        self.assertEquals(DocumentField('root.zero.one', 'field contents', additionalParam="propagated"), observer.calledMethods[2].arguments[0])
+        self.assertEquals(DocumentField('root', 'field contents', additionalParam="propagated"), observer.calledMethods[0].arguments[1])
+        self.assertEquals(DocumentField('root.zero', 'field contents', additionalParam="propagated"), observer.calledMethods[1].arguments[1])
+        self.assertEquals(DocumentField('root.zero.one', 'field contents', additionalParam="propagated"), observer.calledMethods[2].arguments[1])
 
 
