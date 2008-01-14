@@ -60,7 +60,8 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.partName = "xmlfields"
         self.document = Xml2Document()._create(self.id, FIELDS)
         self.realjazz = OaiJazzLucene(
-            LuceneIndex(join(self.tempdir,'index'), "Cql Composer is ignored"),
+            LuceneIndex(
+                join(self.tempdir,'index'), "Cql Composer is ignored"),
             StorageComponent(HierarchicalStorage(Storage(join(self.tempdir,'storage')), split = defaultSplit)),
             iter(xrange(99)))
 

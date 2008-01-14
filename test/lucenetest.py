@@ -49,11 +49,11 @@ class LuceneTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.reactor = CallTrace('reactor')
+        self.timer = CallTrace('timer')
         self._luceneIndex = LuceneIndex(
             directoryName=self.tempdir,
             cqlComposer=Composer({}),
-            reactor=self.reactor)
+            timer=self.timer)
 
         self.timerCallbackMethod = self._luceneIndex._lastUpdateTimeout
 
@@ -143,7 +143,7 @@ class LuceneTest(CQ2TestCase):
         self.assertEquals(1, len(hits))
 
     def testIndexCloses(self):
-        index = LuceneIndex(self.tempdir + '/x', cqlComposer=None, reactor=self.reactor)
+        index = LuceneIndex(self.tempdir + '/x', cqlComposer=None, timer=self.timer)
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         index.addToIndex(myDocument)
@@ -153,7 +153,7 @@ class LuceneTest(CQ2TestCase):
     def testExecuteCQLUsesComposer(self):
         mockComposer = CallTrace("CQL Composer")
         mockComposer.returnValues["compose"] = TermQuery(Term('title', 'titel'))
-        index = LuceneIndex(directoryName=self.tempdir+'/x', cqlComposer=mockComposer, reactor=None)
+        index = LuceneIndex(directoryName=self.tempdir+'/x', cqlComposer=mockComposer, timer=None)
         astTree = CallTrace("AST")
         index.executeCQL(astTree)
         self.assertEquals(1, len(mockComposer.calledMethods))
@@ -180,32 +180,32 @@ class LuceneTest(CQ2TestCase):
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument) # this must trigger a timer
-        self.assertEquals('addTimer', self.reactor.calledMethods[0].name)
-        self.assertEquals(1, self.reactor.calledMethods[0].args[0])
-        timeCallback = self.reactor.calledMethods[0].args[1]
+        self.assertEquals('addTimer', self.timer.calledMethods[0].name)
+        self.assertEquals(1, self.timer.calledMethods[0].args[0])
+        timeCallback = self.timer.calledMethods[0].args[1]
         self.assertTrue(timeCallback)
 
     def testUpdateRESetsTimer(self):
-        self.reactor.returnValues['addTimer'] = 'aToken'
+        self.timer.returnValues['addTimer'] = 'aToken'
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument) # this must trigger a timer
         self._luceneIndex.addToIndex(myDocument) # this must REset the timer
         self.assertEquals(['addTimer', 'removeTimer', 'addTimer'],
-            [method.name for method in self.reactor.calledMethods])
-        self.assertEquals('aToken', self.reactor.calledMethods[1].args[0])
+            [method.name for method in self.timer.calledMethods])
+        self.assertEquals('aToken', self.timer.calledMethods[1].args[0])
 
     def testOptimizeOnTimeOut(self):
-        self.reactor.returnValues['addTimer'] = 'aToken'
+        self.timer.returnValues['addTimer'] = 'aToken'
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addToIndex(myDocument)
-        timeCallback = self.reactor.calledMethods[0].args[1]
+        timeCallback = self.timer.calledMethods[0].args[1]
         self.assertEquals(0, len(list(self._luceneIndex.executeCQL(parseString("title=titel")))))
         timeCallback()
         self.assertEquals(1, len(list(self._luceneIndex.executeCQL(parseString("title=titel")))))
         # after callback the old timer will not be removed
         self._luceneIndex.addToIndex(myDocument)
         self.assertEquals(['addTimer', 'addTimer'],
-            [method.name for method in self.reactor.calledMethods])
+            [method.name for method in self.timer.calledMethods])
         

@@ -25,28 +25,25 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-import os.path
-from tempfile import gettempdir
-from shutil import rmtree
-from PyLucene import Term, TermQuery
+from PyLucene import Term, TermQuery, IndexReader
 
-from unittest import TestCase
-from lucenerawdocsetstest import addUntokenized
+from cq2utils import CQ2TestCase
 
+from meresco.components.lucene import Document
 from meresco.components.drilldown import Drilldown
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 
-class DrilldownTest(TestCase):
-
-    def setUp(self):
-        self._tempdir = gettempdir() + '/testing'
-        self._directoryName = os.path.join(self._tempdir, 'lucene-index')
-        self._luceneIndex = LuceneIndex(self._directoryName, "cqlcomposer not used")
-
-    def tearDown(self):
-        self._luceneIndex = None
-        rmtree(self._tempdir)
+class DrilldownTest(CQ2TestCase):
+    #Helper functions:
+    def addUntokenized(self, documents):
+        index = LuceneIndex(self.tempdir, 'CQL Composer ignored')
+        for docId, fields in documents:
+            myDocument = Document(docId)
+            for field, value in fields.items():
+                myDocument.addIndexedField(field, value, tokenize = False)
+            index.addToIndex(myDocument)
+        index.close()
 
     def testLoadDocSetsNoTerms(self):
         data = [('field_0', [])]
@@ -67,17 +64,19 @@ class DrilldownTest(TestCase):
         self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_1'].cardinality())
 
     def testDrilldown(self):
-        addUntokenized(self._luceneIndex, [
+        self.addUntokenized([
             ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
             ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
 
-        convertor = LuceneRawDocSets(self._luceneIndex._getReader(), ['field_0', 'field_1'])
+        reader = IndexReader.open(self.tempdir)
+        convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
         drilldown.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
-        queryResults = self._luceneIndex.executeQuery(TermQuery(Term("field_1", "inquery")))
+        index = LuceneIndex(self.tempdir, 'CQL composer not used')        
+        queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
         drilldownResult = list(drilldown.drilldown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)]))

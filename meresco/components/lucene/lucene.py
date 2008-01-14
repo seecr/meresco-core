@@ -40,12 +40,19 @@ from meresco.components.statistics import Logger
 class LuceneException(Exception):
     pass
 
+class TimerForTestSupport(object):
+    def addTimer(self, time, callback):
+        callback()
+        return (time,callback)
+    def removeTimer(self, token):
+        pass
+
 class LuceneIndex(Logger):
 
-    def __init__(self, directoryName, cqlComposer, reactor):
+    def __init__(self, directoryName, cqlComposer, timer = TimerForTestSupport()):
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
-        self._reactor = reactor
+        self._timer = timer
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
@@ -53,6 +60,7 @@ class LuceneIndex(Logger):
             self._directoryName,
             StandardAnalyzer(), not indexExists)
         self._lastUpdateTimeoutToken = None
+        self._reader = IndexReader.open(self._directoryName)
         self._searcher = IndexSearcher(self._directoryName)
 
 
@@ -65,24 +73,26 @@ class LuceneIndex(Logger):
 
     def _lastUpdateTimeout(self):
         self._writer.optimize()
+        self._searcher.close()
+        self._reader = IndexReader.open(self._directoryName)
         self._searcher = IndexSearcher(self._directoryName)
         self._lastUpdateTimeoutToken = None
 
     def deleteID(self, anId):
         if self._lastUpdateTimeoutToken != None:
-            self._reactor.removeTimer(self._lastUpdateTimeoutToken)
+            self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._writer.deleteDocuments(Term(IDFIELD, anId))
-        self._lastUpdateTimeoutToken = self._reactor.addTimer(1, self._lastUpdateTimeout)
+        self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
         
     def addToIndex(self, aDocument):
         if self._lastUpdateTimeoutToken != None:
-            self._reactor.removeTimer(self._lastUpdateTimeoutToken)
+            self._timer.removeTimer(self._lastUpdateTimeoutToken)
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
-        self._lastUpdateTimeoutToken = self._reactor.addTimer(1, self._lastUpdateTimeout)
+        self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def docCount(self):
-        return self._getReader().numDocs()
+        return self._reader.numDocs()
 
     def _getPyLuceneSort(self, sortBy, sortDescending):
         return sortBy and Sort(sortBy, bool(sortDescending)) or None
