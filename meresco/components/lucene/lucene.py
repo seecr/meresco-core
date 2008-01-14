@@ -36,6 +36,7 @@ from meresco.components.lucene.clausecollector import ClauseCollector
 from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
 from meresco.components.statistics import Logger
+from meresco.framework import Observable
 
 class LuceneException(Exception):
     pass
@@ -47,9 +48,10 @@ class TimerForTestSupport(object):
     def removeTimer(self, token):
         pass
 
-class LuceneIndex(Logger):
+class LuceneIndex(Observable, Logger):
 
     def __init__(self, directoryName, cqlComposer, timer = TimerForTestSupport()):
+        Observable.__init__(self)
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
         self._timer = timer
@@ -60,9 +62,8 @@ class LuceneIndex(Logger):
             self._directoryName,
             StandardAnalyzer(), not indexExists)
         self._lastUpdateTimeoutToken = None
-        self._reader = IndexReader.open(self._directoryName)
-        self._searcher = IndexSearcher(self._directoryName)
-
+        self._reader = self._openReader()
+        self._searcher = self._openSearcher()
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
         return Hits(self._searcher, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
@@ -73,9 +74,11 @@ class LuceneIndex(Logger):
 
     def _lastUpdateTimeout(self):
         self._writer.optimize()
+        self._reader.close()
+        self._reader = self._openReader()
+        self.do.indexOptimized(self._reader)
         self._searcher.close()
-        self._reader = IndexReader.open(self._directoryName)
-        self._searcher = IndexSearcher(self._directoryName)
+        self._searcher = self._openSearcher()
         self._lastUpdateTimeoutToken = None
 
     def deleteID(self, anId):
@@ -94,11 +97,18 @@ class LuceneIndex(Logger):
     def docCount(self):
         return self._reader.numDocs()
 
+    def _openReader(self):
+        return IndexReader.open(self._directoryName)
+
+    def _openSearcher(self):
+        return IndexSearcher(self._reader)
+
     def _getPyLuceneSort(self, sortBy, sortDescending):
         return sortBy and Sort(sortBy, bool(sortDescending)) or None
 
     def close(self):
         self._writer.close()
+        self._reader.close()
         self._searcher.close()
 
     def __del__(self):

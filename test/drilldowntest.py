@@ -63,6 +63,18 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals(3, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
         self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_1'].cardinality())
 
+    def testLoadDocSetsOverwritesPreviousDocsets(self):
+        data1 = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
+        data2 = [('field_0', [('term_0', [1]), ('term_2', [2,4])])]
+
+        drilldown = Drilldown(['field_0'])
+        drilldown.loadDocSets(data1, 5)
+        drilldown.loadDocSets(data2, 5)
+        self.assertEquals(2, len(drilldown._docSets['field_0']))
+        self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
+        self.assertFalse(dict(drilldown._docSets['field_0']).has_key('term_1'))
+        self.assertEquals(2, dict(drilldown._docSets['field_0'])['term_2'].cardinality())
+
     def testDrilldown(self):
         self.addUntokenized([
             ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),

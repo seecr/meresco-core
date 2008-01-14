@@ -208,4 +208,25 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addToIndex(myDocument)
         self.assertEquals(['addTimer', 'addTimer'],
             [method.name for method in self.timer.calledMethods])
+
+    def testOptimizeWillSentUpdateMessage(self):
+        intercept = CallTrace('Interceptor')
+        self._luceneIndex.addObserver(intercept)
+        self.timer.returnValues['addTimer'] = 'aToken'
+        myDocument = Document('1')
+        myDocument.addIndexedField('title', 'een titel')
+        self._luceneIndex.addToIndex(myDocument)
+        timeCallback = self.timer.calledMethods[0].args[1]
+        self.assertEquals(0, len(intercept.calledMethods))
+        self.assertEquals(0, self._luceneIndex.docCount())
+        timeCallback()
+        self.assertEquals(1, self._luceneIndex.docCount())
+        self.assertEquals(1, len(intercept.calledMethods))
+        self.assertEquals('indexOptimized', intercept.calledMethods[0].name)
+        self.assertEquals(1, len(intercept.calledMethods[0].args))
+        reader = intercept.calledMethods[0].args[0]
+        self.assertEquals(IndexReader, type(reader))
+        self.assertEquals(1, reader.numDocs())
+        
+        
         
