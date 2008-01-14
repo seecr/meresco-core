@@ -73,13 +73,16 @@ class LuceneIndex(Observable, Logger):
         return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
+        self._optimizeAndNotifyObservers()
+        self._lastUpdateTimeoutToken = None
+
+    def _optimizeAndNotifyObservers(self):
         self._writer.optimize()
         self._reader.close()
         self._reader = self._openReader()
         self.do.indexOptimized(self._reader)
         self._searcher.close()
         self._searcher = self._openSearcher()
-        self._lastUpdateTimeoutToken = None
 
     def deleteID(self, anId):
         if self._lastUpdateTimeoutToken != None:
@@ -113,4 +116,7 @@ class LuceneIndex(Observable, Logger):
 
     def __del__(self):
         self.close()
+
+    def start(self):
+        self._optimizeAndNotifyObservers()
 

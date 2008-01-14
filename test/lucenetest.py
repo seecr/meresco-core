@@ -227,6 +227,13 @@ class LuceneTest(CQ2TestCase):
         reader = intercept.calledMethods[0].args[0]
         self.assertEquals(IndexReader, type(reader))
         self.assertEquals(1, reader.numDocs())
+
+    def testStart(self):
+        intercept = CallTrace('Interceptor')
+        self._luceneIndex.addObserver(intercept)
         
+        self._luceneIndex.start()
         
+        self.assertEquals(1, len(intercept.calledMethods))
+        self.assertEquals('indexOptimized', intercept.calledMethods[0].name)
         
