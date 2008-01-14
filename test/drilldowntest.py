@@ -75,18 +75,25 @@ class DrilldownTest(CQ2TestCase):
         self.assertFalse(dict(drilldown._docSets['field_0']).has_key('term_1'))
         self.assertEquals(2, dict(drilldown._docSets['field_0'])['term_2'].cardinality())
 
+    def testIndexOptimized(self):
+        self.addUntokenized([('id', {'field_0': 'this is term_0', 'field_1': 'inquery'})])
+        drilldown = Drilldown(['field_0'])
+        reader = IndexReader.open(self.tempdir)
+        drilldown.indexOptimized(reader)
+        term, result = drilldown.drilldown([0], [('field_0', 10)]).next()
+        self.assertEquals('field_0', term)
+        self.assertEquals([('this is term_0', 1)], list(result))
+    
     def testDrilldown(self):
         self.addUntokenized([
             ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
             ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
-
         reader = IndexReader.open(self.tempdir)
         convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
         drilldown.loadDocSets(convertor.getDocSets(), convertor.docCount())
-
         index = LuceneIndex(self.tempdir, 'CQL composer not used')        
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))

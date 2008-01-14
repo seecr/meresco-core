@@ -26,6 +26,7 @@
 #
 ## end license ##
 from bitmatrix import BitMatrix
+from lucenerawdocsets import LuceneRawDocSets
 
 class DrilldownException(Exception):
     pass
@@ -69,6 +70,10 @@ class Drilldown(object):
     def loadDocSets(self, rawDocSets, docCount):
         for fieldname, terms in rawDocSets:
             self._fieldMatrices[fieldname] = FieldMatrix(terms, docCount)
+
+    def indexOptimized(self, indexReader):
+        convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
+        self.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
     def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
         queryDocSet = self._docSetForQueryResult(docIds)
