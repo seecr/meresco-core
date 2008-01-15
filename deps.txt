@@ -11,4 +11,3 @@ python-lucene (>=2.0.0)
 python-amara (=1.2a2)
 python-lxml (>=1.2)
 python-magic
-python-xml

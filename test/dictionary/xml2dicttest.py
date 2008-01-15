@@ -45,8 +45,9 @@ class Xml2DictTest(TestCase):
         observable.do.add('id','partName', binderytools.bind_string('<fields><tag>value</tag></fields>').fields)
 
         self.assertEquals('addDocumentDict', observer.calledMethods[0].name)
-        self.assertEquals(('id', 'partName'), observer.calledMethods[0].args[:2])
-        documentDict = observer.calledMethods[0].args[2]
+        self.assertEquals(2, len(observer.calledMethods[0].args))
+        self.assertEquals('id', observer.calledMethods[0].args[0])
+        documentDict = observer.calledMethods[0].args[1]
         self.assertEquals(1, len(documentDict.get('fields.tag')))
         self.assertEquals('value', documentDict.get('fields.tag')[0].value)
 
