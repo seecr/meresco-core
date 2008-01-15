@@ -42,7 +42,7 @@ class DrilldownTest(CQ2TestCase):
             myDocument = Document(docId)
             for field, value in fields.items():
                 myDocument.addIndexedField(field, value, tokenize = False)
-            index.addToIndex(myDocument)
+            index.addDocument(myDocument)
         index.close()
 
     def testLoadDocSetsNoTerms(self):
@@ -52,6 +52,9 @@ class DrilldownTest(CQ2TestCase):
 
         self.assertEquals(['field_0'], drilldown._docSets.keys())
         self.assertEquals(0, len(drilldown._docSets['field_0']))
+        field, results = drilldown.drilldown([0], [('field_0', 10)]).next()
+        self.assertEquals('field_0', field)
+        self.assertEquals(0, len(list(results)))
 
     def testLoadDocSets(self):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
@@ -76,13 +79,13 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals(2, dict(drilldown._docSets['field_0'])['term_2'].cardinality())
 
     def testIndexOptimized(self):
-        self.addUntokenized([('id', {'field_0': 'this is term_0', 'field_1': 'inquery'})])
+        self.addUntokenized([('id', {'field_0': 'this is term_0'})])
         drilldown = Drilldown(['field_0'])
         reader = IndexReader.open(self.tempdir)
         drilldown.indexOptimized(reader)
-        term, result = drilldown.drilldown([0], [('field_0', 10)]).next()
-        self.assertEquals('field_0', term)
-        self.assertEquals([('this is term_0', 1)], list(result))
+        field, results = drilldown.drilldown([0], [('field_0', 10)]).next()
+        self.assertEquals('field_0', field)
+        self.assertEquals([('this is term_0', 1)], list(results))
     
     def testDrilldown(self):
         self.addUntokenized([

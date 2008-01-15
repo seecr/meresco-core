@@ -73,7 +73,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.mockedjazz.add(self.id, self.partName, bind_string('<empty/>'))
         self.assertEquals(2,len(self.index.calledMethods))
         self.assertEquals("deleteID('id')", str(self.index.calledMethods[0]))
-        self.assertEquals('addToIndex(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
+        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[1]))
 
     def testDeleteIncrementsDatestampAndUnique(self):
         jazz = self.realjazz

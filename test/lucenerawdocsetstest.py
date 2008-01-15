@@ -43,7 +43,7 @@ class LuceneRawDocSetsTest(CQ2TestCase):
             myDocument = Document(docId)
             for field, value in fields.items():
                 myDocument.addIndexedField(field, value, tokenize = False)
-            index.addToIndex(myDocument)
+            index.addDocument(myDocument)
         index.close()
 
     def testCreateDocSetsFromReader(self):

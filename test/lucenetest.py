@@ -68,7 +68,7 @@ class LuceneTest(CQ2TestCase):
     def testAddToIndex(self):
         myDocument = Document('0123456789')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
@@ -79,7 +79,7 @@ class LuceneTest(CQ2TestCase):
         myDocument = Document('id')
         myDocument.addIndexedField('title', 'een titel')
         myDocument.addIndexedField('title', 'een sub titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
@@ -91,11 +91,11 @@ class LuceneTest(CQ2TestCase):
     def testAddTwoDocuments(self):
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
 
         myDocument = Document('2')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
@@ -105,7 +105,7 @@ class LuceneTest(CQ2TestCase):
         myDocument = Document('1')
         myDocument.addIndexedField('field1', 'value_1')
         myDocument.addIndexedField('field1', 'value_2')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         
         self.timerCallbackMethod()
 
@@ -118,16 +118,16 @@ class LuceneTest(CQ2TestCase):
     def testAddUTF8Document(self):
         myDocument = Document('0123456789')
         myDocument.addIndexedField('title', 'BijenkorfÂ´s')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
 
     def testDeleteFromIndex(self):
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
 
         myDocument = Document('2')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
         
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
@@ -146,7 +146,7 @@ class LuceneTest(CQ2TestCase):
         index = LuceneIndex(self.tempdir + '/x', cqlComposer=None, timer=self.timer)
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        index.addToIndex(myDocument)
+        index.addDocument(myDocument)
         index.__del__()
         self.assertFalse(isfile(self.tempdir + '/x/write.lock'))
 
@@ -179,7 +179,7 @@ class LuceneTest(CQ2TestCase):
     def testUpdateSetsTimer(self):
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument) # this must trigger a timer
+        self._luceneIndex.addDocument(myDocument) # this must trigger a timer
         self.assertEquals('addTimer', self.timer.calledMethods[0].name)
         self.assertEquals(1, self.timer.calledMethods[0].args[0])
         timeCallback = self.timer.calledMethods[0].args[1]
@@ -189,8 +189,8 @@ class LuceneTest(CQ2TestCase):
         self.timer.returnValues['addTimer'] = 'aToken'
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument) # this must trigger a timer
-        self._luceneIndex.addToIndex(myDocument) # this must REset the timer
+        self._luceneIndex.addDocument(myDocument) # this must trigger a timer
+        self._luceneIndex.addDocument(myDocument) # this must REset the timer
         self.assertEquals(['addTimer', 'removeTimer', 'addTimer'],
             [method.name for method in self.timer.calledMethods])
         self.assertEquals('aToken', self.timer.calledMethods[1].args[0])
@@ -199,13 +199,13 @@ class LuceneTest(CQ2TestCase):
         self.timer.returnValues['addTimer'] = 'aToken'
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         timeCallback = self.timer.calledMethods[0].args[1]
         self.assertEquals(0, len(list(self._luceneIndex.executeCQL(parseString("title=titel")))))
         timeCallback()
         self.assertEquals(1, len(list(self._luceneIndex.executeCQL(parseString("title=titel")))))
         # after callback the old timer will not be removed
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         self.assertEquals(['addTimer', 'addTimer'],
             [method.name for method in self.timer.calledMethods])
 
@@ -215,7 +215,7 @@ class LuceneTest(CQ2TestCase):
         self.timer.returnValues['addTimer'] = 'aToken'
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addToIndex(myDocument)
+        self._luceneIndex.addDocument(myDocument)
         timeCallback = self.timer.calledMethods[0].args[1]
         self.assertEquals(0, len(intercept.calledMethods))
         self.assertEquals(0, self._luceneIndex.docCount())
