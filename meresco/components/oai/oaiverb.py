@@ -28,7 +28,6 @@
 
 from time import gmtime, strftime
 from xml.sax.saxutils import escape as xmlEscape
-from xml.utils import iso8601
 
 DONE = 1
 

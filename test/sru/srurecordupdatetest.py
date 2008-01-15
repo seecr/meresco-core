@@ -139,7 +139,7 @@ class SRURecordUpdateTest(TestCase):
             self.subject.handleRequest(request)
             self.fail()
         except Exception, e:
-            self.assertEquals('SAXParseException', str(e.__class__).split('.')[-1])
+          self.assertTrue('SAXParseException' in str(e.__class__))
         self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
 
     def testErrorsArePassed(self):

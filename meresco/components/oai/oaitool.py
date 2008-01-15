@@ -26,28 +26,40 @@
 #
 ## end license ##
 
-from xml.utils import iso8601
+from time import strptime
 
 class ISO8601Exception(Exception):
     pass
 
+shortDate = '%Y-%m-%d'
+longDate = '%Y-%m-%dT%H:%M:%SZ'
+
 class ISO8601:
     short, long = [len('YYYY-MM-DD'), len('YYYY-MM-DDThh:mm:ssZ')]
-    
+
     def __init__(self, s):
         if not len(s) in [self.short, self.long]:
             raise ISO8601Exception(s)
-        try:
-            iso8601.parse(s)
-        except ValueError, e:
-            raise ISO8601Exception(s)
+        
+        if not self._matchesDateTimeFormat(shortDate, s) and not self._matchesDateTimeFormat(longDate, s):
+          raise ISO8601Exception(s)
         self.s = s
     
     def _extend(self, extension):
         if not self.isShort():
             return self.s
         return self.s + extension
-    
+
+    def _matchesDateTimeFormat(self, aDateFormat, aDateString):
+      result = True
+      try:
+        year, month, day, hour, minute, seconds, wday, yday, isdst = strptime(aDateString, aDateFormat)
+        if seconds > 59:
+          result = False
+      except ValueError:
+        result = False
+      return result
+
     def floor(self):
         return self._extend("T00:00:00Z")
     
