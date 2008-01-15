@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -38,13 +38,8 @@ class SRURecordUpdate(Observable):
             action = self.actionToMethod(str(updateRequest.action))
             record = updateRequest.record
             recordSchema = str(record.recordSchema)
-            dataNodes = []
-            dataNodes.append(record.recordData.childNodes[0])
-            if hasattr(record, 'extraRecordData'):
-                for child in record.extraRecordData.childNodes:
-                    if is_element(child):
-                        dataNodes.append(child)
-            self.do.unknown(action, recordId, recordSchema, *dataNodes)
+
+            self.do.unknown(action, recordId, recordSchema, record.recordData.childNodes[0])
             self.writeSucces(httpRequest)
         except Exception, e:
             self.writeError(httpRequest, str(e))

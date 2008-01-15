@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -43,7 +43,6 @@ XML = """<?xml version="1.0" encoding="UTF-8"?>
         <srw:recordPacking>%(recordPacking)s</srw:recordPacking>
         <srw:recordSchema>%(recordSchema)s</srw:recordSchema>
         <srw:recordData>%(recordData)s</srw:recordData>
-        %(extraRecordData)s
     </srw:record>
 </updateRequest>"""
 
@@ -69,8 +68,8 @@ class SRURecordUpdateTest(TestCase):
             "recordIdentifier": "defaultId",
             "recordPacking": "defaultPacking",
             "recordSchema": "defaultSchema",
-            "recordData": "<defaultXml/>",
-            "extraRecordData": ""}
+            "recordData": "<defaultXml/>"
+            }
 
     def createRequest(self):
         return MockHTTPRequest(XML % self.requestData)
@@ -82,7 +81,7 @@ class SRURecordUpdateTest(TestCase):
             "recordPacking": "text/xml",
             "recordSchema": "irrelevantXML",
             "recordData": "<dc>empty</dc>",
-            "extraRecordData": ""}
+            }
         self.subject.handleRequest(self.createRequest())
         self.assertEquals(1, len(self.observer.calledMethods))
         method = self.observer.calledMethods[0]
@@ -92,23 +91,6 @@ class SRURecordUpdateTest(TestCase):
         self.assertEquals(str, type(method.arguments[0]))
         self.assertEquals("irrelevantXML", method.arguments[1])
         self.assertEquals("<dc>empty</dc>", method.arguments[2].xml())
-
-    def testExtraRecordData(self):
-        self.requestData["extraRecordData"] = "<srw:extraRecordData><one><a/></one><two/></srw:extraRecordData>"
-        self.subject.handleRequest(self.createRequest())
-        self.assertEquals(1, len(self.observer.calledMethods))
-        method = self.observer.calledMethods[0]
-        self.assertEquals(5, len(method.arguments), str(method))
-        self.assertEquals("<one><a/></one>", method.arguments[3].xml())
-        self.assertEquals("<two/>", method.arguments[4].xml())
-
-    def testEmptyExtraRecordData(self):
-        self.requestData["extraRecordData"] = "<srw:extraRecordData></srw:extraRecordData>"
-        self.subject.handleRequest(self.createRequest())
-        self.assertEquals(1, len(self.observer.calledMethods))
-
-        method = self.observer.calledMethods[0]
-        self.assertEquals(3, len(method.arguments), str(method))
 
     def testDelete(self):
         self.requestData["action"] = DELETE
@@ -153,25 +135,6 @@ class SRURecordUpdateTest(TestCase):
         self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
         self.assertTrue(request.written.find("""Some Exception""") > -1)
 
-
-    def testAsHowItIsSupposedToBeUsed(self):
-        self.requestData["extraRecordData"] = """"<srw:extraRecordData>
-<oai:header xmlns:oai="http://www.openarchives.org/OAI/2.0/">
-    <oai:identifier>12345</oai:identifier>
-    <oai:datestamp>datestamp</oai:datestamp>
-    <oai:setSpec>one</oai:setSpec>
-    <oai:setSpec>two</oai:setSpec>
-</oai:header></srw:extraRecordData>"""
-        self.subject.handleRequest(self.createRequest())
-        self.assertEquals(1, len(self.observer.calledMethods))
-        method = self.observer.calledMethods[0]
-        self.assertEquals("add", method.name)
-        self.assertEquals(4, len(method.arguments))
-
-        header = method.arguments[3]
-        self.assertEquals('http://www.openarchives.org/OAI/2.0/', header.namespaceURI)
-        self.assertEquals('header', header.localName)
-        self.assertEquals(2, len(header.setSpec))
 
 class MockHTTPRequest:
 

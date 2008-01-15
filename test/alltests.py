@@ -45,7 +45,6 @@ from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
-from fields2xmlcomponenttest import Fields2XmlComponentTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
