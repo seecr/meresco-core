@@ -29,10 +29,9 @@ from os.path import isfile, join
 
 from meresco.components.http import utils as httputils
 
-#hack... remove if found
-#import magic
-#magicCookie = magic.open(magic.MAGIC_MIME)
-#magicCookie.load()
+import magic
+magicCookie = magic.open(magic.MAGIC_MIME)
+magicCookie.load()
 
 import mimetypes
 mimetypes.init()
