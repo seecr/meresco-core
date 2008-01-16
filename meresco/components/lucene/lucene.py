@@ -93,6 +93,7 @@ class LuceneIndex(Observable, Logger):
     def addDocument(self, aDocument):
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
+        #self._writer.deleteDocuments(Term(IDFIELD, aDocument.id)) # voeg toe na schrijven test TJ/JJ
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
