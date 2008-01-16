@@ -32,15 +32,15 @@ ContentTypeRss = "Content-Type: application/rss+xml"
 ContentTypeHtml = "Content-Type: text/html; charset=utf-8"
 
 #200
-okXml = "HTTP/1.0 200 Ok" + CRLF + \
+okXml = "HTTP/1.0 200 OK" + CRLF + \
         ContentTypeXml + CRLF + \
         CRLF
 
-okRss = "HTTP/1.0 200 Ok" + CRLF + \
+okRss = "HTTP/1.0 200 OK" + CRLF + \
         ContentTypeRss + CRLF + \
         CRLF
 
-okHtml = "HTTP/1.0 200 Ok" + CRLF + \
+okHtml = "HTTP/1.0 200 OK" + CRLF + \
         ContentTypeHtml + CRLF + \
         CRLF
 

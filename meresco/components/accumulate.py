@@ -38,12 +38,13 @@ def emptyGenerator():
 
 class Accumulate(Observable):
 
-    def __init__(self, message, combine, getIdentifier=getIdentifier, outMessage=None):
+    def __init__(self, message, combine, getIdentifier=getIdentifier, outMessage=None, magicDoneCondition=lambda argumentCollection: False):
         Observable.__init__(self)
         self._reset()
         self._message = message
         self._getIdentifier = getIdentifier
         self._combine = combine
+        self._magicDoneCondition = magicDoneCondition
         if outMessage:
             self._outMessage = outMessage
         else:
@@ -74,6 +75,8 @@ class Accumulate(Observable):
                 result = self._send()
             self._identifier = identifier
             self._collect(*args, **kwargs)
+            if self._magicDoneCondition(self._collection):
+                result = self._send()
             return result
         else:
             return self.all.unknown(message, *args, ** kwargs)

@@ -35,23 +35,21 @@ class SRURecordUpdate(Observable):
         try:
             updateRequest = bind_stream(httpRequest.content).updateRequest
             recordId = str(updateRequest.recordIdentifier)
-            action = self.actionToMethod(str(updateRequest.action))
-            record = updateRequest.record
-            recordSchema = str(record.recordSchema)
-
-            self.do.unknown(action, recordId, recordSchema, record.recordData.childNodes[0])
+            prefix = "info:srw/action/1/"
+            action = str(updateRequest.action)
+            if action == prefix + "replace" or action == prefix + "create":
+                record = updateRequest.record
+                recordSchema = str(record.recordSchema)
+                self.do.add(recordId, recordSchema, record.recordData.childNodes[0])
+            elif action == prefix + "delete":
+                self.do.delete(recordId)
+            else:
+                raise Exception("Unknown action: " + action)
             self.writeSucces(httpRequest)
         except Exception, e:
-            self.writeError(httpRequest, str(e))
+            self.riteError(httpRequest, str(e))
             raise
 
-    def actionToMethod(self, action):
-        prefix = "info:srw/action/1/"
-        if action == prefix + "replace" or action == prefix + "create":
-            return "add"
-        if action == prefix + "delete":
-            return "delete"
-        raise Exception("Unknown action: " + action)
 
     def writeSucces(self, httpRequest):
         response = RESPONSE_XML % {

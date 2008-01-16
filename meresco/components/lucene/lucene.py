@@ -50,7 +50,7 @@ class TimerForTestSupport(object):
 
 class LuceneIndex(Observable, Logger):
 
-    def __init__(self, directoryName, cqlComposer, timer = TimerForTestSupport()):
+    def __init__(self, directoryName, cqlComposer, timer):
         Observable.__init__(self)
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
