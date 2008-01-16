@@ -36,7 +36,7 @@ from meresco.components.rss import Rss
 from sru.srutest import MockListeners, MockHits
 
 
-RSS_HEAD = """HTTP/1.0 200 Ok
+RSS_HEAD = """HTTP/1.0 200 OK
 Content-Type: application/rss+xml
 
 <?xml version="1.0" encoding="UTF-8"?>

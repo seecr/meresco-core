@@ -87,7 +87,7 @@ class StatisticsXmlTest(CQ2TestCase):
     def testResponseFormat(self):
         statisticsxml = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
         result = ''.join(list(statisticsxml.handleRequest(RequestURI="http://localhost/statistics?key=a&fromTime=2008&toTime=2008-01-01")))
-        self.assertTrue("""HTTP/1.0 200 Ok""" in result, result)
+        self.assertTrue("""HTTP/1.0 200 OK""" in result, result)
         self.assertTrue("""<?xml""" in result, result)
         self.assertTrue("""<statistics""" in result, result)
         self.assertTrue("""<serverTime""" in result, result)

@@ -66,5 +66,5 @@ class FileServerTest(TestCase):
         fileServer = FileServer(self.directory)
         response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/someFile", Method="GET", Headers={}))
 
-        self.assertTrue("HTTP/1.0 200 Ok" in response)
+        self.assertTrue("HTTP/1.0 200 OK" in response)
         self.assertTrue("Some Contents" in response)

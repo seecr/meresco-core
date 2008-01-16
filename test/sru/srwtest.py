@@ -33,7 +33,7 @@ from meresco.components.sru.srw import Srw
 
 from srutest import MockListeners, MockHits
 
-httpResponse = """HTTP/1.0 200 Ok
+httpResponse = """HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
 
 %s"""

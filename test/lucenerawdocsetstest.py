@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -32,13 +32,14 @@ from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.lucene.document import Document
 
+from timerfortestsupport import TimerForTestSupport
 from PyLucene import IndexReader
 
 class LuceneRawDocSetsTest(CQ2TestCase):
 
     #Helper functions:
     def addUntokenized(self, documents):
-        index = LuceneIndex(self.tempdir, 'CQL Composer ignored')
+        index = LuceneIndex(self.tempdir, 'CQL Composer ignored', timer=TimerForTestSupport())
         for docId, fields in documents:
             myDocument = Document(docId)
             for field, value in fields.items():

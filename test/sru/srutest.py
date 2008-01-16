@@ -47,7 +47,7 @@ class SruTest(CQ2TestCase):
         component = Sru(host='TEST_SERVER_HOST', port='TEST_SERVER_PORT', description='TEST_SERVER_DESCRIPTION', modifiedDate='TEST_SERVER_DATE')
 
         result = "".join(list(component.handleRequest(RequestURI='/DATABASE/sru')))
-        self.assertEqualsWS("""HTTP/1.0 200 Ok
+        self.assertEqualsWS("""HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
 
 <?xml version="1.0" encoding="UTF-8"?>
@@ -228,7 +228,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals(('0', 'dc', 'xml'), observer.writtenRecords[0])
         self.assertEquals(('0', 'extra', 'xml'), observer.writtenRecords[1])
 
-        self.assertEqualsWS("""HTTP/1.0 200 Ok
+        self.assertEqualsWS("""HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
 
 <?xml version="1.0" encoding="UTF-8"?>

@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -34,10 +34,12 @@ from meresco.components.drilldown import Drilldown
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 
+from timerfortestsupport import TimerForTestSupport
+
 class DrilldownTest(CQ2TestCase):
     #Helper functions:
     def addUntokenized(self, documents):
-        index = LuceneIndex(self.tempdir, 'CQL Composer ignored')
+        index = LuceneIndex(self.tempdir, 'CQL Composer ignored', timer=TimerForTestSupport())
         for docId, fields in documents:
             myDocument = Document(docId)
             for field, value in fields.items():
@@ -86,7 +88,7 @@ class DrilldownTest(CQ2TestCase):
         field, results = drilldown.drilldown([0], [('field_0', 10)]).next()
         self.assertEquals('field_0', field)
         self.assertEquals([('this is term_0', 1)], list(results))
-    
+
     def testDrilldown(self):
         self.addUntokenized([
             ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
@@ -97,7 +99,7 @@ class DrilldownTest(CQ2TestCase):
         convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
         drilldown.loadDocSets(convertor.getDocSets(), convertor.docCount())
-        index = LuceneIndex(self.tempdir, 'CQL composer not used')        
+        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=TimerForTestSupport())
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 

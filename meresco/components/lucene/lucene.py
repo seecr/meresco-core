@@ -41,12 +41,6 @@ from meresco.framework import Observable
 class LuceneException(Exception):
     pass
 
-class TimerForTestSupport(object):
-    def addTimer(self, time, callback):
-        callback()
-        return (time,callback)
-    def removeTimer(self, token):
-        pass
 
 class LuceneIndex(Observable, Logger):
 

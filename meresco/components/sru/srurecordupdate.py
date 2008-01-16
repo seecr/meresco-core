@@ -47,7 +47,7 @@ class SRURecordUpdate(Observable):
                 raise Exception("Unknown action: " + action)
             self.writeSucces(httpRequest)
         except Exception, e:
-            self.riteError(httpRequest, str(e))
+            self.writeError(httpRequest, str(e))
             raise
 
 

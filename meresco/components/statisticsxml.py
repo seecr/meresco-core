@@ -72,7 +72,7 @@ class StatisticsXml(object):
                 yield stuff
 
     def _htmlHeader(self):
-        return """HTTP/1.0 200 Ok\r\nContent-Type: text/xml\r\n\r\n<?xml version="1.0" encoding="utf-8" ?>"""
+        return """HTTP/1.0 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version="1.0" encoding="utf-8" ?>"""
 
     def _listKeys(self):
         yield "</header><availableKeys>"

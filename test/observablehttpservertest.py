@@ -40,7 +40,7 @@ class ObservableHttpServerTest(TestCase):
         reactor = Reactor()
         server = ObservableHttpServer(reactor, port)
         mockObserver = CallTrace()
-        mockObserver.returnValues['handleRequest'] = (i for i in 'HTTP/1.0 200 Ok\r\n\r\nabc')
+        mockObserver.returnValues['handleRequest'] = (i for i in 'HTTP/1.0 200 OK\r\n\r\nabc')
         server.addObserver(mockObserver)
         fragments = []
         def send(data):
