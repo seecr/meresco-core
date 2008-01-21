@@ -26,9 +26,6 @@
 #
 ## end license ##
 
-from sys import getdefaultencoding
-assert getdefaultencoding() == 'utf-8'
-
 from meresco.framework.observable import Observable
 
 from meresco.components.oai.resumptiontoken import resumptionTokenFromString, ResumptionToken
