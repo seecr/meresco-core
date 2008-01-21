@@ -29,6 +29,6 @@ from sys import getdefaultencoding
 from locale import getdefaultlocale
 assert getdefaultencoding() == 'utf-8'
 languageCode, encoding = getdefaultlocale()
-assert encoding == 'utf-8', "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
+assert encoding.lower() in ['utf-8', 'utf8'], "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
 del languageCode
 del encoding
