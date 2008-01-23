@@ -27,6 +27,7 @@
 ## end license ##
 from cgi import parse_qs
 from urlparse import urlsplit
+from urllib import unquote
 from xml.sax.saxutils import escape as xmlEscape
 
 from meresco.framework import Observable, decorate, compose
@@ -144,6 +145,8 @@ class Sru(Observable):
         if not operation in SUPPORTED_OPERATIONS:
             raise SruException(UNSUPPORTED_OPERATION, operation)
 
+        self._validateCorrectEncoding(arguments)
+
         for argument in arguments:
             if not (argument in OFFICIAL_REQUEST_PARAMETERS[operation] or argument.startswith('x-')):
                 raise SruException(UNSUPPORTED_PARAMETER, argument)
@@ -155,6 +158,15 @@ class Sru(Observable):
         if not arguments['version'][0] == VERSION:
             raise SruException(UNSUPPORTED_VERSION, arguments['version'][0])
 
+    def _validateCorrectEncoding(self, arguments):
+        try:
+            for key, values in arguments.items():
+                key.decode('utf-8')
+                for value in values:
+                    value.decode('utf-8')
+        except UnicodeDecodeError:
+            raise SruException(UNSUPPORTED_PARAMETER_VALUE, "Parameters are not properly 'utf-8' encoded.")
+    
     def _doExplain(self, database):
         version = VERSION
         host = self._host

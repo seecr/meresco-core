@@ -147,7 +147,8 @@ class LuceneTest(CQ2TestCase):
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         index.addDocument(myDocument)
-        #index.__del__()
+        # The next call shouldn't be necessary, but ....
+        index.__del__()
         index = None
         self.assertFalse(isfile(self.tempdir + '/x/write.lock'))
 
