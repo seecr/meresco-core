@@ -34,5 +34,5 @@ class Dict2Doc(Transparant):
         luceneDocument = LuceneDocument(id)
         for documentField in documentDict:
             luceneDocument.addIndexedField(documentField.key, documentField.value, documentField.options.get('tokenize', True))
-        return self.all.addDocument(id, "partnames are ignored", luceneDocument)
+        return self.all.addDocument(luceneDocument)
 

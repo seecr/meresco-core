@@ -33,13 +33,9 @@ class LuceneInterfaceAdapter(Observable):
         Observable.__init__(self)
         self._index = anIndex
 
-    def addDocument(self, id, partName, document):
-        self._index.deleteID(id)
+    def addDocument(self, document):
+        self._index.deleteID(document.identifier)
         self._index.addDocument(document)
-
-    def add(self, id, partName, document):
-        """Legacy name"""
-        self.addDocument(id, partName, document)
 
     def delete(self, id):
         self._index.deleteID(id)
