@@ -34,16 +34,65 @@ import unittest
 
 class TransformTest(unittest.TestCase):
 
-    def testBasicBehavior(self):
+    def testNoSourceMatches(self):
         observer = CallTrace("observer")
-        transform = Transform('some.source', 'target', CleanSplit(';'))
+        transform = Transform([('source', 'target', lambda x: ['transformed %s'  % x])])
         transform.addObserver(observer)
-        transform.addField("id", DocumentField('some.source', 'some;thing'))
+        transform.addField("id", DocumentField('not the source', 'value'))
+        self.assertEquals(1, len(observer.calledMethods))
+
+        self.assertEquals(DocumentField('not the source', 'value'), observer.calledMethods[0].arguments[1])
+
+    def testMultipleRules(self):
+        observer = CallTrace("observer")
+        transform = Transform([
+            ('source', 'target', lambda x: ['transformed %s'  % x]),
+            ('source', 'target2', lambda x: ['transformed2 %s'  % x]),
+        ])
+        transform.addObserver(observer)
+        transform.addField("id", DocumentField('source', 'value'))
+        self.assertEquals(3, len(observer.calledMethods))
+
+        self.assertEquals(DocumentField('source', 'value'), observer.calledMethods[0].arguments[1])
+        self.assertEquals(DocumentField('target', 'transformed value'), observer.calledMethods[1].arguments[1])
+        self.assertEquals(DocumentField('target2', 'transformed2 value'), observer.calledMethods[2].arguments[1])
+
+    def testNoTransformation(self):
+        observer = CallTrace("observer")
+        transform = Transform([('source', 'target', lambda x: [])])
+        transform.addObserver(observer)
+        transform.addField("id", DocumentField('source', 'value'))
+        self.assertEquals(1, len(observer.calledMethods))
+
+        self.assertEquals(DocumentField('source', 'value'), observer.calledMethods[0].arguments[1])
+
+    def testMultipleTransformations(self):
+        observer = CallTrace("observer")
+        transform = Transform([
+            ('source', 'target', lambda x: ['transformed %s'  % x, 'transformed2 %s'  % x]),
+        ])
+        transform.addObserver(observer)
+        transform.addField("id", DocumentField('source', 'value'))
+        self.assertEquals(3, len(observer.calledMethods))
+
+        self.assertEquals(DocumentField('source', 'value'), observer.calledMethods[0].arguments[1])
+        self.assertEquals(DocumentField('target', 'transformed value'), observer.calledMethods[1].arguments[1])
+        self.assertEquals(DocumentField('target', 'transformed2 value'), observer.calledMethods[2].arguments[1])
+
+    def testOptionsArePreserved(self):
+        observer = CallTrace("observer")
+        transform = Transform([
+            ('source', 'target', lambda x: ['transformed %s'  % x]),
+        ])
+        transform.addObserver(observer)
+        transform.addField("id", DocumentField('source', 'value', option="an option"))
         self.assertEquals(2, len(observer.calledMethods))
 
-        self.assertEquals(DocumentField('target', 'some'), observer.calledMethods[0].arguments[1])
-        self.assertEquals(DocumentField('target', 'thing'), observer.calledMethods[1].arguments[1])
+        self.assertEquals(DocumentField('source', 'value', option="an option"), observer.calledMethods[0].arguments[1])
+        self.assertEquals(DocumentField('target', 'transformed value', option="an option"), observer.calledMethods[1].arguments[1])
 
+    def testCleanSplit(self):
+        self.assertEquals(['some', 'thing'], list(CleanSplit(';')('some;thing')))
 
     def testYears(self):
         self.assertEquals([], years('garbage'))

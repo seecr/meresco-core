@@ -32,16 +32,20 @@ from meresco.components.dictionary import DocumentField
 import re
 
 class Transform(Observable):
-    def __init__(self, sourceFieldname, targetFieldname, transformer):
+    def __init__(self, transformations):
         Observable.__init__(self)
-        self.sourceFieldname = sourceFieldname
-        self.targetFieldname = targetFieldname
-        self.transformer = transformer
+        self._transformations = {}
+        for source, target, transformer in transformations:
+            if not source in self._transformations:
+                self._transformations[source] = []
+            self._transformations[source].append((target, transformer))
 
     def addField(self, id, documentField):
-        if self.sourceFieldname == documentField.key:
-            for part in self.transformer(documentField.value):
-                self.do.addField(id, DocumentField(self.targetFieldname, part))
+        self.do.addField(id, documentField)
+        transformations = self._transformations.get(documentField.key, [])
+        for target, transformer in transformations:
+            for newValue in transformer(documentField.value):
+                self.do.addField(id, DocumentField(target, newValue, **documentField.options))
 
 class CleanSplit:
     def __init__(self, separator):
