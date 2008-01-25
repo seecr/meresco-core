@@ -84,6 +84,9 @@ class LuceneIndex(Observable, Logger):
         self._writer.deleteDocuments(Term(IDFIELD, anId))
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
+    def add(self, *args, **kwargs):
+        raise Exception("BOOM")
+
     def addDocument(self, aDocument):
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)

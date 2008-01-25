@@ -28,4 +28,3 @@
 
 from lucene import LuceneIndex
 from document import Document
-from luceneinterfaceadapter import LuceneInterfaceAdapter

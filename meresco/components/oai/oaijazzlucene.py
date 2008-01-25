@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -36,9 +36,8 @@ from amara.binderytools import bind_string, bind_stream
 
 from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 
-from meresco.framework import Observable
+from meresco.framework import Observable, Transparant
 from meresco.components import Xml2Document, XmlParseAmara
-from meresco.components.lucene import LuceneInterfaceAdapter
 
 def createOaiMeta(sets, prefixes, stamp, unique):
     yield '<oaimeta xmlns:t="http://www.cq2.nl/teddy">'
@@ -72,8 +71,9 @@ class OaiJazzLucene(Observable):
         self.addObservers([
             (XmlParseAmara(), [
                 (Xml2Document(), [
-                    LuceneInterfaceAdapter(anIndex)])
+                    anIndex
                 ]),
+            ]),
             aStorage])
         self._numberGenerator = aNumberGenerator
         def close():
@@ -131,7 +131,7 @@ class OaiJazzLucene(Observable):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
             root.add(range, BooleanClause.Occur.MUST)
 
-        if self.any.numberOfDocuments() == 0:
+        if self.any.docCount() == 0:
             return []
 
         #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase

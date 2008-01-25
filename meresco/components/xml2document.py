@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -39,7 +39,7 @@ class Xml2Document(Observable):
         return self.all.unknown(methodName, *args, **kwargs)
 
     def add(self, id, partName, amaraXmlNode):
-        return self.all.add(id, partName, self._create(id, amaraXmlNode))
+        return self.all.addDocument(self._create(id, amaraXmlNode))
 
     def _create(self, documentId, topNode):
         doc = Document(documentId)
