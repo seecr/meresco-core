@@ -30,3 +30,4 @@ from observablehttpserver import ObservableHttpServer
 from pathfilter import PathFilter
 from geturl import GetURL
 from fileserver import StringServer, FileServer
+from ipfilter import IpFilter
