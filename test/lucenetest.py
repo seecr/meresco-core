@@ -133,7 +133,7 @@ class LuceneTest(CQ2TestCase):
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
-        self._luceneIndex.deleteID('1')
+        self._luceneIndex.delete('1')
         
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))

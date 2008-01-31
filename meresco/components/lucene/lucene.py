@@ -94,9 +94,9 @@ class LuceneIndex(Observable, Logger):
         thread = Thread(target=self._optimize)
         thread.start()
 
-    def deleteID(self, anId):
+    def delete(self, anId):
         if not self._writingAllowed:
-            pass#raise Exception('Backoff')
+            raise Exception('Backoff')
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._writer.deleteDocuments(Term(IDFIELD, anId))
@@ -107,7 +107,7 @@ class LuceneIndex(Observable, Logger):
 
     def addDocument(self, aDocument):
         if not self._writingAllowed:
-            pass#raise Exception('Backoff')
+            raise Exception('Backoff')
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
