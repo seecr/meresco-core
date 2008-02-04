@@ -103,7 +103,7 @@ class LuceneIndex(Observable, Logger):
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def add(self, *args, **kwargs):
-        raise Exception("BOOM")
+        raise Exception("You are attempting to run index with the deprecated interface of LuceneInterfaceAdapter")
 
     def addDocument(self, aDocument):
         if not self._writingAllowed:
