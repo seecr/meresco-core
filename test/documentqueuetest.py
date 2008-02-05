@@ -57,29 +57,28 @@ class DocumentQueueTest(TestCase):
         queue = DocumentQueue(storageComponent, sink, TimerOff(), 1)
         queue.add('id0', 'partname', 'a document')
         self.assertEquals("add", storageComponent.calledMethods[0].name)
-        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        self.assertEquals(['id0', 'queued', 'a document'], storageComponent.calledMethods[0].arguments)
         
         queue._tick()
         self.assertEquals("getStream", storageComponent.calledMethods[1].name)
-        self.assertEquals(['id0', 'partname'], storageComponent.calledMethods[1].arguments)
+        self.assertEquals(['id0', 'queued'], storageComponent.calledMethods[1].arguments)
         
         self.assertEquals("add", sink.calledMethods[0].name)
-        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        self.assertEquals(['id0', 'unknown', 'a document'], sink.calledMethods[0].arguments)
         
-    def xxxtestDelete(self):
+    def testDelete(self):
         storageComponent = CallTrace("Storage Component")
         sink = CallTrace("Sink")
         queue = DocumentQueue(storageComponent, sink, TimerOff(), 1)
         queue.delete('id0')
         self.assertEquals("deletePart", storageComponent.calledMethods[0].name)
-        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        self.assertEquals(['id0', 'queued'], storageComponent.calledMethods[0].arguments)
         
         queue._tick()
-        self.assertEquals("getStream", storageComponent.calledMethods[1].name)
-        self.assertEquals(['id0', 'partname'], storageComponent.calledMethods[1].arguments)
         
-        self.assertEquals("add", sink.calledMethods[0].name)
-        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        self.assertEquals("delete", sink.calledMethods[0].name)
+        self.assertEquals(['id0'], sink.calledMethods[0].arguments)
+
 
 class TimerOff(object):
     def addTimer(self, time, callback):

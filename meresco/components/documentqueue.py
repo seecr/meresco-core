@@ -1,6 +1,6 @@
 
-ADD = 1
-DELETE = 2
+INTERNAL_PARTNAME = 'queued'
+UNKNOWN_PARTNAME = 'unknown'
 
 QUEUE_NODES_LENGTH = 100
 
@@ -13,19 +13,23 @@ class DocumentQueue(object):
         self._frequency = frequency
         self._queues = []
         self._token = self._reactor.addTimer(self._frequency, self._tick)
+        
+        self._instructions = {
+            'ADD': self._actualAdd,
+            'DELETE': self._actualDelete,
+            'REFRESH': self._actualRefresh
+        }
     
     def add(self, id, partname, document):
-        self._storageComponent.add(id, partname, document)
-        self._enqueue((ADD, (id, partname)))
+        self._storageComponent.add(id, INTERNAL_PARTNAME, document)
+        self._enqueueAndLog(('ADD', id))
     
     def delete(self, id):
-        self.storageComponent.delete(document)
-        self._enqueue((DELETE, id))
+        self._storageComponent.deletePart(id, INTERNAL_PARTNAME)
+        self._enqueueAndLog(('DELETE', id))
     
     def refresh(self):
-        for id in self.storageComponent:
-            self.addId(id)
-        self.optimize()
+        self._enqueueAndLog(('REFRESH', 'id_is_ignored'))
     
     def optimize(self):
         removeAllDuplicates
@@ -35,33 +39,61 @@ class DocumentQueue(object):
         element = self._dequeue()
         if not element:
             return
-        job, data = element
-        if job == ADD:
-            self._actualAdd(*data)
-        else: #DELETE
-            id = data
-            self._actualDelete(data)
-            
+        instruction, id = element
+        self._instructions[instruction](id)
         self._reactor.addTimer(self._frequency, self._tick)
     
-    def _actualAdd(self, id, partname):
-        #try:
-        document = self._storageComponent.getStream(id, partname).getvalue()
-        #except: HierarchicalStorageError
-            
-        self._sink.add(id, partname, document)
+    def _actualAdd(self, id):
+        try:
+            document = self._storageComponent.getStream(id, INTERNAL_PARTNAME).getvalue()
+        except HierarchicalStorageError:
+            return # an order to delete has followed already
+        self._sink.add(id, UNKNOWN_PARTNAME, document)
     
     def _actualDelete(self, id):
         self._sink.delete(id)
+        
+    def _actualRefresh(self):
+        #KVS: het is een zooitje met die storage interface - dus hier er maar omheen hakken.
+        hierarchicalStorage = self._storageComponent._storage
+        for id, partName in hierarchicalStorage:
+            self._enqueue((self._actualAdd, id))
 
+    def _readFromFile(self, filename):
+        raise NotImplemented
+        remove(log2name)
+        f = open(filename)
+        for line in f.readlines:
+            line = line.strip()
+            parts = tuple(line.split('\t'))
+            self._enqueue(parts)
+        f.close()
+    
+    def _writeLogLine(self, element):
+        raise NotImplemented
+        self._log.write('\t'.join(element) + '\n')
+        self._log.flush()
+        
+    def _recreateLog(self):
+        raise NotImplemented
+        log2 = open('...')
+        for element in self._queue.allElements():
+            log2.write('\t'.join(element) + '\n')
+        log2.close()
+        move(log2Name, logName)
+    
+    def _enqueueAndLog(self, element):
+        #self._writeLogLine(element)
+        self._enqueue(element)
 
-    #two level tree to (somewhat) reduce the huge cost of copying the lists all the time
     def _enqueue(self, element):
+        """This is implemented using a two level tree to reduce the cost of copying the lists all the time"""
         if not self._queues or (len(self._queues[0]) > QUEUE_NODES_LENGTH):
             self._queues.insert(0, [])
         self._queues[0].insert(0, element)
         
     def _dequeue(self):
+        """This is implemented using a two level tree to reduce the cost of copying the lists all the time"""
         if not self._queues:
             return None
         lastQueue = self._queues[-1]
