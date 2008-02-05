@@ -1,14 +1,18 @@
+from meresco.framework import Transparant
+from storage.hierarchicalstorage import HierarchicalStorageError
 
 INTERNAL_PARTNAME = 'queued'
 UNKNOWN_PARTNAME = 'unknown'
 
 QUEUE_NODES_LENGTH = 100
 
-class DocumentQueue(object):
+class DocumentQueue(Transparant):
     
-    def __init__(self, storageComponent, sink, reactor, frequency):
+    def __init__(self, storageComponent, reactor, frequency):
+        reactor.addWriter(1, lambda *args: None) #workaround: 1 is sys.stdout
+        
+        Transparant.__init__(self)
         self._storageComponent = storageComponent
-        self._sink = sink
         self._reactor = reactor
         self._frequency = frequency
         self._queues = []
@@ -21,6 +25,8 @@ class DocumentQueue(object):
         }
     
     def add(self, id, partname, document):
+        if not type(document) == str:
+            raise Exception("Document should be string")
         self._storageComponent.add(id, INTERNAL_PARTNAME, document)
         self._enqueueAndLog(('ADD', id))
     
@@ -35,23 +41,24 @@ class DocumentQueue(object):
         removeAllDuplicates
     
     def _tick(self):
-        self._reactor.removeTimer(self._token)
-        element = self._dequeue()
-        if not element:
-            return
-        instruction, id = element
-        self._instructions[instruction](id)
-        self._reactor.addTimer(self._frequency, self._tick)
+        try:
+            element = self._dequeue()
+            if not element:
+                return
+            instruction, id = element
+            self._instructions[instruction](id)
+        finally:
+            self._token = self._reactor.addTimer(self._frequency, self._tick)
     
     def _actualAdd(self, id):
         try:
-            document = self._storageComponent.getStream(id, INTERNAL_PARTNAME).getvalue()
+            document = self._storageComponent.getStream(id, INTERNAL_PARTNAME).read()
         except HierarchicalStorageError:
             return # an order to delete has followed already
-        self._sink.add(id, UNKNOWN_PARTNAME, document)
+        self.do.add(id, UNKNOWN_PARTNAME, document)
     
     def _actualDelete(self, id):
-        self._sink.delete(id)
+        self.do.delete(id)
         
     def _actualRefresh(self):
         #KVS: het is een zooitje met die storage interface - dus hier er maar omheen hakken.
