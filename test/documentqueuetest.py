@@ -36,7 +36,7 @@ from meresco.components.documentqueue import DocumentQueue
 class DocumentQueueTest(TestCase):
     
     def testQueue(self):
-        queue = DocumentQueue('storage', 'sink', TimerOff(), 1)
+        queue = DocumentQueue('storage', TimerOff(), 1)
         self.assertEquals(None, queue._dequeue())
         queue._enqueue(0)
         queue._enqueue(1)
@@ -53,8 +53,9 @@ class DocumentQueueTest(TestCase):
     def testAdd(self):
         storageComponent = CallTrace("Storage Component")
         storageComponent.returnValues['getStream'] = StringIO('a document')
-        sink = CallTrace("Sink")
-        queue = DocumentQueue(storageComponent, sink, TimerOff(), 1)
+        observer = CallTrace("Observer")
+        queue = DocumentQueue(storageComponent, TimerOff(), 1)
+        queue.addObserver(observer)
         queue.add('id0', 'partname', 'a document')
         self.assertEquals("add", storageComponent.calledMethods[0].name)
         self.assertEquals(['id0', 'queued', 'a document'], storageComponent.calledMethods[0].arguments)
@@ -63,21 +64,22 @@ class DocumentQueueTest(TestCase):
         self.assertEquals("getStream", storageComponent.calledMethods[1].name)
         self.assertEquals(['id0', 'queued'], storageComponent.calledMethods[1].arguments)
         
-        self.assertEquals("add", sink.calledMethods[0].name)
-        self.assertEquals(['id0', 'unknown', 'a document'], sink.calledMethods[0].arguments)
+        self.assertEquals("add", observer.calledMethods[0].name)
+        self.assertEquals(['id0', 'unknown', 'a document'], observer.calledMethods[0].arguments)
         
     def testDelete(self):
         storageComponent = CallTrace("Storage Component")
-        sink = CallTrace("Sink")
-        queue = DocumentQueue(storageComponent, sink, TimerOff(), 1)
+        observer = CallTrace("Observer")
+        queue = DocumentQueue(storageComponent, TimerOff(), 1)
+        queue.addObserver(observer)
         queue.delete('id0')
         self.assertEquals("deletePart", storageComponent.calledMethods[0].name)
         self.assertEquals(['id0', 'queued'], storageComponent.calledMethods[0].arguments)
         
         queue._tick()
         
-        self.assertEquals("delete", sink.calledMethods[0].name)
-        self.assertEquals(['id0'], sink.calledMethods[0].arguments)
+        self.assertEquals("delete", observer.calledMethods[0].name)
+        self.assertEquals(['id0'], observer.calledMethods[0].arguments)
 
 
 class TimerOff(object):

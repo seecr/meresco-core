@@ -9,8 +9,6 @@ QUEUE_NODES_LENGTH = 100
 class DocumentQueue(Transparant):
     
     def __init__(self, storageComponent, reactor, frequency):
-        reactor.addWriter(1, lambda *args: None) #workaround: 1 is sys.stdout
-        
         Transparant.__init__(self)
         self._storageComponent = storageComponent
         self._reactor = reactor
@@ -37,9 +35,6 @@ class DocumentQueue(Transparant):
     def refresh(self):
         self._enqueueAndLog(('REFRESH', 'id_is_ignored'))
     
-    def optimize(self):
-        removeAllDuplicates
-    
     def _tick(self):
         try:
             element = self._dequeue()
@@ -65,6 +60,7 @@ class DocumentQueue(Transparant):
         hierarchicalStorage = self._storageComponent._storage
         for id, partName in hierarchicalStorage:
             self._enqueue(("ADD", id))
+        self._removeAllDuplicates()
 
     def _readFromFile(self, filename):
         raise NotImplemented
