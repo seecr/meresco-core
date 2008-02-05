@@ -60,11 +60,11 @@ class DocumentQueue(Transparant):
     def _actualDelete(self, id):
         self.do.delete(id)
         
-    def _actualRefresh(self):
+    def _actualRefresh(self, ignoredId):
         #KVS: het is een zooitje met die storage interface - dus hier er maar omheen hakken.
         hierarchicalStorage = self._storageComponent._storage
         for id, partName in hierarchicalStorage:
-            self._enqueue((self._actualAdd, id))
+            self._enqueue(("ADD", id))
 
     def _readFromFile(self, filename):
         raise NotImplemented
@@ -111,6 +111,12 @@ class DocumentQueue(Transparant):
             lastQueue = self._queues[-1]
         result = lastQueue[-1]
         self._queues[-1] = lastQueue[:-1]
+        return result
+        
+    def __len__(self):
+        result = 0
+        for queue in self._queues:
+            result += len(queue)
         return result
 
 #todo: file stuff: dwz transaction queue daarop gebaseerd
