@@ -28,6 +28,8 @@
 from unittest import TestCase
 from cq2utils import CallTrace
 
+from StringIO import StringIO
+
 from timerfortestsupport import TimerForTestSupport
 from meresco.components.documentqueue import DocumentQueue
 
@@ -49,12 +51,35 @@ class DocumentQueueTest(TestCase):
         self.assertEquals(None, queue._dequeue())
 
     def testAdd(self):
-        storage = CallTrace("Storage")
+        storageComponent = CallTrace("Storage Component")
+        storageComponent.returnValues['getStream'] = StringIO('a document')
         sink = CallTrace("Sink")
-        queue = DocumentQueue(storage, sink, TimerOff(), 1)
+        queue = DocumentQueue(storageComponent, sink, TimerOff(), 1)
         queue.add('id0', 'partname', 'a document')
-        self.assertEquals("put", storage.calledMethods[0].name)
-        self.assertEquals(('id0', 'partname'), storage.calledMethods[0].arguments)
+        self.assertEquals("add", storageComponent.calledMethods[0].name)
+        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        
+        queue._tick()
+        self.assertEquals("getStream", storageComponent.calledMethods[1].name)
+        self.assertEquals(['id0', 'partname'], storageComponent.calledMethods[1].arguments)
+        
+        self.assertEquals("add", sink.calledMethods[0].name)
+        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        
+    def xxxtestDelete(self):
+        storageComponent = CallTrace("Storage Component")
+        sink = CallTrace("Sink")
+        queue = DocumentQueue(storageComponent, sink, TimerOff(), 1)
+        queue.delete('id0')
+        self.assertEquals("deletePart", storageComponent.calledMethods[0].name)
+        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
+        
+        queue._tick()
+        self.assertEquals("getStream", storageComponent.calledMethods[1].name)
+        self.assertEquals(['id0', 'partname'], storageComponent.calledMethods[1].arguments)
+        
+        self.assertEquals("add", sink.calledMethods[0].name)
+        self.assertEquals(['id0', 'partname', 'a document'], storageComponent.calledMethods[0].arguments)
 
 class TimerOff(object):
     def addTimer(self, time, callback):

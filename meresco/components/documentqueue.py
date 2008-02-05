@@ -6,8 +6,8 @@ QUEUE_NODES_LENGTH = 100
 
 class DocumentQueue(object):
     
-    def __init__(self, storage, sink, reactor, frequency):
-        self._storage = storage
+    def __init__(self, storageComponent, sink, reactor, frequency):
+        self._storageComponent = storageComponent
         self._sink = sink
         self._reactor = reactor
         self._frequency = frequency
@@ -15,15 +15,15 @@ class DocumentQueue(object):
         self._token = self._reactor.addTimer(self._frequency, self._tick)
     
     def add(self, id, partname, document):
-        self.storage.add(document)
-        self._queue.append((ADD, (id, partname)))
+        self._storageComponent.add(id, partname, document)
+        self._enqueue((ADD, (id, partname)))
     
     def delete(self, id):
-        self.storage.delete(document)
-        self._queue.append((DELETE, id))
+        self.storageComponent.delete(document)
+        self._enqueue((DELETE, id))
     
     def refresh(self):
-        for id in self.storage:
+        for id in self.storageComponent:
             self.addId(id)
         self.optimize()
     
@@ -42,12 +42,13 @@ class DocumentQueue(object):
             id = data
             self._actualDelete(data)
             
-        self._reactor.addTimer(self.frequency, self._tick)
+        self._reactor.addTimer(self._frequency, self._tick)
     
     def _actualAdd(self, id, partname):
-        if cantFindDocument:
-            return
-        document = self._storage.get((id, partname)).readOfZo()
+        #try:
+        document = self._storageComponent.getStream(id, partname).getvalue()
+        #except: HierarchicalStorageError
+            
         self._sink.add(id, partname, document)
     
     def _actualDelete(self, id):
