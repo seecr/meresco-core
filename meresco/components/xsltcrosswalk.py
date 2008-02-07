@@ -18,7 +18,6 @@ class XsltCrosswalk(Observable):
         result = anObject
         if type(anObject) == _ElementTree:
             result = self._convert(anObject)
-        print ">>>", type(result)
         return result
 
     def unknown(self, method, *args, **kwargs):
