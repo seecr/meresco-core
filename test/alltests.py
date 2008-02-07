@@ -86,6 +86,7 @@ from oai.oaiprovenancetest import OaiProvenanceTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
+from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest
 from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
 from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
