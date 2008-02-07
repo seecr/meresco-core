@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -25,17 +25,29 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery, StandardAnalyzer
 from cqlparser import CqlVisitor
+from StringIO import StringIO
+
+def _standardAnalyzeTokens(tokens):
+    result = []
+    analyzer = StandardAnalyzer()
+    tokenStream = analyzer.tokenStream('', StringIO(unicode(" ".join(tokens))))
+    token = tokenStream.next()
+    while token:
+        result.append(token.termText())
+        token = tokenStream.next()
+    return result
 
 def _termOrPhraseQuery(index, termString):
+
     listOfTermStrings = [termString.lower()]
     if ' ' in termString:
         listOfTermStrings = [x.lower() for x in termString.split(" ") if x]
     if len(listOfTermStrings) == 1:
         return TermQuery(Term(index, listOfTermStrings[0]))
     result = PhraseQuery()
-    for term in listOfTermStrings:
+    for term in _standardAnalyzeTokens(listOfTermStrings):
         result.add(Term(index, term))
     return result
 

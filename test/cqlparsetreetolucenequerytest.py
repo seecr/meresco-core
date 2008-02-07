@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -48,6 +48,14 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         query.add(Term("unqualified", "cats"))
         query.add(Term("unqualified", "dogs"))
         self.assertConversion(query,'"cats dogs"')
+
+    def testPhraseQueryIsStandardAnalyzed(self):
+        expected = PhraseQuery()
+        for term in ["vol.118", "2008", "nr.3", "march", "p.435-444"]:
+            expected.add(Term("unqualified", term))
+        input = '"vol.118 (2008) nr.3 (March) p.435-444"'
+        self.assertConversion(expected, input)
+
 
     def testIndexRelationTermOutput(self):
         self.assertConversion(TermQuery(Term("animal", "cats")), 'animal=cats')
