@@ -15,9 +15,11 @@ class XsltCrosswalk(Observable):
         return result
 
     def _detectAndConvert(self, anObject):
+        result = anObject
         if type(anObject) == _ElementTree:
-            return self._convert(anObject)
-        return anObject
+            result = self._convert(anObject)
+        print ">>>", type(result)
+        return result
 
     def unknown(self, method, *args, **kwargs):
         newArgs = [self._detectAndConvert(arg) for arg in args]

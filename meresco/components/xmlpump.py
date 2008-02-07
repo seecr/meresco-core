@@ -29,7 +29,7 @@
 from meresco.framework.observable import Observable
 from amara.binderytools import bind_string
 from amara.bindery import is_element
-from lxml.etree import parse, _ElementTree, tostring
+from lxml.etree import parse, _ElementTree, tostring, _XSLTResultTree
 from cStringIO import StringIO
 from re import compile
 
@@ -91,7 +91,7 @@ class Amara2Lxml(Converter):
 
 class Lxml2Amara(Converter):
     def _canConvert(self, anObject):
-        return type(anObject) == _ElementTree
+        return type(anObject) in [_ElementTree, _XSLTResultTree]
 
     def _convert(self, anObject):
         return bind_string(tostring(anObject)).childNodes[0]
