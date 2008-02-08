@@ -29,10 +29,10 @@ from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery, 
 from cqlparser import CqlVisitor
 from StringIO import StringIO
 
-def _standardAnalyzeTokens(tokens):
+def _standardAnalyzeToken(token):
     result = []
     analyzer = StandardAnalyzer()
-    tokenStream = analyzer.tokenStream('', StringIO(unicode(" ".join(tokens))))
+    tokenStream = analyzer.tokenStream('', StringIO(unicode(token)))
     token = tokenStream.next()
     while token:
         result.append(token.termText())
@@ -41,13 +41,11 @@ def _standardAnalyzeTokens(tokens):
 
 def _termOrPhraseQuery(index, termString):
 
-    listOfTermStrings = [termString.lower()]
-    if ' ' in termString:
-        listOfTermStrings = [x.lower() for x in termString.split(" ") if x]
+    listOfTermStrings = _standardAnalyzeToken(termString.lower())
     if len(listOfTermStrings) == 1:
         return TermQuery(Term(index, listOfTermStrings[0]))
     result = PhraseQuery()
-    for term in _standardAnalyzeTokens(listOfTermStrings):
+    for term in listOfTermStrings:
         result.add(Term(index, term))
     return result
 

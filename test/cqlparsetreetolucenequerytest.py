@@ -56,6 +56,12 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         input = '"vol.118 (2008) nr.3 (March) p.435-444"'
         self.assertConversion(expected, input)
 
+    def testOneTermPhraseQueryUsesStandardAnalyzed(self):
+        expected = PhraseQuery()
+        expected.add(Term('unqualified', 'aap'))
+        expected.add(Term('unqualified', 'noot'))
+        self.assertConversion(expected, 'aap:noot')
+
 
     def testIndexRelationTermOutput(self):
         self.assertConversion(TermQuery(Term("animal", "cats")), 'animal=cats')
