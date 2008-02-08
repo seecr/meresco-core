@@ -1,6 +1,6 @@
 from cq2utils import CQ2TestCase
 from os.path import join
-from lxml.etree import parse, tostring
+from lxml.etree import parse, tostring, _ElementTree
 
 from meresco.framework import Observable
 from meresco.components import XsltCrosswalk
@@ -60,6 +60,7 @@ class XsltCrosswalkTest(CQ2TestCase):
         class Intercept:
             def someMessage(innerself, xmlNode):
                 self.crosswalkedNode.append(tostring(xmlNode, pretty_print=True))
+                self.assertEquals(_ElementTree, type(xmlNode))
         start = Observable()
         start.addObservers([
             (XsltCrosswalk([self.xsltFilename]), [

@@ -12,7 +12,7 @@ class XsltCrosswalk(Observable):
         result = xmlSource
         for xslt in self._xslts:
             result = xslt(result)
-        return result
+        return result.getroot().getroottree()
 
     def _detectAndConvert(self, anObject):
         result = anObject
