@@ -60,7 +60,7 @@ class DocumentQueue(Transparant):
         hierarchicalStorage = self._storageComponent._storage
         for id, partName in hierarchicalStorage:
             self._enqueue(("ADD", id))
-        self._removeAllDuplicates()
+        #self._removeAllDuplicates()
 
     def _readFromFile(self, filename):
         raise NotImplemented
