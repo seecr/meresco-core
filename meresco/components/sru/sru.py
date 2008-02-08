@@ -166,7 +166,7 @@ class Sru(Observable):
                     value.decode('utf-8')
         except UnicodeDecodeError:
             raise SruException(UNSUPPORTED_PARAMETER_VALUE, "Parameters are not properly 'utf-8' encoded.")
-    
+
     def _doExplain(self, database):
         version = VERSION
         host = self._host
@@ -270,21 +270,23 @@ class Sru(Observable):
         yield '<srw:record>'
         yield '<srw:recordSchema>%s</srw:recordSchema>' % sruQuery.recordSchema
         yield '<srw:recordPacking>%s</srw:recordPacking>' % sruQuery.recordPacking
-        try:
-            stuffs = compose(self._writeRecordData(sruQuery, recordId))
-            for stuff in stuffs:
-                yield stuff
-            stuffs = compose(self._writeExtraRecordData(sruQuery, recordId))
-            for stuff in stuffs:
-                yield stuff
-        except Exception, e:
-            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
+        yield self._writeRecordData(sruQuery, recordId)
+        yield self._writeExtraRecordData(sruQuery, recordId)
         yield '</srw:record>'
 
     def _writeRecordData(self, sruQuery, recordId):
         yield '<srw:recordData>'
-        yield self.all.yieldRecordForRecordPacking(recordId, sruQuery.recordSchema, sruQuery.recordPacking)
+
+        yield self._catchErrors(self.all.yieldRecordForRecordPacking(recordId, sruQuery.recordSchema, sruQuery.recordPacking))
         yield '</srw:recordData>'
+
+    def _catchErrors(self, dataGenerator):
+        try:
+            for stuff in compose(dataGenerator):
+                yield stuff
+        except Exception, e:
+            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
+
 
     def _writeExtraRecordData(self, sruQuery, recordId):
         if not sruQuery.x_recordSchema:
@@ -293,7 +295,7 @@ class Sru(Observable):
         yield '<srw:extraRecordData>'
         for schema in sruQuery.x_recordSchema:
             yield '<recordData recordSchema="%s">' % xmlEscape(schema)
-            yield self.all.yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking)
+            yield self._catchErrors(self.all.yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking))
             yield '</recordData>'
         yield '</srw:extraRecordData>'
 

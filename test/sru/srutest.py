@@ -1,10 +1,10 @@
 ## begin license ##
 #
-#    Meresco Core is an open-source library containing components to build 
+#    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
 #    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school. 
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -268,13 +268,13 @@ Content-Type: text/xml; charset=utf-8
 </srw:searchRetrieveResponse>
 """, result)
 
-    def testExceptionInWriteResult(self):
+    def testExceptionInWriteRecordData(self):
         class RaisesException(object):
             def yieldRecordForRecordPacking(self, *args):
                 raise Exception("Test Exception")
         component = Sru('', '', '', '')
         component.addObserver(RaisesException())
-        result = "".join(list(compose(component._writeResult(CallTrace("Query"), "ID"))))
+        result = "".join(list(compose(component._writeRecordData(CallTrace("Query"), "ID"))))
         self.assertTrue("diagnostic" in result)
 
     def testExceptionInWriteExtraRecordData(self):
