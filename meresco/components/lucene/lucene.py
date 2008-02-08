@@ -103,7 +103,7 @@ class LuceneIndex(Observable, Logger):
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def add(self, *args, **kwargs):
-        raise Exception("You are attempting to run index with the deprecated interface of LuceneInterfaceAdapter")
+        raise Exception("You are attempting to run index with the deprecated interface of LuceneInterfaceAdapter - remove exception in March 2008 please")
 
     def addDocument(self, aDocument):
         if not self._writingAllowed:
@@ -138,3 +138,23 @@ class LuceneIndex(Observable, Logger):
     def start(self):
         self._optimizeAndNotifyObservers()
 
+
+
+class LuceneIndexASync(LuceneIndex):
+    """This is supposed to replace LuceneIndex soon, but I don't want to frustrate edurep (again)
+    
+    diffs:
+    timer eruit, die gaat weer extern maar dan met de log. geimplementeerd door dat ding met een mock te vervangen.
+    """
+    def __init__(self, directoryName, cqlComposer):
+        LuceneIndex.__init__(self, directoryName, cqlComposer, FakeTimer())
+    
+    def optimize(self):
+        self._optimizeAndNotifyObservers()
+    
+
+class FakeTimer(object):
+    def addTimer(self, *args, **kwargs):
+        return 'token'
+    def removeTimer(self, *args, **kwargs):
+        return

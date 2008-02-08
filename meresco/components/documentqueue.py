@@ -6,15 +6,18 @@ UNKNOWN_PARTNAME = 'unknown'
 
 QUEUE_NODES_LENGTH = 100
 
-class DocumentQueue(Transparant):
+ADDS_BEFORE_OPTIMIZE = 1000
+
+class DocumentQueue(object):
     
-    def __init__(self, storageComponent, reactor, frequency):
-        Transparant.__init__(self)
+    def __init__(self, storageComponent, index, reactor, frequency):
         self._storageComponent = storageComponent
+        self._index = index
         self._reactor = reactor
         self._frequency = frequency
         self._queues = []
         self._token = self._reactor.addTimer(self._frequency, self._tick)
+        self._optimizeCount = 0
         
         self._instructions = {
             'ADD': self._actualAdd,
@@ -36,9 +39,14 @@ class DocumentQueue(Transparant):
         self._enqueueAndLog(('REFRESH', 'id_is_ignored'))
     
     def _tick(self):
+        if not self._index._writingAllowed:
+            return
         try:
             element = self._dequeue()
             if not element:
+                #probleemgebied, maar ik ben nog aan het schetsen hier....
+                self._optimizeCount = 0
+                self._index.optimize()
                 return
             instruction, id = element
             self._instructions[instruction](id)
@@ -50,10 +58,15 @@ class DocumentQueue(Transparant):
             document = self._storageComponent.getStream(id, INTERNAL_PARTNAME).read()
         except HierarchicalStorageError:
             return # an order to delete has followed already
-        self.do.add(id, UNKNOWN_PARTNAME, document)
+        self._index.add(id, UNKNOWN_PARTNAME, document)
+        
+        self._optimizeCount += 1
+        if self._optimizeCount >= ADDS_BEFORE_OPTIMIZE:
+            self._optimizeCount = 0
+            self._index.optimize()
     
     def _actualDelete(self, id):
-        self.do.delete(id)
+        self._index.delete(id)
         
     def _actualRefresh(self, ignoredId):
         #KVS: het is een zooitje met die storage interface - dus hier er maar omheen hakken.
