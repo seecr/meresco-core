@@ -41,11 +41,8 @@ class FieldMatrix(object):
             nr = self._matrix.addRow(docIds)
             self._row2term[nr] = term
 
-    def drilldown(self, docIds, maxresults = 0):
-        drilldownResults = self._matrix.combinedRowCardinalities(docIds)
-        drilldownResults.sort(lambda (x1,y1),(x2,y2):cmp(y2,y1))
-        if maxresults > 0:
-            drilldownResults = drilldownResults[:maxresults]
+    def drilldown(self, docIds, maxResults = 0):
+        drilldownResults = self._matrix.combinedRowCardinalities(docIds, maxResults)
         for nr, occurences in drilldownResults:
             yield self._row2term[nr], occurences
 
