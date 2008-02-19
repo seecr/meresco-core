@@ -30,6 +30,8 @@ from meresco.components.lucene.xslice import XSlice
 
 from PyLucene import QueryFilter, IndexSearcher
 
+from collector.collector import getScoreDocs
+
 DEFAULT_FETCHED_DOCS_COUNT = 10
 
 class Hits:
@@ -59,10 +61,10 @@ class Hits:
         return self._totalHits
 
     def docNumbers(self):
-        if self._totalHits == self._reader.numDocs():
-            return xrange(self._totalHits)
-        else:
-            return self._docNumbersReal()
+        return getScoreDocs(
+            self._reader.maxDoc(),
+            self._pyLuceneQuery.weight(self._searcher),
+            self._searcher)
 
     def _docNumbersReal(self):
         queryFilter = QueryFilter(self._pyLuceneQuery)
