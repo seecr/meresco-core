@@ -28,16 +28,9 @@
 from meresco.components.lucene import document
 from meresco.components.lucene.xslice import XSlice
 
-from PyLucene import HitCollector
+from PyLucene import QueryFilter, IndexSearcher
 
 DEFAULT_FETCHED_DOCS_COUNT = 10
-
-class DocIdCollector(object):
-    def __init__(self):
-        self.docIds = []
-
-    def collect(self, doc, score):
-        self.docIds.append(doc)
 
 class Hits:
     """Remake of Lucene's hits object, with added 'TeddyIds' functionality
@@ -51,7 +44,8 @@ class Hits:
     Implementation hint: the performance benefit is achieved because we know exactly how many documents will be needed. Note the positions of self._loadScoreDocs() in the code
     """
 
-    def __init__(self, searcher, pyLuceneQuery, pyLuceneSort):
+    def __init__(self, searcher,reader, pyLuceneQuery, pyLuceneSort):
+        self._reader = reader
         self._searcher = searcher
         self._pyLuceneQuery = pyLuceneQuery
         self._pyLuceneSort = pyLuceneSort
@@ -65,11 +59,12 @@ class Hits:
         return self._totalHits
 
     def docNumbers(self):
-        collector = DocIdCollector()
-        self._searcher.search(self._pyLuceneQuery.weight(self._searcher), None, collector)
-        return (docId for docId in collector.docIds)
-        #self._loadScoreDocs(self._totalHits)
-        #return (scoreDoc.doc for scoreDoc in self._scoreDocs)
+        queryFilter = QueryFilter(self._pyLuceneQuery)
+        bits = queryFilter.bits(self._reader)
+        value = bits.nextSetBit(0)
+        while value != -1:
+            yield value
+            value = bits.nextSetBit(value + 1)
 
     def __getslice__(self, start, stop):
         self._loadScoreDocs(min(len(self), stop))

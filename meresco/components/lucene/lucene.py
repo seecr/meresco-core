@@ -61,7 +61,7 @@ class LuceneIndex(Observable, Logger):
         self._searcher = self._openSearcher()
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return Hits(self._searcher, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
+        return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
@@ -142,16 +142,16 @@ class LuceneIndex(Observable, Logger):
 
 class LuceneIndexASync(LuceneIndex):
     """This is supposed to replace LuceneIndex soon, but I don't want to frustrate edurep (again)
-    
+
     diffs:
     timer eruit, die gaat weer extern maar dan met de log. geimplementeerd door dat ding met een mock te vervangen.
     """
     def __init__(self, directoryName, cqlComposer):
         LuceneIndex.__init__(self, directoryName, cqlComposer, FakeTimer())
-    
+
     def optimize(self):
         self._optimizeAndNotifyObservers()
-    
+
 
 class FakeTimer(object):
     def addTimer(self, *args, **kwargs):

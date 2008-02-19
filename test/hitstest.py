@@ -25,12 +25,15 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.components.lucene import hits
-import unittest
+from meresco.components.lucene import Document, LuceneIndex
+from meresco.components.lucene.hits import Hits
 from meresco.components.lucene import document
-from cq2utils.calltrace import CallTrace
+from cq2utils import CallTrace, CQ2TestCase
+from timerfortestsupport import TimerForTestSupport
 
-class HitsTest(unittest.TestCase):
+from PyLucene import TermQuery, Term
+
+class HitsTest(CQ2TestCase):
 
     def testIterator(self):
         iterator = self.createHits(range(3)).__iter__()
@@ -41,9 +44,17 @@ class HitsTest(unittest.TestCase):
         self.assertEquals(15, len(hits))
 
     def testDocNumbers(self):
-        pyLuceneIds = [33, 34, 10, 11, 12, 54, 55]
-        hits = self.createHits(pyLuceneIds)
-        self.assertEquals(pyLuceneIds, list(hits.docNumbers()))
+        #pyLuceneIds = [33, 34, 10, 11, 12, 54, 55]
+        #hits = self.createHits(pyLuceneIds)
+        #self.assertEquals(pyLuceneIds, list(hits.docNumbers()))
+        index = LuceneIndex(self.tempdir, 'cql composer ignored', TimerForTestSupport())
+        document = Document('1')
+        document.addIndexedField('field', 'value')
+        index.addDocument(document)
+
+        hits = index.executeQuery(TermQuery(Term('field', 'value')))
+        self.assertEquals([0], list(hits.docNumbers()))
+
 
     def testQueryIsExecuted(self):
         hitsCount = 3
@@ -52,12 +63,14 @@ class HitsTest(unittest.TestCase):
         aSearcher = CallTrace("Searcher")
         aSearcher.returnValues['search'] = topDocs
 
+        reader = CallTrace('reader', verbose=True)
+
         aWeight = CallTrace("Weight")
 
         aQuery = CallTrace("Query")
         aQuery.returnValues['weight'] = aWeight
 
-        hits.Hits(aSearcher, aQuery, None)
+        Hits(aSearcher, reader, aQuery, None)
 
         self.assertEquals([
             "weight(<CallTrace: Searcher>)"], aQuery.__calltrace__())
@@ -72,6 +85,8 @@ class HitsTest(unittest.TestCase):
         aSearcher = CallTrace("Searcher")
         aSearcher.returnValues['search'] = topDocs
 
+        reader = CallTrace('reader')
+
         aWeight = CallTrace("Weight")
 
         aQuery = CallTrace("Query")
@@ -80,7 +95,7 @@ class HitsTest(unittest.TestCase):
         aSort = CallTrace("Sort")
         aSort.returnValues['__nonzero__'] = True
 
-        hits.Hits(aSearcher, aQuery, aSort)
+        Hits(aSearcher, reader, aQuery, aSort)
 
         self.assertEquals([
             "weight(<CallTrace: Searcher>)"], aQuery.__calltrace__())
@@ -90,10 +105,11 @@ class HitsTest(unittest.TestCase):
 
 
     def createHits(self, luceneIds):
+        reader = CallTrace()
         aSearcher = MockSearcher(luceneIds, MockTopDocs(luceneIds))
         aQuery = CallTrace("PyLuceneQuery")
         aSort = None
-        return hits.Hits(aSearcher, aQuery, aSort)
+        return Hits(aSearcher, reader, aQuery, aSort)
 
 class MockTopDocs:
     def __init__(self, luceneIds):
