@@ -59,6 +59,12 @@ class Hits:
         return self._totalHits
 
     def docNumbers(self):
+        if self._totalHits == self._reader.numDocs():
+            return xrange(self._totalHits)
+        else:
+            return self._docNumbersReal()
+
+    def _docNumbersReal(self):
         queryFilter = QueryFilter(self._pyLuceneQuery)
         bits = queryFilter.bits(self._reader)
         value = bits.nextSetBit(0)
