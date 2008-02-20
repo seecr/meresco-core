@@ -66,6 +66,10 @@ class Hits:
             self._pyLuceneQuery.weight(self._searcher),
             self._searcher)
 
+    def _queryBits(self):
+        queryFilter = QueryFilter(self._pyLuceneQuery)
+        return queryFilter.bits(self._reader)
+
     def _docNumbersReal(self):
         queryFilter = QueryFilter(self._pyLuceneQuery)
         bits = queryFilter.bits(self._reader)

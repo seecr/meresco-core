@@ -22,9 +22,9 @@ from PyLucene import TermQuery, Term
 
 drilldownFields = [
     'drilldown.olc.yearNorm',
-#    'drilldown.olc.author',
-#    'drilldown.olc.source',
-#    'drilldown.olc.uncontrolledTerm'
+    'drilldown.olc.author',
+    'drilldown.olc.source',
+    'drilldown.olc.uncontrolledTerm'
 ]
 
 t0 = time()
@@ -38,9 +38,14 @@ query = TermQuery(Term('meta.repository.collection', 'tilburg'))
 
 t0 = time()
 hits = index.executeQuery(query)
-docIds = hits.docNumbers()
-for fieldname, results in drilldown.drilldown(docIds, zip(drilldownFields, [10] * len(drilldownFields))):
-    print fieldname
-    print list(results)
+#docIds = hits.docNumbers()
+#for fieldname, results in drilldown.drilldown(docIds, zip(drilldownFields, [10] * len(drilldownFields))):
 
-print 'drilldown time', time() - t0
+for fieldname, results in drilldown.drilldown(hits, zip(drilldownFields, [10] * len(drilldownFields))):
+    t1 = time()
+    print fieldname
+    #print list(results)
+    list(results)
+    print "drilldown time", fieldname, time()-t1
+
+print 'total drilldown time', time() - t0
