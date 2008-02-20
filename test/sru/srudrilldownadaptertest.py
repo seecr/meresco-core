@@ -59,7 +59,7 @@ class SRUTermDrilldownTest(CQ2TestCase):
         adapter = SRUTermDrilldown()
         adapter.addObserver(self)
         hits = CallTrace("Hits")
-        hits.returnValues['docNumbers'] = "Hits are simply passed"
+        hits.returnValues['bitMatrixRow'] = "Hits are simply passed"
         result = adapter.extraResponseData(arguments, hits)
         self.assertEqualsWS("""<dd:term-drilldown><dd:navigator name="field0">
     <dd:item count="14">value0_0</dd:item>

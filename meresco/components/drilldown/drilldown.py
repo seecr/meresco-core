@@ -72,12 +72,9 @@ class Drilldown(object):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
         self.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
-    def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
-        queryDocSet = self._docSetForQueryResult(docIds)
+    def drilldown(self, row, drilldownFieldnamesAndMaximumResults):
         for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults:
             if fieldname not in self._drilldownFieldnames:
                 raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._drilldownFieldnames))
-            yield fieldname, self._fieldMatrices[fieldname].drilldown(queryDocSet, maximumResults)
+            yield fieldname, self._fieldMatrices[fieldname].drilldown(row, maximumResults)
 
-    def _docSetForQueryResult(self, docIds):
-        return sorted(docIds) #  <====  What to do about this sorting and performance ?

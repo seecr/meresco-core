@@ -36,6 +36,8 @@ from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 
 from timerfortestsupport import TimerForTestSupport
 
+from bitmatrix import Row
+
 class DrilldownTest(CQ2TestCase):
     #Helper functions:
     def addUntokenized(self, documents):
@@ -54,7 +56,7 @@ class DrilldownTest(CQ2TestCase):
 
         self.assertEquals(['field_0'], drilldown._docSets.keys())
         self.assertEquals(0, len(drilldown._docSets['field_0']))
-        field, results = drilldown.drilldown([0], [('field_0', 10)]).next()
+        field, results = drilldown.drilldown(Row([0]), [('field_0', 10)]).next()
         self.assertEquals('field_0', field)
         self.assertEquals(0, len(list(results)))
 
@@ -85,7 +87,7 @@ class DrilldownTest(CQ2TestCase):
         drilldown = Drilldown(['field_0'])
         reader = IndexReader.open(self.tempdir)
         drilldown.indexOptimized(reader)
-        field, results = drilldown.drilldown([0], [('field_0', 10)]).next()
+        field, results = drilldown.drilldown(Row([0]), [('field_0', 10)]).next()
         self.assertEquals('field_0', field)
         self.assertEquals([('this is term_0', 1)], list(results))
 
@@ -103,7 +105,7 @@ class DrilldownTest(CQ2TestCase):
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
-        drilldownResult = list(drilldown.drilldown(queryResults.docNumbers(), [('field_0', 0), ('field_1', 0)]))
+        drilldownResult = list(drilldown.drilldown(queryResults.bitMatrixRow(), [('field_0', 0), ('field_1', 0)]))
 
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)

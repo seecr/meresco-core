@@ -43,17 +43,22 @@ class HitsTest(CQ2TestCase):
         hits = self.createHits(range(15))
         self.assertEquals(15, len(hits))
 
-    def testDocNumbers(self):
-        #pyLuceneIds = [33, 34, 10, 11, 12, 54, 55]
-        #hits = self.createHits(pyLuceneIds)
-        #self.assertEquals(pyLuceneIds, list(hits.docNumbers()))
+    def testBitMatrixRow(self):
         index = LuceneIndex(self.tempdir, 'cql composer ignored', TimerForTestSupport())
+        document = Document('0')
+        document.addIndexedField('field', 'value')
+        index.addDocument(document)
+
         document = Document('1')
+        document.addIndexedField('field', 'nonMatching')
+        index.addDocument(document)
+
+        document = Document('2')
         document.addIndexedField('field', 'value')
         index.addDocument(document)
 
         hits = index.executeQuery(TermQuery(Term('field', 'value')))
-        self.assertEquals([0], list(hits.docNumbers()))
+        self.assertEquals([0, 2], list(hits.bitMatrixRow().asPythonListForTesting()))
 
 
     def testQueryIsExecuted(self):
