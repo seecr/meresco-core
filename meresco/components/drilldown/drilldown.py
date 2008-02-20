@@ -27,35 +27,22 @@
 ## end license ##
 from bitmatrix import BitMatrix
 from lucenerawdocsets import LuceneRawDocSets
-from time import time
 
 class DrilldownException(Exception):
     pass
 
 class FieldMatrix(object):
 
-
-    #def __init__(self, terms, numDocsInIndex):
-        #t0 = time()
-        #print type(terms)
-        #self._matrix = BitMatrix(numDocsInIndex, terms)
-        #print "FieldMatrix init", time() - t0
-
-
     def __init__(self, terms, numDocsInIndex):
-        t0 = time()
         terms = list(terms)
-        print "reading generator", time() - t0
         self._matrix = BitMatrix(numDocsInIndex, len(terms))
         self._row2term = {}
-
         for term, docIds in terms:
             nr = self._matrix.addRow(docIds)
             self._row2term[nr] = term
-        print "FieldMatrix init", time() - t0
 
-    def drilldown(self, hits, maxResults = 0):
-        drilldownResults = self._matrix.combinedRowCardinalities(hits, maxResults)
+    def drilldown(self, docIds, maxResults = 0):
+        drilldownResults = self._matrix.combinedRowCardinalities(docIds, maxResults)
         for nr, occurences in drilldownResults:
             yield self._row2term[nr], occurences
 
@@ -81,17 +68,16 @@ class Drilldown(object):
         for fieldname, terms in rawDocSets:
             self._fieldMatrices[fieldname] = FieldMatrix(terms, docCount)
 
-
     def indexOptimized(self, indexReader):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
         self.loadDocSets(convertor.getDocSets(), convertor.docCount())
 
-    def drilldown(self, hits, drilldownFieldnamesAndMaximumResults):
-        #queryDocSet = self._docSetForQueryResult(hits)
+    def drilldown(self, docIds, drilldownFieldnamesAndMaximumResults):
+        queryDocSet = self._docSetForQueryResult(docIds)
         for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults:
             if fieldname not in self._drilldownFieldnames:
                 raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._drilldownFieldnames))
-            yield fieldname, self._fieldMatrices[fieldname].drilldown(hits, maximumResults)
+            yield fieldname, self._fieldMatrices[fieldname].drilldown(queryDocSet, maximumResults)
 
     def _docSetForQueryResult(self, docIds):
         return sorted(docIds) #  <====  What to do about this sorting and performance ?
