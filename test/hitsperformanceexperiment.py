@@ -34,7 +34,15 @@ def getAndIterateOverDocNumbers():
     hits = Hits(searcher, reader, query, None)
     hits.bitMatrixRow()
 
+#twoMillionRow
+from bitmatrix import Row
+twoMillion = range(2000000)
+
+def twoMillionRow():
+    Row(twoMillion)
+
 getAndIterateOverDocNumbersResult = profile(getAndIterateOverDocNumbers)
+twoMillionRowResult = profile(twoMillionRow)
 
 from commands import getstatusoutput
 
@@ -48,7 +56,7 @@ f.write("*************************\n")
 f.write(svnInfo + "\n")
 
 f.write('getAndIterateOverDocNumbers ' + str(getAndIterateOverDocNumbersResult) + "\n")
-
+f.write('twoMillionRow ' + str(twoMillionRowResult) + "\n")
 
 f.close()
 
