@@ -32,8 +32,7 @@ query = TermQuery(Term('meta.repository.collection', 'tilburg'))
 
 def getAndIterateOverDocNumbers():
     hits = Hits(searcher, reader, query, None)
-    for i in hits.docNumbers():
-        pass
+    hits.bitMatrixRow()
 
 getAndIterateOverDocNumbersResult = profile(getAndIterateOverDocNumbers)
 

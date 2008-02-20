@@ -76,7 +76,7 @@ class SRUTermDrilldown(Observable):
         if fieldsAndMaximums == [""]:
             raise StopIteration
 
-        drilldownResults = self.any.drilldown(hits.docNumbers(), fieldMaxTuples)
+        drilldownResults = self.any.drilldown(hits.bitMatrixRow(), fieldMaxTuples)
         yield "<dd:term-drilldown>"
         for fieldname, termCounts in drilldownResults:
             yield '<dd:navigator name=%s>' % quoteattr(fieldname)

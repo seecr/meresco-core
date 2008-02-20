@@ -41,8 +41,8 @@ class FieldMatrix(object):
             nr = self._matrix.addRow(docIds)
             self._row2term[nr] = term
 
-    def drilldown(self, docIds, maxResults = 0):
-        drilldownResults = self._matrix.combinedRowCardinalities(docIds, maxResults)
+    def drilldown(self, row, maxResults = 0):
+        drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
         for nr, occurences in drilldownResults:
             yield self._row2term[nr], occurences
 

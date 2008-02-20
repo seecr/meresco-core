@@ -29,6 +29,7 @@ from meresco.components.lucene import document
 from meresco.components.lucene.xslice import XSlice
 
 from PyLucene import QueryFilter, IndexSearcher
+from bitmatrix import JavaBitSetRow
 
 DEFAULT_FETCHED_DOCS_COUNT = 10
 
@@ -58,19 +59,10 @@ class Hits:
     def __len__(self):
         return self._totalHits
 
-    def docNumbers(self):
-        if self._totalHits == self._reader.numDocs():
-            return xrange(self._totalHits)
-        else:
-            return self._docNumbersReal()
-
-    def _docNumbersReal(self):
+    def bitMatrixRow(self):
         queryFilter = QueryFilter(self._pyLuceneQuery)
         bits = queryFilter.bits(self._reader)
-        value = bits.nextSetBit(0)
-        while value != -1:
-            yield value
-            value = bits.nextSetBit(value + 1)
+        return JavaBitSetRow(bits)
 
     def __getslice__(self, start, stop):
         self._loadScoreDocs(min(len(self), stop))
