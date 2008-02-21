@@ -43,7 +43,6 @@ from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from documenttest import DocumentTest
-#from documentqueuetest import DocumentQueueTest
 from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
 from generatorutilstest import GeneratorUtilsTest
