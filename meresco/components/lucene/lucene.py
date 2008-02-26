@@ -28,8 +28,7 @@
 
 from os.path import isdir
 from os import makedirs
-from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, Sort, PythonThread as Thread
-
+from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, Sort
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 from meresco.components.lucene.clausecollector import ClauseCollector
 
@@ -52,7 +51,6 @@ class LuceneIndex(Observable, Logger):
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
-        self._writingAllowed = True
         self._writer = IndexWriter(
             self._directoryName,
             StandardAnalyzer(), not indexExists)
@@ -77,26 +75,15 @@ class LuceneIndex(Observable, Logger):
             self._directoryName,
             StandardAnalyzer(), False)
 
-    def _optimize(self):
-        self._writer.optimize()
-        self._writingAllowed = True
-
     def _optimizeAndNotifyObservers(self):
         self._reOpenWriter()
-
         self._reader.close()
         self._reader = self._openReader()
-        self.do.indexOptimized(self._reader)
+        self.do.indexOptimized(self._reader) #een beetje een misnomer nu, maar goed...
         self._searcher.close()
         self._searcher = self._openSearcher()
 
-        self._writingAllowed = False
-        thread = Thread(target=self._optimize)
-        thread.start()
-
     def delete(self, anId):
-        if not self._writingAllowed:
-            raise Exception('Backoff')
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._writer.deleteDocuments(Term(IDFIELD, anId))
@@ -106,8 +93,6 @@ class LuceneIndex(Observable, Logger):
         raise Exception("You are attempting to run index with the deprecated interface of LuceneInterfaceAdapter - remove exception in March 2008 please")
 
     def addDocument(self, aDocument):
-        if not self._writingAllowed:
-            raise Exception('Backoff')
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
