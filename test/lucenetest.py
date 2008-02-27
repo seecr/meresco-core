@@ -31,8 +31,9 @@ from tempfile import mkdtemp, gettempdir
 from time import sleep
 import os
 from os.path import isfile, join
+from os import listdir
 from shutil import rmtree
-import PyLucene
+
 from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.components.lucene.document import Document
@@ -43,7 +44,7 @@ from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 from cqlparser import parseString
 
-from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery
+from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery, MatchAllDocsQuery
 
 class LuceneTest(CQ2TestCase):
 
@@ -106,7 +107,7 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('field1', 'value_1')
         myDocument.addIndexedField('field1', 'value_2')
         self._luceneIndex.addDocument(myDocument)
-        
+
         self.timerCallbackMethod()
 
         def check(value):
@@ -129,15 +130,15 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
-        
+
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
         self._luceneIndex.delete('1')
-        
+
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
-        
+
         self.timerCallbackMethod()
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(1, len(hits))
@@ -233,9 +234,89 @@ class LuceneTest(CQ2TestCase):
     def testStart(self):
         intercept = CallTrace('Interceptor')
         self._luceneIndex.addObserver(intercept)
-        
+
         self._luceneIndex.start()
-        
+
         self.assertEquals(1, len(intercept.calledMethods))
         self.assertEquals('indexOptimized', intercept.calledMethods[0].name)
-        
+
+    def testDocIdsAssumptions(self):
+        self._luceneIndex._timer = CallTrace()
+
+        def addDocs(min, max):
+            for x in range(min, max):
+                doc = Document(str(x))
+                doc.addIndexedField('field', 'required')
+                self._luceneIndex.addDocument(doc)
+        addDocs(0, 150) #halverwege segment 2. v. grootte honderd
+        self._luceneIndex._optimizeAndNotifyObservers() #een rare naam voor "uit en aan".
+
+        hits = self._luceneIndex.executeQuery(MatchAllDocsQuery())
+        self.assertEquals(range(150), hits.bitMatrixRow().asPythonListForTesting())
+
+        #schiet verschillende smaken gaten in segment 1. (wat hierbij al afgerond is)
+        for x in range(0, 31, 2):
+            self._luceneIndex.delete(str(x))
+        for x in range(70, 100):
+            self._luceneIndex.delete(str(x))
+
+        #in tweede segment v. grootte honderd (een nog niet afgerond segment)
+        for x in range(100, 120, 2):
+            self._luceneIndex.delete(str(x))
+        for x in range(130, 140):
+            self._luceneIndex.delete(str(x))
+
+        addDocs(150, 220) #well into segment 3 v. grootte honderd.
+
+        self._luceneIndex._optimizeAndNotifyObservers() #een rare naam voor "uit en aan".
+
+        docIds = []
+        for id in range(220):
+            hits = self._luceneIndex.executeQuery(TermQuery(Term(IDFIELD, str(id))))
+            currentDocIds = hits.bitMatrixRow().asPythonListForTesting()
+            if currentDocIds:
+                currentDocId = currentDocIds[0]
+                docIds.append(currentDocId)
+                if id < 100: #segment that had no chance to optimize
+                    self.assertEquals(id, currentDocId) #not optimized, so still identical
+                else:
+                    self.assertTrue(currentDocId < id) #reused smaller, available docId
+
+        self.assertEquals(sorted(docIds), docIds)
+
+        #uit onderstaand blok kan je lezen dat bij het mergen van een segment x nieuwe nummers gebruikt gaan worden, te beginnen bij het hoogste nummer van ('vol' of 'gatenkaas') vorige segment
+        self.assertFalse(0 in docIds)
+        self.assertFalse(70 in docIds)
+        self.assertFalse(99 in docIds)
+        self.assertTrue(100 in docIds) #hoewel weggegooid, is deze hergebruikt
+        self.assertTrue(130 in docIds) #hoewel weggegooid, is deze hergebruikt
+
+
+    def testMerging(self):
+        """
+            After 10 added documents, a new segment file is created.
+            After the 10th segment, the segments are merged into 1 segment
+        """
+        def addDocument(number):
+            d = Document(str(number))
+            d.addIndexedField('field', 'value')
+            self._luceneIndex.addDocument(d)
+
+        fileCount = 3
+        docsAdded = 0
+        segmentMerges = 0
+        for i in range(300):
+            addDocument(i)
+            docsAdded += 1
+            newFileCount = len(listdir(self.tempdir))
+
+            # less files, seperate segments got merged into a larger segment
+            if newFileCount < fileCount:
+                segmentMerges += 1
+                self.assertEquals(100*segmentMerges, i+1)   # i = 0 based
+
+            # after 10 added documents, a new file should have been born
+            if newFileCount != fileCount:
+                self.assertEquals(10, docsAdded)
+                fileCount = newFileCount
+                docsAdded = 0
