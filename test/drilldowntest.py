@@ -31,6 +31,7 @@ from cq2utils import CQ2TestCase
 
 from meresco.components.lucene import Document
 from meresco.components.drilldown import Drilldown
+from meresco.components.drilldown.drilldown import FieldMatrix
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 
@@ -113,3 +114,17 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals([("this is term_1", 2), ("this is term_0", 1)], list(result['field_0']))
         self.assertEquals([("inquery", 3)], list(result['field_1']))
 
+    def testAppendToRow(self):
+        fieldMatrix = FieldMatrix([], 0)
+        fieldMatrix.addDocument(0, ['term0', 'term1'])
+        self.assertEquals('term0', fieldMatrix._row2term[0])
+        self.assertEquals('term1', fieldMatrix._row2term[1])
+        self.assertEquals([('term0', 1), ('term1', 1)], list(fieldMatrix.drilldown(Row([0, 1]))))
+
+        fieldMatrix.addDocument(1, ['term0', 'term1'])
+        self.assertEquals('term0', fieldMatrix._row2term[0])
+        self.assertEquals('term1', fieldMatrix._row2term[1])
+        self.assertEquals([('term0', 2), ('term1', 2)], list(fieldMatrix.drilldown(Row([0, 1]))))
+
+        fieldMatrix.addDocument(2, ['term0', 'term2'])
+        self.assertEquals([('term0', 3), ('term1', 2), ('term2', 1)], list(fieldMatrix.drilldown(Row([0, 1, 2]))))

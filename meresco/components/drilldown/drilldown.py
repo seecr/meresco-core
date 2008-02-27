@@ -37,9 +37,21 @@ class FieldMatrix(object):
         terms = list(terms)
         self._matrix = BitMatrix(numDocsInIndex, len(terms))
         self._row2term = {}
+        self._term2row = {}
         for term, docIds in terms:
-            nr = self._matrix.addRow(docIds)
-            self._row2term[nr] = term
+            rowNr = self._matrix.addRow(docIds)
+            self._row2term[rowNr] = term
+            self._term2row[term] = rowNr
+
+    def addDocument(self, docId, terms):
+        for term in terms:
+            if term in self._term2row:
+                rowNr = self._term2row[term]
+                self._matrix.appendToRow(rowNr, docId)
+            else:
+                rowNr = self._matrix.addRow([docId])
+                self._row2term[rowNr] = term
+                self._term2row[term] = rowNr
 
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
@@ -67,6 +79,10 @@ class Drilldown(object):
     def loadDocSets(self, rawDocSets, docCount):
         for fieldname, terms in rawDocSets:
             self._fieldMatrices[fieldname] = FieldMatrix(terms, docCount)
+
+    def addDocument(self, docId, fieldAndTermsList):
+        for fieldname, terms in fieldAndTermsList:
+            self._fieldMatrices[fieldname].addDocument(docId, terms)
 
     def indexOptimized(self, indexReader):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
