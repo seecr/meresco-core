@@ -47,9 +47,11 @@ class FieldMatrix(object):
         for term in terms:
             if term in self._term2row:
                 rowNr = self._term2row[term]
+                #print "old row", rowNr, term, docId
                 self._matrix.appendToRow(rowNr, docId)
             else:
                 rowNr = self._matrix.addRow([docId])
+                #print "new row", rowNr, term, docId
                 self._row2term[rowNr] = term
                 self._term2row[term] = rowNr
 
@@ -82,9 +84,11 @@ class Drilldown(object):
 
     def addDocument(self, docId, fieldAndTermsList):
         for fieldname, terms in fieldAndTermsList:
-            self._fieldMatrices[fieldname].addDocument(docId, terms)
+            if fieldname in self._drilldownFieldnames:
+                #print "#######", fieldname
+                self._fieldMatrices[fieldname].addDocument(docId, terms)
 
-    def indexOptimized(self, indexReader):
+    def indexStarted(self, indexReader):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
         self.loadDocSets(convertor.getDocSets(), convertor.docCount())
 

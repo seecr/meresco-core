@@ -47,6 +47,7 @@ class Document:
         self._document = PyLucene.Document()
         self._document.add(PyLucene.Field(IDFIELD, anId, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
         self._fields = [IDFIELD]
+        self.pokedDict = None
 
     def _isValidFieldValue(self, anObject):
         return type(anObject) == str and anObject.strip()

@@ -128,3 +128,9 @@ class DrilldownTest(CQ2TestCase):
 
         fieldMatrix.addDocument(2, ['term0', 'term2'])
         self.assertEquals([('term0', 3), ('term1', 2), ('term2', 1)], list(fieldMatrix.drilldown(Row([0, 1, 2]))))
+
+        try:
+            fieldMatrix.addDocument(2, ['term0', 'term2'])
+        except Exception, e:
+            self.assertTrue("non-increasing" in str(e))
+

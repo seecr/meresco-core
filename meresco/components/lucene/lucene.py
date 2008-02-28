@@ -28,7 +28,7 @@
 
 from os.path import isdir
 from os import makedirs
-from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, Sort
+from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 from meresco.components.lucene.clausecollector import ClauseCollector
 
@@ -48,6 +48,7 @@ class LuceneIndex(Observable, Logger):
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
         self._timer = timer
+        self._storedForReopen = []
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
@@ -66,7 +67,7 @@ class LuceneIndex(Observable, Logger):
         return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
-        self._optimizeAndNotifyObservers()
+        self._reopenIndex()
         self._lastUpdateTimeoutToken = None
 
     def _reOpenWriter(self):
@@ -75,22 +76,37 @@ class LuceneIndex(Observable, Logger):
             self._directoryName,
             StandardAnalyzer(), False)
 
-    def _optimizeAndNotifyObservers(self):
+    def _reopenIndex(self):
+        from time import time
+        t0 = time()
+
         self._reOpenWriter()
         self._reader.close()
         self._reader = self._openReader()
-        self.do.indexOptimized(self._reader) #een beetje een misnomer nu, maar goed...
         self._searcher.close()
         self._searcher = self._openSearcher()
+
+        print "reopen indexes in", time() - t0
+        t0 = time()
+        count = 0
+        for count, (id, documentDict) in enumerate(self._storedForReopen):
+            fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
+            hits = self.executeQuery(TermQuery(Term(IDFIELD, id)))
+            docIds = hits.bitMatrixRow().asPythonListForTesting() #hier iets moois voor verzinnen
+            assert len(docIds) == 1
+            docId = docIds[0]
+            self.do.addDocument(docId, fieldAndTermsList)
+
+        total = time() - t0
+        if count:
+            print count, "reopen addDocument calls in", total, "seconds, avg:", total/count
+        self._storedForReopen = []
 
     def delete(self, anId):
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
-        self._writer.deleteDocuments(Term(IDFIELD, anId))
+        #self._writer.deleteDocuments(Term(IDFIELD, anId))
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
-
-    def add(self, *args, **kwargs):
-        raise Exception("You are attempting to run index with the deprecated interface of LuceneInterfaceAdapter - remove exception in March 2008 please")
 
     def addDocument(self, aDocument):
         if self._lastUpdateTimeoutToken != None:
@@ -98,6 +114,7 @@ class LuceneIndex(Observable, Logger):
         self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
+        self._storedForReopen.append((aDocument.identifier, aDocument.pokedDict))
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def docCount(self):
@@ -121,25 +138,21 @@ class LuceneIndex(Observable, Logger):
         self.close()
 
     def start(self):
-        self._optimizeAndNotifyObservers()
+        from time import time
+        self._reopenIndex()
+        t0 = time()
+        self.do.indexStarted(self._reader)
+        print "indexStarted [drilldown init] in", time() - t0, "seconds"
 
 
-
-class LuceneIndexASync(LuceneIndex):
-    """This is supposed to replace LuceneIndex soon, but I don't want to frustrate edurep (again)
-
-    diffs:
-    timer eruit, die gaat weer extern maar dan met de log. geimplementeerd door dat ding met een mock te vervangen.
+def documentDictToFieldsAndTermsList(documentDict):
+    """Waar dit hoort weten we nog niet zo goed.
+    * Let op dat hier ook impliciet in zit dat rechterkanten maar 1 keer voorkomen (set)
+    * en dat we hier de strip() doen
     """
-    def __init__(self, directoryName, cqlComposer):
-        LuceneIndex.__init__(self, directoryName, cqlComposer, FakeTimer())
-
-    def optimize(self):
-        self._optimizeAndNotifyObservers()
-
-
-class FakeTimer(object):
-    def addTimer(self, *args, **kwargs):
-        return 'token'
-    def removeTimer(self, *args, **kwargs):
-        return
+    result = {}
+    for documentField in documentDict:
+        if not documentField.key in result:
+            result[documentField.key] = set([])
+        result[documentField.key].add(documentField.value.strip())
+    return result.items()
