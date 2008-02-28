@@ -47,6 +47,7 @@ from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
+from incnumbermaptest import IncNumberMapTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
