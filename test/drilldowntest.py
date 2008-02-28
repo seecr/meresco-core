@@ -83,11 +83,11 @@ class DrilldownTest(CQ2TestCase):
         self.assertFalse(dict(drilldown._docSets['field_0']).has_key('term_1'))
         self.assertEquals(2, dict(drilldown._docSets['field_0'])['term_2'].cardinality())
 
-    def testIndexOptimized(self):
+    def testIndexStarted(self):
         self.addUntokenized([('id', {'field_0': 'this is term_0'})])
         drilldown = Drilldown(['field_0'])
         reader = IndexReader.open(self.tempdir)
-        drilldown.indexOptimized(reader)
+        drilldown.indexStarted(reader)
         field, results = drilldown.drilldown(Row([0]), [('field_0', 10)]).next()
         self.assertEquals('field_0', field)
         self.assertEquals([('this is term_0', 1)], list(results))

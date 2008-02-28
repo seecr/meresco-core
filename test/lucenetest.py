@@ -36,10 +36,10 @@ from shutil import rmtree
 
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.components.lucene.document import Document
+from meresco.components.lucene.document import Document, IDFIELD
 
 from meresco.components.lucene.lucene import LuceneIndex
-from meresco.components.lucene.document import IDFIELD
+from meresco.components.dictionary import  DocumentDict, DocumentField
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 from cqlparser import parseString
@@ -212,25 +212,6 @@ class LuceneTest(CQ2TestCase):
         self.assertEquals(['addTimer', 'addTimer'],
             [method.name for method in self.timer.calledMethods])
 
-    def testOptimizeWillSentUpdateMessage(self):
-        intercept = CallTrace('Interceptor')
-        self._luceneIndex.addObserver(intercept)
-        self.timer.returnValues['addTimer'] = 'aToken'
-        myDocument = Document('1')
-        myDocument.addIndexedField('title', 'een titel')
-        self._luceneIndex.addDocument(myDocument)
-        timeCallback = self.timer.calledMethods[0].args[1]
-        self.assertEquals(0, len(intercept.calledMethods))
-        self.assertEquals(0, self._luceneIndex.docCount())
-        timeCallback()
-        self.assertEquals(1, self._luceneIndex.docCount())
-        self.assertEquals(1, len(intercept.calledMethods))
-        self.assertEquals('indexOptimized', intercept.calledMethods[0].name)
-        self.assertEquals(1, len(intercept.calledMethods[0].args))
-        reader = intercept.calledMethods[0].args[0]
-        self.assertEquals(IndexReader, type(reader))
-        self.assertEquals(1, reader.numDocs())
-
     def testStart(self):
         intercept = CallTrace('Interceptor')
         self._luceneIndex.addObserver(intercept)
@@ -238,7 +219,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.start()
 
         self.assertEquals(1, len(intercept.calledMethods))
-        self.assertEquals('indexOptimized', intercept.calledMethods[0].name)
+        self.assertEquals('indexStarted', intercept.calledMethods[0].name)
 
     def testDocIdsAssumptions(self):
         self._luceneIndex._timer = CallTrace()
@@ -249,7 +230,7 @@ class LuceneTest(CQ2TestCase):
                 doc.addIndexedField('field', 'required')
                 self._luceneIndex.addDocument(doc)
         addDocs(0, 150) #halverwege segment 2. v. grootte honderd
-        self._luceneIndex._optimizeAndNotifyObservers() #een rare naam voor "uit en aan".
+        self._luceneIndex._reopenIndex()
 
         hits = self._luceneIndex.executeQuery(MatchAllDocsQuery())
         self.assertEquals(range(150), hits.bitMatrixRow().asPythonListForTesting())
@@ -268,7 +249,7 @@ class LuceneTest(CQ2TestCase):
 
         addDocs(150, 220) #well into segment 3 v. grootte honderd.
 
-        self._luceneIndex._optimizeAndNotifyObservers() #een rare naam voor "uit en aan".
+        self._luceneIndex._reopenIndex()
 
         docIds = []
         for id in range(220):
@@ -280,7 +261,7 @@ class LuceneTest(CQ2TestCase):
                 if id < 100: #segment that had no chance to optimize
                     self.assertEquals(id, currentDocId) #not optimized, so still identical
                 else:
-                    self.assertTrue(currentDocId < id) #reused smaller, available docId
+                    self.assertTrue(currentDocId < id, "expecting currentDocId to be smaller than id, because currentDocIds should be reused, but: not  %s < %s" % (currentDocId, id))
 
         self.assertEquals(sorted(docIds), docIds)
 
@@ -320,3 +301,20 @@ class LuceneTest(CQ2TestCase):
                 self.assertEquals(10, docsAdded)
                 fileCount = newFileCount
                 docsAdded = 0
+
+
+    def testCallAddDocumentAfterReopen(self):
+        d = Document("anId")
+        d.addIndexedField('field', 'value')
+        d.pokedDict = DocumentDict()
+        d.pokedDict.addField(DocumentField('field', 'value'))
+        self._luceneIndex.addDocument(d)
+        observer = CallTrace()
+        self._luceneIndex.addObserver(observer)
+        self._luceneIndex._reopenIndex()
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals('addDocument', observer.calledMethods[0].name)
+        self.assertEquals(0, observer.calledMethods[0].args[0])
+        self.assertEquals([('field', set(['value']))], observer.calledMethods[0].args[1])
+
+

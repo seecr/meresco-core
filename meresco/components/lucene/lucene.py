@@ -77,8 +77,8 @@ class LuceneIndex(Observable, Logger):
             StandardAnalyzer(), False)
 
     def _reopenIndex(self):
-        from time import time
-        t0 = time()
+        #from time import time
+        #t0 = time()
 
         self._reOpenWriter()
         self._reader.close()
@@ -86,10 +86,11 @@ class LuceneIndex(Observable, Logger):
         self._searcher.close()
         self._searcher = self._openSearcher()
 
-        print "reopen indexes in", time() - t0
-        t0 = time()
-        count = 0
-        for count, (id, documentDict) in enumerate(self._storedForReopen):
+        #print "reopen indexes in", time() - t0
+        #t0 = time()
+        #count = 0
+        #for count, (id, documentDict) in enumerate(self._storedForReopen):
+        for id, documentDict in self._storedForReopen:
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
             hits = self.executeQuery(TermQuery(Term(IDFIELD, id)))
             docIds = hits.bitMatrixRow().asPythonListForTesting() #hier iets moois voor verzinnen
@@ -97,9 +98,9 @@ class LuceneIndex(Observable, Logger):
             docId = docIds[0]
             self.do.addDocument(docId, fieldAndTermsList)
 
-        total = time() - t0
-        if count:
-            print count, "reopen addDocument calls in", total, "seconds, avg:", total/count
+        #total = time() - t0
+        #if count:
+            #print count, "reopen addDocument calls in", total, "seconds, avg:", total/count
         self._storedForReopen = []
 
     def delete(self, anId):
@@ -138,11 +139,11 @@ class LuceneIndex(Observable, Logger):
         self.close()
 
     def start(self):
-        from time import time
+        #from time import time
         self._reopenIndex()
-        t0 = time()
+        #t0 = time()
         self.do.indexStarted(self._reader)
-        print "indexStarted [drilldown init] in", time() - t0, "seconds"
+        #print "indexStarted [drilldown init] in", time() - t0, "seconds"
 
 
 def documentDictToFieldsAndTermsList(documentDict):
