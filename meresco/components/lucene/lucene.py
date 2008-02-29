@@ -85,6 +85,14 @@ class LuceneIndex(Observable, Logger):
             self._directoryName,
             StandardAnalyzer(), False)
 
+    def _docIdForId(self, id):
+        hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
+        oneElementList = hits.bitMatrixRow().asList()
+        if len(oneElementList) == 0:
+            return None
+        assert len(oneElementList) == 1
+        return oneElementList[0]
+
     def _reopenIndex(self):
         self._reOpenWriter()
         self._reader.close()
@@ -95,11 +103,8 @@ class LuceneIndex(Observable, Logger):
         docIds = []
         for id, documentDict in self._storedForReopen:
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
-            hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
-            oneElementList = hits.bitMatrixRow().asPythonListForTesting()
-            if oneElementList:
-                assert len(oneElementList) == 1
-                docId = oneElementList[0]
+            docId = self._docIdForId(id)
+            if docId != None:
                 docIds.append((docId, fieldAndTermsList))
         self._storedForReopen = []
 
@@ -116,13 +121,11 @@ class LuceneIndex(Observable, Logger):
     def delete(self, anId):
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
-        term = Term(IDFIELD, anId)
-        docIds = self._executeQuery(TermQuery(term)).bitMatrixRow().asPythonListForTesting()
-        if docIds:
-            assert len(docIds) == 1
-            self._storedDeletesForReopen.append(docIds[0])
+        docId = self._docIdForId(anId)
+        if not docId == None:
+            self._storedDeletesForReopen.append(docId)
 
-        self._writer.deleteDocuments(term)
+        self._writer.deleteDocuments(Term(IDFIELD, anId))
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def addDocument(self, aDocument):

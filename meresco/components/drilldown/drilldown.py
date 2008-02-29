@@ -27,15 +27,15 @@
 ## end license ##
 from bitmatrix import BitMatrix
 from lucenerawdocsets import LuceneRawDocSets
+from time import time
 
 class DrilldownException(Exception):
     pass
 
 class FieldMatrix(object):
 
-    def __init__(self, terms, numDocsInIndex):
-        terms = list(terms)
-        self._matrix = BitMatrix(numDocsInIndex, len(terms))
+    def __init__(self, terms):
+        self._matrix = BitMatrix()
         self._row2term = {}
         self._term2row = {}
         for term, docIds in terms:
@@ -44,16 +44,17 @@ class FieldMatrix(object):
             self._term2row[term] = rowNr
 
     def addDocument(self, docId, terms):
+        t0 = time()
         for term in terms:
             if term in self._term2row:
                 rowNr = self._term2row[term]
-                #print "old row", rowNr, term, docId
                 self._matrix.appendToRow(rowNr, docId)
+
             else:
                 rowNr = self._matrix.addRow([docId])
-                #print "new row", rowNr, term, docId
                 self._row2term[rowNr] = term
                 self._term2row[term] = rowNr
+        print >> open('/tmp/drilldown-addDocument', 'a'), time() - t0
 
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
@@ -78,9 +79,9 @@ class Drilldown(object):
         # for supporting the old test only
         self._docSets = self._fieldMatrices
 
-    def loadDocSets(self, rawDocSets, docCount):
+    def loadDocSets(self, rawDocSets):
         for fieldname, terms in rawDocSets:
-            self._fieldMatrices[fieldname] = FieldMatrix(terms, docCount)
+            self._fieldMatrices[fieldname] = FieldMatrix(terms)
 
     def addDocument(self, docId, fieldAndTermsList):
         for fieldname, terms in fieldAndTermsList:
@@ -90,7 +91,7 @@ class Drilldown(object):
 
     def indexStarted(self, indexReader):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
-        self.loadDocSets(convertor.getDocSets(), convertor.docCount())
+        self.loadDocSets(convertor.getDocSets())
 
     def drilldown(self, row, drilldownFieldnamesAndMaximumResults):
         for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults:

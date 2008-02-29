@@ -244,7 +244,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex._reopenIndex()
 
         hits = self._luceneIndex._executeQuery(MatchAllDocsQuery())
-        self.assertEquals(range(150), hits.bitMatrixRow().asPythonListForTesting())
+        self.assertEquals(range(150), hits.bitMatrixRow().asList())
 
         #schiet verschillende smaken gaten in segment 1. (wat hierbij al afgerond is)
         for x in range(0, 31, 2):
@@ -265,7 +265,7 @@ class LuceneTest(CQ2TestCase):
         docIds = []
         for id in range(220):
             hits = self._luceneIndex._executeQuery(TermQuery(Term(IDFIELD, str(id))))
-            currentDocIds = hits.bitMatrixRow().asPythonListForTesting()
+            currentDocIds = hits.bitMatrixRow().asList()
             if currentDocIds:
                 currentDocId = currentDocIds[0]
                 docIds.append(currentDocId)
@@ -284,7 +284,7 @@ class LuceneTest(CQ2TestCase):
         self.assertTrue(130 in docIds) #hoewel weggegooid, is deze hergebruikt
 
         def luceneState():
-            return self._luceneIndex._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asPythonListForTesting()
+            return self._luceneIndex._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asList()
 
         #the following tests that deletes without add do not trigger merges/shifting of docids
         lastDocIds = luceneState()

@@ -68,7 +68,7 @@ class Hits:
         else:
             queryFilter = QueryFilter(self._pyLuceneQuery)
             bits = queryFilter.bits(self._reader)
-            currentBits = JavaBitSetRow(bits).asPythonListForTesting()
+            currentBits = JavaBitSetRow(bits).asList()
             asInBitMatrix = []
             for bit in currentBits:
                 #print self._docIdsMap._map
