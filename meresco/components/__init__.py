@@ -40,4 +40,3 @@ from rss import Rss
 from accumulate import Accumulate
 from xmlcompose import XmlCompose
 from rssitem import RssItem
-from incnumbermap import IncNumberMap, IncNumberMapException

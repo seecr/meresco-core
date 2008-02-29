@@ -37,7 +37,7 @@ from meresco.components.lucene.document import IDFIELD
 from meresco.components.statistics import Logger
 from meresco.framework import Observable
 
-from meresco.components.incnumbermap import IncNumberMap
+from bitmatrix import IncNumberMap
 
 class LuceneException(Exception):
     pass
