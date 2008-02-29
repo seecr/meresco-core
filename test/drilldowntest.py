@@ -193,5 +193,14 @@ class DrilldownTest(CQ2TestCase):
         for i in whatsLeft:
             assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
 
-        #todo: add & delete in 1 batch
+        for i in range(110, 120):
+            add('id%s' % i, 'value%s' % i)
+        whatsLeft = whatsLeft + range(110, 120)
 
+        index.delete("id%s" % 115)
+        whatsLeft.remove(115)
+        index._reopenIndex()
+
+        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
+        for i in whatsLeft:
+            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))

@@ -10,7 +10,8 @@ class IncNumberMap(object):
 
     def add(self, docId):
         if docId > len(self._map):
-            raise Exception("")
+            holeSize = docId - len(self._map)
+            self._map.extend(holeSize * [None])
         if docId < len(self._map):
             shiftSize = len(self._map) - docId
             self._collapse(shiftSize)

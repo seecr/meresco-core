@@ -97,7 +97,7 @@ class LuceneIndex(Observable, Logger):
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
             hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
             oneElementList = hits.bitMatrixRow().asPythonListForTesting()
-            if oneElementList: #TODO: (uitgesteld - goed nadenken over een add gevolgd door delete in dezelfde batch)
+            if oneElementList:
                 assert len(oneElementList) == 1
                 docId = oneElementList[0]
                 docIds.append((docId, fieldAndTermsList))
@@ -107,10 +107,8 @@ class LuceneIndex(Observable, Logger):
             self._docIdsAsOriginal.delete(docId)
         self._storedDeletesForReopen = []
 
-        if docIds: #aanname is dat deleten nooit merges forceert (nog checkin in test aub)
+        if docIds:
             docIds = sorted(docIds)
-            lowest = docIds[0][0]
-
             for docId, fieldAndTermsList in docIds:
                 mappedId = self._docIdsAsOriginal.add(docId)
                 self.do.addDocument(mappedId, fieldAndTermsList)
@@ -157,11 +155,8 @@ class LuceneIndex(Observable, Logger):
         self.close()
 
     def start(self):
-        #from time import time
         self._reopenIndex()
-        #t0 = time()
         self.do.indexStarted(self._reader)
-        #print "indexStarted [drilldown init] in", time() - t0, "seconds"
 
 
 def documentDictToFieldsAndTermsList(documentDict):

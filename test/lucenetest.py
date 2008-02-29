@@ -143,6 +143,17 @@ class LuceneTest(CQ2TestCase):
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(1, len(hits))
 
+    def testAddDeleteWithoutReopenInBetween(self):
+        myDocument = Document('1')
+        myDocument.addIndexedField('title', 'een titel')
+        self._luceneIndex.addDocument(myDocument)
+
+        self._luceneIndex.delete('1')
+        self.timerCallbackMethod()
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        self.assertEquals(0, len(hits))
+
+
     def testIndexCloses(self):
         index = LuceneIndex(self.tempdir + '/x', cqlComposer=None, timer=self.timer)
         myDocument = Document('1')
@@ -271,6 +282,21 @@ class LuceneTest(CQ2TestCase):
         self.assertFalse(99 in docIds)
         self.assertTrue(100 in docIds) #hoewel weggegooid, is deze hergebruikt
         self.assertTrue(130 in docIds) #hoewel weggegooid, is deze hergebruikt
+
+        def luceneState():
+            return self._luceneIndex._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asPythonListForTesting()
+
+        #the following tests that deletes without add do not trigger merges/shifting of docids
+        lastDocIds = luceneState()
+        for x in range(220):
+            self._luceneIndex.delete(str(x))
+            self._luceneIndex._reopenIndex()
+            currentDocIds = luceneState()
+            if currentDocIds == lastDocIds:
+                continue
+            self.assertEquals(1, len(lastDocIds) - len(currentDocIds))
+            self.assertEquals(lastDocIds[1:], currentDocIds)
+            lastDocIds = currentDocIds
 
 
     def testMerging(self):
