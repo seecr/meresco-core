@@ -4,13 +4,16 @@ class IncNumberMapException(Exception):
     pass
 
 class IncNumberMap(object):
-    def __init__(self, length):
+    def __init__(self, length=0):
         self._map = range(length)
         self._number = length
 
     def add(self, docId):
-        if docId != len(self._map):
-            raise IncNumberMapException('Re adding not allowed')
+        if docId > len(self._map):
+            raise Exception("")
+        if docId < len(self._map):
+            shiftSize = len(self._map) - docId
+            self._collapse(shiftSize)
         self._map.append(self._number)
         self._number += 1
         return self._number - 1
@@ -27,7 +30,7 @@ class IncNumberMap(object):
     def delete(self, docId):
         self._map[docId] = None
 
-    def collapse(self, nrOfFilledHoles):
+    def _collapse(self, nrOfFilledHoles):
         i = len(self._map) - 1
         while nrOfFilledHoles:
             if i == -1:

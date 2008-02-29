@@ -232,7 +232,7 @@ class LuceneTest(CQ2TestCase):
         addDocs(0, 150) #halverwege segment 2. v. grootte honderd
         self._luceneIndex._reopenIndex()
 
-        hits = self._luceneIndex.executeQuery(MatchAllDocsQuery())
+        hits = self._luceneIndex._executeQuery(MatchAllDocsQuery())
         self.assertEquals(range(150), hits.bitMatrixRow().asPythonListForTesting())
 
         #schiet verschillende smaken gaten in segment 1. (wat hierbij al afgerond is)
@@ -253,7 +253,7 @@ class LuceneTest(CQ2TestCase):
 
         docIds = []
         for id in range(220):
-            hits = self._luceneIndex.executeQuery(TermQuery(Term(IDFIELD, str(id))))
+            hits = self._luceneIndex._executeQuery(TermQuery(Term(IDFIELD, str(id))))
             currentDocIds = hits.bitMatrixRow().asPythonListForTesting()
             if currentDocIds:
                 currentDocId = currentDocIds[0]

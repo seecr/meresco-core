@@ -48,7 +48,7 @@ class IncNumberMapTest(TestCase):
         except IncNumberMapException:
             pass
         self.assertEquals(1, self._incNumberMap.get(1))
-        self._incNumberMap.collapse(1)
+        self._incNumberMap._collapse(1)
         self.assertEquals(1, self._incNumberMap.get(0))
 
     def testDeleteMultiple(self):
@@ -59,7 +59,7 @@ class IncNumberMapTest(TestCase):
         self._incNumberMap.delete(2)
 
         self.assertEquals(1, self._incNumberMap.get(1))
-        self._incNumberMap.collapse(2)
+        self._incNumberMap._collapse(2)
         self.assertEquals(1, self._incNumberMap.get(0))
 
         try:
@@ -67,5 +67,17 @@ class IncNumberMapTest(TestCase):
             self.fail()
         except IncNumberMapException:
             pass
+
+    def testAddAlreadyThere(self):
+        self._incNumberMap.add(0)
+        self._incNumberMap.add(1)
+        self._incNumberMap.add(2)
+        self._incNumberMap.delete(0)
+        self._incNumberMap.delete(2)
+        result = self._incNumberMap.add(1)
+
+        self.assertEquals(1, self._incNumberMap.get(0))
+        self.assertEquals(3, result)
+        self.assertEquals(3, self._incNumberMap.get(1))
 
 

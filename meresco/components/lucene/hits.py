@@ -61,22 +61,22 @@ class Hits:
         return self._totalHits
 
     def bitMatrixRow(self):
-        #if not self._docIdsMap:
+        if not self._docIdsMap:
             queryFilter = QueryFilter(self._pyLuceneQuery)
             bits = queryFilter.bits(self._reader)
             return JavaBitSetRow(bits)
-        #else:
-            #queryFilter = QueryFilter(self._pyLuceneQuery)
-            #bits = queryFilter.bits(self._reader)
-            #currentBits = JavaBitSetRow(bits).asPythonListForTesting()
-            #asInBitMatrix = []
-            #for bit in currentBits:
+        else:
+            queryFilter = QueryFilter(self._pyLuceneQuery)
+            bits = queryFilter.bits(self._reader)
+            currentBits = JavaBitSetRow(bits).asPythonListForTesting()
+            asInBitMatrix = []
+            for bit in currentBits:
                 #print self._docIdsMap._map
                 #print "bit", bit
-                #original = self._docIdsMap.get(bit)
+                original = self._docIdsMap.get(bit)
                 #print "original", original
-                #asInBitMatrix.append(original)
-            #return Row(asInBitMatrix)
+                asInBitMatrix.append(original)
+            return Row(asInBitMatrix)
 
 
     def __getslice__(self, start, stop):
