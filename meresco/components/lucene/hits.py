@@ -29,7 +29,7 @@ from meresco.components.lucene import document
 from meresco.components.lucene.xslice import XSlice
 
 from PyLucene import QueryFilter, IndexSearcher
-from bitmatrix import JavaBitSetRow
+from bitmatrix import JavaBitSetRow, Row
 
 DEFAULT_FETCHED_DOCS_COUNT = 10
 
@@ -45,11 +45,12 @@ class Hits:
     Implementation hint: the performance benefit is achieved because we know exactly how many documents will be needed. Note the positions of self._loadScoreDocs() in the code
     """
 
-    def __init__(self, searcher,reader, pyLuceneQuery, pyLuceneSort):
+    def __init__(self, searcher, reader, pyLuceneQuery, pyLuceneSort, docIdsMap=None):
         self._reader = reader
         self._searcher = searcher
         self._pyLuceneQuery = pyLuceneQuery
         self._pyLuceneSort = pyLuceneSort
+        self._docIdsMap = docIdsMap
 
         #attributes for high-performance remake of PyLucene
         self._weight = None
@@ -60,9 +61,23 @@ class Hits:
         return self._totalHits
 
     def bitMatrixRow(self):
-        queryFilter = QueryFilter(self._pyLuceneQuery)
-        bits = queryFilter.bits(self._reader)
-        return JavaBitSetRow(bits)
+        #if not self._docIdsMap:
+            queryFilter = QueryFilter(self._pyLuceneQuery)
+            bits = queryFilter.bits(self._reader)
+            return JavaBitSetRow(bits)
+        #else:
+            #queryFilter = QueryFilter(self._pyLuceneQuery)
+            #bits = queryFilter.bits(self._reader)
+            #currentBits = JavaBitSetRow(bits).asPythonListForTesting()
+            #asInBitMatrix = []
+            #for bit in currentBits:
+                #print self._docIdsMap._map
+                #print "bit", bit
+                #original = self._docIdsMap.get(bit)
+                #print "original", original
+                #asInBitMatrix.append(original)
+            #return Row(asInBitMatrix)
+
 
     def __getslice__(self, start, stop):
         self._loadScoreDocs(min(len(self), stop))

@@ -38,17 +38,34 @@ class IncNumberMapTest(TestCase):
         except IncNumberMapException:
             pass
 
-    def testDeleteAtBeginning(self):
+    def testDelete(self):
         self._incNumberMap.add(0)
         self._incNumberMap.add(1)
-        self._incNumberMap.deleteAndCollapse(0)
+        self._incNumberMap.delete(0)
+        try:
+            self._incNumberMap.get(0)
+            self.fail()
+        except IncNumberMapException:
+            pass
+        self.assertEquals(1, self._incNumberMap.get(1))
+        self._incNumberMap.collapse(1)
         self.assertEquals(1, self._incNumberMap.get(0))
 
-    def testDeleteAtEnd(self):
+    def testDeleteMultiple(self):
         self._incNumberMap.add(0)
         self._incNumberMap.add(1)
-        self._incNumberMap.deleteAndCollapse(1)
-        self.assertEquals(0, self._incNumberMap.get(0))
+        self._incNumberMap.add(2)
+        self._incNumberMap.delete(0)
+        self._incNumberMap.delete(2)
 
+        self.assertEquals(1, self._incNumberMap.get(1))
+        self._incNumberMap.collapse(2)
+        self.assertEquals(1, self._incNumberMap.get(0))
+
+        try:
+            self._incNumberMap.get(1)
+            self.fail()
+        except IncNumberMapException:
+            pass
 
 

@@ -37,6 +37,8 @@ from meresco.components.lucene.document import IDFIELD
 from meresco.components.statistics import Logger
 from meresco.framework import Observable
 
+from meresco.components.incnumbermap import IncNumberMap
+
 class LuceneException(Exception):
     pass
 
@@ -49,26 +51,34 @@ class LuceneIndex(Observable, Logger):
         self._cqlComposer = cqlComposer
         self._timer = timer
         self._storedForReopen = []
+        self._storedDeletesForReopen = []
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
         self._writer = IndexWriter(
             self._directoryName,
             StandardAnalyzer(), not indexExists)
+        self._writer.optimize()                             # create a consistent state
         self._lastUpdateTimeoutToken = None
         self._reader = self._openReader()
         self._searcher = self._openSearcher()
+        self._docIdsAsOriginal = IncNumberMap(self._getHighestDocId() + 1)
+
+    def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
+        return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
+        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
         return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
+        print "lucene.py: _lastUpdateTimeout START"
         self._reopenIndex()
         self._lastUpdateTimeoutToken = None
+        print "lucene.py: _lastUpdateTimeout START"
 
     def _reOpenWriter(self):
         self._writer.close()
@@ -77,39 +87,64 @@ class LuceneIndex(Observable, Logger):
             StandardAnalyzer(), False)
 
     def _reopenIndex(self):
-        #from time import time
-        #t0 = time()
-
+        print "lucene.py: _reopenIndex START"
         self._reOpenWriter()
         self._reader.close()
         self._reader = self._openReader()
         self._searcher.close()
         self._searcher = self._openSearcher()
 
-        #print "reopen indexes in", time() - t0
-        #t0 = time()
-        #count = 0
-        #for count, (id, documentDict) in enumerate(self._storedForReopen):
+        docIds = []
         for id, documentDict in self._storedForReopen:
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
-            hits = self.executeQuery(TermQuery(Term(IDFIELD, id)))
-            docIds = hits.bitMatrixRow().asPythonListForTesting() #hier iets moois voor verzinnen
-            assert len(docIds) == 1
-            docId = docIds[0]
-            self.do.addDocument(docId, fieldAndTermsList)
-
-        #total = time() - t0
-        #if count:
-            #print count, "reopen addDocument calls in", total, "seconds, avg:", total/count
+            hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
+            oneElementList = hits.bitMatrixRow().asPythonListForTesting()
+            if oneElementList: #TODO: (uitgesteld - goed nadenken over een add gevolgd door delete in dezelfde batch)
+                assert len(oneElementList) == 1
+                docId = oneElementList[0]
+                self.do.addDocument(docId, fieldAndTermsList)
+                docIds.append(docId)
         self._storedForReopen = []
+
+        for docId in self._storedDeletesForReopen:
+            self._docIdsAsOriginal.delete(docId)
+        self._storedDeletesForReopen = []
+
+        if docIds: #aanname is dat deleten nooit merges forceert (nog checkin in test aub)
+            docIds = sorted(docIds)
+            lowest = docIds[0]
+            if lowest <= self.highestDocId:
+                shift = self.highestDocId - lowest + 1
+                self._docIdsAsOriginal.collapse(shift)
+
+            for docId in docIds:
+                self._docIdsAsOriginal.add(docId)
+
+        self.highestDocId = self._getHighestDocId()
+        print "lucene.py: _reopenIndex END"
+
+    def _getHighestDocId(self):
+        from PyLucene import MatchAllDocsQuery
+        l = self._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asPythonListForTesting()
+        l = sorted(l)
+        if not l:
+            return -1
+        return l[-1]
 
     def delete(self, anId):
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
-        #self._writer.deleteDocuments(Term(IDFIELD, anId))
+        term = Term(IDFIELD, anId)
+        docIds = self._executeQuery(TermQuery(term)).bitMatrixRow().asPythonListForTesting()
+        if docIds:
+            assert len(docIds) == 1
+            self._storedDeletesForReopen.append(docIds[0])
+
+        self._writer.deleteDocuments(term)
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def addDocument(self, aDocument):
+        print "lucene.py: addDocument START"
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
@@ -117,6 +152,7 @@ class LuceneIndex(Observable, Logger):
         aDocument.addToIndexWith(self._writer)
         self._storedForReopen.append((aDocument.identifier, aDocument.pokedDict))
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
+        print "lucene.py: addDocument END"
 
     def docCount(self):
         return self._reader.numDocs()
