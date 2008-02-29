@@ -27,7 +27,7 @@
 ## end license ##
 from PyLucene import Term, TermQuery, IndexReader
 
-from cq2utils import CQ2TestCase
+from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.components.lucene import Document
 from meresco.components.drilldown import Drilldown
@@ -94,15 +94,16 @@ class DrilldownTest(CQ2TestCase):
 
     def testDrilldown(self):
         self.addUntokenized([
-            ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+            ('0', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+            ('1', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
-            ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
-            ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
+            ('3', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
         reader = IndexReader.open(self.tempdir)
         convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
         drilldown.loadDocSets(convertor.getDocSets())
-        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=TimerForTestSupport())
+        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace())
+        index._reopenIndex()
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
