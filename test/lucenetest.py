@@ -304,6 +304,8 @@ class LuceneTest(CQ2TestCase):
             After 10 added documents, a new segment file is created.
             After the 10th segment, the segments are merged into 1 segment
         """
+        self._luceneIndex._reopenIndex = lambda: None #turn off auto-reopens
+
         def addDocument(number):
             d = Document(str(number))
             d.addIndexedField('field', 'value')
