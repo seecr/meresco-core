@@ -64,7 +64,11 @@ class Hits:
         queryFilter = QueryFilter(self._pyLuceneQuery)
         bits = queryFilter.bits(self._reader)
         if self._docIdsMap:
-           return MappedRow(JavaBitSetRow(bits), self._docIdsMap)
+            x = JavaBitSetRow(bits)
+            result = MappedRow(x, self._docIdsMap)
+            if x.asList() != result.asList():
+                print "oi oi oi", x.asList(), " != ", result.asList()
+            return result
         return JavaBitSetRow(bits)
 
     def __getslice__(self, start, stop):
