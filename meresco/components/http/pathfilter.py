@@ -28,6 +28,7 @@
 
 from meresco.framework.observable import Observable
 from meresco.components.statistics import Logger
+from urlparse import urlsplit
 
 class PathFilter(Observable, Logger):
     def __init__(self, subPath):
@@ -36,7 +37,8 @@ class PathFilter(Observable, Logger):
         self._subPath = subPath
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
-        if RequestURI.startswith(self._subPath):
+        scheme, netloc, path, query, fragment = urlsplit(RequestURI)
+        if path.startswith(self._subPath):
             self.log(path=self._subPath)
             return self.all.handleRequest(RequestURI=RequestURI, *args, **kwargs)
         return (f for f in [])

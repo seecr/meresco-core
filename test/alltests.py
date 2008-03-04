@@ -65,6 +65,7 @@ from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
 
 from http.fileservertest import FileServerTest
+from http.pathfiltertest import PathFilterTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
