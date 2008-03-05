@@ -139,6 +139,8 @@ class LuceneIndex(Observable, Logger):
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
         self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
+        if len(self._storedForReopen) >= 250:
+            self._reopenIndex()
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def docCount(self):
