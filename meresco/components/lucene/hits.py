@@ -66,8 +66,6 @@ class Hits:
         if self._docIdsMap:
             x = JavaBitSetRow(bits)
             result = MappedRow(x, self._docIdsMap)
-            if x.asList() != result.asList():
-                print "oi oi oi", x.asList(), " != ", result.asList()
             return result
         return JavaBitSetRow(bits)
 

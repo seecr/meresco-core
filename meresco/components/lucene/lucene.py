@@ -28,7 +28,7 @@
 
 from os.path import isdir
 from os import makedirs
-from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort, MatchAllDocsQuery
+from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 from meresco.components.lucene.clausecollector import ClauseCollector
 
@@ -94,9 +94,6 @@ class LuceneIndex(Observable, Logger):
         return oneElementList[0]
 
     def _reopenIndex(self):
-        log = open('/tmp/klaasZoektBug.log', 'a')
-        print >> log, "###### _reopenIndex"
-        log.flush()
         self._reOpenWriter()
         self._reader.close()
         self._reader = self._openReader()
@@ -108,14 +105,10 @@ class LuceneIndex(Observable, Logger):
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
             docId = self._docIdForId(id)
             if docId != None:
-                print >> log, docId, "is docId for", id
-                log.flush()
                 docIds.append((docId, fieldAndTermsList))
         self._storedForReopen = []
 
         for docId in self._storedDeletesForReopen:
-            print >>log, "deleting docId", docId
-            log.flush()
             self._docIdsAsOriginal.delete(docId)
         self._storedDeletesForReopen = []
 
@@ -123,21 +116,7 @@ class LuceneIndex(Observable, Logger):
             docIds = sorted(docIds)
             for docId, fieldAndTermsList in docIds:
                 mappedId = self._docIdsAsOriginal.add(docId)
-                print >> log, "adding doc", mappedId, "for docId", docId
-                log.flush()
                 self.do.addDocument(mappedId, fieldAndTermsList)
-        try:
-            self.executeQuery(MatchAllDocsQuery()).bitMatrixRow()
-            self.executeQuery(TermQuery(Term('drilldown.dc.type', 'Article'))).bitMatrixRow()
-            print >> log, "self.executeQuery ok"
-            log.flush()
-        except Exception, e:
-            print >> log, "Exception in self.executeQuery", str(e)
-            log.flush()
-            raise
-
-
-        log.close()
 
     def delete(self, anId):
         if self._lastUpdateTimeoutToken != None:
@@ -157,9 +136,6 @@ class LuceneIndex(Observable, Logger):
         aDocument.addToIndexWith(self._writer)
         self._storedForReopen.append((aDocument.identifier, aDocument.pokedDict))
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
-
-        if len(self._storedForReopen) > 250:
-            self._reopenIndex()
 
     def docCount(self):
         return self._reader.numDocs()
