@@ -109,6 +109,8 @@ class LuceneIndex(Observable, Logger):
         self._storedForReopen = {}
 
         for docId in self._storedDeletesForReopen:
+            mappedId = self._docIdsAsOriginal.get(docId)
+            self.do.deleteDocument(mappedId)
             self._docIdsAsOriginal.delete(docId)
         self._storedDeletesForReopen = []
 

@@ -44,7 +44,6 @@ class FieldMatrix(object):
             self._term2row[term] = rowNr
 
     def addDocument(self, docId, terms):
-        t0 = time()
         for term in terms:
             if term in self._term2row:
                 rowNr = self._term2row[term]
@@ -54,7 +53,9 @@ class FieldMatrix(object):
                 rowNr = self._matrix.addRow([docId])
                 self._row2term[rowNr] = term
                 self._term2row[term] = rowNr
-        print >> open('/tmp/drilldown-addDocument', 'a'), time() - t0
+
+    def deleteDocument(self, docId):
+        self._matrix.deleteColumn(docId)
 
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
@@ -86,8 +87,11 @@ class Drilldown(object):
     def addDocument(self, docId, fieldAndTermsList):
         for fieldname, terms in fieldAndTermsList:
             if fieldname in self._drilldownFieldnames:
-                #print "#######", fieldname
                 self._fieldMatrices[fieldname].addDocument(docId, terms)
+
+    def deleteDocument(self, docId):
+        for fieldname in self._drilldownFieldnames:
+            self._fieldMatrices[fieldname].deleteDocument(docId)
 
     def indexStarted(self, indexReader):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
