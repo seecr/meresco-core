@@ -50,7 +50,7 @@ class LuceneIndex(Observable, Logger):
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
         self._timer = timer
-        self._storedForReopen = []
+        self._storedForReopen = {}
         self._storedDeletesForReopen = []
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
@@ -101,12 +101,12 @@ class LuceneIndex(Observable, Logger):
         self._searcher = self._openSearcher()
 
         docIds = []
-        for id, documentDict in self._storedForReopen:
+        for id, documentDict in self._storedForReopen.items():
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
             docId = self._docIdForId(id)
             if docId != None:
                 docIds.append((docId, fieldAndTermsList))
-        self._storedForReopen = []
+        self._storedForReopen = {}
 
         for docId in self._storedDeletesForReopen:
             self._docIdsAsOriginal.delete(docId)
@@ -118,23 +118,27 @@ class LuceneIndex(Observable, Logger):
                 mappedId = self._docIdsAsOriginal.add(docId)
                 self.do.addDocument(mappedId, fieldAndTermsList)
 
-    def delete(self, anId):
-        if self._lastUpdateTimeoutToken != None:
-            self._timer.removeTimer(self._lastUpdateTimeoutToken)
+    def _delete(self, anId):
         docId = self._docIdForId(anId)
         if not docId == None:
             self._storedDeletesForReopen.append(docId)
 
         self._writer.deleteDocuments(Term(IDFIELD, anId))
+
+    def delete(self, anId):
+        if self._lastUpdateTimeoutToken != None:
+            self._timer.removeTimer(self._lastUpdateTimeoutToken)
+        self._delete(anId)
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def addDocument(self, aDocument):
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
-        self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
+        self._delete(aDocument.identifier)
+        #self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
-        self._storedForReopen.append((aDocument.identifier, aDocument.pokedDict))
+        self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def docCount(self):

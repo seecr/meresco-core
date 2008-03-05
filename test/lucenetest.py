@@ -330,36 +330,6 @@ class LuceneTest(CQ2TestCase):
                 fileCount = newFileCount
                 docsAdded = 0
 
-    def xxxtestManyDocumentsWeirdMergeBug(self):
-        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
-
-        print "huh??"
-        reopen = self._luceneIndex._reopenIndex
-        self._luceneIndex._reopenIndex = lambda: None #turn off auto-reopens
-        big = 30000
-
-        def add(id):
-            dd = DocumentDict()
-            dd.add("value", id)
-            doc = Dict2Doc()._dict2Doc(id, dd)
-            self._luceneIndex.addDocument(doc)
-
-        for i in range(big):
-            if i % 100 == 0:
-                print "johan de ongeduldiage ", i
-            add(str(i))
-
-        reopen()
-
-        for x in range(big):
-            if x % 100 == 0:
-                print "johan de ongeduldiage ", x
-            l = self._luceneIndex._executeQuery(TermQuery(Term('__id__', str(x)))).bitMatrixRow().asList()
-
-            if not l == [x]:
-                print "%s != [%s]" % (l, x)
-
-
     def testCallAddDocumentAfterReopen(self):
         d = Document("anId")
         d.addIndexedField('field', 'value')
@@ -375,3 +345,33 @@ class LuceneTest(CQ2TestCase):
         self.assertEquals([('field', set(['value']))], observer.calledMethods[0].args[1])
 
 
+    def testAddIsAlsoDeleteCausesBug(self):
+        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
+        reopen = self._luceneIndex._reopenIndex
+        self._luceneIndex._reopenIndex = lambda: None
+
+        def add(value):
+            dd = DocumentDict()
+            dd.add("value", value)
+            doc = Dict2Doc()._dict2Doc("theIdIsTheSame", dd)
+            self._luceneIndex.addDocument(doc)
+
+        for i in range(100):
+            add("a" + str(i))
+            reopen()
+
+    def testMultipleAddsWithoutReopenIsEvenDifferent(self):
+        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
+        reopen = self._luceneIndex._reopenIndex
+        self._luceneIndex._reopenIndex = lambda: None
+
+        def add(value):
+            dd = DocumentDict()
+            dd.add("value", value)
+            doc = Dict2Doc()._dict2Doc("theIdIsTheSame", dd)
+            self._luceneIndex.addDocument(doc)
+
+        for i in range(100):
+            add("a" + str(i))
+
+        reopen()
