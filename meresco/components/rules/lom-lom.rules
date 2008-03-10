@@ -61,7 +61,7 @@ two('lom:rights/lom:cost/lom:value', ('.',), '%s'),
 
 two('lom:rights/lom:copyrightAndOtherRestrictions/lom:source', ('.',), '%s'),
 two('lom:rights/lom:copyrightAndOtherRestrictions/lom:value', ('.',), '%s',
-        [('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]),
+        [[('.*/(yes|no|by|by-nd|by-nc-nd|by-nc|by-nc-sa|by-sa)/.*', '%s')]]),
 two('lom:rights/lom:description', ('lom:string/@language', 'lom:string'), '<lom:string language="%s">%s</lom:string>'),
 
 two('lom:annotation/lom:entity', ('.',), '%s', [normalizeVcardRules]),
