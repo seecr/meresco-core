@@ -25,7 +25,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from bitmatrix import BitMatrix
+from bitmatrix import BitMatrix, RowTermIndex
 from lucenerawdocsets import LuceneRawDocSets
 from time import time
 
@@ -35,24 +35,34 @@ class DrilldownException(Exception):
 class FieldMatrix(object):
 
     def __init__(self, terms):
+        #totalTermSize = 0
+        #terms2 = []
+        #for term, docIds in terms:
+            #if type(term) == unicode:
+                #term = term.encode('utf-8')
+            #totalTermSize += len(term)
+            #terms2.append((term, docIds))
+
         self._matrix = BitMatrix()
-        self._row2term = {}
-        self._term2row = {}
+        self._rowTermIndex = RowTermIndex()
         for term, docIds in terms:
+            if type(term) == unicode:
+                term = term.encode('utf-8')
+
             rowNr = self._matrix.addRow(docIds)
-            self._row2term[rowNr] = term
-            self._term2row[term] = rowNr
+            self._rowTermIndex.add(rowNr, term)
 
     def addDocument(self, docId, terms):
         for term in terms:
-            if term in self._term2row:
-                rowNr = self._term2row[term]
+            if type(term) == unicode:
+                term = term.encode('utf-8')
+            if self._rowTermIndex.hasTerm(term):
+                rowNr = self._rowTermIndex.getRow(term)
                 self._matrix.appendToRow(rowNr, docId)
 
             else:
                 rowNr = self._matrix.addRow([docId])
-                self._row2term[rowNr] = term
-                self._term2row[term] = rowNr
+                self._rowTermIndex.add(rowNr, term)
 
     def deleteDocument(self, docId):
         self._matrix.deleteColumn(docId)
@@ -60,17 +70,17 @@ class FieldMatrix(object):
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
         for nr, occurences in drilldownResults:
-            yield self._row2term[nr], occurences
+            yield self._rowTermIndex.getTerm(nr), occurences
 
     # below here is for supporting the old test only
-    def __len__(self): return len(self._row2term)
+    def __len__(self): return len(self._rowTermIndex)
 
     def __iter__(self):
         class MockBitSet:
             def __init__(self, occurences): self._occurences = occurences
             def cardinality(self): return self._occurences
         for nr, occurences in self._matrix.rowCardinalities():
-            yield self._row2term[nr], MockBitSet(occurences)
+            yield self._rowTermIndex.getTerm(nr), MockBitSet(occurences)
 
 class Drilldown(object):
 
