@@ -27,10 +27,11 @@
 ## end license ##
 from PyLucene import Term, TermQuery, IndexReader
 
-from cq2utils import CQ2TestCase
+from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.components.lucene import Document
 from meresco.components.drilldown import Drilldown
+from meresco.components.drilldown.drilldown import FieldMatrix
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
 
@@ -52,7 +53,7 @@ class DrilldownTest(CQ2TestCase):
     def testLoadDocSetsNoTerms(self):
         data = [('field_0', [])]
         drilldown = Drilldown(['field_0'])
-        drilldown.loadDocSets(data, 5)
+        drilldown.loadDocSets(data)
 
         self.assertEquals(['field_0'], drilldown._docSets.keys())
         self.assertEquals(0, len(drilldown._docSets['field_0']))
@@ -64,7 +65,7 @@ class DrilldownTest(CQ2TestCase):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
         drilldown = Drilldown(['field_0'])
-        drilldown.loadDocSets(data, 5)
+        drilldown.loadDocSets(data)
 
         self.assertEquals(2, len(drilldown._docSets['field_0']))
         self.assertEquals(3, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
@@ -75,33 +76,34 @@ class DrilldownTest(CQ2TestCase):
         data2 = [('field_0', [('term_0', [1]), ('term_2', [2,4])])]
 
         drilldown = Drilldown(['field_0'])
-        drilldown.loadDocSets(data1, 5)
-        drilldown.loadDocSets(data2, 5)
+        drilldown.loadDocSets(data1)
+        drilldown.loadDocSets(data2)
         self.assertEquals(2, len(drilldown._docSets['field_0']))
         self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
         self.assertFalse(dict(drilldown._docSets['field_0']).has_key('term_1'))
         self.assertEquals(2, dict(drilldown._docSets['field_0'])['term_2'].cardinality())
 
-    def testIndexOptimized(self):
+    def testIndexStarted(self):
         self.addUntokenized([('id', {'field_0': 'this is term_0'})])
         drilldown = Drilldown(['field_0'])
         reader = IndexReader.open(self.tempdir)
-        drilldown.indexOptimized(reader)
+        drilldown.indexStarted(reader)
         field, results = drilldown.drilldown(Row([0]), [('field_0', 10)]).next()
         self.assertEquals('field_0', field)
         self.assertEquals([('this is term_0', 1)], list(results))
 
     def testDrilldown(self):
         self.addUntokenized([
-            ('1', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+            ('0', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+            ('1', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
-            ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
-            ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
+            ('3', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
         reader = IndexReader.open(self.tempdir)
         convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
-        drilldown.loadDocSets(convertor.getDocSets(), convertor.docCount())
-        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=TimerForTestSupport())
+        drilldown.loadDocSets(convertor.getDocSets())
+        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace())
+        index._reopenIndex()
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
@@ -110,6 +112,96 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)
         self.assertEquals(['field_0', 'field_1'], result.keys())
-        self.assertEquals([("this is term_1", 2), ("this is term_0", 1)], list(result['field_0']))
+        self.assertEquals([("this is term_0", 1), ("this is term_1", 2)], list(result['field_0']))
         self.assertEquals([("inquery", 3)], list(result['field_1']))
 
+    def testAppendToRow(self):
+        fieldMatrix = FieldMatrix([])
+        fieldMatrix.addDocument(0, ['term0', 'term1'])
+        self.assertEquals('term0', fieldMatrix._row2term[0])
+        self.assertEquals('term1', fieldMatrix._row2term[1])
+        self.assertEquals([('term0', 1), ('term1', 1)], list(fieldMatrix.drilldown(Row([0, 1]))))
+
+        fieldMatrix.addDocument(1, ['term0', 'term1'])
+        self.assertEquals('term0', fieldMatrix._row2term[0])
+        self.assertEquals('term1', fieldMatrix._row2term[1])
+        self.assertEquals([('term0', 2), ('term1', 2)], list(fieldMatrix.drilldown(Row([0, 1]))))
+
+        fieldMatrix.addDocument(2, ['term0', 'term2'])
+        self.assertEquals([('term0', 3), ('term1', 2), ('term2', 1)], list(fieldMatrix.drilldown(Row([0, 1, 2]))))
+
+        try:
+            fieldMatrix.addDocument(2, ['term0', 'term2'])
+        except Exception, e:
+            self.assertTrue("non-increasing" in str(e))
+
+
+    def testDrilldownBitwiseAddIntegration(self):
+
+        #"""This Test was created by KvS/JJ on 29/02/2008 and has a limited life span. It is bloated because we didn't understand everything yet. Feel free to toss it"""
+        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
+        from PyLucene import MatchAllDocsQuery
+        from cq2utils import CallTrace
+
+        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace(""))
+        drilldown = Drilldown(['value'])
+        drilldown.loadDocSets([("value", [])])
+        index.addObserver(drilldown)
+
+        def add(id, value):
+            dd = DocumentDict()
+            dd.add("value", value)
+            doc = Dict2Doc()._dict2Doc(id, dd)
+            index.addDocument(doc)
+
+        def assertDrilldown(expected, query):
+            row = index.executeQuery(query).bitMatrixRow()
+            results = list(drilldown.drilldown(row, [('value', 0)]))
+            self.assertEquals(1, len(results))
+            fieldname, result = results[0]
+            self.assertEquals(expected, list(result))
+
+        def values(l):
+            return [('value%s' % i, 1) for i in l]
+
+        for i in range(20):
+            add('id%s' % i, 'value%s' % i)
+        index._reopenIndex()
+
+        assertDrilldown(values(range(20)), MatchAllDocsQuery())
+        for i in range(20):
+            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
+
+        whatsLeft = range(20)
+        for id in [0, 4 ,8, 11, 18, 19]:
+            index.delete("id%s" % id)
+            whatsLeft.remove(id)
+
+        index._reopenIndex()
+
+        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
+        for i in whatsLeft:
+            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
+
+        for i in range(20, 110):
+            add('id%s' % i, 'value%s' % i)
+        index._reopenIndex()
+
+        index._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asList()
+
+        whatsLeft = whatsLeft + range(20, 110)
+        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
+        for i in whatsLeft:
+            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
+
+        for i in range(110, 120):
+            add('id%s' % i, 'value%s' % i)
+        whatsLeft = whatsLeft + range(110, 120)
+
+        index.delete("id%s" % 115)
+        whatsLeft.remove(115)
+        index._reopenIndex()
+
+        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
+        for i in whatsLeft:
+            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))

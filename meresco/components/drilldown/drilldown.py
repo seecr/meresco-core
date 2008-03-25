@@ -25,36 +25,62 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from bitmatrix import BitMatrix
+from bitmatrix import BitMatrix, RowTermIndex
 from lucenerawdocsets import LuceneRawDocSets
+from time import time
 
 class DrilldownException(Exception):
     pass
 
 class FieldMatrix(object):
 
-    def __init__(self, terms, numDocsInIndex):
-        terms = list(terms)
-        self._matrix = BitMatrix(numDocsInIndex, len(terms))
-        self._row2term = {}
+    def __init__(self, terms):
+        #totalTermSize = 0
+        #terms2 = []
+        #for term, docIds in terms:
+            #if type(term) == unicode:
+                #term = term.encode('utf-8')
+            #totalTermSize += len(term)
+            #terms2.append((term, docIds))
+
+        self._matrix = BitMatrix()
+        self._rowTermIndex = RowTermIndex()
         for term, docIds in terms:
-            nr = self._matrix.addRow(docIds)
-            self._row2term[nr] = term
+            if type(term) == unicode:
+                term = term.encode('utf-8')
+
+            rowNr = self._matrix.addRow(docIds)
+            self._rowTermIndex.add(rowNr, term)
+
+    def addDocument(self, docId, terms):
+        for term in terms:
+            if type(term) == unicode:
+                term = term.encode('utf-8')
+            if self._rowTermIndex.hasTerm(term):
+                rowNr = self._rowTermIndex.getRow(term)
+                self._matrix.appendToRow(rowNr, docId)
+
+            else:
+                rowNr = self._matrix.addRow([docId])
+                self._rowTermIndex.add(rowNr, term)
+
+    def deleteDocument(self, docId):
+        self._matrix.deleteColumn(docId)
 
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
         for nr, occurences in drilldownResults:
-            yield self._row2term[nr], occurences
+            yield self._rowTermIndex.getTerm(nr), occurences
 
     # below here is for supporting the old test only
-    def __len__(self): return len(self._row2term)
+    def __len__(self): return len(self._rowTermIndex)
 
     def __iter__(self):
         class MockBitSet:
             def __init__(self, occurences): self._occurences = occurences
             def cardinality(self): return self._occurences
         for nr, occurences in self._matrix.rowCardinalities():
-            yield self._row2term[nr], MockBitSet(occurences)
+            yield self._rowTermIndex.getTerm(nr), MockBitSet(occurences)
 
 class Drilldown(object):
 
@@ -64,13 +90,22 @@ class Drilldown(object):
         # for supporting the old test only
         self._docSets = self._fieldMatrices
 
-    def loadDocSets(self, rawDocSets, docCount):
+    def loadDocSets(self, rawDocSets):
         for fieldname, terms in rawDocSets:
-            self._fieldMatrices[fieldname] = FieldMatrix(terms, docCount)
+            self._fieldMatrices[fieldname] = FieldMatrix(terms)
 
-    def indexOptimized(self, indexReader):
+    def addDocument(self, docId, fieldAndTermsList):
+        for fieldname, terms in fieldAndTermsList:
+            if fieldname in self._drilldownFieldnames:
+                self._fieldMatrices[fieldname].addDocument(docId, terms)
+
+    def deleteDocument(self, docId):
+        for fieldname in self._drilldownFieldnames:
+            self._fieldMatrices[fieldname].deleteDocument(docId)
+
+    def indexStarted(self, indexReader):
         convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
-        self.loadDocSets(convertor.getDocSets(), convertor.docCount())
+        self.loadDocSets(convertor.getDocSets())
 
     def drilldown(self, row, drilldownFieldnamesAndMaximumResults):
         for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults:

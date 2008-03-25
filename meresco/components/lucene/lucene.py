@@ -28,8 +28,7 @@
 
 from os.path import isdir
 from os import makedirs
-from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, Sort, PythonThread as Thread
-
+from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 from meresco.components.lucene.clausecollector import ClauseCollector
 
@@ -37,6 +36,8 @@ from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
 from meresco.components.statistics import Logger
 from meresco.framework import Observable
+
+from bitmatrix import IncNumberMap
 
 class LuceneException(Exception):
     pass
@@ -49,27 +50,36 @@ class LuceneIndex(Observable, Logger):
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
         self._timer = timer
+        self._storedForReopen = {}
+        self._storedDeletesForReopen = []
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
-        self._writingAllowed = True
         self._writer = IndexWriter(
             self._directoryName,
             StandardAnalyzer(), not indexExists)
+        self._writer.optimize()                             # create a consistent state
         self._lastUpdateTimeoutToken = None
         self._reader = self._openReader()
         self._searcher = self._openSearcher()
+        self._docIdsAsOriginal = IncNumberMap(self._reader.numDocs())
+
+
+    def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
+        return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
+        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
         return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
-        self._optimizeAndNotifyObservers()
-        self._lastUpdateTimeoutToken = None
+        try:
+            self._reopenIndex()
+        finally:
+            self._lastUpdateTimeoutToken = None
 
     def _reOpenWriter(self):
         self._writer.close()
@@ -77,42 +87,64 @@ class LuceneIndex(Observable, Logger):
             self._directoryName,
             StandardAnalyzer(), False)
 
-    def _optimize(self):
-        self._writer.optimize()
-        self._writingAllowed = True
+    def _docIdForId(self, id):
+        hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
+        oneElementList = hits.bitMatrixRow().asList()
+        if len(oneElementList) == 0:
+            return None
+        assert len(oneElementList) == 1
+        return oneElementList[0]
 
-    def _optimizeAndNotifyObservers(self):
+    def _reopenIndex(self):
         self._reOpenWriter()
-
         self._reader.close()
         self._reader = self._openReader()
-        self.do.indexOptimized(self._reader)
         self._searcher.close()
         self._searcher = self._openSearcher()
 
-        self._writingAllowed = False
-        thread = Thread(target=self._optimize)
-        thread.start()
+        docIds = []
+        for id, documentDict in self._storedForReopen.items():
+            fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
+            docId = self._docIdForId(id)
+            if docId != None:
+                docIds.append((docId, fieldAndTermsList))
+        self._storedForReopen = {}
+
+        for docId in self._storedDeletesForReopen:
+            mappedId = self._docIdsAsOriginal.get(docId)
+            self.do.deleteDocument(mappedId)
+            self._docIdsAsOriginal.delete(docId)
+        self._storedDeletesForReopen = []
+
+        if docIds:
+            docIds = sorted(docIds)
+            for docId, fieldAndTermsList in docIds:
+                mappedId = self._docIdsAsOriginal.add(docId)
+                self.do.addDocument(mappedId, fieldAndTermsList)
+
+    def _delete(self, anId):
+        docId = self._docIdForId(anId)
+        if not docId == None:
+            self._storedDeletesForReopen.append(docId)
+
+        self._writer.deleteDocuments(Term(IDFIELD, anId))
 
     def delete(self, anId):
-        if not self._writingAllowed:
-            raise Exception('Backoff')
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
-        self._writer.deleteDocuments(Term(IDFIELD, anId))
+        self._delete(anId)
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
-    def add(self, *args, **kwargs):
-        raise Exception("You are attempting to run index with the deprecated interface of LuceneInterfaceAdapter - remove exception in March 2008 please")
-
     def addDocument(self, aDocument):
-        if not self._writingAllowed:
-            raise Exception('Backoff')
         if self._lastUpdateTimeoutToken != None:
             self._timer.removeTimer(self._lastUpdateTimeoutToken)
-        self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
+        self._delete(aDocument.identifier)
+        #self._writer.deleteDocuments(Term(IDFIELD, aDocument.identifier))
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
+        self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
+        if len(self._storedForReopen) >= 250:
+            self._reopenIndex()
         self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def docCount(self):
@@ -136,25 +168,18 @@ class LuceneIndex(Observable, Logger):
         self.close()
 
     def start(self):
-        self._optimizeAndNotifyObservers()
+        self._reopenIndex()
+        self.do.indexStarted(self._reader)
 
 
-
-class LuceneIndexASync(LuceneIndex):
-    """This is supposed to replace LuceneIndex soon, but I don't want to frustrate edurep (again)
-
-    diffs:
-    timer eruit, die gaat weer extern maar dan met de log. geimplementeerd door dat ding met een mock te vervangen.
+def documentDictToFieldsAndTermsList(documentDict):
+    """Waar dit hoort weten we nog niet zo goed.
+    * Let op dat hier ook impliciet in zit dat rechterkanten maar 1 keer voorkomen (set)
+    * en dat we hier de strip() doen
     """
-    def __init__(self, directoryName, cqlComposer):
-        LuceneIndex.__init__(self, directoryName, cqlComposer, FakeTimer())
-
-    def optimize(self):
-        self._optimizeAndNotifyObservers()
-
-
-class FakeTimer(object):
-    def addTimer(self, *args, **kwargs):
-        return 'token'
-    def removeTimer(self, *args, **kwargs):
-        return
+    result = {}
+    for documentField in documentDict:
+        if not documentField.key in result:
+            result[documentField.key] = set([])
+        result[documentField.key].add(documentField.value.strip())
+    return result.items()

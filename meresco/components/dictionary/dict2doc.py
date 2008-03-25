@@ -31,8 +31,11 @@ from meresco.framework import Transparant
 class Dict2Doc(Transparant):
 
     def addDocumentDict(self, id, documentDict):
+        return self.all.addDocument(self._dict2Doc(id, documentDict))
+
+    def _dict2Doc(self, id, documentDict):
         luceneDocument = LuceneDocument(id)
         for documentField in documentDict:
             luceneDocument.addIndexedField(documentField.key, documentField.value, documentField.options.get('tokenize', True))
-        return self.all.addDocument(luceneDocument)
-
+        luceneDocument.pokedDict = documentDict
+        return luceneDocument
