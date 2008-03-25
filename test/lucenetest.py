@@ -244,7 +244,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex._reopenIndex()
 
         hits = self._luceneIndex._executeQuery(MatchAllDocsQuery())
-        self.assertEquals(range(150), hits.bitMatrixRow().asList())
+        self.assertEquals(range(150), hits.bitMatrixRow().asPythonListForTesting())
 
         #schiet verschillende smaken gaten in segment 1. (wat hierbij al afgerond is)
         for x in range(0, 31, 2):
@@ -265,7 +265,7 @@ class LuceneTest(CQ2TestCase):
         docIds = []
         for id in range(220):
             hits = self._luceneIndex._executeQuery(TermQuery(Term(IDFIELD, str(id))))
-            currentDocIds = hits.bitMatrixRow().asList()
+            currentDocIds = hits.bitMatrixRow().asPythonListForTesting()
             if currentDocIds:
                 currentDocId = currentDocIds[0]
                 docIds.append(currentDocId)
@@ -284,7 +284,7 @@ class LuceneTest(CQ2TestCase):
         self.assertTrue(130 in docIds) #hoewel weggegooid, is deze hergebruikt
 
         def luceneState():
-            return self._luceneIndex._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asList()
+            return self._luceneIndex._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asPythonListForTesting()
 
         #the following tests that deletes without add do not trigger merges/shifting of docids
         lastDocIds = luceneState()
@@ -330,19 +330,20 @@ class LuceneTest(CQ2TestCase):
                 fileCount = newFileCount
                 docsAdded = 0
 
-    def testCallAddDocumentAfterReopen(self):
-        d = Document("anId")
-        d.addIndexedField('field', 'value')
-        d.pokedDict = DocumentDict()
-        d.pokedDict.addField(DocumentField('field', 'value'))
-        self._luceneIndex.addDocument(d)
-        observer = CallTrace()
-        self._luceneIndex.addObserver(observer)
-        self._luceneIndex._reopenIndex()
-        self.assertEquals(1, len(observer.calledMethods))
-        self.assertEquals('addDocument', observer.calledMethods[0].name)
-        self.assertEquals(0, observer.calledMethods[0].args[0])
-        self.assertEquals([('field', set(['value']))], observer.calledMethods[0].args[1])
+    #bitwise extension version:
+    #def testCallAddDocumentAfterReopen(self):
+        #d = Document("anId")
+        #d.addIndexedField('field', 'value')
+        #d.pokedDict = DocumentDict()
+        #d.pokedDict.addField(DocumentField('field', 'value'))
+        #self._luceneIndex.addDocument(d)
+        #observer = CallTrace()
+        #self._luceneIndex.addObserver(observer)
+        #self._luceneIndex._reopenIndex()
+        #self.assertEquals(1, len(observer.calledMethods))
+        #self.assertEquals('addDocument', observer.calledMethods[0].name)
+        #self.assertEquals(0, observer.calledMethods[0].args[0])
+        #self.assertEquals([('field', set(['value']))], observer.calledMethods[0].args[1])
 
 
     def testAddIsAlsoDeleteCausesBug(self):

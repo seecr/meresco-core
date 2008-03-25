@@ -58,7 +58,7 @@ class HitsTest(CQ2TestCase):
         index.addDocument(document)
 
         hits = index.executeQuery(TermQuery(Term('field', 'value')))
-        self.assertEquals([0, 2], list(hits.bitMatrixRow().asList()))
+        self.assertEquals([0, 2], list(hits.bitMatrixRow().asPythonListForTesting()))
 
 
     def testQueryIsExecuted(self):
