@@ -76,8 +76,10 @@ class LuceneIndex(Observable, Logger):
         return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
-        self._reopenIndex()
-        self._lastUpdateTimeoutToken = None
+        try:
+            self._reopenIndex()
+        finally:
+            self._lastUpdateTimeoutToken = None
 
     def _reOpenWriter(self):
         self._writer.close()
