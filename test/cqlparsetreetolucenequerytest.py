@@ -27,7 +27,7 @@
 ## end license ##
 from unittest import TestCase
 
-from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery, PrefixQuery
 
 from cqlparser import parseString as parseCql
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
@@ -118,6 +118,35 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         query.add(left, BooleanClause.Occur.SHOULD)
 
         right = TermQuery(Term("field1", "value"))
+        right.setBoost(2.0)
+        query.add(right, BooleanClause.Occur.SHOULD)
+
+        self.assertEquals(query, result)
+
+    def testWildcards(self):
+        query = PrefixQuery(Term('unqualified', 'prefix'))
+        self.assertConversion(query, 'prefix*')
+        self.assertConversion(query, 'PREfix*')
+        query = PrefixQuery(Term('field', 'prefix'))
+        self.assertConversion(query, 'field="PREfix*"')
+        self.assertConversion(query, 'field=prefix*')
+        query = TermQuery(Term('field', 'p'))
+        self.assertConversion(query, 'field="P*"')
+        #only prefix queries for now
+        query = TermQuery(Term('field', 'post'))
+        self.assertConversion(query, 'field="*post"')
+        
+        query = TermQuery(Term('field', 'prefix'))
+        self.assertConversion(query, 'field=prefix**')
+
+        result = Composer(unqualifiedTermFields=[("field0", 0.2), ("field1", 2.0)]).compose(parseCql("prefix*"))
+
+        query = BooleanQuery()
+        left = PrefixQuery(Term("field0", "prefix"))
+        left.setBoost(0.2)
+        query.add(left, BooleanClause.Occur.SHOULD)
+
+        right = PrefixQuery(Term("field1", "prefix"))
         right.setBoost(2.0)
         query.add(right, BooleanClause.Occur.SHOULD)
 

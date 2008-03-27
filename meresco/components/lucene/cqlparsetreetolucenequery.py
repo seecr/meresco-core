@@ -25,9 +25,10 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery, StandardAnalyzer
+from PyLucene import TermQuery, Term, BooleanQuery, BooleanClause, PhraseQuery, StandardAnalyzer, PrefixQuery
 from cqlparser import CqlVisitor
 from StringIO import StringIO
+from re import compile
 
 def _standardAnalyzeToken(token):
     result = []
@@ -39,10 +40,13 @@ def _standardAnalyzeToken(token):
         token = tokenStream.next()
     return result
 
-def _termOrPhraseQuery(index, termString):
+prefixRegexp = compile(r'^(\w{2,})\*$') # pr*, prefix* ....
 
+def _termOrPhraseQuery(index, termString):
     listOfTermStrings = _standardAnalyzeToken(termString.lower())
     if len(listOfTermStrings) == 1:
+        if prefixRegexp.match(termString):
+            return PrefixQuery(Term(index, listOfTermStrings[0]))
         return TermQuery(Term(index, listOfTermStrings[0]))
     result = PhraseQuery()
     for term in listOfTermStrings:
