@@ -53,7 +53,7 @@ class DrilldownTest(CQ2TestCase):
     def testLoadDocSetsNoTerms(self):
         data = [('field_0', [])]
         drilldown = Drilldown(['field_0'])
-        drilldown.loadDocSets(data)
+        drilldown.loadDocSets(data, 1)
 
         self.assertEquals(['field_0'], drilldown._docSets.keys())
         self.assertEquals(0, len(drilldown._docSets['field_0']))
@@ -65,7 +65,7 @@ class DrilldownTest(CQ2TestCase):
         data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
 
         drilldown = Drilldown(['field_0'])
-        drilldown.loadDocSets(data)
+        drilldown.loadDocSets(data, 1)
 
         self.assertEquals(2, len(drilldown._docSets['field_0']))
         self.assertEquals(3, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
@@ -76,8 +76,8 @@ class DrilldownTest(CQ2TestCase):
         data2 = [('field_0', [('term_0', [1]), ('term_2', [2,4])])]
 
         drilldown = Drilldown(['field_0'])
-        drilldown.loadDocSets(data1)
-        drilldown.loadDocSets(data2)
+        drilldown.loadDocSets(data1, 1)
+        drilldown.loadDocSets(data2, 1)
         self.assertEquals(2, len(drilldown._docSets['field_0']))
         self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
         self.assertFalse(dict(drilldown._docSets['field_0']).has_key('term_1'))
@@ -101,7 +101,7 @@ class DrilldownTest(CQ2TestCase):
         reader = IndexReader.open(self.tempdir)
         convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
-        drilldown.loadDocSets(convertor.getDocSets())
+        drilldown.loadDocSets(convertor.getDocSets(), 4)
         index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace())
         index._reopenIndex()
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
