@@ -45,6 +45,7 @@ from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 from cqlparser import parseString
 
 from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery, MatchAllDocsQuery
+from weightless import Reactor
 
 class LuceneTest(CQ2TestCase):
 
@@ -120,6 +121,31 @@ class LuceneTest(CQ2TestCase):
         myDocument = Document('0123456789')
         myDocument.addIndexedField('title', 'BijenkorfÂ´s')
         self._luceneIndex.addDocument(myDocument)
+
+    def testAddDocumentWithFailure(self):
+        self._luceneIndex.close()
+        myIndex = LuceneIndex(
+            directoryName=self.tempdir,
+            cqlComposer=Composer({}),
+            timer=Reactor())
+        class MyException(Exception):
+            pass
+        myDocument = Document('1')
+        myDocument.addIndexedField('aap', 'noot')
+        myIndex.addDocument(myDocument)
+        def validate():
+            raise MyException('Boom')
+        myDocument.validate = validate
+        try:
+            myIndex.addDocument(myDocument)
+            self.fail()
+        except MyException:
+            pass
+
+        my2Document = Document('2')
+        my2Document.addIndexedField('aap', 'noot')
+        myIndex.addDocument(my2Document)
+        
 
     def testDeleteFromIndex(self):
         myDocument = Document('1')

@@ -43,6 +43,16 @@ from meresco.framework import Observable
 class LuceneException(Exception):
     pass
 
+def lastUpdateTimeoutToken(method):
+    def wrapper(luceneIndexSelf, *args, **kwargs):
+        if luceneIndexSelf._lastUpdateTimeoutToken != None:
+            luceneIndexSelf._timer.removeTimer(luceneIndexSelf._lastUpdateTimeoutToken)
+        try:
+            return method(luceneIndexSelf, *args, **kwargs)
+        finally:
+            luceneIndexSelf._lastUpdateTimeoutToken = luceneIndexSelf._timer.addTimer(1, luceneIndexSelf._lastUpdateTimeout)
+    return wrapper
+    
 
 class LuceneIndex(Observable, Logger):
 
@@ -139,15 +149,12 @@ class LuceneIndex(Observable, Logger):
 
         self._writer.deleteDocuments(Term(IDFIELD, anId))
 
+    @lastUpdateTimeoutToken
     def delete(self, anId):
-        if self._lastUpdateTimeoutToken != None:
-            self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._delete(anId)
-        self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
+    @lastUpdateTimeoutToken
     def addDocument(self, aDocument):
-        if self._lastUpdateTimeoutToken != None:
-            self._timer.removeTimer(self._lastUpdateTimeoutToken)
         self._delete(aDocument.identifier)
 
         aDocument.validate()
@@ -157,7 +164,6 @@ class LuceneIndex(Observable, Logger):
         #self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
         #if len(self._storedForReopen) >= 250:
             #self._reopenIndex()
-        self._lastUpdateTimeoutToken = self._timer.addTimer(1, self._lastUpdateTimeout)
 
     def docCount(self):
         return self._reader.numDocs()
