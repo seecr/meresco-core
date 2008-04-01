@@ -26,6 +26,10 @@
 #
 ## end license ##
 from os.path import isfile, join
+from rfc822 import formatdate
+from time import mktime, gmtime, timezone
+from stat import ST_MTIME
+from os import stat
 
 from meresco.components.http import utils as httputils
 
@@ -56,15 +60,25 @@ class FileServer:
                 yield line
             raise StopIteration
 
-        yield 'HTTP/1.0 200 OK\r\n'
         filename = self._filenameFor(RequestURI)
         ext = filename.split(".")[-1]
         try:
-            extension = mimetypes.types_map["."+ext]
+            contentType = mimetypes.types_map["." + ext]
         except KeyError:
-            extension = "text/plain"
-        yield "Content-Type: %s\r\n" % extension
-        yield "\r\n"
+            contentType = "text/plain"
+
+        date = self._date()
+        expires = self._date(3600)
+        lastModified = formatdate(stat(filename)[ST_MTIME])
+
+        yield ('\r\n'.join([
+            'HTTP/1.0 200 OK',
+            'Date: %(date)s',
+            'Expires: %(expires)s',
+            'Last-Modified: %(lastModified)s',
+            'Content-Type: %(contentType)s',
+            ''
+        ])) % locals()
 
         f = open(filename)
         data = f.read(1024)
@@ -76,10 +90,14 @@ class FileServer:
     def _filenameFor(self, filename):
         while filename and filename[0] == '/':
             filename = filename[1:]
+        filename = filename.replace('..', '')
         return join(self._documentRoot, filename)
 
     def fileExists(self, filename):
         return isfile(self._filenameFor(filename))
+
+    def _date(self, offset=0):
+        return formatdate(mktime(gmtime()) - timezone + offset)
 
 class StringServer(object):
     def __init__(self, aString, contentType):

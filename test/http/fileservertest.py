@@ -30,6 +30,7 @@ from unittest import TestCase
 from os.path import join
 from shutil import rmtree
 from tempfile import mkdtemp
+from os import remove
 
 from meresco.components.http.fileserver import FileServer
 
@@ -57,6 +58,13 @@ class FileServerTest(TestCase):
         self.assertTrue(server.fileExists("/filename"))
 
         self.assertFalse(server.fileExists("//etc/shadow"))
+        open('/tmp/testFileExists', 'w').close()
+        try:
+            self.assertFalse(server.fileExists("/tmp/testFileExists"))
+            self.assertFalse(server.fileExists("//tmp/testFileExists"))
+            self.assertFalse(server.fileExists("../testFileExists"))
+        finally:
+            remove('/tmp/testFileExists')
 
     def testServeFile(self):
         f = open(join(self.directory, 'someFile'), 'w')
@@ -68,3 +76,15 @@ class FileServerTest(TestCase):
 
         self.assertTrue("HTTP/1.0 200 OK" in response)
         self.assertTrue("Some Contents" in response)
+
+    def testCacheControlStuff(self):
+        f = open(join(self.directory, 'someFile'), 'w')
+        f.write("Some Contents")
+        f.close()
+
+        fileServer = FileServer(self.directory)
+        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/someFile", Method="GET", Headers={}))
+
+        self.assertTrue("Date: " in response)
+        self.assertTrue("Last-Modified: " in response)
+        self.assertTrue("Expires: " in response)
