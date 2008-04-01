@@ -77,7 +77,7 @@ class FileServer:
             'Expires: %(expires)s',
             'Last-Modified: %(lastModified)s',
             'Content-Type: %(contentType)s',
-            ''
+            '', ''
         ])) % locals()
 
         f = open(filename)
