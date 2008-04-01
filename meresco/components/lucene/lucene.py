@@ -28,7 +28,7 @@
 
 from os.path import isdir
 from os import makedirs
-from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort
+from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort,  StandardTokenizer, StandardFilter, LowerCaseFilter
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 from meresco.components.lucene.clausecollector import ClauseCollector
 
@@ -43,6 +43,10 @@ from meresco.framework import Observable
 class LuceneException(Exception):
     pass
 
+class IncludeStopWordAnalyzer(object):
+    def tokenStream(self, fieldName, reader):
+        return LowerCaseFilter(StandardFilter(StandardTokenizer(reader)))
+
 def lastUpdateTimeoutToken(method):
     def wrapper(luceneIndexSelf, *args, **kwargs):
         if luceneIndexSelf._lastUpdateTimeoutToken != None:
@@ -52,7 +56,6 @@ def lastUpdateTimeoutToken(method):
         finally:
             luceneIndexSelf._lastUpdateTimeoutToken = luceneIndexSelf._timer.addTimer(1, luceneIndexSelf._lastUpdateTimeout)
     return wrapper
-    
 
 class LuceneIndex(Observable, Logger):
 
@@ -70,7 +73,7 @@ class LuceneIndex(Observable, Logger):
         indexExists = IndexReader.indexExists(self._directoryName)
         self._writer = IndexWriter(
             self._directoryName,
-            StandardAnalyzer(), not indexExists)
+            IncludeStopWordAnalyzer(), not indexExists)
         self._writer.optimize()                             # create a consistent state
         self._lastUpdateTimeoutToken = None
         self._reader = self._openReader()
@@ -101,7 +104,7 @@ class LuceneIndex(Observable, Logger):
         self._writer.close()
         self._writer = IndexWriter(
             self._directoryName,
-            StandardAnalyzer(), False)
+            IncludeStopWordAnalyzer(), False)
 
     #bitwise extension version:
     #def _docIdForId(self, id):

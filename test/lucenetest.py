@@ -1,3 +1,4 @@
+
 # -*- encoding: utf-8 -*-
 ## begin license ##
 #
@@ -402,3 +403,18 @@ class LuceneTest(CQ2TestCase):
             add("a" + str(i))
 
         reopen()
+
+    def testAnalyser(self):
+        myDocument = Document('id0')
+        myDocument.addIndexedField('field', 'a')
+        myDocument.addIndexedField('field', 'vAlUe')
+        self._luceneIndex.addDocument(myDocument)
+        self.timerCallbackMethod()
+
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'a')))
+        self.assertEquals(len(hits), 1)
+        self.assertEquals(['id0'], list(hits))
+
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'value')))
+        self.assertEquals(len(hits), 1)
+        self.assertEquals(['id0'], list(hits))
