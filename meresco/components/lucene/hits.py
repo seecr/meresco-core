@@ -29,9 +29,7 @@ from meresco.components.lucene import document
 from meresco.components.lucene.xslice import XSlice
 
 from PyLucene import QueryFilter, IndexSearcher
-from bitmatrix import JavaBitSetRow, Row
-#bitwise extension version:
-#from bitmatrix import JavaBitSetRow, Row, MappedRow
+from bitmatrix import JavaBitSetRow, Row, MappedRow
 
 DEFAULT_FETCHED_DOCS_COUNT = 10
 

@@ -37,8 +37,7 @@ from meresco.components.lucene.document import IDFIELD
 from meresco.components.statistics import Logger
 from meresco.framework import Observable
 
-#bitwise extension version:
-#from bitmatrix import IncNumberMap
+from bitmatrix import IncNumberMap
 
 class LuceneException(Exception):
     pass
@@ -59,15 +58,15 @@ def lastUpdateTimeoutToken(method):
 
 class LuceneIndex(Observable, Logger):
 
-    def __init__(self, directoryName, cqlComposer, timer):
+    def __init__(self, directoryName, cqlComposer, timer, bitwise=False):
         Observable.__init__(self)
+        self._bitwise = bitwise
         self._directoryName = directoryName
         self._cqlComposer = cqlComposer
         self._timer = timer
 
-        #bitwise extension version:
-        #self._storedForReopen = {}
-        #self._storedDeletesForReopen = []
+        self._storedForReopen = {}
+        self._storedDeletesForReopen = []
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
@@ -79,16 +78,16 @@ class LuceneIndex(Observable, Logger):
         self._reader = self._openReader()
         self._searcher = self._openSearcher()
 
-        #bitwise extension version:
-        #self._docIdsAsOriginal = IncNumberMap(self._reader.numDocs())
+        if bitwise:
+            self._docIdsAsOriginal = IncNumberMap(self._reader.numDocs())
+        else:
+            self._docIdsAsOriginal = None
 
     def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
         return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        #bitwise extension version:
-        #return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
-        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending)
+        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
 
     def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
@@ -106,14 +105,13 @@ class LuceneIndex(Observable, Logger):
             self._directoryName,
             IncludeStopWordAnalyzer(), False)
 
-    #bitwise extension version:
-    #def _docIdForId(self, id):
-        #hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
-        #oneElementList = hits.bitMatrixRow().asList()
-        #if len(oneElementList) == 0:
-            #return None
-        #assert len(oneElementList) == 1
-        #return oneElementList[0]
+    def _docIdForId(self, id):
+        hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
+        oneElementList = hits.bitMatrixRow().asList()
+        if len(oneElementList) == 0:
+            return None
+        assert len(oneElementList) == 1
+        return oneElementList[0]
 
     def _reopenIndex(self):
         self._reOpenWriter()
@@ -122,9 +120,13 @@ class LuceneIndex(Observable, Logger):
         self._searcher.close()
         self._searcher = self._openSearcher()
 
-        self.do.indexStarted(self._reader)
-        #bitwise extension version:
-        """docIds = []
+        if self._bitwise:
+            self._doBitwiseExtensions()
+        else:
+            self.do.indexStarted(self._reader)
+
+    def _doBitwiseExtensions(self):
+        docIds = []
         for id, documentDict in self._storedForReopen.items():
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
             docId = self._docIdForId(id)
@@ -142,13 +144,13 @@ class LuceneIndex(Observable, Logger):
             docIds = sorted(docIds)
             for docId, fieldAndTermsList in docIds:
                 mappedId = self._docIdsAsOriginal.add(docId)
-                self.do.addDocument(mappedId, fieldAndTermsList)"""
+                self.do.addDocument(mappedId, fieldAndTermsList)
 
     def _delete(self, anId):
-        #bitwise extension version:
-        #docId = self._docIdForId(anId)
-        #if not docId == None:
-            #self._storedDeletesForReopen.append(docId)
+        if self._bitwise:
+            docId = self._docIdForId(anId)
+            if not docId == None:
+                self._storedDeletesForReopen.append(docId)
 
         self._writer.deleteDocuments(Term(IDFIELD, anId))
 
@@ -163,10 +165,10 @@ class LuceneIndex(Observable, Logger):
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
 
-        #bitwise extension version:
-        #self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
-        #if len(self._storedForReopen) >= 250:
-            #self._reopenIndex()
+        if self._bitwise:
+            self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
+            if len(self._storedForReopen) >= 250:
+                self._reopenIndex()
 
     def docCount(self):
         return self._reader.numDocs()
@@ -190,18 +192,17 @@ class LuceneIndex(Observable, Logger):
 
     def start(self):
         self._reopenIndex()
-        #bitwise extension version:
-        #self.do.indexStarted(self._reader)
+        if self._bitwise:
+            self.do.indexStarted(self._reader)
 
-#bitwise extension version:
-#def documentDictToFieldsAndTermsList(documentDict):
-    #"""Waar dit hoort weten we nog niet zo goed.
-    #* Let op dat hier ook impliciet in zit dat rechterkanten maar 1 keer voorkomen (set)
-    #* en dat we hier de strip() doen
-    #"""
-    #result = {}
-    #for documentField in documentDict:
-        #if not documentField.key in result:
-            #result[documentField.key] = set([])
-        #result[documentField.key].add(documentField.value.strip())
-    #return result.items()
+def documentDictToFieldsAndTermsList(documentDict):
+    """Waar dit hoort weten we nog niet zo goed.
+    * Let op dat hier ook impliciet in zit dat rechterkanten maar 1 keer voorkomen (set)
+    * en dat we hier de strip() doen
+    """
+    result = {}
+    for documentField in documentDict:
+        if not documentField.key in result:
+            result[documentField.key] = set([])
+        result[documentField.key].add(documentField.value.strip())
+    return result.items()
