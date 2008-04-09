@@ -28,6 +28,8 @@
 from amara.binderytools import bind_stream
 from amara.bindery import is_element
 from meresco.framework.observable import Observable
+from traceback import format_exc
+from xml.sax.saxutils import escape as escapeXml
 
 class SRURecordUpdate(Observable):
 
@@ -47,9 +49,7 @@ class SRURecordUpdate(Observable):
                 raise Exception("Unknown action: " + action)
             self.writeSucces(httpRequest)
         except Exception, e:
-            self.writeError(httpRequest, str(e))
-            raise
-
+            self.writeError(httpRequest, format_exc(limit=7))
 
     def writeSucces(self, httpRequest):
         response = RESPONSE_XML % {
@@ -60,7 +60,7 @@ class SRURecordUpdate(Observable):
     def writeError(self, httpRequest, message):
         response = RESPONSE_XML % {
             "operationStatus": "fail",
-            "diagnostics": DIAGNOSTIC_XML % message}
+            "diagnostics": DIAGNOSTIC_XML % escapeXml(message)}
         httpRequest.write(response)
 
 RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -69,4 +69,10 @@ RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>
     <ucp:operationStatus>%(operationStatus)s</ucp:operationStatus>%(diagnostics)s
 </updateRequest>"""
 
-DIAGNOSTIC_XML = """<srw:diagnostics>%s</srw:diagnostics>"""
+DIAGNOSTIC_XML = """<srw:diagnostics>
+    <diag:diagnostic xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/">
+        <diag:uri>info:srw/diagnostic/12/1</diag:uri>
+        <diag:details>%s</diag:details>
+        <diag:message>Invalid component:  record rejected</diag:message>
+    </diag:diagnostic>
+</srw:diagnostics>"""

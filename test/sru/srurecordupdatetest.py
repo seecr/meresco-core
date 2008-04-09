@@ -32,6 +32,7 @@ from StringIO import StringIO
 from cq2utils.calltrace import CallTrace
 
 from meresco.components.sru.srurecordupdate import SRURecordUpdate
+from amara.binderytools import bind_string
 
 
 XML = """<?xml version="1.0" encoding="UTF-8"?>
@@ -117,23 +118,16 @@ class SRURecordUpdateTest(TestCase):
 
     def testNotCorrectXml(self):
         request = MockHTTPRequest("nonsense")
-        try:
-            self.subject.handleRequest(request)
-            self.fail()
-        except Exception, e:
-          self.assertTrue('SAXParseException' in str(e.__class__))
+        self.subject.handleRequest(request)
         self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
 
-    def testErrorsArePassed(self):
-        self.observer.exceptions['add'] = Exception('Some Exception')
+    def testErrorsAreNotPassed(self):
+        self.observer.exceptions['add'] = Exception('Some <Exception>')
         request = self.createRequest()
-        try:
-            self.subject.handleRequest(request)
-            self.fail()
-        except Exception, e:
-            self.assertEquals('Some Exception', str(e))
+        self.subject.handleRequest(request)
         self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
-        self.assertTrue(request.written.find("""Some Exception""") > -1)
+        diag = bind_string(request.written)
+        self.assertTrue(str(diag.updateRequest.diagnostics.diagnostic.details).find("""Some <Exception>""") > -1)
 
 
 class MockHTTPRequest:
