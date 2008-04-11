@@ -25,47 +25,67 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-import PyLucene
+from PyLucene import Term
 
 class LuceneRawDocSets(object):
+    """IndexReader.terms returns something of the following form, if fieldname == fieldname3
+    fieldname3 'abla'
+    fieldname3 'bb'
+    fielname3 'zz'
+    fieldname4 'aa'
+
+    The enum has the following (weird) behaviour: the internal pointer references
+    the first element by default, but when there are no elements it references a
+    None element. Therefor we have to check "if not term".
+    We use a "do ... while" idiom because calling next would advance the internal
+    pointer, resulting in a missed first element
+    """
     def __init__(self, aLuceneIndexReader, fieldNames):
         self._reader = aLuceneIndexReader
         self._fieldNames = fieldNames
 
     def getDocSets(self):
-        for fieldName in self._fieldNames:
-            yield (fieldName, luceneRawDocSetsForField(self._reader, fieldName))
+        termEnum = self._reader.terms()
+
+        for field in sorted(self._fieldNames):
+            currentTerm = termEnum.term()
+            if currentTerm == None or currentTerm.field() != field:
+                termEnum.skipTo(Term(field, ''))
+            while True:
+                term = termEnum.term()
+                #print term
+                if not term or term.field() != field:
+                    break
+
+                if term.field() == field:
+                    rawDocSets = self._luceneRawDocSets(term.field(), termEnum)
+                    yield (field, rawDocSets)
+                else:
+                    if not termEnum.next():
+                        break
 
     def docCount(self):
         return self._reader.numDocs()
 
-def luceneRawDocSetsForField(reader, fieldName):
-    termDocs = reader.termDocs()
-    termEnum = reader.terms(PyLucene.Term(fieldName, ''))
-    #IndexReader.terms returns something of the following form, if fieldname == fieldname3
-    #fieldname3 'abla'
-    #fieldname3 'bb'
-    #fielname3 'zz'
-    #fieldname4 'aa'
+    def _luceneRawDocSets(self, fieldName, termEnum):
+        result = []
+        while True:
+            term = termEnum.term()
+            if not term or term.field() != fieldName:
+                return result
 
-    #The enum has the following (weird) behaviour: the internal pointer references
-    #the first element by default, but when there are no elements it references a
-    #None element. Therefor we have to check "if not term".
-    #We use a "do ... while" idiom because calling next would advance the internal
-    #pointer, resulting in a missed first element
+            result.append((term.text(), self._generateDocIds(self._reader.termDocs(term), termEnum.docFreq())))
+            if not termEnum.next():
+                return result
 
-    while True:
-        term = termEnum.term()
-        if not term or term.field() != fieldName:
-            break
-        termDocs.seek(term)
+    def _generateDocIds(self, termDocs, docFreq):
+        docIds, na  = termDocs.read(docFreq)
+        while len(docIds) != docFreq:
+            if termDocs.next():
+                docIds.append(termDocs.doc())
+            docIdsBatch, na  = termDocs.read(docFreq - len(docIds))
+            if docIdsBatch == []:
+                break
+            docIds.extend(docIdsBatch)
+        return docIds
 
-        yield (term.text(), _generateDocIds(termDocs))
-        if not termEnum.next():
-            break
-
-def _generateDocIds(termDocs):
-    result = []
-    while termDocs.next():
-        result.append(termDocs.doc())
-    return result
