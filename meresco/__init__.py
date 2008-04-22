@@ -26,9 +26,7 @@
 #
 ## end license ##
 from sys import getdefaultencoding
-from locale import getdefaultlocale
+from locale import getdefaultlocale, _parse_localename
+
 assert getdefaultencoding() == 'utf-8'
-languageCode, encoding = getdefaultlocale()
-assert encoding.lower() in ['utf-8', 'utf8'], "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
-del languageCode
-del encoding
+assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
