@@ -28,3 +28,4 @@
 
 from lucene import LuceneIndex
 from document import Document
+from cqlparsetreetolucenequery import Composer

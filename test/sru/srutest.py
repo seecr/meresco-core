@@ -228,8 +228,8 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals(10, hits.slice_stop)
 
         self.assertEquals(4, len(observer.writtenRecords))
-        self.assertEquals(('0', 'dc', 'xml'), observer.writtenRecords[0])
-        self.assertEquals(('0', 'extra', 'xml'), observer.writtenRecords[1])
+        self.assertEquals(('0', 'dc'), observer.writtenRecords[0])
+        self.assertEquals(('0', 'extra'), observer.writtenRecords[1])
 
         self.assertEqualsWS("""HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
@@ -298,11 +298,9 @@ class MockListeners:
         self.sortDirection = sortDirection
         return self.executeCQLResult
 
-    def writeRecord(self, recordId, recordSchema, recordPacking):
-        self.writtenRecords.append((recordId, recordSchema, recordPacking))
+    def yieldRecord(self, recordId, recordSchema):
+        self.writtenRecords.append((recordId, recordSchema))
         yield "<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema)
-
-    yieldRecordForRecordPacking = writeRecord #TODO
 
 class MockHits:
 

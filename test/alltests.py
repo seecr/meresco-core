@@ -57,7 +57,6 @@ from rsstest import RssTest
 from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
 from statisticsxmltest import StatisticsXmlTest
-from teddygrowlservertest import TeddyGrowlServerTest
 from venturitest import VenturiTest
 from xml2documenttest import Xml2DocumentTest
 from xmlpumptest import XmlPumpTest

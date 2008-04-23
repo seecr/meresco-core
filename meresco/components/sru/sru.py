@@ -277,7 +277,7 @@ class Sru(Observable):
     def _writeRecordData(self, sruQuery, recordId):
         yield '<srw:recordData>'
 
-        yield self._catchErrors(self.all.yieldRecordForRecordPacking(recordId, sruQuery.recordSchema, sruQuery.recordPacking))
+        yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, sruQuery.recordSchema, sruQuery.recordPacking))
         yield '</srw:recordData>'
 
     def _catchErrors(self, dataGenerator):
@@ -295,16 +295,11 @@ class Sru(Observable):
         yield '<srw:extraRecordData>'
         for schema in sruQuery.x_recordSchema:
             yield '<recordData recordSchema="%s">' % xmlEscape(schema)
-            yield self._catchErrors(self.all.yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking))
+            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking))
             yield '</recordData>'
         yield '</srw:extraRecordData>'
-
-class PossibleXmlEscapeForRecordPacking(Observable):
-
-    def unknown(self, msg, *args, **kwargs):
-        return self.all.unknown(msg, *args, **kwargs)
-
-    def yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
+    
+    def _yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
         generator = self.all.yieldRecord(recordId, recordSchema)
         if recordPacking == 'xml':
             for data in generator:
@@ -314,3 +309,7 @@ class PossibleXmlEscapeForRecordPacking(Observable):
                 yield xmlEscape(data)
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
+
+class PossibleXmlEscapeForRecordPacking(Observable):
+    def __init__(self):
+        raise Error("PossibleXmlEscapeForRecordPacking is no longer used.")
