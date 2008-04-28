@@ -45,47 +45,29 @@ class LuceneRawDocSets(object):
         self._fieldNames = fieldNames
 
     def getDocSets(self):
-        termEnum = self._reader.terms()
-
+        termDocs = self._reader.termDocs()
         for field in sorted(self._fieldNames):
-            currentTerm = termEnum.term()
-            if currentTerm == None or currentTerm.field() != field:
-                termEnum.skipTo(Term(field, ''))
-            while True:
-                term = termEnum.term()
-                #print term
-                if not term or term.field() != field:
-                    break
+            yield (field, self._luceneRawDocSetsForField(field, termDocs))
 
-                if term.field() == field:
-                    rawDocSets = self._luceneRawDocSets(term.field(), termEnum)
-                    yield (field, rawDocSets)
-                else:
-                    if not termEnum.next():
-                        break
+    def _luceneRawDocSetsForField(self, field, termDocs):
+        termEnum = self._reader.terms(Term(field, ''))
+        while True:
+            term = termEnum.term()
+            if not term or term.field() != field:
+                break;
+            freq = termEnum.docFreq()
+            termDocs.seek(termEnum)
+            docIds, na = termDocs.read(freq)
+            while len(docIds) != freq:
+                print 'While reading %s docIds: need %s more for %s=%s' % (freq, freq - len(docIds), field, term.text())
+                docIdsBatch, na  = termDocs.read(freq - len(docIds))
+                if docIdsBatch == []:
+                    break
+                docIds.extend(docIdsBatch)
+            if len(docIds) > 0:
+                yield (term.text(), docIds)
+            if not termEnum.next():
+                break
 
     def docCount(self):
         return self._reader.numDocs()
-
-    def _luceneRawDocSets(self, fieldName, termEnum):
-        result = []
-        while True:
-            term = termEnum.term()
-            if not term or term.field() != fieldName:
-                return result
-
-            result.append((term.text(), self._generateDocIds(self._reader.termDocs(term), termEnum.docFreq())))
-            if not termEnum.next():
-                return result
-
-    def _generateDocIds(self, termDocs, docFreq):
-        docIds, na  = termDocs.read(docFreq)
-        while len(docIds) != docFreq:
-            if termDocs.next():
-                docIds.append(termDocs.doc())
-            docIdsBatch, na  = termDocs.read(docFreq - len(docIds))
-            if docIdsBatch == []:
-                break
-            docIds.extend(docIdsBatch)
-        return docIds
-
