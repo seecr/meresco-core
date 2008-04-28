@@ -59,7 +59,6 @@ class LuceneRawDocSets(object):
             termDocs.seek(termEnum)
             docIds, na = termDocs.read(freq)
             while len(docIds) != freq:
-                print 'While reading %s docIds: need %s more for %s=%s' % (freq, freq - len(docIds), field, term.text())
                 docIdsBatch, na  = termDocs.read(freq - len(docIds))
                 if docIdsBatch == []:
                     break
