@@ -122,13 +122,13 @@ class DrilldownTest(CQ2TestCase):
     def testAppendToRow(self):
         fieldMatrix = FieldMatrix([])
         fieldMatrix.addDocument(0, ['term0', 'term1'])
-        self.assertEquals('term0', fieldMatrix._row2term[0])
-        self.assertEquals('term1', fieldMatrix._row2term[1])
+        self.assertEquals('term0', fieldMatrix._trie.getTerm(0))
+        self.assertEquals('term1', fieldMatrix._trie.getTerm(1))
         self.assertEquals([('term0', 1), ('term1', 1)], list(fieldMatrix.drilldown(Row([0, 1]))))
 
         fieldMatrix.addDocument(1, ['term0', 'term1'])
-        self.assertEquals('term0', fieldMatrix._row2term[0])
-        self.assertEquals('term1', fieldMatrix._row2term[1])
+        self.assertEquals('term0', fieldMatrix._trie.getTerm(0))
+        self.assertEquals('term1', fieldMatrix._trie.getTerm(1))
         self.assertEquals([('term0', 2), ('term1', 2)], list(fieldMatrix.drilldown(Row([0, 1]))))
 
         fieldMatrix.addDocument(2, ['term0', 'term2'])

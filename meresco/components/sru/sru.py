@@ -310,6 +310,3 @@ class Sru(Observable):
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
 
-class PossibleXmlEscapeForRecordPacking(Observable):
-    def __init__(self):
-        raise Error("PossibleXmlEscapeForRecordPacking is no longer used.")

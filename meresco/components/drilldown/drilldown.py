@@ -27,7 +27,7 @@
 ## end license ##
 #trie version:
 #from bitmatrix import BitMatrix, RowTermIndex
-from bitmatrix import BitMatrix
+from bitmatrix import BitMatrix, Trie
 from lucenerawdocsets import LuceneRawDocSets
 from time import time
 
@@ -36,37 +36,25 @@ class DrilldownException(Exception):
 
 class FieldMatrix(object):
 
-    #trie version:
-    """def __init__(self, terms):
+    def __init__(self, terms):
         self._matrix = BitMatrix()
-        self._rowTermIndex = RowTermIndex()
+        self._trie = Trie()
         for term, docIds in terms:
             if type(term) == unicode:
                 term = term.encode('utf-8')
 
             rowNr = self._matrix.addRow(docIds)
-            self._rowTermIndex.add(rowNr, term)"""
-
-    def __init__(self, terms):
-        terms = list(terms)
-        self._matrix = BitMatrix()
-        self._row2term = {}
-        self._term2row = {}
-        for term, docIds in terms:
-            rowNr = self._matrix.addRow(docIds)
-            self._row2term[rowNr] = term
-            self._term2row[term] = rowNr
+            self._trie.add(rowNr, term)
 
     def addDocument(self, docId, terms):
         for term in terms:
-            if term in self._term2row:
-                rowNr = self._term2row[term]
+            rowNr = self._trie.getValue(term)
+            if rowNr != None:
                 self._matrix.appendToRow(rowNr, docId)
 
             else:
                 rowNr = self._matrix.addRow([docId])
-                self._row2term[rowNr] = term
-                self._term2row[term] = rowNr
+                self._trie.add(rowNr, term)
 
     def deleteDocument(self, docId):
         self._matrix.deleteColumn(docId)
@@ -74,7 +62,7 @@ class FieldMatrix(object):
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
         for nr, occurences in drilldownResults:
-            yield self._row2term[nr], occurences
+            yield self._trie.getTerm(nr), occurences
 
 class Drilldown(object):
 
