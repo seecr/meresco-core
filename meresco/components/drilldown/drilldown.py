@@ -39,12 +39,11 @@ class FieldMatrix(object):
     def __init__(self, terms):
         self._matrix = BitMatrix()
         self._trie = Trie()
+        self._totalTerms = 0
+        self._totalTermLength = 0
         for term, docIds in terms:
-            if type(term) == unicode:
-                term = term.encode('utf-8')
-
             rowNr = self._matrix.addRow(docIds)
-            self._trie.add(rowNr, term)
+            self._addTermToTrie(rowNr, term)
 
     def addDocument(self, docId, terms):
         for term in terms:
@@ -54,7 +53,15 @@ class FieldMatrix(object):
 
             else:
                 rowNr = self._matrix.addRow([docId])
-                self._trie.add(rowNr, term)
+                self._addTermToTrie(rowNr, term)
+
+    def _addTermToTrie(self, rowNr, term):
+        if type(term) == unicode:
+            term = term.encode('utf-8')
+        self._trie.add(rowNr, term)
+        self._totalTerms += 1
+        self._totalTermLength += len(term)
+
 
     def deleteDocument(self, docId):
         self._matrix.deleteColumn(docId)
@@ -72,9 +79,23 @@ class Drilldown(object):
         # for supporting the old test only
         self._docSets = self._fieldMatrices
 
+    def showMemoryUsage(self):
+        first = True
+        for field, matrix in self._fieldMatrices.items():
+            nodeMem, stringMem, trieMem = matrix._trie.memoryUsage()
+            if first:
+                yield "total nodes", nodeMem
+                yield "total string", stringMem
+                first = False
+
+            yield "field usage [%s]" % field, trieMem
+
     def loadDocSets(self, rawDocSets):
         for fieldname, terms in rawDocSets:
             self._fieldMatrices[fieldname] = FieldMatrix(terms)
+
+        print "total terms", sum([fieldmatrix._totalTerms for fieldmatrix in self._fieldMatrices.values()])
+        print "total term len", sum([fieldmatrix._totalTermLength for fieldmatrix in self._fieldMatrices.values()])
 
     def addDocument(self, docId, fieldAndTermsList):
         for fieldname, terms in fieldAndTermsList:
