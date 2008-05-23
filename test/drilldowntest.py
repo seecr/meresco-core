@@ -140,6 +140,28 @@ class DrilldownTest(CQ2TestCase):
         except Exception, e:
             self.assertTrue("non-increasing" in str(e))
 
+    def testSterretje(self):
+        self.addUntokenized([
+            ('0', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
+            ('1', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
+            ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
+            ('3', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'}),
+            ('4', {'field_0': 'this has different prefix', 'field_1': 'inquery'}),
+            ])
+        reader = IndexReader.open(self.tempdir)
+        convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
+        drilldown = Drilldown(['field_0', 'field_1'])
+        drilldown.loadDocSets(convertor.getDocSets())
+        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace())
+        index._reopenIndex()
+        queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
+        self.assertEquals(4, len(queryResults))
+
+        self.assertEquals([('this has different prefix', 1), ('this is term_0', 1), ('this is term_1', 2)], list(drilldown.sterretje("field_0", "this", queryResults.bitMatrixRow())))
+
+        self.assertEquals([('this is term_0', 1), ('this is term_1', 2)], list(drilldown.sterretje("field_0", "this is", queryResults.bitMatrixRow())))
+
+
     def testDrilldownBitwiseAddIntegration(self):
 
         #"""This Test was created by KvS/JJ on 29/02/2008 and has a limited life span. It is bloated because we didn't understand everything yet. Feel free to toss it"""

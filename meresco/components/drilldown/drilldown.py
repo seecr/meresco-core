@@ -71,6 +71,12 @@ class FieldMatrix(object):
         for nr, occurences in drilldownResults:
             yield self._trie.getTerm(nr), occurences
 
+    def sterretje(self, prefix, row, maximumResults=0):
+        rowNrs = self._trie.getValues(prefix)
+        drilldownResults = self._matrix.sterretje(rowNrs, row, maximumResults)
+        for nr, occurences in drilldownResults:
+            yield self._trie.getTerm(nr), occurences
+
 class Drilldown(object):
 
     def __init__(self, drilldownFieldnames):
@@ -79,23 +85,9 @@ class Drilldown(object):
         # for supporting the old test only
         self._docSets = self._fieldMatrices
 
-    def showMemoryUsage(self):
-        first = True
-        for field, matrix in self._fieldMatrices.items():
-            nodeMem, stringMem, trieMem = matrix._trie.memoryUsage()
-            if first:
-                yield "total nodes", nodeMem
-                yield "total string", stringMem
-                first = False
-
-            yield "field usage [%s]" % field, trieMem
-
     def loadDocSets(self, rawDocSets):
         for fieldname, terms in rawDocSets:
             self._fieldMatrices[fieldname] = FieldMatrix(terms)
-
-        print "total terms", sum([fieldmatrix._totalTerms for fieldmatrix in self._fieldMatrices.values()])
-        print "total term len", sum([fieldmatrix._totalTermLength for fieldmatrix in self._fieldMatrices.values()])
 
     def addDocument(self, docId, fieldAndTermsList):
         for fieldname, terms in fieldAndTermsList:
@@ -115,4 +107,7 @@ class Drilldown(object):
             if fieldname not in self._drilldownFieldnames:
                 raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._drilldownFieldnames))
             yield fieldname, self._fieldMatrices[fieldname].drilldown(row, maximumResults)
+
+    def sterretje(self, fieldname, prefix, row, maximumResults=0):
+        return self._fieldMatrices[fieldname].sterretje(prefix, row, maximumResults)
 
