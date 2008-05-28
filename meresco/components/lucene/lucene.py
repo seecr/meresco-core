@@ -73,7 +73,8 @@ class LuceneIndex(Observable, Logger):
         self._writer = IndexWriter(
             self._directoryName,
             IncludeStopWordAnalyzer(), not indexExists)
-        self._writer.optimize()                             # create a consistent state
+        if bitwise:
+            self._writer.optimize()                             # create a consistent state
         self._lastUpdateTimeoutToken = None
         self._reader = self._openReader()
         self._searcher = self._openSearcher()
