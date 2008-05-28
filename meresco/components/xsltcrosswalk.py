@@ -27,15 +27,24 @@
 ## end license ##
 from meresco.framework import Observable
 
-from lxml.etree import parse, XSLT, _ElementTree
+from lxml.etree import parse, XSLT, _ElementTree, tostring
 
 class XsltCrosswalk(Observable):
 
     def __init__(self, xslFileList):
         Observable.__init__(self)
-        self._xslts = [XSLT(parse(open(xslFile))) for xslFile in xslFileList]
+        self._xsltFilelist = xslFileList
+        self._xslts = None
+
+    def lazyInit(self):
+        #xslts are created via _convert (not __init__) due to a bug in XSLT that causes a glibc crash
+        #if __init__ is called from a different thread, this might happen. This is a scenario that happens in the integrationtest.
+
+        if self._xslts == None:
+            self._xslts = [XSLT(parse(open(s))) for s in self._xsltFilelist]
 
     def _convert(self, xmlSource):
+        self.lazyInit()
         result = xmlSource
         for xslt in self._xslts:
             result = xslt(result)
