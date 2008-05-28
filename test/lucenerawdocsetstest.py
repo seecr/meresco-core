@@ -55,12 +55,16 @@ class LuceneRawDocSetsTest(CQ2TestCase):
             ('3', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
             ('4', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'})])
         reader = IndexReader.open(self.tempdir)
-        converter = LuceneRawDocSets(reader, ['field_0', 'field_1'])
+
+        converter = LuceneRawDocSets(reader, ['field_0', 'field_1', 'none_existing_field'])
         docsets = [(field, [(term, list(docIds))
             for term, docIds in terms])
                 for field, terms in converter.getDocSets()]
-        self.assertEquals(2, len(docsets), docsets)
-        self.assertEquals([('field_0', [(u'this is term_0', [0, 1]), (u'this is term_1', [2]), (u'this is term_2', [3])]), ('field_1', [(u'cannotbefound', [3]), (u'inquery', [0, 1, 2])])], docsets)
+        self.assertEquals(3, len(docsets), docsets)
+        self.assertEquals([
+            ('field_0', [(u'this is term_0', [0, 1]),(u'this is term_1', [2]), (u'this is term_2', [3])]),
+            ('field_1', [(u'cannotbefound', [3]), (u'inquery', [0, 1, 2])]),
+            ('none_existing_field', [])], docsets)
 
     def testListOperatorNotWorkingBug(self):
         """Some parts of execution may not be deferred using generators. Since they depend on pointers and need to be read immediately before the pointer is shifted."""
