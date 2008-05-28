@@ -71,9 +71,9 @@ class FieldMatrix(object):
         for nr, occurences in drilldownResults:
             yield self._trie.getTerm(nr), occurences
 
-    def sterretje(self, prefix, row, maximumResults=0):
+    def prefixDrilldown(self, prefix, row, maximumResults=0):
         rowNrs = self._trie.getValues(prefix)
-        drilldownResults = self._matrix.sterretje(rowNrs, row, maximumResults)
+        drilldownResults = self._matrix.combinedRowCardinalitiesForRowNrs(rowNrs, row, maximumResults)
         for nr, occurences in drilldownResults:
             yield self._trie.getTerm(nr), occurences
 
@@ -108,6 +108,6 @@ class Drilldown(object):
                 raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._drilldownFieldnames))
             yield fieldname, self._fieldMatrices[fieldname].drilldown(row, maximumResults)
 
-    def sterretje(self, fieldname, prefix, row, maximumResults=0):
-        return self._fieldMatrices[fieldname].sterretje(prefix, row, maximumResults)
+    def prefixDrilldown(self, fieldname, prefix, row, maximumResults=0):
+        return self._fieldMatrices[fieldname].prefixDrilldown(prefix, row, maximumResults)
 

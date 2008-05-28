@@ -157,9 +157,9 @@ class DrilldownTest(CQ2TestCase):
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(4, len(queryResults))
 
-        self.assertEquals([('this has different prefix', 1), ('this is term_0', 1), ('this is term_1', 2)], list(drilldown.sterretje("field_0", "this", queryResults.bitMatrixRow())))
+        self.assertEquals([('this has different prefix', 1), ('this is term_0', 1), ('this is term_1', 2)], list(drilldown.prefixDrilldown("field_0", "this", queryResults.bitMatrixRow())))
 
-        self.assertEquals([('this is term_0', 1), ('this is term_1', 2)], list(drilldown.sterretje("field_0", "this is", queryResults.bitMatrixRow())))
+        self.assertEquals([('this is term_0', 1), ('this is term_1', 2)], list(drilldown.prefixDrilldown("field_0", "this is", queryResults.bitMatrixRow())))
 
 
     def testDrilldownBitwiseAddIntegration(self):
