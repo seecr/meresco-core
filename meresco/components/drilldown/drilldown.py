@@ -72,7 +72,7 @@ class FieldMatrix(object):
             yield self._trie.getTerm(nr), occurences
 
     def prefixDrilldown(self, prefix, row, maximumResults=0):
-        rowNrs = self._trie.getValues(prefix)
+        rowNrs = self._trie.getValues(prefix, caseSensitive=False)
         drilldownResults = self._matrix.combinedRowCardinalitiesForRowNrs(rowNrs, row, maximumResults)
         for nr, occurences in drilldownResults:
             yield self._trie.getTerm(nr), occurences
