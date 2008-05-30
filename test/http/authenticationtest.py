@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -26,10 +27,20 @@
 #
 ## end license ##
 
-from observablehttpserver import ObservableHttpServer
-from pathfilter import PathFilter
-from geturl import GetURL
-from fileserver import StringServer, FileServer
-from ipfilter import IpFilter
-from basichttphandler import BasicHttpHandler
-from authentication import Authentication
+from unittest import TestCase
+from meresco.components.http import Authentication
+from base64 import b64encode
+
+class AuthenticationTest(TestCase):
+
+    def testParseHeader(self):
+        authentication = Authentication()
+        self.assertEquals(("username", "password"), authentication._parseHeader("Basic " + b64encode("username:password")))
+
+    def testParseHeaderWeirdCases(self):
+        authentication = Authentication()
+        self.assertEquals(None, authentication._parseHeader("bla bla bla"))
+        self.assertEquals(None, authentication._parseHeader("NonsenseInPart0 QWxhZGRpbjpvcGVuIHNlc2FtZQ=="))
+        self.assertEquals(None, authentication._parseHeader("Basic " + b64encode("nonsense")))
+
+
