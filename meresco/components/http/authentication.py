@@ -31,23 +31,19 @@ from base64 import b64decode
 
 class Authentication(Observable):
 
-    def __init__(self):
+    def __init__(self, realm):
         Observable.__init__(self)
-        pass
+        self._realm = realm
 
     def handleRequest(self, Headers={}, *args, **kwargs):
         relevantHeader = Headers.get('Authorization', None)
         if relevantHeader == None:
-            return REQUEST_AUTHENTICATION_RESPONSE
-        else:
-            parsed = self._parseHeader(relevantHeader)
-            if not parsed:
-                return REQUEST_AUTHENTICATION_RESPONSE
-            username, password = parsed
-            if not self.any.isValidLogin(username, password):
-                return REQUEST_AUTHENTICATION_RESPONSE
-
-        return self.all.handleRequest(self, Headers=Headers, *args, **kwargs)
+            return REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Please give username and password.')
+        parsed = self._parseHeader(relevantHeader)
+        username, password = parsed
+        if not self.any.isValidLogin(username, password):
+            return REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Username or password are not valid.')
+        return self.all.handleRequest(Headers=Headers, user={'name': username}, *args, **kwargs)
 
     def _parseHeader(self, header):
         parts = header.split()
@@ -64,20 +60,11 @@ class Authentication(Observable):
 
         return username, password
 
-REQUEST_AUTHENTICATION_RESPONSE = '\r\n'.join([
-            "'HTTP/1.0 401 UNAUTHORIZED",
-            "Content-Type: text/html; charset=utf-8"
-            "", ""]) + """<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
-<html><head>
-<title>401 Authorization Required</title>
-</head><body>
-<h1>Authorization Required</h1>
-<p>This server could not verify that you
-are authorized to access the document
-requested.  Either you supplied the wrong
-credentials (e.g., bad password), or your
-browser doesn't understand how to supply
-the credentials required.</p>
-</body></html>"""
-
-
+REQUEST_AUTHENTICATION_RESPONSE = '\r\n'.join(
+    [
+        'HTTP/1.1 401 UNAUTHORIZED',
+        'Content-Type: text/plain; charset=utf-8',
+        'WWW-Authenticate: Basic realm="%s"',
+        '',
+        '%s'
+    ])
