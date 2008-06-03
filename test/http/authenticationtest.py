@@ -66,6 +66,18 @@ class AuthenticationTest(TestCase):
         list(response)
         self.assertEquals({'name': 'anotherUser'}, interceptor.calledMethods[3].kwargs['user'])
 
+    def testDetectValidUserWithPasswordAndUserName(self):
+        authentication = Authentication(realm='Test Realm')
+        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'handleRequest': (x for x in 'response')})
+        authentication.addObserver(interceptor)
+        headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
+        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
+        self.assertFalse('WWW-Authenticate: Basic realm="Test Realm"\r\n' in response, response)
+        interceptor.returnValues['isValidLogin'] = False
+        headers = {'Authorization': 'Basic ' + b64encode('aUser:aCompletelyWrongPassword')}
+        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
+        self.assertTrue('WWW-Authenticate: Basic realm="Test Realm"\r\n' in response, response)
+
     def testFailedLogin(self):
         authentication = Authentication(realm='Test Realm')
         interceptor = CallTrace('httphandler', returnValues={'isValidLogin': False})
@@ -75,6 +87,19 @@ class AuthenticationTest(TestCase):
         self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
         self.assertTrue('WWW-Authenticate: Basic realm="Test Realm"\r\n' in response, response)
         self.assertTrue('Username or password are not valid.' in response)
+
+    def testCheckPasswordOnlyOnceAndKeepUserDict(self):
+        authentication = Authentication(realm='Test Realm')
+        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'handleRequest': (x for x in 'response')})
+        authentication.addObserver(interceptor)
+        headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
+        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
+        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
+        self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
+        self.assertEquals('handleRequest', interceptor.calledMethods[1].name)
+        self.assertEquals('handleRequest', interceptor.calledMethods[2].name)
+        userObjectId = id(interceptor.calledMethods[1].kwargs['user'])
+        self.assertEquals(userObjectId,id(interceptor.calledMethods[2].kwargs['user']) )
 
     def testParseHeader(self):
         authentication = Authentication(realm='Test Realm')
