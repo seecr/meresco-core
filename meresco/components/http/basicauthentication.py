@@ -29,7 +29,7 @@
 from meresco.framework import Observable
 from base64 import b64decode
 
-class Authentication(Observable):
+class BasicAuthentication(Observable):
 
     def __init__(self, realm):
         Observable.__init__(self)

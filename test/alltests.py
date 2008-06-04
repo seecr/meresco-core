@@ -62,7 +62,7 @@ from xml2documenttest import Xml2DocumentTest
 from xmlpumptest import XmlPumpTest
 from xslicetest import XSliceTest
 
-from http.authenticationtest import AuthenticationTest
+from http.basicauthenticationtest import BasicAuthenticationTest
 from http.fileservertest import FileServerTest
 from http.pathfiltertest import PathFilterTest
 

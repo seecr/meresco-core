@@ -32,4 +32,4 @@ from geturl import GetURL
 from fileserver import StringServer, FileServer
 from ipfilter import IpFilter
 from basichttphandler import BasicHttpHandler
-from authentication import Authentication
+from basicauthentication import BasicAuthentication
