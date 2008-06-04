@@ -39,15 +39,17 @@ class Authentication(Observable):
     def handleRequest(self, Headers={}, *args, **kwargs):
         relevantHeader = Headers.get('Authorization', None)
         if relevantHeader == None:
-            return REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Please give username and password.')
+            yield REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Please give username and password.')
+            return
         credentials = self._parseHeader(relevantHeader)
         if not credentials in self._validUsers:
             if not self.any.isValidLogin(*credentials):
-                return REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Username or password are not valid.')
+                yield REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Username or password are not valid.')
+                return
             else:
                 username, password = credentials
                 self._validUsers[credentials] = {'name': username}
-        return self.all.handleRequest(Headers=Headers, user=self._validUsers[credentials], *args, **kwargs)
+        yield self.all.handleRequest(Headers=Headers, user=self._validUsers[credentials], *args, **kwargs)
 
     def _parseHeader(self, header):
         parts = header.split()
@@ -66,7 +68,7 @@ class Authentication(Observable):
 
 REQUEST_AUTHENTICATION_RESPONSE = '\r\n'.join(
     [
-        'HTTP/1.1 401 UNAUTHORIZED',
+        'HTTP/1.0 401 UNAUTHORIZED',
         'Content-Type: text/plain; charset=utf-8',
         'WWW-Authenticate: Basic realm="%s"',
         '',

@@ -31,6 +31,7 @@ from unittest import TestCase
 from cq2utils import CallTrace
 from meresco.components.http import Authentication
 from base64 import b64encode
+from meresco.framework import compose
 
 class AuthenticationTest(TestCase):
 
@@ -41,13 +42,14 @@ class AuthenticationTest(TestCase):
         response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET'))
         self.assertTrue('WWW-Authenticate: Basic realm="Test Realm"\r\n' in response, response)
 
+
     def testHandleSimplePrivateRequest(self):
         authentication = Authentication(realm='Test Realm')
         interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True})
         authentication.addObserver(interceptor)
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
         response = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
-        list(response)
+        list(compose(response))
         self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
         self.assertEquals(('aUser', 'aPassword'), interceptor.calledMethods[0].args)
         self.assertEquals('handleRequest', interceptor.calledMethods[1].name)
@@ -59,11 +61,11 @@ class AuthenticationTest(TestCase):
         authentication.addObserver(interceptor)
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
         response = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
-        list(response)
+        list(compose(response))
         self.assertEquals({'name': 'aUser'}, interceptor.calledMethods[1].kwargs['user'])
         headers = {'Authorization': 'Basic ' + b64encode('anotherUser:anotherPassword')}
         response = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
-        list(response)
+        list(compose(response))
         self.assertEquals({'name': 'anotherUser'}, interceptor.calledMethods[3].kwargs['user'])
 
     def testDetectValidUserWithPasswordAndUserName(self):
@@ -71,7 +73,8 @@ class AuthenticationTest(TestCase):
         interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'handleRequest': (x for x in 'response')})
         authentication.addObserver(interceptor)
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
-        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
+        results = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
+        response = ''.join(compose(results))
         self.assertFalse('WWW-Authenticate: Basic realm="Test Realm"\r\n' in response, response)
         interceptor.returnValues['isValidLogin'] = False
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aCompletelyWrongPassword')}
@@ -93,8 +96,10 @@ class AuthenticationTest(TestCase):
         interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'handleRequest': (x for x in 'response')})
         authentication.addObserver(interceptor)
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
-        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
-        response = ''.join(authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers))
+        results = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
+        list(compose(results))
+        results = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
+        list(compose(results))
         self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
         self.assertEquals('handleRequest', interceptor.calledMethods[1].name)
         self.assertEquals('handleRequest', interceptor.calledMethods[2].name)
