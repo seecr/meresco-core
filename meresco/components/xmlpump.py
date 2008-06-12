@@ -53,7 +53,7 @@ class Converter(Observable):
 
 xmlStringRegexp = compile(r'(?s)^\s*<.*>\s*$')
 def isXmlString(anObject):
-    return type(anObject) == str and xmlStringRegexp.match(anObject)
+    return type(anObject) in [str, unicode] and xmlStringRegexp.match(anObject)
 
 class XmlParseAmara(Converter):
     def _canConvert(self, anObject):
