@@ -1,3 +1,4 @@
+# encoding=utf-8
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -70,10 +71,10 @@ class XmlPumpTest(CQ2TestCase):
                 self.lxmlNode = lxmlNode
         amara2lxml = Amara2Lxml()
         amara2lxml.addObserver(Observer())
-        amaraNode = binderytools.bind_string('<a><b>c</b></a>')
+        amaraNode = binderytools.bind_string('<a><b>“c</b></a>')
         list(amara2lxml.unknown('ape', amaraNode))
         self.assertEquals(_ElementTree, type(self.lxmlNode))
-        self.assertEquals('<a><b>c</b></a>', tostring(self.lxmlNode))
+        self.assertEquals('<a><b>“c</b></a>', tostring(self.lxmlNode, encoding='utf-8'))
 
     def testLxml2Amara(self):
         class Observer:
@@ -81,10 +82,9 @@ class XmlPumpTest(CQ2TestCase):
                 self.amaraNode = amaraNode
         lxml2amara = Lxml2Amara()
         lxml2amara.addObserver(Observer())
-        lxmlNode = parse(StringIO('<a><b>c</b></a>'))
+        lxmlNode = parse(StringIO('<a><b>“c</b></a>'))
         list(lxml2amara.unknown('ape', lxmlNode))
-        #self.assertEquals("<class 'amara.bindery.root_base'>", str(type(self.amaraNode)))
-        self.assertEquals('<a><b>c</b></a>', self.amaraNode.xml())
+        self.assertEquals('<a><b>“c</b></a>', self.amaraNode.xml())
 
     def testXmlParseAmaraRespondsToEveryMessage(self):
         observable = Observable()

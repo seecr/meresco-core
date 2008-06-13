@@ -26,3 +26,9 @@
 #
 ## end license ##
 from validate import Validate, ValidateException
+from os.path import dirname, abspath, join
+schemasPath = join(dirname(abspath(__file__)), 'schemas')
+
+del join
+del dirname
+del abspath

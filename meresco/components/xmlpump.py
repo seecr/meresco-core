@@ -81,7 +81,7 @@ class XmlPrintLxml(Converter):
         return type(anObject) == _ElementTree
 
     def _convert(self, anObject):
-        return tostring(anObject, pretty_print = True)
+        return tostring(anObject, pretty_print = True, encoding="UTF-8")
 
 class Amara2Lxml(Converter):
     def _detectAndConvert(self, something):
@@ -94,7 +94,7 @@ class Lxml2Amara(Converter):
         return type(anObject) in [_ElementTree, _XSLTResultTree]
 
     def _convert(self, anObject):
-        return bind_string(tostring(anObject)).childNodes[0]
+        return bind_string(tostring(anObject, encoding="UTF-8")).childNodes[0]
 
 # backwards compatible
 XmlInflate = XmlParseAmara
