@@ -27,5 +27,6 @@
 ## end license ##
 
 from lucene import LuceneIndex
+from lucenetools import unlock
 from document import Document
 from cqlparsetreetolucenequery import Composer
