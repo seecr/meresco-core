@@ -26,78 +26,122 @@
 #
 ## end license ##
 
-from cStringIO import StringIO
+from StringIO import StringIO
 
-from cq2utils.cq2testcase import CQ2TestCase
-from cq2utils.calltrace import CallTrace
-
-from amara import binderytools
+from cq2utils import CQ2TestCase, CallTrace
+from lxml.etree import fromstring, tostring
 
 from meresco.components.venturi import Venturi
+from weightless import compose
 
 class VenturiTest(CQ2TestCase):
-    def setUp(self):
-        CQ2TestCase.setUp(self)
-        self.storage = CallTrace('Storage')
-        self.unit = CallTrace('Unit')
-        self.storage.returnValues['getUnit'] = self.unit
-        self.venturi = Venturi('venturiName', self.storage)
-        self.observer = CallTrace('Observer')
-        self.venturi.addObserver(self.observer)
+    def testOutline(self):
+        inputEvent = fromstring("""<document><part name="partone">&lt;some&gt;message&lt;/some&gt;</part><part name="parttwo"><second>message</second></part></document>""")
+        interceptor = CallTrace('Interceptor')
+        v = Venturi(
+            should=[('partone', '/document/part[@name="partone"]/text()'),
+                    ('parttwo', '/document/part/second')],
+            namespaceMap={})
+        v.addObserver(interceptor)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(('identifier', 'partone'), interceptor.calledMethods[0].args[:2])
+        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
+        self.assertEquals(('identifier', 'parttwo',), interceptor.calledMethods[1].args[:2])
+        secondXml = interceptor.calledMethods[1].args[2]
+        self.assertEquals('<second>message</second>', tostring(secondXml))
+        self.assertEquals('second', secondXml.getroot().tag)
+        
 
-    def testWithNonExistingVenturiObject(self):
-        meta = binderytools.bind_string('<meta><tagOne>data</tagOne></meta>').meta
-        list(self.venturi.add('id', 'meta', meta))
-        self.assertEquals(['getUnit'], [method.name for method in self.storage.calledMethods])
-        self.assertEquals(['hasBox'], [method.name for method in self.unit.calledMethods])
+    def testOnlyPassPartsSpecified(self):
+        inputEvent = fromstring("""<document><part name="partone">&lt;some&gt;message&lt;/some&gt;</part><part name="parttwo"><second/></part></document>""")
+        interceptor = CallTrace('Interceptor')
+        v = Venturi(
+            should=[('partone', '/document/part[@name="partone"]/text()')],
+            namespaceMap={})
+        v.addObserver(interceptor)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
 
-        self.assertEquals(1, len(self.observer.calledMethods))
-        method = self.observer.calledMethods[0]
-        self.assertEquals('add', method.name)
-        self.assertEquals(3, len(method.arguments))
-        self.assertEquals('id', method.arguments[0])
-        self.assertEquals('venturiName', method.arguments[1])
-        self.assertEqualsWS("""<venturiName>
-    <meta>
-        <tagOne>data</tagOne>
-    </meta>
-</venturiName>""", method.arguments[2].xml())
+    def testReadFromStorage(self):
+        inputEvent = fromstring('<document/>')
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        storage = CallTrace('Storage', ignoredAttributes=['add', 'finish'])
+        storage.returnValues['getStream'] = StringIO('<some>message</some>')
+        v = Venturi(
+            should=[('partone', '/document/part[@name="partone"]/text()')],
+            namespaceMap={})
+        v.addObserver(interceptor)
+        v.addObserver(storage)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
+        self.assertEquals(('identifier', 'partone'), storage.calledMethods[0].args)
 
-    def testWithExistingVenturiObjectWithoutMeta(self):
-        meta = binderytools.bind_string('<meta><tagOne>data</tagOne></meta>').meta
-        self.unit.returnValues['hasBox'] = True
-        self.unit.returnValues['openBox'] = StringIO("""<venturiName>
-    <lom>
-        <general><title>data</title></general>
-    </lom>
-</venturiName>""")
+    def testCouldHave(self):
+        inputEvent = fromstring('<document><one/></document>')
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        v = Venturi(
+            could=[('one', '/document/one')],
+            namespaceMap={})
+        v.addObserver(interceptor)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<one/>', tostring(interceptor.calledMethods[0].args[2]))
+    
+    def testCouldHaveInStorage(self):
+        inputEvent = fromstring('<document><other/></document>')
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        storage = CallTrace('Storage', ignoredAttributes=['add', 'finish'])
+        storage.returnValues['getStream'] = StringIO('<one/>')
+        v = Venturi(
+            could=[('one', '/document/one')],
+            namespaceMap={})
+        v.addObserver(interceptor)
+        v.addObserver(storage)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<one/>', tostring(interceptor.calledMethods[0].args[2]))
+        self.assertEquals(('identifier', 'one'), storage.calledMethods[0].args)
 
-        list(self.venturi.add(id, 'meta', meta))
+    def testCouldHaveButDoesnot(self):
+        inputEvent = fromstring('<document><other/></document>')
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        storage = CallTrace('Storage', ignoredAttributes=['add', 'finish'])
+        storage.exceptions['getStream'] = MyException('Not Available')
+        v = Venturi(
+            should=[('other', '/document/other')],
+            could=[('one', '/document/one')],
+            namespaceMap={})
+        v.addObserver(interceptor)
+        v.addObserver(storage)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(('identifier', 'other',), interceptor.calledMethods[0].args[:2])
 
-        self.assertEquals(1, len(self.observer.calledMethods))
-        self.assertEqualsWS("""<venturiName>
-    <lom>
-        <general><title>data</title></general>
-    </lom>
-    <meta>
-        <tagOne>data</tagOne>
-    </meta>
-</venturiName>""", self.observer.calledMethods[0].arguments[2].xml())
+    def testXpathReturnsMultipleResults(self):
+        inputEvent = fromstring('<document><one/><two/></document>')
+        v = Venturi(
+            should=[('one', '/document/*')],
+            namespaceMap={})
+        try:
+            list(compose(v.add('identifier', 'document', inputEvent)))
+            self.fail()
+        except Exception, e:
+            self.assertEquals("XPath '/document/*' should return atmost one result.", str(e))
 
-    def testWithExistingVenturiObjectWithMeta(self):
-        meta = binderytools.bind_string('<meta><tagOne>data</tagOne></meta>').meta
-        self.unit.returnValues['hasBox'] = True
-        self.unit.returnValues['openBox'] = StringIO("""<venturiName>
-    <meta>
-        <already>here</already>
-    </meta>
-</venturiName>""")
-        list(self.venturi.add('id', 'meta', meta))
-        self.assertEquals(1, len(self.observer.calledMethods))
-        args = self.observer.calledMethods[0].arguments
-        self.assertEqualsWS("""<venturiName>
-    <meta>
-        <tagOne>data</tagOne>
-    </meta>
-</venturiName>""", args[2].xml())
+    def testNamespace(self):
+        inputEvent = fromstring('<document xmlns="ns1" xmlns:ns2="ns2"><ns2:one/><two/></document>')
+        interceptor = CallTrace('Interceptor')
+        v = Venturi(
+            should=[('one', '/prefixone:document/prefixtwo:one'),
+                    ('two', '/prefixone:document/prefixone:two')],
+            namespaceMap={'prefixone':'ns1', 'prefixtwo':'ns2'})
+        v.addObserver(interceptor)
+        list(compose(v.add('identifier', 'document', inputEvent)))
+        self.assertEquals(['add', 'add', 'finish'], [m.name for m in interceptor.calledMethods])
+        
 
+class MyException(Exception):
+    pass

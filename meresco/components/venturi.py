@@ -27,27 +27,43 @@
 ## end license ##
 
 from meresco.framework import Observable
-from amara import binderytools
-
+from lxml.etree import fromstring, _Element, ElementTree, parse
+from StringIO import StringIO
 
 class Venturi(Observable):
-    def __init__(self, venturiName, storage):
+    def __init__(self, should=[], could=[], namespaceMap={}):
         Observable.__init__(self)
-        self._storage = storage
-        self._venturiName = venturiName
+        self._namespaceMap = namespaceMap
+        self._should = should
+        self._could = could
 
-    def add(self, id, name, newNode):
-        unit = self._storage.getUnit(id)
-        if unit.hasBox(self._venturiName):
-            box = unit.openBox(self._venturiName)
+    def add(self, identifier, name, lxmlNode):
+        for partname, partXPath in self._should:
+            part = self._findPart(identifier, partname, lxmlNode, partXPath)
+            yield self.all.add(identifier, partname, part)
+        for partname, partXPath in self._could:
             try:
-                venturiObject = binderytools.bind_stream(box).rootNode.childNodes[0]
-                existingNode = getattr(venturiObject, newNode.localName, None)
-                if existingNode:
-                    venturiObject.xml_remove_child(existingNode)
-            finally:
-                box.close()
+                part = self._findPart(identifier, partname, lxmlNode, partXPath)
+                yield self.all.add(identifier, partname, part)
+            except Exception, e:
+                pass
+        self.do.finish()
+
+    def _findPart(self, identifier, partname, lxmlNode, partXPath):
+        matches = lxmlNode.xpath(partXPath, self._namespaceMap)
+        assert len(matches) <= 1, "XPath '%s' should return atmost one result." % partXPath
+        if len(matches) == 1:
+            return self._convert(matches[0])
         else:
-            venturiObject = binderytools.bind_string('<%s/>' % self._venturiName).rootNode.childNodes[0]
-        venturiObject.xml_append(newNode)
-        return self.all.add(id, self._venturiName, venturiObject)
+            return parse(self.any.getStream(identifier, partname))
+
+    def _convert(self, anObject):
+        if type(anObject) == _Element:
+            buff = StringIO()
+            ElementTree(anObject).write(buff)
+            buff.seek(0)
+            return parse(buff)
+        return parse(StringIO(anObject))
+
+    def delete(self, id):
+        self.do.delete(id)
