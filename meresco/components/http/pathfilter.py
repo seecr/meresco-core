@@ -31,24 +31,22 @@ from meresco.components.statistics import Logger
 from urlparse import urlsplit
 
 class PathFilter(Observable, Logger):
-    def __init__(self, subPath, excluding=[]):
+    def __init__(self, subPaths, excluding=[]):
         Observable.__init__(self)
         Logger.__init__(self)
-        self._subPath = subPath
+        self._subPaths = subPaths
+        if type(subPaths) == str:
+            self._subPaths = [subPaths]
         self._excluding = excluding
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         scheme, netloc, path, query, fragment = urlsplit(RequestURI)
-        if path.startswith(self._subPath) and not self._isExcluded(path):
-            self.log(path=self._subPath)
+        matchesSubPath = [subPath for subPath in self._subPaths if path.startswith(subPath)]
+        matchesExcludedPath = [excludedPath for excludedPath in self._excluding if path.startswith(excludedPath)]
+        if matchesSubPath and not matchesExcludedPath:
+            self.log(path=matchesSubPath[0])
             return self.all.handleRequest(RequestURI=RequestURI, *args, **kwargs)
         return (f for f in [])
-
-    def _isExcluded(self, path):
-        for excludedPath in self._excluding:
-            if path.startswith(excludedPath):
-                return True
-        return False
 
     def unknown(self, methodName, *args, **kwargs):
         return self.all.unknown(methodName, *args, **kwargs)
