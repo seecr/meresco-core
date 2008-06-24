@@ -35,5 +35,5 @@ from oailistsets import OaiListSets
 from oaigetrecord import OaiGetRecord
 from oaijazzlucene import OaiJazzLucene
 from oaiprovenance import OaiProvenance
-
+from uniquenumbergenerator import UniqueNumberGenerator
 

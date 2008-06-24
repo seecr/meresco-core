@@ -27,6 +27,7 @@
 ## end license ##
 
 from meresco.components.oai.oaiverb import OaiVerb
+from xml.sax.saxutils import escape as escapeXml
 
 class OaiIdentify(OaiVerb):
     """
@@ -73,9 +74,9 @@ The response may include multiple instances of the following optional elements:
 
     def process(self, webRequest):
         values = {
-            'repositoryName': self._repositoryName,
-            'baseURL': self.getRequestUrl(webRequest),
-            'adminEmails': ''.join([ADMIN_EMAIL % email for email in [self._adminEmail]]),
+            'repositoryName': escapeXml(self._repositoryName),
+            'baseURL': escapeXml(self.getRequestUrl(webRequest)),
+            'adminEmails': ''.join([ADMIN_EMAIL % escapeXml(email) for email in [self._adminEmail]]),
             'deletedRecord': 'persistent'
         }
         values.update(hardcoded_values)
