@@ -28,7 +28,7 @@
 from meresco.components.dictionary import DocumentDict
 from meresco.framework import Transparant
 
-class DictToFields(Transparant):
+class Dict2Fields(Transparant):
 
     def addDocumentDict(self, id, documentDict):
         for field in documentDict:

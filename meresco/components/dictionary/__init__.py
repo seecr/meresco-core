@@ -32,5 +32,8 @@ from dict2doc import Dict2Doc
 from dictaggregator import DictAggregator
 from dictidentity import DictIdentity
 from alldotsplittedprefixes import AllDotSplittedPrefixes
-from dicttofields import DictToFields
+from dict2fields import Dict2Fields
 from xpath2dict import XPath2Dict
+
+# backwards compatibility
+DictToFields = Dict2Fields
