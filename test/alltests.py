@@ -93,6 +93,7 @@ from xml_generic.validatetest import ValidateTest
 from dictionary.transformtest import TransformTest
 from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
 from dictionary.xml2dicttest import Xml2DictTest
+from dictionary.xpath2dicttest import XPath2DictTest
 
 if __name__ == '__main__':
         unittest.main()

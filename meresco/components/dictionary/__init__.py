@@ -33,3 +33,4 @@ from dictaggregator import DictAggregator
 from dictidentity import DictIdentity
 from alldotsplittedprefixes import AllDotSplittedPrefixes
 from dicttofields import DictToFields
+from xpath2dict import XPath2Dict
