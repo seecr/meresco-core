@@ -50,43 +50,6 @@ class DrilldownTest(CQ2TestCase):
             index.addDocument(myDocument)
         index.close()
 
-#de volgende drie tests moeten ofwel verschoven worden naar FieldMatrix, ofwel gewoon weggegooid
-
-    #def testLoadDocSetsNoTerms(self):
-        #data = [('field_0', [])]
-        #drilldown = Drilldown(['field_0'])
-        #drilldown.loadDocSets(data)
-
-        #self.assertEquals(['field_0'], drilldown._docSets.keys())
-        #self.assertEquals(0, len(drilldown._docSets['field_0']))
-        #field, results = drilldown.drilldown(Row([0]), [('field_0', 10)]).next()
-        #self.assertEquals('field_0', field)
-        #self.assertEquals(0, len(list(results)))
-
-    #def testLoadDocSets(self):
-        #data = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
-
-        #drilldown = Drilldown(['field_0'])
-        #drilldown.loadDocSets(data)
-
-
-
-        #self.assertEquals(2, len(drilldown._docSets['field_0']))
-        #self.assertEquals(3, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
-        #self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_1'].cardinality())
-
-    #def testLoadDocSetsOverwritesPreviousDocsets(self):
-        #data1 = [('field_0', [('term_0', [1,2,5]), ('term_1', [4])])]
-        #data2 = [('field_0', [('term_0', [1]), ('term_2', [2,4])])]
-
-        #drilldown = Drilldown(['field_0'])
-        #drilldown.loadDocSets(data1)
-        #drilldown.loadDocSets(data2)
-        #self.assertEquals(2, len(drilldown._docSets['field_0']))
-        #self.assertEquals(1, dict(drilldown._docSets['field_0'])['term_0'].cardinality())
-        #self.assertFalse(dict(drilldown._docSets['field_0']).has_key('term_1'))
-        #self.assertEquals(2, dict(drilldown._docSets['field_0'])['term_2'].cardinality())
-
     def testIndexStarted(self):
         self.addUntokenized([('id', {'field_0': 'this is term_0'})])
         drilldown = Drilldown(['field_0'])
@@ -123,13 +86,13 @@ class DrilldownTest(CQ2TestCase):
         fieldMatrix = FieldMatrix([])
 
         fieldMatrix.addDocument(0, ['term0', 'term1'])
-        self.assertEquals('term0', fieldMatrix._trie.getTerm(0))
-        self.assertEquals('term1', fieldMatrix._trie.getTerm(1))
+        self.assertEquals('term0', fieldMatrix._row2term[0])
+        self.assertEquals('term1', fieldMatrix._row2term[1])
         self.assertEquals([('term0', 1), ('term1', 1)], list(fieldMatrix.drilldown(Row([0, 1]))))
 
         fieldMatrix.addDocument(1, ['term0', 'term1'])
-        self.assertEquals('term0', fieldMatrix._trie.getTerm(0))
-        self.assertEquals('term1', fieldMatrix._trie.getTerm(1))
+        self.assertEquals('term0', fieldMatrix._row2term[0])
+        self.assertEquals('term1', fieldMatrix._row2term[1])
         self.assertEquals([('term0', 2), ('term1', 2)], list(fieldMatrix.drilldown(Row([0, 1]))))
 
         fieldMatrix.addDocument(2, ['term0', 'term2'])
@@ -139,28 +102,6 @@ class DrilldownTest(CQ2TestCase):
             fieldMatrix.addDocument(2, ['term0', 'term2'])
         except Exception, e:
             self.assertTrue("non-increasing" in str(e))
-
-    def testSterretje(self):
-        self.addUntokenized([
-            ('0', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
-            ('1', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
-            ('2', {'field_0': 'this is term_1', 'field_1': 'inquery'}),
-            ('3', {'field_0': 'this is term_2', 'field_1': 'cannotbefound'}),
-            ('4', {'field_0': 'this has different prefix', 'field_1': 'inquery'}),
-            ])
-        reader = IndexReader.open(self.tempdir)
-        convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
-        drilldown = Drilldown(['field_0', 'field_1'])
-        drilldown.loadDocSets(convertor.getDocSets())
-        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace())
-        index._reopenIndex()
-        queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
-        self.assertEquals(4, len(queryResults))
-
-        self.assertEquals([('this has different prefix', 1), ('this is term_0', 1), ('this is term_1', 2)], list(drilldown.prefixDrilldown("field_0", "this", queryResults.bitMatrixRow())))
-
-        self.assertEquals([('this is term_0', 1), ('this is term_1', 2)], list(drilldown.prefixDrilldown("field_0", "this is", queryResults.bitMatrixRow())))
-
 
     def testDrilldownBitwiseAddIntegration(self):
 

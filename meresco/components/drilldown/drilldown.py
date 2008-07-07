@@ -25,9 +25,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-#trie version:
-#from bitmatrix import BitMatrix, RowTermIndex
-from bitmatrix import BitMatrix, Trie
+from bitmatrix import BitMatrix
 from lucenerawdocsets import LuceneRawDocSets
 from time import time
 
@@ -38,7 +36,8 @@ class FieldMatrix(object):
 
     def __init__(self, terms):
         self._matrix = BitMatrix()
-        self._trie = Trie()
+        self._row2term = {}
+        self._term2row = {}
         self._totalTerms = 0
         self._totalTermLength = 0
         for term, docIds in terms:
@@ -47,7 +46,7 @@ class FieldMatrix(object):
 
     def addDocument(self, docId, terms):
         for term in terms:
-            rowNr = self._trie.getValue(term)
+            rowNr = self._term2row.get(term, None)
             if rowNr != None:
                 self._matrix.appendToRow(rowNr, docId)
 
@@ -58,7 +57,8 @@ class FieldMatrix(object):
     def _addTermToTrie(self, rowNr, term):
         if type(term) == unicode:
             term = term.encode('utf-8')
-        self._trie.add(rowNr, term)
+        self._row2term[rowNr] = term
+        self._term2row[term] = rowNr
         self._totalTerms += 1
         self._totalTermLength += len(term)
 
@@ -69,9 +69,10 @@ class FieldMatrix(object):
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
         for nr, occurences in drilldownResults:
-            yield self._trie.getTerm(nr), occurences
+            yield self._row2term[nr], occurences
 
     def prefixDrilldown(self, prefix, row, maximumResults=0):
+        raise Exception("not implemented, we've turned offf prefixDrilldown to find (maybe) a bug in the C code")
         rowNrs = self._trie.getValues(prefix, caseSensitive=False)
         drilldownResults = self._matrix.combinedRowCardinalitiesForRowNrs(rowNrs, row, maximumResults)
         for nr, occurences in drilldownResults:
