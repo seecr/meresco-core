@@ -62,7 +62,7 @@ class Hits:
 
     def bitMatrixRow(self):
         queryFilter = QueryFilter(self._pyLuceneQuery)
-        bits = queryFilter.bits(self._reader)
+        bits = queryFilter.bits(self._reader._subject)
         if self._docIdsMap:
             x = JavaBitSetRow(bits)
             result = MappedRow(x, self._docIdsMap)

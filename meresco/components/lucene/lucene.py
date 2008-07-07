@@ -35,7 +35,7 @@ from meresco.components.lucene.clausecollector import ClauseCollector
 from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
 from meresco.components.statistics import Logger
-from meresco.framework import Observable
+from meresco.framework import Observable, Resource
 
 from bitmatrix import IncNumberMap
 
@@ -76,23 +76,23 @@ class LuceneIndex(Observable, Logger):
         if bitwise:
             self._writer.optimize()                             # create a consistent state
         self._lastUpdateTimeoutToken = None
-        self._reader = self._openReader()
+        self._readerResource = self._openReader()
         self._searcher = self._openSearcher()
 
         if bitwise:
-            self._docIdsAsOriginal = IncNumberMap(self._reader.numDocs())
+            self._docIdsAsOriginal = IncNumberMap(self._readerResource.numDocs())
         else:
             self._docIdsAsOriginal = None
 
         self._logFile = open('/tmp/luceneLog', 'a')
-        self._log('__init__', self._reader.numDocs())
+        self._log('__init__', self._readerResource.numDocs())
 
     def _log(self, *args):
         self._logFile.write("\t".join(map(str, args)) + "\n")
         self._logFile.flush()
 
     def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
-        return Hits(self._searcher, self._reader, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
+        return Hits(self._searcher, self._readerResource, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
         return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
@@ -123,15 +123,16 @@ class LuceneIndex(Observable, Logger):
 
     def _reopenIndex(self):
         self._reOpenWriter()
-        self._reader.close()
-        self._reader = self._openReader()
+        #self._readerResource.close()
+        self._readerResource = None
+        self._readerResource = self._openReader()
         self._searcher.close()
         self._searcher = self._openSearcher()
 
         if self._bitwise:
             self._doBitwiseExtensions()
         else:
-            self.do.indexStarted(self._reader)
+            self.do.indexStarted(self._readerResource)
 
     def _doBitwiseExtensions(self):
         self._log("_doBitwiseExtensions")
@@ -191,20 +192,21 @@ class LuceneIndex(Observable, Logger):
                 self._reopenIndex()
 
     def docCount(self):
-        return self._reader.numDocs()
+        return self._readerResource.numDocs()
 
     def _openReader(self):
-        return IndexReader.open(self._directoryName)
+        return Resource(IndexReader.open(self._directoryName))
 
     def _openSearcher(self):
-        return IndexSearcher(self._reader)
+        return IndexSearcher(self._readerResource._subject)
 
     def _getPyLuceneSort(self, sortBy, sortDescending):
         return sortBy and Sort(sortBy, bool(sortDescending)) or None
 
     def close(self):
         self._writer.close()
-        self._reader.close()
+        #self._readerResource.close()
+        self._readerResource = None
         self._searcher.close()
 
     def __del__(self):
@@ -213,7 +215,7 @@ class LuceneIndex(Observable, Logger):
     def start(self):
         self._reopenIndex()
         if self._bitwise:
-            self.do.indexStarted(self._reader)
+            self.do.indexStarted(self._readerResource)
 
 def documentDictToFieldsAndTermsList(documentDict):
     """Waar dit hoort weten we nog niet zo goed.

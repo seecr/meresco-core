@@ -45,7 +45,7 @@ from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 from cqlparser import parseString
 
-from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery, MatchAllDocsQuery
+from PyLucene import Document as PyDocument, Field, IndexReader, IndexWriter, Term, TermQuery, MatchAllDocsQuery, JavaError
 from weightless import Reactor
 
 class LuceneTest(CQ2TestCase):
@@ -180,6 +180,21 @@ class LuceneTest(CQ2TestCase):
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(0, len(hits))
 
+    def testIndexReaderResourceManagementKeepsIndexOpenAndClosesItWhenAllRefsAreGone(self):
+        myDocument = Document('0123456789')
+        myDocument.addIndexedField('title', 'een titel')
+        self._luceneIndex.addDocument(myDocument)
+        self.timerCallbackMethod()
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        # keep ref to hits, while refreshing/reopening the index after timeout
+        self.timerCallbackMethod()
+        # now try to get the results, 
+        try:
+            list(hits)
+        except JavaError, e:
+            self.assertEquals('org.apache.lucene.store.AlreadyClosedException: this IndexReader is closed', str(e))
+            self.fail('this must not fail on a closed reader')
+        
 
     def testIndexCloses(self):
         index = LuceneIndex(self.tempdir + '/x', cqlComposer=None, timer=self.timer)

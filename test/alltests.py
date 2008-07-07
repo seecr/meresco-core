@@ -95,6 +95,8 @@ from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
 from dictionary.xml2dicttest import Xml2DictTest
 from dictionary.xpath2dicttest import XPath2DictTest
 
+from resourcetest import ResourceTest
+
 if __name__ == '__main__':
         unittest.main()
         os.system('find .. -name "*.pyc" | xargs rm -f')
