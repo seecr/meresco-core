@@ -62,6 +62,12 @@ class CqlParseTreeToLuceneQueryTest(TestCase):
         expected.add(Term('unqualified', 'noot'))
         self.assertConversion(expected, 'aap:noot')
 
+    def testStandardAnalyserWithoutStopWords(self):
+        expected = PhraseQuery()
+        for term in ["no", "is", "the", "only", "option"]:
+            expected.add(Term("unqualified", term))
+        self.assertConversion(expected, '"no is the only option"')
+
 
     def testIndexRelationTermOutput(self):
         self.assertConversion(TermQuery(Term("animal", "cats")), 'animal=cats')
