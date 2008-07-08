@@ -65,6 +65,7 @@ from xslicetest import XSliceTest
 from http.basicauthenticationtest import BasicAuthenticationTest
 from http.fileservertest import FileServerTest
 from http.pathfiltertest import PathFilterTest
+from http.sessionhandlertest import SessionHandlerTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
