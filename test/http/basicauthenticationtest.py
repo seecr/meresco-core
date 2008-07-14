@@ -44,28 +44,32 @@ class BasicAuthenticationTest(TestCase):
 
     def testHandleSimplePrivateRequest(self):
         authentication = BasicAuthentication(realm='Test Realm')
-        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True})
+        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'getUser':{'name':'aUser'}})
         authentication.addObserver(interceptor)
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
         response = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
         list(compose(response))
         self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
         self.assertEquals(('aUser', 'aPassword'), interceptor.calledMethods[0].args)
-        self.assertEquals('handleRequest', interceptor.calledMethods[1].name)
-        self.assertEquals({'name': 'aUser'}, interceptor.calledMethods[1].kwargs['user'])
+        self.assertEquals('getUser', interceptor.calledMethods[1].name)
+        self.assertEquals(('aUser',), interceptor.calledMethods[1].args)
+        self.assertEquals('handleRequest', interceptor.calledMethods[2].name)
+        self.assertEquals({'name': 'aUser'}, interceptor.calledMethods[2].kwargs['user'])
 
     def testHandleDifferentUsers(self):
         authentication = BasicAuthentication(realm='Test Realm')
-        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True})
+        userdata = {'name':'aUser'}
+        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'getUser':userdata})
         authentication.addObserver(interceptor)
         headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
         response = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
         list(compose(response))
-        self.assertEquals({'name': 'aUser'}, interceptor.calledMethods[1].kwargs['user'])
+        self.assertEquals({'name': 'aUser'}, interceptor.calledMethods[2].kwargs['user'])
         headers = {'Authorization': 'Basic ' + b64encode('anotherUser:anotherPassword')}
+        userdata['name'] = 'anotherUser'
         response = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
         list(compose(response))
-        self.assertEquals({'name': 'anotherUser'}, interceptor.calledMethods[3].kwargs['user'])
+        self.assertEquals({'name': 'anotherUser'}, interceptor.calledMethods[5].kwargs['user'])
 
     def testDetectValidUserWithPasswordAndUserName(self):
         authentication = BasicAuthentication(realm='Test Realm')
@@ -89,21 +93,6 @@ class BasicAuthenticationTest(TestCase):
         self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
         self.assertTrue('WWW-Authenticate: Basic realm="Test Realm"\r\n' in response, response)
         self.assertTrue('Username or password are not valid.' in response)
-
-    def testCheckPasswordOnlyOnceAndKeepUserDict(self):
-        authentication = BasicAuthentication(realm='Test Realm')
-        interceptor = CallTrace('httphandler', returnValues={'isValidLogin': True, 'handleRequest': (x for x in 'response')})
-        authentication.addObserver(interceptor)
-        headers = {'Authorization': 'Basic ' + b64encode('aUser:aPassword')}
-        results = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
-        list(compose(results))
-        results = authentication.handleRequest(port='8080', RequestURI='/private', Method='GET', Headers=headers)
-        list(compose(results))
-        self.assertEquals('isValidLogin', interceptor.calledMethods[0].name)
-        self.assertEquals('handleRequest', interceptor.calledMethods[1].name)
-        self.assertEquals('handleRequest', interceptor.calledMethods[2].name)
-        userObjectId = id(interceptor.calledMethods[1].kwargs['user'])
-        self.assertEquals(userObjectId,id(interceptor.calledMethods[2].kwargs['user']) )
 
     def testParseHeader(self):
         authentication = BasicAuthentication(realm='Test Realm')

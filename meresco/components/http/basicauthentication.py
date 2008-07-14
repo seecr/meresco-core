@@ -34,22 +34,18 @@ class BasicAuthentication(Observable):
     def __init__(self, realm):
         Observable.__init__(self)
         self._realm = realm
-        self._validUsers = {}
 
     def handleRequest(self, Headers={}, *args, **kwargs):
         relevantHeader = Headers.get('Authorization', None)
         if relevantHeader == None:
             yield REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Please give username and password.')
             return
-        credentials = self._parseHeader(relevantHeader)
-        if not credentials in self._validUsers:
-            if not self.any.isValidLogin(*credentials):
-                yield REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Username or password are not valid.')
-                return
-            else:
-                username, password = credentials
-                self._validUsers[credentials] = {'name': username}
-        yield self.all.handleRequest(Headers=Headers, user=self._validUsers[credentials], *args, **kwargs)
+        username, password = self._parseHeader(relevantHeader)
+        if not self.any.isValidLogin(username, password):
+            yield REQUEST_AUTHENTICATION_RESPONSE % (self._realm, 'Username or password are not valid.')
+            return
+        user = self.any.getUser(username)
+        yield self.all.handleRequest(Headers=Headers, user=user, *args, **kwargs)
 
     def _parseHeader(self, header):
         parts = header.split()
