@@ -42,3 +42,4 @@ from accumulate import Accumulate
 from xmlcompose import XmlCompose
 from rssitem import RssItem
 from venturi import Venturi
+from configuration import Configuration, readConfig
