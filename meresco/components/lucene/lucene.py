@@ -84,13 +84,6 @@ class LuceneIndex(Observable, Logger):
         else:
             self._docIdsAsOriginal = None
 
-        self._logFile = open('/tmp/luceneLog', 'a')
-        self._log('__init__', self._readerResource.numDocs())
-
-    def _log(self, *args):
-        self._logFile.write("\t".join(map(str, args)) + "\n")
-        self._logFile.flush()
-
     def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
         return Hits(self._searcher, self._readerResource, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
 
@@ -135,21 +128,16 @@ class LuceneIndex(Observable, Logger):
             self.do.indexStarted(self._readerResource)
 
     def _doBitwiseExtensions(self):
-        self._log("_doBitwiseExtensions")
         docIds = []
         for id, documentDict in self._storedForReopen.items():
-            self._log("_doBitwiseExtensions: determine docId for", id)
             fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
             docId = self._docIdForId(id)
             if docId != None:
-                self._log("_doBitwiseExtensions: found docId", docId)
                 docIds.append((docId, fieldAndTermsList))
         self._storedForReopen = {}
 
         for docId in self._storedDeletesForReopen:
-            self._log("_doBitwiseExtensions: deleted docId", docId)
             mappedId = self._docIdsAsOriginal.get(docId)
-            self._log("_doBitwiseExtensions: deleted docId mappedId", mappedId)
             self.do.deleteDocument(mappedId)
             self._docIdsAsOriginal.delete(docId)
         self._storedDeletesForReopen = []
@@ -157,18 +145,13 @@ class LuceneIndex(Observable, Logger):
         if docIds:
             docIds = sorted(docIds)
             for docId, fieldAndTermsList in docIds:
-                self._log("_doBitwiseExtensions: adding to map", docId)
                 mappedId = self._docIdsAsOriginal.add(docId)
-                self._log("_doBitwiseExtensions: adding to bitmatrix", mappedId)
                 self.do.addDocument(mappedId, fieldAndTermsList)
-        self._log("_doBitwiseExtensions done")
 
     def _delete(self, anId):
         if self._bitwise:
-            self._log("_delete", anId)
             docId = self._docIdForId(anId)
             if not docId == None:
-                self._log("_delete: append", docId)
                 self._storedDeletesForReopen.append(docId)
 
         self._writer.deleteDocuments(Term(IDFIELD, anId))
@@ -179,14 +162,12 @@ class LuceneIndex(Observable, Logger):
 
     @lastUpdateTimeoutToken
     def addDocument(self, aDocument):
-        self._log("addDocument", aDocument.identifier)
         self._delete(aDocument.identifier)
 
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
 
         if self._bitwise:
-            self._log("addDocument: append")
             self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
             if len(self._storedForReopen) >= 250:
                 self._reopenIndex()
