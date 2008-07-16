@@ -41,6 +41,7 @@ import unittest
 from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
+from cql2lucenequerytest import Cql2LuceneQueryTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest

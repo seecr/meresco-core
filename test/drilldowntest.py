@@ -42,7 +42,7 @@ from bitmatrix import Row
 class DrilldownTest(CQ2TestCase):
     #Helper functions:
     def addUntokenized(self, documents):
-        index = LuceneIndex(self.tempdir, 'CQL Composer ignored', timer=TimerForTestSupport())
+        index = LuceneIndex(self.tempdir, timer=TimerForTestSupport())
         for docId, fields in documents:
             myDocument = Document(docId)
             for field, value in fields.items():
@@ -69,7 +69,7 @@ class DrilldownTest(CQ2TestCase):
         convertor = LuceneRawDocSets(reader, ['field_0', 'field_1'])
         drilldown = Drilldown(['field_0', 'field_1'])
         drilldown.loadDocSets(convertor.getDocSets())
-        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace())
+        index = LuceneIndex(self.tempdir, timer=CallTrace())
         index._reopenIndex()
         queryResults = index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
@@ -110,7 +110,7 @@ class DrilldownTest(CQ2TestCase):
         from PyLucene import MatchAllDocsQuery
         from cq2utils import CallTrace
 
-        index = LuceneIndex(self.tempdir, 'CQL composer not used', timer=CallTrace(""), bitwise=True)
+        index = LuceneIndex(self.tempdir, timer=CallTrace(""), bitwise=True)
         drilldown = Drilldown(['value'])
         drilldown.loadDocSets([("value", [])])
         index.addObserver(drilldown)

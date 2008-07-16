@@ -39,7 +39,7 @@ from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.components.lucene.document import Document, IDFIELD
 
-from meresco.components.lucene.lucene import LuceneIndex
+from meresco.components.lucene import LuceneIndex, CQL2LuceneQuery
 from meresco.components.dictionary import  DocumentDict, DocumentField
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
@@ -55,7 +55,6 @@ class LuceneTest(CQ2TestCase):
         self.timer = CallTrace('timer')
         self._luceneIndex = LuceneIndex(
             directoryName=self.tempdir,
-            cqlComposer=Composer({}),
             timer=self.timer)
 
         self.timerCallbackMethod = self._luceneIndex._lastUpdateTimeout
@@ -127,7 +126,6 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.close()
         myIndex = LuceneIndex(
             directoryName=self.tempdir,
-            cqlComposer=Composer({}),
             timer=Reactor())
         class MyException(Exception):
             pass
@@ -188,16 +186,16 @@ class LuceneTest(CQ2TestCase):
         hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         # keep ref to hits, while refreshing/reopening the index after timeout
         self.timerCallbackMethod()
-        # now try to get the results, 
+        # now try to get the results,
         try:
             list(hits)
         except JavaError, e:
             self.assertEquals('org.apache.lucene.store.AlreadyClosedException: this IndexReader is closed', str(e))
             self.fail('this must not fail on a closed reader')
-        
+
 
     def testIndexCloses(self):
-        index = LuceneIndex(self.tempdir + '/x', cqlComposer=None, timer=self.timer)
+        index = LuceneIndex(self.tempdir + '/x', timer=self.timer)
         myDocument = Document('1')
         myDocument.addIndexedField('title', 'een titel')
         index.addDocument(myDocument)
@@ -206,31 +204,18 @@ class LuceneTest(CQ2TestCase):
         index = None
         self.assertFalse(isfile(self.tempdir + '/x/write.lock'))
 
-    def testExecuteCQLUsesComposer(self):
-        mockComposer = CallTrace("CQL Composer")
-        mockComposer.returnValues["compose"] = TermQuery(Term('title', 'titel'))
-        index = LuceneIndex(directoryName=self.tempdir+'/x', cqlComposer=mockComposer, timer=None)
-        astTree = CallTrace("AST")
-        index.executeCQL(astTree)
-        self.assertEquals(1, len(mockComposer.calledMethods))
-        self.assertEquals(astTree, mockComposer.calledMethods[0].arguments[0])
-
-    def testLoggingCQL(self):
-        def logShunt(**dict):
-            self.dict = dict
-        self._luceneIndex.log = logShunt
-        self._luceneIndex.executeCQL(parseString("term"))
-        self.assertEquals({'clause': 'term'}, self.dict)
-        self._luceneIndex.executeCQL(parseString("field=term"))
-        self.assertEquals({'clause': 'field = term'}, self.dict)
-        self._luceneIndex.executeCQL(parseString("field =/boost=1.1 term"))
-        self.assertEquals({'clause': 'field =/boost=1.1 term'}, self.dict)
-        self._luceneIndex.executeCQL(parseString("field exact term"))
-        self.assertEquals({'clause': 'field exact term'}, self.dict)
-        self._luceneIndex.executeCQL(parseString("term1 AND term2"))
-        self.assertEquals({'clause': 'term1'}, self.dict)
-        self._luceneIndex.executeCQL(parseString("(term)"))
-        self.assertEquals({'clause': 'term'}, self.dict)
+    def testCQLConversionIntegration(self):
+        queryConvertor = CQL2LuceneQuery([])
+        queryConvertor.addObserver(self._luceneIndex)
+        myDocument = Document('0123456789')
+        myDocument.addIndexedField('title', 'een titel')
+        self._luceneIndex.addDocument(myDocument)
+        self.timerCallbackMethod()
+        hits1 = list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))
+        hits2 = list(queryConvertor.executeCQL(parseString("title = titel")))
+        self.assertEquals(len(hits1), len(hits2))
+        self.assertEquals(['0123456789'], hits1)
+        self.assertEquals(['0123456789'], hits2)
 
     def testUpdateSetsTimer(self):
         myDocument = Document('1')
@@ -257,9 +242,9 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addDocument(myDocument)
         timeCallback = self.timer.calledMethods[0].args[1]
-        self.assertEquals(0, len(list(self._luceneIndex.executeCQL(parseString("title=titel")))))
+        self.assertEquals(0, len(list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))))
         timeCallback()
-        self.assertEquals(1, len(list(self._luceneIndex.executeCQL(parseString("title=titel")))))
+        self.assertEquals(1, len(list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))))
         # after callback the old timer will not be removed
         self._luceneIndex.addDocument(myDocument)
         self.assertEquals(['addTimer', 'addTimer'],

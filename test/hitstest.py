@@ -44,7 +44,7 @@ class HitsTest(CQ2TestCase):
         self.assertEquals(15, len(hits))
 
     def testBitMatrixRow(self):
-        index = LuceneIndex(self.tempdir, 'cql composer ignored', TimerForTestSupport())
+        index = LuceneIndex(self.tempdir, TimerForTestSupport())
         document = Document('0')
         document.addIndexedField('field', 'value')
         index.addDocument(document)

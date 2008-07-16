@@ -39,7 +39,7 @@ class LuceneRawDocSetsTest(CQ2TestCase):
 
     #Helper functions:
     def addUntokenized(self, documents):
-        index = LuceneIndex(self.tempdir, 'CQL Composer ignored', timer=TimerForTestSupport())
+        index = LuceneIndex(self.tempdir, timer=TimerForTestSupport())
         for docId, fields in documents:
             myDocument = Document(docId)
             for field, value in fields.items():

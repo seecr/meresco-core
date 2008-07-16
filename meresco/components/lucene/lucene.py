@@ -29,12 +29,9 @@
 from os.path import isdir
 from os import makedirs
 from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort,  StandardTokenizer, StandardFilter, LowerCaseFilter
-from meresco.components.lucene.cqlparsetreetolucenequery import Composer
-from meresco.components.lucene.clausecollector import ClauseCollector
 
 from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
-from meresco.components.statistics import Logger
 from meresco.framework import Observable, Resource
 
 from bitmatrix import IncNumberMap
@@ -56,13 +53,12 @@ def lastUpdateTimeoutToken(method):
             luceneIndexSelf._lastUpdateTimeoutToken = luceneIndexSelf._timer.addTimer(1, luceneIndexSelf._lastUpdateTimeout)
     return wrapper
 
-class LuceneIndex(Observable, Logger):
+class LuceneIndex(Observable):
 
-    def __init__(self, directoryName, cqlComposer, timer, bitwise=False):
+    def __init__(self, directoryName, timer, bitwise=False):
         Observable.__init__(self)
         self._bitwise = bitwise
         self._directoryName = directoryName
-        self._cqlComposer = cqlComposer
         self._timer = timer
 
         self._storedForReopen = {}
@@ -89,10 +85,6 @@ class LuceneIndex(Observable, Logger):
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
         return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
-
-    def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
-        ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
-        return self.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
         try:
