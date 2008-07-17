@@ -27,6 +27,7 @@
 #
 ## end license ##
 
+#comment added for svn ci test
 import os, sys
 os.system('find .. -name "*.pyc" | xargs rm -f')
 
