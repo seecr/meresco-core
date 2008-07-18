@@ -110,6 +110,8 @@ class Observable(object):
                 node, branch = node
                 node.addObservers(branch)
             self.addObserver(node)
+            if hasattr(node, 'start'):
+                node.start()
 
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):

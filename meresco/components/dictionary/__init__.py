@@ -25,7 +25,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from documentdict import DocumentDict, DocumentField
+from documentdict import DocumentDict, DocumentField, fromDict, asDict
 from transform import Transform
 from xml2dict import Xml2Dict
 from dict2doc import Dict2Doc

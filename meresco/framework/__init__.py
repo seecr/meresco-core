@@ -30,3 +30,4 @@ from observable import Observable, Transparant
 from observer import ObserverFunction
 from generatorutils import decorate, compose
 from resource import Resource
+from helix import findHelix

@@ -80,6 +80,9 @@ class LuceneIndex(Observable):
         else:
             self._docIdsAsOriginal = None
 
+    def start(self):
+        self.do.indexStarted(self._readerResource)
+
     def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
         return Hits(self._searcher, self._readerResource, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
 
@@ -105,6 +108,9 @@ class LuceneIndex(Observable):
             return None
         assert len(oneElementList) == 1
         return oneElementList[0]
+
+    def getIndexReader(self):
+        return self._readerResource
 
     def _reopenIndex(self):
         self._reOpenWriter()

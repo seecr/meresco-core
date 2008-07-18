@@ -25,7 +25,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from PyLucene import Term
+from PyLucene import Term, IndexReader
 
 class LuceneRawDocSets(object):
     """IndexReader.terms returns something of the following form, if fieldname == fieldname3
@@ -40,9 +40,13 @@ class LuceneRawDocSets(object):
     We use a "do ... while" idiom because calling next would advance the internal
     pointer, resulting in a missed first element
     """
-    def __init__(self, aLuceneIndexReader, fieldNames):
-        self._reader = aLuceneIndexReader
+    def __init__(self, aLuceneIndexReader, fieldNames=None):
         self._fieldNames = fieldNames
+        if not fieldNames:
+            self._fieldNames = [fieldname
+                for fieldname in aLuceneIndexReader.getFieldNames(IndexReader.FieldOption.ALL)
+                    if not fieldname.startswith('__')]
+        self._reader = aLuceneIndexReader
 
     def getDocSets(self):
         termDocs = self._reader.termDocs()
@@ -70,3 +74,6 @@ class LuceneRawDocSets(object):
 
     def docCount(self):
         return self._reader.numDocs()
+
+    def getFieldNames(self):
+        return self._fieldNames

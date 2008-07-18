@@ -99,6 +99,7 @@ from dictionary.xml2dicttest import Xml2DictTest
 from dictionary.xpath2dicttest import XPath2DictTest
 
 from resourcetest import ResourceTest
+from helixtest import HelixTest
 
 if __name__ == '__main__':
         unittest.main()

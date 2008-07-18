@@ -66,6 +66,11 @@ class FieldMatrix(object):
     def deleteDocument(self, docId):
         self._matrix.deleteColumn(docId)
 
+    def allRowCardinalities(self):
+        for nr, occurences in self._matrix.rowCardinalities():
+            yield self._row2term[nr], occurences
+        
+
     def drilldown(self, row, maxResults = 0):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
         for nr, occurences in drilldownResults:
@@ -80,8 +85,9 @@ class FieldMatrix(object):
 
 class Drilldown(object):
 
-    def __init__(self, drilldownFieldnames):
-        self._drilldownFieldnames = drilldownFieldnames
+    def __init__(self, staticDrilldownFieldnames=None):
+        self._staticDrilldownFieldnames = staticDrilldownFieldnames
+        self._actualDrilldownFieldnames = self._staticDrilldownFieldnames
         self._fieldMatrices = {}
         # for supporting the old test only
         self._docSets = self._fieldMatrices
@@ -92,22 +98,31 @@ class Drilldown(object):
 
     def addDocument(self, docId, fieldAndTermsList):
         for fieldname, terms in fieldAndTermsList:
-            if fieldname in self._drilldownFieldnames:
+            if fieldname in self._actualDrilldownFieldnames:
                 self._fieldMatrices[fieldname].addDocument(docId, terms)
 
     def deleteDocument(self, docId):
-        for fieldname in self._drilldownFieldnames:
+        for fieldname in self._actualDrilldownFieldnames:
             self._fieldMatrices[fieldname].deleteDocument(docId)
 
     def indexStarted(self, indexReader):
-        convertor = LuceneRawDocSets(indexReader, self._drilldownFieldnames)
+        convertor = LuceneRawDocSets(indexReader, self._staticDrilldownFieldnames)
+        self._actualDrilldownFieldnames = convertor.getFieldNames()
         self.loadDocSets(convertor.getDocSets())
 
-    def drilldown(self, row, drilldownFieldnamesAndMaximumResults):
+    def drilldown(self, row, drilldownFieldnamesAndMaximumResults=[]):
+        if not drilldownFieldnamesAndMaximumResults:
+            drilldownFieldnamesAndMaximumResults = [(fieldname, 0)
+                for fieldname in self._actualDrilldownFieldnames]
+                    
         for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults:
-            if fieldname not in self._drilldownFieldnames:
-                raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._drilldownFieldnames))
+            if fieldname not in self._actualDrilldownFieldnames:
+                raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._actualDrilldownFieldnames))
             yield fieldname, self._fieldMatrices[fieldname].drilldown(row, maximumResults)
+
+    def rowCardinalities(self):
+        for fieldname in self._actualDrilldownFieldnames:
+            yield fieldname, self._fieldMatrices[fieldname].allRowCardinalities()
 
     def prefixDrilldown(self, fieldname, prefix, row, maximumResults=0):
         return self._fieldMatrices[fieldname].prefixDrilldown(prefix, row, maximumResults)
