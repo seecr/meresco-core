@@ -58,7 +58,15 @@ class SessionHandlerTest(TestCase):
         result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % 'injected_id'})))
         self.assertNotEqual('injected_id', sessions[0]['id'])
 
-
+    def testSetSesionVarsWithLink(self):
+        arguments = {}
+        def handleRequest(session=None, *args, **kwargs):
+            arguments.update(kwargs)
+            yield session.setLink('linktitle', 'key', 'value')
+        self.observer.handleRequest = handleRequest
+        result = ''.join(self.handler.handleRequest(arguments))
+        self.assertEquals('a href', result)
+        
 
 
 
