@@ -39,7 +39,7 @@ class XmlXPathTest(CQ2TestCase):
         
     def createXmlXPath(self, xpathList, nsMap):
         self.observable = Observable()
-        self.observer = CallTrace('observer')
+        self.observer = CallTrace('observer',ignoredAttributes=['start'] )
         self.observable.addObservers([
             (XmlParseLxml(), [
                 (XmlXPath(xpathList, nsMap), [

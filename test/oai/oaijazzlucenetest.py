@@ -73,6 +73,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
     def testAdd(self):
         self.index.ignoredAttributes = ['isAvailable', 'store', 'unknown', 'deletePart']
         self.mockedjazz.add(self.id, self.partName, bind_string('<empty/>'))
+        
         self.assertEquals(1,len(self.index.calledMethods))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[0]))
 

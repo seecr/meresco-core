@@ -39,7 +39,7 @@ class XmlPumpTest(CQ2TestCase):
 
     def testInflate(self):
         observable = Observable()
-        observer = CallTrace('Observer')
+        observer = CallTrace('Observer', ignoredAttributes=['start'])
         observable.addObservers([(XmlParseAmara(), [observer])])
 
         xmlString = """<tag><content>contents</content></tag>"""
@@ -55,7 +55,7 @@ class XmlPumpTest(CQ2TestCase):
 
     def testDeflate(self):
         observable = Observable()
-        observer = CallTrace('Observer')
+        observer = CallTrace('Observer', ignoredAttributes=['start'])
         observable.addObservers([(XmlPrintAmara(), [observer])])
 
         s = """<tag><content>contents</content></tag>"""
@@ -88,7 +88,7 @@ class XmlPumpTest(CQ2TestCase):
 
     def testXmlParseAmaraRespondsToEveryMessage(self):
         observable = Observable()
-        observer = CallTrace('Observer')
+        observer = CallTrace('Observer', ignoredAttributes=['start'])
         observable.addObservers([
             (XmlParseAmara(),[
                 observer
@@ -133,7 +133,6 @@ class XmlPumpTest(CQ2TestCase):
         ])
 
         observable.do.something('identifier', 'partName', '<?xml version="1.0"?><a><b>c</b></a>')
-
         self.assertEqualsWS('<a><b>c</b></a>', amara.calledMethods[0].args[2].xml())
         self.assertEqualsWS('<a><b>c</b></a>', deflate.calledMethods[0].args[2])
         self.assertEqualsWS('<a><b>c</b></a>', lxml.calledMethods[0].args[2])

@@ -103,6 +103,8 @@ class Observable(object):
 
     def addObserver(self, observer):
         self._observers.append(observer)
+        if hasattr(observer.__class__, 'observer_init'): # You can't fake the observer_init method
+            observer.observer_init()
 
     def addObservers(self, tree):
         for node in tree:
@@ -110,8 +112,6 @@ class Observable(object):
                 node, branch = node
                 node.addObservers(branch)
             self.addObserver(node)
-            if hasattr(node, 'start'):
-                node.start()
 
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):

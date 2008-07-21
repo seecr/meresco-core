@@ -36,6 +36,17 @@ import unittest
 
 class ObservableTest(unittest.TestCase):
 
+    def testObserverInit(self):
+        initcalled = [0]
+        class MyObserver(object):
+            def observer_init(self):
+                initcalled[0] += 1
+        observable = Observable()
+        observable.addObserver(MyObserver())
+        self.assertEquals([1], initcalled)
+        observable.addObservers([MyObserver()])
+        self.assertEquals([2], initcalled)
+
     def testAllWithoutImplementers(self):
         observable = Observable()
         responses = observable.all.someMethodNobodyIsListeningTo()
