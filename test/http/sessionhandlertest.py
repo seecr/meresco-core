@@ -48,7 +48,6 @@ class SessionHandlerTest(TestCase):
         self.assertEquals(sessions[0], sessions[1])
         self.assertEquals(id(sessions[0]),id(sessions[1]))
 
-
     def testInjectAnyCookie(self):
         sessions = []
         def handleRequest(session=None, *args, **kwargs):
@@ -62,11 +61,47 @@ class SessionHandlerTest(TestCase):
         arguments = {}
         def handleRequest(session=None, *args, **kwargs):
             arguments.update(kwargs)
-            yield session.setLink('linktitle', 'key', 'value')
+            yield session.setLink('setvalue', 'key', 'value1')
+            yield session.unsetLink('unsetvalue', 'key', 'value2')
         self.observer.handleRequest = handleRequest
         result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={})))
-        self.assertEquals('<a href="?key=%2Bvalue">linktitle</a>', result)
+        self.assertEquals(  '<a href="?key=%2B%27value1%27">setvalue</a>' +
+                            '<a href="?key=-%27value2%27">unsetvalue</a>', result)
         
+    def testSimpleDataTypeArgumentsViaURL(self):
+        def handleRequest(session=None, *args, **kwargs):
+            yield session.setLink('linktitle', 'key', ('a simple tuple',))
+        self.observer.handleRequest = handleRequest
+        result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={})))
+        self.assertEquals("""<a href="?key=%2B%28%27a+simple+tuple%27%2C%29">linktitle</a>""", result)
+
+    def testParseAndSetSesionVars(self):
+        arguments = {}
+        def handleRequest(session=None, *args, **kwargs):
+            arguments.update(session)
+            yield 'goodbye'
+        self.observer.handleRequest = handleRequest
+        list(self.handler.handleRequest(arguments={'key': ["+('a simple tuple',)"]}, Client=('127.0.0.1', 12345)))
+        self.assertEquals(2, len(arguments))
+        self.assertTrue('key' in arguments)
+        self.assertEquals( [('a simple tuple',)], arguments['key'])
+
+    def testParseAndSetSesionVars(self):
+        arguments = {}
+        def handleRequest(session=None, *args, **kwargs):
+            arguments.update(session)
+            yield 'goodbye'
+        self.observer.handleRequest = handleRequest
+        list(self.handler.handleRequest(arguments={'aap': ["+'noot'"]}, Client=('127.0.0.1', 12345)))
+        self.assertEquals( ['noot'], arguments['aap'])
+        list(self.handler.handleRequest(arguments={'aap': ["-'noot'"]}, Client=('127.0.0.1', 12345)))
+        self.assertEquals( [], arguments['aap'])
+
+
+
+    def testDoNotEvalAnything(self):
+        response = ''.join(self.handler.handleRequest(arguments={'key': ["+exit(0)"]}, Client=('127.0.0.1', 12345)))
+        self.assertEquals("HTTP/1.0 400 Bad Request\r\n\r\nname 'exit' is not defined", response)
 
 # Cookie bevat:
 # - id (session)

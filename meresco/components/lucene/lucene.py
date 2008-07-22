@@ -80,7 +80,7 @@ class LuceneIndex(Observable):
         else:
             self._docIdsAsOriginal = None
 
-    def start(self):
+    def observer_init(self):
         self.do.indexStarted(self._readerResource)
 
     def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):

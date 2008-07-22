@@ -37,7 +37,22 @@ class ObservableHttpServer(Observable):
     def __init__(self, reactor, port, timeout=1):
         Observable.__init__(self)
         self._port = port
-        server = HttpServer(reactor, port, self._connect, timeout=timeout)
+        self._reactor = reactor
+        self._timeout = timeout
+        
+    def observer_init(self):
+        server = HttpServer(self._reactor, self._port, self._connect, timeout=self._timeout)
 
     def _connect(self, **kwargs):
-        return self.all.handleRequest(port=self._port, **kwargs)
+        return self.handleRequest(port=self._port, **kwargs)
+
+    def handleRequest(self, RequestURI=None, *args, **kwargs):
+        scheme, netloc, path, query, fragments = urlsplit(RequestURI)
+        arguments = parse_qs(query)
+        requestArguments = {
+            'scheme': scheme, 'netloc': netloc, 'path': path, 'query': query, 'fragments': fragments,
+            'arguments': arguments,
+            'RequestURI': RequestURI}
+        requestArguments.update(kwargs)
+        return self.all.handleRequest(**requestArguments)
+

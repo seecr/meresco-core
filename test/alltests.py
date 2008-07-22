@@ -53,6 +53,7 @@ from logobservertest import LogObserverTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from observabletest import ObservableTest
+from observablehttpservertest import ObservableHttpServerTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from rsstest import RssTest

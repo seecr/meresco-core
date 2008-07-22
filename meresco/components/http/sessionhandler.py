@@ -24,11 +24,13 @@ class Session(object):
         self._data[key] = value
 
     def setLink(self, caption, key, value):
-        return '<a href="?%s">%s</a>' % (urlencode({key: '+'+value}), caption)
+        return '<a href="?%s">%s</a>' % (urlencode({key: '+' + repr(value)}), caption)
 
     def unsetLink(self, caption, key, value):
-        return '<a href="?%s">%s</a>' % (urlencode({key: '-'+value}), caption)
+        return '<a href="?%s">%s</a>' % (urlencode({key: '-' + repr(value)}), caption)
 
+    def keys(self):
+        return self._data.keys()
 
 class SessionHandler(Observable):
     def __init__(self, secretSeed):
@@ -36,9 +38,7 @@ class SessionHandler(Observable):
         self._secretSeed = secretSeed
         self._sessions = {}
 
-    def handleRequest(self, RequestURI='', Client=None, Headers={}, *args, **kwargs):
-        scheme, netloc, path, query, fragments = urlsplit(RequestURI)
-        arguments = parse_qs(query)
+    def handleRequest(self, RequestURI='', Client=None, Headers={}, arguments = {}, *args, **kwargs):
         sessioncookies = [cookie.strip() for cookie in Headers.get('Cookie','').split(';') if cookie.strip().startswith('session=')]
         sessionid, session = None, None
         if len(sessioncookies) >=1:
@@ -55,11 +55,15 @@ class SessionHandler(Observable):
             if not k in session:
                 session[k] = []
             for value in v:
-                sign, value = value[0], value[1:]
+                try:
+                    sign, value = value[0], eval(value[1:], {'__builtins__': {}})
+                except Exception, e:
+                    yield 'HTTP/1.0 400 Bad Request\r\n\r\n' + str(e)
+                    return
                 if sign == '+':
                     session[k].append(value)
-                elif sign == '-':
-                    session[k].remove(value)
+                elif sign == '-' and value in session[k]:
+                        session[k].remove(value)
         
         result = self.all.handleRequest(session=session, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
         alreadyDone = False
