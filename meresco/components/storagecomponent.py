@@ -26,17 +26,23 @@
 #
 ## end license ##
 
+from storage import HierarchicalStorage, Storage
+
 def defaultSplit((id, partName)):
     result = id.split(':',1)
     if partName != None:
-        result += [partName + '.xml']
+        result += [partName]
     return result
 
+def defaultJoin(parts):
+    id = ":".join(parts[:-1])
+    partName = parts[-1]
+    return id, partName
+
 class StorageComponent(object):
-    def __init__(self, storage): #storeDirectory, split=defaultSplit): <= zo was't
-        if isinstance(storage, str):
-            raise Exception("Deprecated..., 1st param of StorageComponent should be a HierarchicalStorage, not a string")
-        self._storage = storage
+    def __init__(self, directory, split=defaultSplit, join=defaultJoin):
+        assert type(directory) == str, 'Please use directory as first parameter'
+        self._storage = HierarchicalStorage(Storage(directory), split, join)
 
     def store(self, *args, **kwargs):
         return self.add(*args, **kwargs)

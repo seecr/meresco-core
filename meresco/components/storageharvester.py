@@ -27,16 +27,11 @@
 ## end license ##
 
 from meresco.framework.observable import Observable
-from meresco.components.storagecomponent import defaultSplit
+from meresco.components.storagecomponent import defaultSplit, defaultJoin
 
 from storage import HierarchicalStorage, Storage
 
 from cStringIO import StringIO
-
-def defaultJoin(parts):
-    id = ":".join(parts[:-1])
-    partName = parts[-1][:-1 * len('.xml')]
-    return id, partName
 
 class StorageHarvester(Observable):
 
