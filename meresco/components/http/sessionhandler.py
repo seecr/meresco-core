@@ -11,6 +11,9 @@ class Session(object):
     def __init__(self, sessionId):
         self._data = {'id': sessionId}
 
+    def __getattr__(self, name):
+        return getattr(self._data)
+
     def get(self, *args, **kwargs):
         return self._data.get(*args, **kwargs)
 
@@ -50,7 +53,7 @@ class SessionHandler(Observable):
             session = Session(sessionid)
             self._sessions[sessionid] = session
         extraHeader = 'Set-Cookie: session=%s; path=/' % sessionid
-        
+
         for k,v in arguments.items():
             if not k in session:
                 session[k] = []
@@ -64,7 +67,7 @@ class SessionHandler(Observable):
                     session[k].append(value)
                 elif sign == '-' and value in session[k]:
                         session[k].remove(value)
-        
+
         result = self.all.handleRequest(session=session, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
         alreadyDone = False
         for iets in result:

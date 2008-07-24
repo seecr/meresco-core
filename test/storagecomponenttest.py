@@ -28,7 +28,7 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.components.storagecomponent import StorageComponent, defaultSplit
+from meresco.components.storagecomponent import StorageComponent
 from storage import HierarchicalStorage, Storage
 from cStringIO import StringIO
 from meresco.framework.observable import Observable
@@ -37,20 +37,16 @@ class StorageComponentTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.storage = HierarchicalStorage(
-            Storage(self.tempdir, revisionControl=True), split = lambda x:x)
-        self.storageComponent = StorageComponent(
-            HierarchicalStorage(
-                Storage(self.tempdir, revisionControl=True), split = defaultSplit))
+        self.storageComponent = StorageComponent(self.tempdir, revisionControl=True)
+        self.storage = self.storageComponent._storage
 
     def testAdd(self):
         old,new = self.storageComponent.add("id_0", "partName", "The contents of the part")
-
-        self.assertEquals('The contents of the part', self.storage.get(('id_0', 'partName.xml')).read())
+        self.assertEquals('The contents of the part', self.storage.get(('id_0', 'partName')).read())
         self.assertEquals((0,1), (old,new))
 
     def testIsAvailableIdAndPart(self):
-        sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))
+        sink = self.storage.put(('some:thing:anId-123','somePartName'))
         sink.send('read string')
         sink.close()
 
@@ -59,7 +55,7 @@ class StorageComponentTest(CQ2TestCase):
         self.assertTrue(hasPartName)
 
     def testIsAvailableId(self):
-        sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))
+        sink = self.storage.put(('some:thing:anId-123','somePartName.xml'))
         sink.send('read string')
         sink.close()
 
@@ -73,23 +69,22 @@ class StorageComponentTest(CQ2TestCase):
         self.assertFalse(hasPartName)
 
     def testWrite(self):
-        sink = self.storage.put(('some','thing:anId-123','somePartName.xml'))
+        sink = self.storage.put(('some:thing:anId-123','somePartName'))
         sink.send('read string')
         sink.close()
-
         stream = StringIO()
         self.storageComponent.write(stream, "some:thing:anId-123", "somePartName")
         self.assertEquals('read string', stream.getvalue())
 
     def testDelete(self):
-        identifier = ('some','thing:anId-123','somePartName.xml')
+        identifier = ('some:thing:anId-123','somePartName')
         self.storage.put(identifier).close()
         self.assertTrue(identifier in self.storage)
         self.storageComponent.deletePart('some:thing:anId-123', 'somePartName')
         self.assertFalse(identifier in self.storage)
 
     def testDeleteNonexisting(self):
-        identifier = ('some','thing:anId-123','somePartName.xml')
+        identifier = ('some:thing:anId-123','somePartName.xml')
         self.assertFalse(identifier in self.storage)
         self.storageComponent.deletePart('some:thing:anId-123', 'somePartName')
         self.assertFalse(identifier in self.storage)

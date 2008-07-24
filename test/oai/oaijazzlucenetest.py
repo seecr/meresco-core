@@ -41,8 +41,7 @@ from meresco.components.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
 from meresco.components.lucene.document import Document
 from meresco.components.lucene.lucene import LuceneIndex
-from meresco.components.storagecomponent import StorageComponent, defaultSplit
-from storage import Storage, HierarchicalStorage
+from meresco.components.storagecomponent import StorageComponent
 
 from timerfortestsupport import TimerForTestSupport
 
@@ -63,7 +62,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.realjazz = OaiJazzLucene(
             LuceneIndex(
                 join(self.tempdir,'index'), timer=TimerForTestSupport()),
-            StorageComponent(HierarchicalStorage(Storage(join(self.tempdir,'storage')), split = defaultSplit)),
+            StorageComponent(join(self.tempdir,'storage')),
             iter(xrange(99)))
 
     def tearDown(self):
@@ -73,7 +72,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
     def testAdd(self):
         self.index.ignoredAttributes = ['isAvailable', 'store', 'unknown', 'deletePart']
         self.mockedjazz.add(self.id, self.partName, bind_string('<empty/>'))
-        
+
         self.assertEquals(1,len(self.index.calledMethods))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[0]))
 
@@ -268,7 +267,7 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self._luceneIndex = LuceneIndex(join(self.tempdir, "lucene-index"), timer=TimerForTestSupport())
-        self._storage = StorageComponent(HierarchicalStorage(Storage(join(self.tempdir,'storage')), split = defaultSplit))
+        self._storage = StorageComponent(join(self.tempdir,'storage'))
         self.jazz = OaiJazzLucene(self._luceneIndex, self._storage, iter(xrange(9999)))
 
     def addDocuments(self, size):

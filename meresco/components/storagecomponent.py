@@ -40,9 +40,9 @@ def defaultJoin(parts):
     return id, partName
 
 class StorageComponent(object):
-    def __init__(self, directory, split=defaultSplit, join=defaultJoin):
+    def __init__(self, directory, split=defaultSplit, join=defaultJoin, revisionControl=False):
         assert type(directory) == str, 'Please use directory as first parameter'
-        self._storage = HierarchicalStorage(Storage(directory), split, join)
+        self._storage = HierarchicalStorage(Storage(directory, revisionControl=revisionControl, ), split, join)
 
     def store(self, *args, **kwargs):
         return self.add(*args, **kwargs)

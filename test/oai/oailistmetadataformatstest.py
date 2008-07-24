@@ -32,8 +32,6 @@ from oaitestcase import OaiTestCase
 from meresco.components.lucene import LuceneIndex
 from meresco.components import StorageComponent
 from meresco.components.oai import OaiListMetadataFormats, OaiJazzLucene
-from meresco.components.storagecomponent import defaultSplit
-from storage import HierarchicalStorage, Storage
 
 from cq2utils import CallTrace
 
@@ -75,9 +73,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
         jazz = OaiJazzLucene(
             LuceneIndex(join(
                 self.tempdir, 'index'), CallTrace('timer')),
-            StorageComponent(HierarchicalStorage(
-                Storage(join(self.tempdir,'storage')),
-                split = defaultSplit)),
+            StorageComponent(join(self.tempdir,'storage')),
             iter(xrange(99)))
         self.subject.addObserver(jazz)
         self.request.args = {'verb': ['ListMetadataFormats'], 'identifier': ['id_0']}
