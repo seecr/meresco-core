@@ -6,34 +6,18 @@ from random import randint
 from urllib import urlencode
 from urlparse import urlsplit
 from cgi import parse_qs
+from UserDict import UserDict
 
-class Session(object):
+class Session(UserDict):
     def __init__(self, sessionId):
-        self._data = {'id': sessionId}
-
-    def __getattr__(self, name):
-        return getattr(self._data)
-
-    def get(self, *args, **kwargs):
-        return self._data.get(*args, **kwargs)
-
-    def __contains__(self, key):
-        return key in self._data
-
-    def __getitem__(self, key, defaultValue=None):
-        return self._data.get(key, defaultValue)
-
-    def __setitem__(self, key, value):
-        self._data[key] = value
+        d = {'id': sessionId}
+        UserDict.__init__(self, d)
 
     def setLink(self, caption, key, value):
         return '<a href="?%s">%s</a>' % (urlencode({key: '+' + repr(value)}), caption)
 
     def unsetLink(self, caption, key, value):
         return '<a href="?%s">%s</a>' % (urlencode({key: '-' + repr(value)}), caption)
-
-    def keys(self):
-        return self._data.keys()
 
 class SessionHandler(Observable):
     def __init__(self, secretSeed):
