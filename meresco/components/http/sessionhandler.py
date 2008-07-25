@@ -48,7 +48,8 @@ class SessionHandler(Observable):
                     yield 'HTTP/1.0 400 Bad Request\r\n\r\n' + str(e)
                     return
                 if sign == '+':
-                    session[k].append(value)
+                    if not value in session[k]:
+                        session[k].append(value)
                 elif sign == '-' and value in session[k]:
                         session[k].remove(value)
 
