@@ -63,6 +63,7 @@ from statisticsxmltest import StatisticsXmlTest
 from venturitest import VenturiTest
 from xml2documenttest import Xml2DocumentTest
 from xmlpumptest import XmlPumpTest
+from xpath2fieldtest import XPath2FieldTest
 from xslicetest import XSliceTest
 
 from http.basicauthenticationtest import BasicAuthenticationTest

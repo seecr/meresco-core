@@ -60,7 +60,7 @@ class XmlParseAmara(Converter):
         return isXmlString(anObject)
 
     def _convert(self, anObject):
-        return bind_string(anObject).childNodes[0]
+        return bind_string(str(anObject)).childNodes[0]
 
 class XmlPrintAmara(Converter):
     def _canConvert(self, anObject):
