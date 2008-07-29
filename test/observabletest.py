@@ -30,9 +30,15 @@ import sys
 from traceback import format_tb
 from types import GeneratorType
 
-from meresco.framework.observable import Observable
+from meresco.framework import Observable, TxParticipant, TransactionScope, be
 from cq2utils.calltrace import CallTrace
 import unittest
+
+class Interceptor(Observable):
+    def unknown(self, message, *args, **kwargs):
+        self.message = message
+        self.args = args
+        self.kwargs = kwargs
 
 class ObservableTest(unittest.TestCase):
 
@@ -360,7 +366,54 @@ class ObservableTest(unittest.TestCase):
             exTraceback = exTraceback.tb_next
             self.assertEquals(None, exTraceback)
 
+    def testOneTransactionPerGenerator(self):
+        txId = []
+        class MyTxParticipant(TxParticipant):
+            def doSomething(self):
+                txId.append(self.tx.getId())
+                yield 'A'
+                txId.append(self.tx.getId())
+                yield 'B'
+        dna = [
+            (TransactionScope(), [
+                MyTxParticipant()
+            ])
+        ]
+        body = be(dna)
+        scope1 = body.all.doSomething()
+        scope2 = body.all.doSomething()
+        scope1.next()
+        scope2.next()
+        scope1.next()
+        scope2.next()
+        self.assertTrue(txId[0] != txId[1])
+        self.assertTrue(txId[1] > 0)
+        self.assertTrue(txId[0] > 0)
+        self.assertEquals(txId[0], txId[2])
+        self.assertEquals(txId[1], txId[3])
 
+    def testTransactionCommit(self):
+        collected = []
+        class MyFirstTxParticipant(TxParticipant):
+            def doSomething(self):
+                self.tx.values['first'] = 'first'
+                yield 'first'
+        class MySecondTxParticipant(TxParticipant):
+            def doSomething(self):
+                self.tx.values['second'] = 'second'
+                yield 'second'
+            def commit(self):
+                collected.append(self.tx.values)
+        dna = [
+            (TransactionScope(), [
+                MyFirstTxParticipant(),
+                MySecondTxParticipant()
+            ])
+        ]
+        body = be(dna)
+        list(body.all.doSomething())
+        self.assertEquals( [{'second': 'second', 'first': 'first'}] , collected)
+        
 class TestException(Exception):
     pass
 

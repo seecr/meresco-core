@@ -92,6 +92,7 @@ class DoMessage(DeferredMessage):
             exType, exValue, exTraceback = exc_info()
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
+
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
