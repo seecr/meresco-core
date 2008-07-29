@@ -37,7 +37,8 @@ from amara.binderytools import bind_string, bind_stream
 from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 
 from meresco.framework import Observable, Transparant
-from meresco.components import Xml2Document, XmlParseAmara
+from meresco.components import XmlParseAmara
+from meresco.components.oai.xml2document import Xml2Document
 
 def createOaiMeta(sets, prefixes, stamp, unique):
     yield '<oaimeta xmlns:t="http://www.cq2.nl/teddy">'

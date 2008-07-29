@@ -30,7 +30,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.xml2document import Xml2Document, TEDDY_NS
+from meresco.components.oai.xml2document import Xml2Document, TEDDY_NS
 from meresco.components.lucene.document import Document, IDFIELD
 from amara import binderytools
 

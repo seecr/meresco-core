@@ -37,7 +37,7 @@ from amara import binderytools
 from amara.binderytools import bind_string
 
 from meresco.components.oai import OaiJazzLucene
-from meresco.components.xml2document import TEDDY_NS, Xml2Document
+from meresco.components.oai.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
 from meresco.components.lucene.document import Document
 from meresco.components.lucene.lucene import LuceneIndex

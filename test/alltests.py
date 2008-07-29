@@ -44,8 +44,8 @@ from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from cql2lucenequerytest import Cql2LuceneQueryTest
 from documenttest import DocumentTest
-from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
+from fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
@@ -61,7 +61,6 @@ from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
 from statisticsxmltest import StatisticsXmlTest
 from venturitest import VenturiTest
-from xml2documenttest import Xml2DocumentTest
 from xmlpumptest import XmlPumpTest
 from xpath2fieldtest import XPath2FieldTest
 from xslicetest import XSliceTest
@@ -88,6 +87,9 @@ from oai.oaisinktest import OaiSinkTest
 from oai.oaitooltest import OaiToolTest
 from oai.oaiprovenancetest import OaiProvenanceTest
 from oai.resumptiontokentest import ResumptionTokenTest
+
+from xml2documenttest import Xml2DocumentTest  # --> Xml2Document only in use by OAI; deprecated; needs to be replaced
+                                               #     when OAI is worked on next.            
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
 from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest

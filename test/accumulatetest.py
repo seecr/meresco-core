@@ -29,7 +29,6 @@ from unittest import TestCase
 
 from cq2utils import CallTrace
 
-from meresco.components.xml2document import TEDDY_NS
 from meresco.components.dictionary import DocumentDict
 from meresco.components.dictionary.documentdict import fromDict, asDict
 from meresco.components import Accumulate

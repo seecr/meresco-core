@@ -29,7 +29,6 @@
 from logobserver import LogObserver
 from storagecomponent import StorageComponent, defaultSplit
 from storageharvester import defaultJoin
-from xml2document import Xml2Document
 from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
 from lumberjack import Lumberjack
 from contextset import ContextSetList, ContextSet
@@ -44,3 +43,4 @@ from rssitem import RssItem
 from venturi import Venturi
 from configuration import Configuration, readConfig
 from xpath2field import XPath2Field
+
