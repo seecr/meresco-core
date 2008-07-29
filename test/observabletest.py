@@ -30,7 +30,7 @@ import sys
 from traceback import format_tb
 from types import GeneratorType
 
-from meresco.framework import Observable, TxParticipant, TransactionScope, be
+from meresco.framework import Observable, TransactionScope, be, Transparant
 from cq2utils.calltrace import CallTrace
 import unittest
 
@@ -368,7 +368,7 @@ class ObservableTest(unittest.TestCase):
 
     def testOneTransactionPerGenerator(self):
         txId = []
-        class MyTxParticipant(TxParticipant):
+        class MyTxParticipant(Observable):
             def doSomething(self):
                 txId.append(self.tx.getId())
                 yield 'A'
@@ -394,11 +394,11 @@ class ObservableTest(unittest.TestCase):
 
     def testTransactionCommit(self):
         collected = []
-        class MyFirstTxParticipant(TxParticipant):
+        class MyFirstTxParticipant(Transparant):
             def doSomething(self):
                 self.tx.values['first'] = 'first'
-                yield 'first'
-        class MySecondTxParticipant(TxParticipant):
+                yield self.any.doSomething()
+        class MySecondTxParticipant(Observable):
             def doSomething(self):
                 self.tx.values['second'] = 'second'
                 yield 'second'
@@ -406,14 +406,15 @@ class ObservableTest(unittest.TestCase):
                 collected.append(self.tx.values)
         dna = [
             (TransactionScope(), [
-                MyFirstTxParticipant(),
-                MySecondTxParticipant()
+                (MyFirstTxParticipant(), [
+                    MySecondTxParticipant()
+                ])
             ])
         ]
         body = be(dna)
         list(body.all.doSomething())
         self.assertEquals( [{'second': 'second', 'first': 'first'}] , collected)
-        
+
 class TestException(Exception):
     pass
 

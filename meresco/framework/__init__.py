@@ -31,4 +31,4 @@ from observer import ObserverFunction
 from generatorutils import decorate, compose
 from resource import Resource
 from helix import findHelix, be
-from transaction import TxParticipant, TransactionScope
+from transaction import TransactionScope
