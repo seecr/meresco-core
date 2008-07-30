@@ -393,17 +393,17 @@ class ObservableTest(unittest.TestCase):
         self.assertEquals(txId[1], txId[3])
 
     def testTransactionCommit(self):
-        collected = []
+        collected = {}
         class MyFirstTxParticipant(Transparant):
             def doSomething(self):
-                self.tx.values['first'] = 'first'
+                collected[self.tx.getId()] = ['first']
                 yield self.any.doSomething()
         class MySecondTxParticipant(Observable):
             def doSomething(self):
-                self.tx.values['second'] = 'second'
+                collected[self.tx.getId()].append('second')
                 yield 'second'
             def commit(self):
-                collected.append(self.tx.values)
+                collected[self.tx.getId()].append('done')
         dna = [
             (TransactionScope(), [
                 (MyFirstTxParticipant(), [
@@ -413,7 +413,59 @@ class ObservableTest(unittest.TestCase):
         ]
         body = be(dna)
         list(body.all.doSomething())
-        self.assertEquals( [{'second': 'second', 'first': 'first'}] , collected)
+        self.assertEquals(['first', 'second', 'done'], collected.values()[0])
+
+    def testAddObserversOnce(self):
+        class  MyObservable(Observable):
+            pass
+
+        observer1 = MyObservable(name='observable 1')
+        observer1a = MyObservable(name='observable 1a')
+        observer2 = MyObservable(name='observable 2')
+        observer3 = MyObservable(name='observable 3')
+        observer3a = MyObservable(name='observable 3a')
+
+        helix = [
+            (observer1, [
+                observer1a
+            ])
+        ]
+
+        dna = [
+            (observer2, helix),
+            (observer3, [
+                (observer3a, helix
+                )
+            ])
+        ]
+
+        root = MyObservable(name="ROOT")
+        root.addObservers(dna)
+        allObservers = []
+        root.recurse(lambda observer: allObservers.append(observer))
+        self.assertEquals(8, len(allObservers))
+
+    def testResolveCallStackVariables(self):
+        class StackVarHolder(Observable):
+            def unknown(self, name, *args, **kwargs):
+                __callstack_var_myvar__ = []
+                for result in self.all.unknown(name, *args, **kwargs):
+                    pass
+                yield __callstack_var_myvar__
+
+        class StackVarUser(Observable):
+            def useVariable(self):
+                self.myvar.append('Thingy')
+
+        dna = [
+            (StackVarHolder(), [
+                StackVarUser()
+            ])
+        ]
+        root = Observable(name="ROOT")
+        root.addObservers(dna)
+        self.assertEquals(['Thingy'], root.any.useVariable())
+
 
 class TestException(Exception):
     pass

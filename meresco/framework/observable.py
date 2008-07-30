@@ -27,6 +27,7 @@
 ## end license ##
 from sys import exc_info
 from generatorutils import compose
+from inspect import currentframe
 
 class Defer:
     def __init__(self, observable, defereeType):
@@ -102,17 +103,59 @@ class Observable(object):
         if name:
             self.__repr__ = lambda: name
 
+    def __getattr__(self, name):
+        stackVarName = '__callstack_var_%s__' % name
+        frame = currentframe().f_back
+        try:
+            while stackVarName not in frame.f_locals:
+                frame = frame.f_back
+            return frame.f_locals[stackVarName]
+        except AttributeError:
+            raise AttributeError("'%s' has no attribute '%s'" % (self, name))
+
     def addObserver(self, observer):
         self._observers.append(observer)
         if hasattr(observer.__class__, 'observer_init'): # You can't fake the observer_init method
             observer.observer_init()
 
     def addObservers(self, tree):
+        branchesDone = []
+        self._addObservers(tree, branchesDone=branchesDone)
+        return branchesDone
+
+    def _addObservers(self, tree, branchesDone):
         for node in tree:
             if isinstance(node, tuple):
                 node, branch = node
-                node.addObservers(branch)
+                if not id(branch) in branchesDone:
+                    branchesDone.append(id(branch))
+                    node._addObservers(branch, branchesDone)
+                else:
+                    branchElement = branch
+                    if type(branch) == list:
+                        branchElement = branch[0][0]
+                    node.addObserver(branchElement)
+                    #node.addObserver(type(branch)==tuple and branch[0] or branch)
             self.addObserver(node)
+
+    def printTree(self, depth=0):
+        def printInColor(ident, color, text):
+            print ' '*ident, chr(27)+"[0;" + str(color) + "m", text, chr(27)+"[0m"
+
+        print ' ' * depth, self.__repr__()
+
+        for observer in self._observers:
+            if hasattr(observer, 'printTree'):
+                observer.printTree(depth=depth+1)
+            else:
+                printInColor(depth+1, 31, observer)
+
+    def recurse(self, aFunction):
+        aFunction(self)
+        for observer in self._observers:
+            if hasattr(observer, 'recurse'):
+                observer.recurse(aFunction)
+
 
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):

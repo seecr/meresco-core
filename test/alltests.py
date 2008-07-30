@@ -63,6 +63,7 @@ from statisticstest import StatisticsTest
 from statisticsxmltest import StatisticsXmlTest
 from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
+from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
 from xslicetest import XSliceTest
 
@@ -100,7 +101,6 @@ from xml_generic.validatetest import ValidateTest
 
 from dictionary.transformtest import TransformTest
 from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
-from dictionary.xml2dicttest import Xml2DictTest
 from dictionary.xpath2dicttest import XPath2DictTest
 
 from resourcetest import ResourceTest

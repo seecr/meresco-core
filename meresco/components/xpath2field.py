@@ -10,6 +10,5 @@ class XPath2Field(Observable):
     def add(self, id, partName, lxmlNode):
         for (xpath, dottedDestinationPath) in self._attributeXpaths:
             values = lxmlNode.xpath(xpath, namespaces=self._namespaceMap)
-            if values:
-                self.do.addField(name=dottedDestinationPath, value=values)
-        return self.all.add(self, id, partName, lxmlNode)
+            for value in values:
+                self.do.addField(name=dottedDestinationPath, value=value)

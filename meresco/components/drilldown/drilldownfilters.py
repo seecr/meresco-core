@@ -26,7 +26,7 @@
 #
 ## end license ##
 from meresco.framework.observable import Observable
-from meresco.components.xml2document import TEDDY_NS
+from meresco.components.oai.xml2document import TEDDY_NS
 
 from amara.bindery import is_element
 
