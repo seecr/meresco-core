@@ -31,9 +31,9 @@ from inspect import currentframe
 
 def be(strand):
     strandsDone = set()
-    return be2(strand, strandsDone)
+    return _beWithDoneStrands(strand, strandsDone)
 
-def be2(strand, strandsDone):
+def _beWithDoneStrands(strand, strandsDone):
     head = strand[0]
     tail = strand[1:]
     if not id(strand) in strandsDone and tail:
@@ -143,33 +143,19 @@ class Observable(object):
     def addObserver(self, observer):
         self._observers.append(observer)
 
-    def addObservers(self, tree):
-        branchesDone = []
-        self._addObservers(tree, branchesDone=branchesDone)
-        return branchesDone
-
     def addStrand(self, strand, strandsDone):
         for helix in strand:
-            self.addObserver(be2(helix, strandsDone))
+            self.addObserver(_beWithDoneStrands(helix, strandsDone))
 
     def printTree(self, depth=0):
         def printInColor(ident, color, text):
             print ' '*ident, chr(27)+"[0;" + str(color) + "m", text, chr(27)+"[0m"
-
         print ' ' * depth, self.__repr__()
-
         for observer in self._observers:
             if hasattr(observer, 'printTree'):
                 observer.printTree(depth=depth+1)
             else:
                 printInColor(depth+1, 31, observer)
-
-    def recurse(self, aFunction):
-        aFunction(self)
-        for observer in self._observers:
-            if hasattr(observer, 'recurse'):
-                observer.recurse(aFunction)
-
 
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):

@@ -37,7 +37,6 @@ class Xml2Fields(Observable):
         self.do.addField('__id__', id)
         if hasattr(lxmlNode, 'getroot'):
             lxmlNode = lxmlNode.getroot()
-        print "Xml2Fields.add", id, partName, lxmlNode
         return self._fillDict(lxmlNode, '')
 
     def _fillDict(self, aNode, parentName):

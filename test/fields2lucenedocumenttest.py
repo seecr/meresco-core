@@ -1,6 +1,6 @@
 from unittest import TestCase
 from cq2utils import CallTrace
-from meresco.framework import be, Transparant
+from meresco.framework import be, Transparant, Observable
 from meresco.framework import TransactionScope
 
 from meresco.components.lucene import Fields2LuceneDocument
@@ -14,15 +14,16 @@ class Fields2LuceneDocumentTest(TestCase):
                 for item in tupleList:
                     this.any.addField(*item)
 
-        dna = [
-            (TransactionScope(), [
-                (Splitter(), [
-                    (Fields2LuceneDocument(tokenized=['b','c']), [
-                        self.observert
-                    ])
-                ])
-            ])
-        ]
+        dna = \
+            (Observable(),
+                (TransactionScope(),
+                    (Splitter(),
+                        (Fields2LuceneDocument(tokenized=['b','c']),
+                            (self.observert,)
+                        )
+                    )
+                )
+            )
         self.body = be(dna)
 
     def testOne(self):

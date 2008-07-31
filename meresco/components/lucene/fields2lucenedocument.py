@@ -1,11 +1,6 @@
 from meresco.framework import Observable
 from meresco.components.lucene import Document
 
-class Transaction(object):
-    pass
-
-i = 0
-
 class Fields2LuceneDocument(Observable):
 
     def __init__(self, tokenized=[]):
@@ -14,14 +9,12 @@ class Fields2LuceneDocument(Observable):
         self.txs = {}
 
     def begin(self):
-        print '=====================begin=================', self.tx.getId()
         self.txs[self.tx.getId()] = Fields2LuceneDocumentTx(self, self._tokenized)
 
     def addField(self, key, value):
         self.txs[self.tx.getId()].addField(key, value)
 
     def commit(self):
-        print '=====================commit=================', self.tx.getId()
         self.txs[self.tx.getId()].finalize()
         del self.txs[self.tx.getId()]
 

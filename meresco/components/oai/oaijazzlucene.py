@@ -36,7 +36,7 @@ from amara.binderytools import bind_string, bind_stream
 
 from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 
-from meresco.framework import Observable, Transparant
+from meresco.framework import Observable, Transparant, be
 from meresco.components import XmlParseAmara
 from meresco.components.oai.xml2document import Xml2Document
 
@@ -69,13 +69,15 @@ def parseOaiMeta(xmlString):
 class OaiJazzLucene(Observable):
     def __init__(self, anIndex, aStorage, aNumberGenerator = None):
         Observable.__init__(self)
-        self.addObservers([
-            (XmlParseAmara(), [
-                (Xml2Document(), [
-                    anIndex
-                ]),
-            ]),
-            aStorage])
+        be((self,
+            (XmlParseAmara(),
+                (Xml2Document(),
+                    (anIndex,)
+                )
+            ),
+            (aStorage, ),
+            )
+        )
         self._numberGenerator = aNumberGenerator
         def close():
             anIndex.close()

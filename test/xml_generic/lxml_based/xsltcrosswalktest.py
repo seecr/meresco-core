@@ -29,7 +29,7 @@ from cq2utils import CQ2TestCase
 from os.path import join
 from lxml.etree import parse, tostring, _ElementTree
 
-from meresco.framework import Observable
+from meresco.framework import Observable, be
 from meresco.components import XsltCrosswalk
 
 xmlCode = """<?xml version="1.0"?>
@@ -88,11 +88,12 @@ class XsltCrosswalkTest(CQ2TestCase):
             def someMessage(innerself, xmlNode):
                 self.crosswalkedNode.append(tostring(xmlNode, pretty_print=True))
                 self.assertEquals(_ElementTree, type(xmlNode))
-        start = Observable()
-        start.addObservers([
-            (XsltCrosswalk([self.xsltFilename]), [
-                Intercept(),
-            ])
-        ])
-        start.do.someMessage(parse(open(self.xmlFilename)))
+        root = be(
+            (Observable(),
+                (XsltCrosswalk([self.xsltFilename]),
+                    (Intercept(), )
+                )
+            )
+        )
+        root.do.someMessage(parse(open(self.xmlFilename)))
         self.assertEqualsWS(expectedXml, self.crosswalkedNode[0])
