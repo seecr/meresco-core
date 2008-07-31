@@ -8,7 +8,7 @@ from meresco.components.lucene import Fields2LuceneDocument
 class Fields2LuceneDocumentTest(TestCase):
 
     def setUp(self):
-        self.observert = CallTrace('Observert')
+        self.observert = CallTrace('Observert', ignoredAttributes=['_observers'])
         class Splitter(Transparant):
             def addFields(this, tupleList):
                 for item in tupleList:
@@ -27,9 +27,11 @@ class Fields2LuceneDocumentTest(TestCase):
 
     def testOne(self):
         list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('b', '2'), ('c', '3')]))
-        self.assertEquals(1, len(self.observert.calledMethods))
-        self.assertEquals('addDocument', self.observert.calledMethods[0].name)
-        document = self.observert.calledMethods[0].args[0]
+        self.assertEquals(3, len(self.observert.calledMethods))
+        self.assertEquals('begin()', str(self.observert.calledMethods[0]))
+        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
+        self.assertEquals('commit()', str(self.observert.calledMethods[2]))
+        document = self.observert.calledMethods[1].args[0]
         self.assertTrue('a' in document.fields())
         self.assertTrue('b' in document.fields())
         self.assertTrue('c' in document.fields())
@@ -37,8 +39,10 @@ class Fields2LuceneDocumentTest(TestCase):
 
     def testMultipleValuesForSameKey(self):
         list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('a', '2'), ('b', '3')]))
-        self.assertEquals(1, len(self.observert.calledMethods))
-        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[0]))
-        document = self.observert.calledMethods[0].args[0]
+        self.assertEquals(3, len(self.observert.calledMethods))
+        self.assertEquals('begin()', str(self.observert.calledMethods[0]))
+        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
+        self.assertEquals('commit()', str(self.observert.calledMethods[2]))
+        document = self.observert.calledMethods[1].args[0]
         self.assertEquals([u'1', u'2'],  document._document.getValues('a'))
 

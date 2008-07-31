@@ -26,9 +26,9 @@
 #
 ## end license ##
 
-from observable import Observable, Transparant
+from observable import Observable, Transparant, be
 from observer import ObserverFunction
 from generatorutils import decorate, compose
 from resource import Resource
-from helix import findHelix, be
+from helix import findHelix
 from transaction import TransactionScope

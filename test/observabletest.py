@@ -30,7 +30,8 @@ import sys
 from traceback import format_tb
 from types import GeneratorType
 
-from meresco.framework import Observable, TransactionScope, be, Transparant
+from meresco.framework import Observable, TransactionScope, Transparant
+from meresco.framework.observable import be
 from cq2utils.calltrace import CallTrace
 import unittest
 
@@ -47,11 +48,9 @@ class ObservableTest(unittest.TestCase):
         class MyObserver(object):
             def observer_init(self):
                 initcalled[0] += 1
-        observable = Observable()
-        observable.addObserver(MyObserver())
+        root = be((Observable(), (MyObserver(),)))
+        root.once.observer_init()
         self.assertEquals([1], initcalled)
-        observable.addObservers([MyObserver()])
-        self.assertEquals([2], initcalled)
 
     def testAllWithoutImplementers(self):
         observable = Observable()
@@ -62,10 +61,8 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         observerOne = CallTrace(returnValues={'aMethod': 'one'})
         observerTwo = CallTrace(returnValues={'aMethod': 'two'})
-        observable.addObservers([observerOne, observerTwo])
-
-        responses = observable.all.aMethod()
-
+        root = be((observable, (observerOne,), (observerTwo,)))
+        responses = root.all.aMethod()
         self.assertEquals(GeneratorType, type(responses))
         self.assertEquals(['one', 'two'], list(responses))
 
@@ -73,17 +70,13 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         observerA = ObserverA()
         observerAB = ObserverAB()
-        observable.addObserver(observerA)
-        observable.addObserver(observerAB)
-
-        resultA = observable.any.methodA(0)
-        resultB = observable.any.methodB(1, 2)
+        root = be((observable, (observerA,), (observerAB,)))
+        resultA = root.any.methodA(0)
+        resultB = root.any.methodB(1, 2)
         self.assertEquals([("Method A", (0,))], observerA.notifications)
         self.assertEquals([("Method B", (1, 2))], observerAB.notifications)
-
         self.assertEquals("A.methodA", resultA)
         self.assertEquals("AB.methodB", resultB)
-
 
     def testAllException(self):
         observable = Observable()
@@ -107,50 +100,46 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         retvalIsAlwaysNone = observable.do.oneWayMethodWithoutReturnValue()
         self.assertEquals(None, retvalIsAlwaysNone)
-
         observer = CallTrace("Observer")
         observer.something = lambda x,y: x.append(y)
-
         observable.addObserver(observer)
         value = []
         observable.do.something(value, 1)
         self.assertEquals([1], value)
 
-    def testAddObserversEmptyList(self):
+    def testAddStrandEmptyList(self):
         observable = Observable()
-        observable.addObservers([])
+        observable.addStrand((), [])
         self.assertEquals([], observable._observers)
 
-    def testAddObserversOne(self):
-        observable = Observable()
-        child = Observable()
-        observable.addObservers([child])
-        self.assertEquals([child], observable._observers)
+    def testBeOne(self):
+        observer = CallTrace()
+        root = be((observer,))
+        self.assertEquals(root, observer)
 
-    def testAddObserversTwo(self):
+    def testBeTwo(self):
         observable = Observable()
         child0 = Observable()
-        observable.addObservers([child0])
         child1 = Observable()
-        observable.addObservers([child1])
+        root = be((observable, (child0,), (child1,)))
         self.assertEquals([child0, child1], observable._observers)
 
-    def testAddObserversTree(self):
+    def testBeTree(self):
         observable = Observable()
         child0 = Observable(name='child0')
         child1 = Observable(name='child1')
-        tree = [(child0, [child1])]
-        observable.addObservers(tree)
-        self.assertEquals([child0], observable._observers)
+        strand = (observable, (child0, (child1,)))
+        root = be(strand)
+        self.assertEquals([child0], root._observers)
         self.assertEquals([child1], child0._observers)
 
-    def testAddOberversTreeToExplainTheIdeaWhithoutTestingSomethingNew(self):
+    def testBeToExplainTheIdeaWhithoutTestingSomethingNew(self):
         observable = Observable()
         child0 = Observable(name='child0')
         child1 = Observable(name='child1')
         child2 = Observable(name='child2')
-        tree = [(child0, [(child1, [child2])])]
-        observable.addObservers(tree)
+        tree = (observable, (child0, (child1, (child2,))))
+        root = be(tree)
         self.assertEquals([child0], observable._observers)
         self.assertEquals([child1], child0._observers)
         self.assertEquals([child2], child1._observers)
@@ -159,11 +148,9 @@ class ObservableTest(unittest.TestCase):
         class A(Observable):
             def myThing(self):
                 return self.any.myThing()
-
         class B(Observable):
             def myThing(self):
                 yield "data"
-
         a = A()
         b = B()
         a.addObserver(b)
@@ -374,11 +361,12 @@ class ObservableTest(unittest.TestCase):
                 yield 'A'
                 txId.append(self.tx.getId())
                 yield 'B'
-        dna = [
-            (TransactionScope(), [
-                MyTxParticipant()
-            ])
-        ]
+        dna = \
+            (Observable(),
+                (TransactionScope(),
+                    (MyTxParticipant(),)
+                )
+            )
         body = be(dna)
         scope1 = body.all.doSomething()
         scope2 = body.all.doSomething()
@@ -404,13 +392,14 @@ class ObservableTest(unittest.TestCase):
                 yield 'second'
             def commit(self):
                 collected[self.tx.getId()].append('done')
-        dna = [
-            (TransactionScope(), [
-                (MyFirstTxParticipant(), [
-                    MySecondTxParticipant()
-                ])
-            ])
-        ]
+        dna = \
+            (Observable(),
+                (TransactionScope(),
+                    (MyFirstTxParticipant(),
+                        (MySecondTxParticipant(),)
+                    )
+                )
+            )
         body = be(dna)
         list(body.all.doSomething())
         self.assertEquals(['first', 'second', 'done'], collected.values()[0])
@@ -418,32 +407,26 @@ class ObservableTest(unittest.TestCase):
     def testAddObserversOnce(self):
         class  MyObservable(Observable):
             pass
-
-        observer1 = MyObservable(name='observable 1')
-        observer1a = MyObservable(name='observable 1a')
-        observer2 = MyObservable(name='observable 2')
-        observer3 = MyObservable(name='observable 3')
-        observer3a = MyObservable(name='observable 3a')
-
-        helix = [
-            (observer1, [
-                observer1a
-            ])
-        ]
-
-        dna = [
-            (observer2, helix),
-            (observer3, [
-                (observer3a, helix
-                )
-            ])
-        ]
-
-        root = MyObservable(name="ROOT")
-        root.addObservers(dna)
-        allObservers = []
-        root.recurse(lambda observer: allObservers.append(observer))
-        self.assertEquals(8, len(allObservers))
+        o1 = MyObservable(name='O1')
+        o2 = MyObservable(name='O2')
+        o3 = MyObservable(name='O3')
+        o4 = MyObservable(name='O4')
+        o5 = MyObservable(name='O5')
+        helix = \
+            (o1,
+                (o2, )
+            )
+        dna =   (o3,
+                    helix,
+                    (o4,),
+                    (o5, helix)
+                 )
+        root = be(dna)
+        self.assertEquals([o2], o1._observers)
+        self.assertEquals([], o2._observers)
+        self.assertEquals([o1, o4, o5], o3._observers)
+        self.assertEquals([], o4._observers)
+        self.assertEquals([o1], o5._observers)
 
     def testResolveCallStackVariables(self):
         class StackVarHolder(Observable):
@@ -457,15 +440,80 @@ class ObservableTest(unittest.TestCase):
             def useVariable(self):
                 self.myvar.append('Thingy')
 
-        dna = [
-            (StackVarHolder(), [
-                StackVarUser()
-            ])
-        ]
-        root = Observable(name="ROOT")
-        root.addObservers(dna)
+        dna = \
+            (Observable(),
+                (StackVarHolder(),
+                    (StackVarUser(),)
+                )
+            )
+        root = be(dna)
         self.assertEquals(['Thingy'], root.any.useVariable())
 
+    def testOnceAndOnlyOnce(self):
+        class MyObserver(Observable):
+            def methodOnlyCalledOnce(self, aList):
+                aList.append('once')
+        once = MyObserver()
+        dna = \
+            (Observable(),
+                (once,),
+                (once,)
+            )
+        root = be(dna)
+        collector = []
+        root.once.methodOnlyCalledOnce(collector)
+        self.assertEquals(['once'], collector)
+
+    def testOnceInDiamondWithTransparant(self):
+        class MyObserver(Observable):
+            def methodOnlyCalledOnce(self, aList):
+                aList.append('once')
+        once = MyObserver()
+        diamond = \
+            (Transparant(),
+                (Transparant(),
+                    (once,)
+                ),
+                (Transparant(),
+                    (once,)
+                )
+            )
+        root = be(diamond)
+        collector = []
+        root.once.methodOnlyCalledOnce(collector)
+        self.assertEquals(['once'], collector)
+
+    def testPropagateThroughAllObservablesInDiamondWithNONTransparantObservablesWithoutUnknownMethodDelegatingUnknownCalls(self):
+        class MyObserver(Observable):
+            def methodOnlyCalledOnce(self, aList):
+                aList.append('once')
+        once = MyObserver()
+        diamond = \
+            (Observable(),
+                (Observable(),
+                    (once,)
+                ),
+                (Observable(),
+                    (once,)
+                )
+            )
+        root = be(diamond)
+        collector = []
+        root.once.methodOnlyCalledOnce(collector)
+        self.assertEquals(['once'], collector)
+
+    def testNonObservableInTreeWithOnce(self):
+        class MyObserver(object):
+            def methodOnNonObservableSubclass(self, aList):
+                aList.append('once')
+        once = MyObserver()
+        dna =   (Observable(),
+                    (once,)
+                )
+        root = be(dna)
+        collector = []
+        root.once.methodOnNonObservableSubclass(collector)
+        self.assertEquals(['once'], collector)
 
 class TestException(Exception):
     pass

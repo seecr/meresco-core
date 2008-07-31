@@ -29,6 +29,18 @@ from sys import exc_info
 from generatorutils import compose
 from inspect import currentframe
 
+def be(strand):
+    strandsDone = set()
+    return be2(strand, strandsDone)
+
+def be2(strand, strandsDone):
+    head = strand[0]
+    tail = strand[1:]
+    if not id(strand) in strandsDone and tail:
+        head.addStrand(tail, strandsDone)
+        strandsDone.add(id(strand))
+    return head
+
 class Defer:
     def __init__(self, observable, defereeType):
         self._observable = observable
@@ -94,12 +106,27 @@ class DoMessage(DeferredMessage):
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 
+class OnceMessage(DeferredMessage):
+
+    def __call__(self, *args, **kwargs):
+        done = []
+        return self._callonce(self._observers, args, kwargs, done)
+
+    def _callonce(self, observers, args, kwargs, done):
+        for observer in observers:
+            if hasattr(observer, self._message) and observer not in done:
+                getattr(observer, self._message)(*args, **kwargs)
+                done.append(observer)
+            if isinstance(observer, Observable):
+                self._callonce(observer._observers, args, kwargs, done)
+
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
         self.all = Defer(self, AllMessage)
         self.any = Defer(self, AnyMessage)
         self.do = Defer(self, DoMessage)
+        self.once = Defer(self, OnceMessage)
         if name:
             self.__repr__ = lambda: name
 
@@ -115,28 +142,15 @@ class Observable(object):
 
     def addObserver(self, observer):
         self._observers.append(observer)
-        if hasattr(observer.__class__, 'observer_init'): # You can't fake the observer_init method
-            observer.observer_init()
 
     def addObservers(self, tree):
         branchesDone = []
         self._addObservers(tree, branchesDone=branchesDone)
         return branchesDone
 
-    def _addObservers(self, tree, branchesDone):
-        for node in tree:
-            if isinstance(node, tuple):
-                node, branch = node
-                if not id(branch) in branchesDone:
-                    branchesDone.append(id(branch))
-                    node._addObservers(branch, branchesDone)
-                else:
-                    branchElement = branch
-                    if type(branch) == list:
-                        branchElement = branch[0][0]
-                    node.addObserver(branchElement)
-                    #node.addObserver(type(branch)==tuple and branch[0] or branch)
-            self.addObserver(node)
+    def addStrand(self, strand, strandsDone):
+        for helix in strand:
+            self.addObserver(be2(helix, strandsDone))
 
     def printTree(self, depth=0):
         def printInColor(ident, color, text):

@@ -13,8 +13,3 @@ def findHelix(dna, clazz):
             yield strand
         for helix in findHelix(observers, clazz):
             yield helix
-
-def be(dna):
-    handle = Transparant()
-    handle.addObservers(dna)
-    return handle
