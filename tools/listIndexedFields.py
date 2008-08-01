@@ -16,13 +16,15 @@ def listTerms(reader, fields):
     for field in sorted(fields):
         print field
         termEnum = reader.terms(Term(field, ''))
-        while termEnum.next():
+        while True:
+            if termEnum.term().field() != field:
+                break
             termDocs.seek(termEnum)
             docIds = []
             while termDocs.next():
                 docIds.append(termDocs.doc())
             print termEnum.term().text(), len(docIds)
-            if termEnum.term().field() != field:
+            if not termEnum.next():
                 break
         print '\n'
 

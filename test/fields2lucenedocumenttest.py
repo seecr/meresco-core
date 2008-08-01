@@ -18,7 +18,7 @@ class Fields2LuceneDocumentTest(TestCase):
             (Observable(),
                 (TransactionScope(),
                     (Splitter(),
-                        (Fields2LuceneDocument(tokenized=['b','c']),
+                        (Fields2LuceneDocument(untokenized=['b']),
                             (self.observert,)
                         )
                     )
@@ -39,11 +39,17 @@ class Fields2LuceneDocumentTest(TestCase):
         self.assertTrue('__id__' in document.fields())
 
     def testMultipleValuesForSameKey(self):
-        list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('a', '2'), ('b', '3')]))
+        list(self.body.all.addFields([('__id__', 'ID'), ('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
         self.assertEquals(3, len(self.observert.calledMethods))
         self.assertEquals('begin()', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
         self.assertEquals('commit()', str(self.observert.calledMethods[2]))
         document = self.observert.calledMethods[1].args[0]
-        self.assertEquals([u'1', u'2'],  document._document.getValues('a'))
+        self.assertEquals([u'TermOne', u'TermTwo'],  document._document.getValues('a'))
+
+    def testTokenizedIsNotForgotten(self):
+        list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('a', 'termone termtwo'), ('b', 'termone termtwo')]))
+        document = self.observert.calledMethods[1].args[0]
+        self.assertTrue(document._document.getField('a').isTokenized())
+        self.assertFalse(document._document.getField('b').isTokenized())
 
