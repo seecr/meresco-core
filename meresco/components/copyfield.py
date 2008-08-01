@@ -25,32 +25,19 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.components import XPathTransform2Field
+from meresco.framework import Transparant
 
-from lxml.etree import parse
-from StringIO import StringIO
+class CopyField(Transparant):
+    def __init__(self, matcher, renamer, transform=lambda value:value):
+        Transparant.__init__(self)
+        self._matcher = matcher
+        self._renamer = renamer
+        self._transform = transform
 
-class XPathTransform2FieldTest(CQ2TestCase):
-    def testOne(self):
-        observer = CallTrace()
-        x = XPathTransform2Field([('/a/b/text()', 'a.b', lambda value: value.swapcase())], namespaceMap={})
-        x.addObserver(observer)
-
-        node = parse(StringIO("""<a><b>Contents</b></a>"""))
-
-        x.add('id', 'partname', node)
-        self.assertEquals(1, len(observer.calledMethods))
-
-        self.assertEquals("addField(name='a.b', value='cONTENTS')", str(observer.calledMethods[0]))
-
-    def testTransformReturnsNone(self):
-        observer = CallTrace()
-        x = XPathTransform2Field([('/a/b/text()', 'a.b', lambda value:None)], namespaceMap={})
-        x.addObserver(observer)
-
-        node = parse(StringIO("""<a><b>Contents</b></a>"""))
-
-        x.add('id', 'partname', node)
-        self.assertEquals(0, len(observer.calledMethods))
+    def addField(self, name, value):
+        if self._matcher(name):
+            newValue = self._transform(value)
+            if newValue != None:
+                self.do.addField(self._renamer(name), newValue)
+        self.do.addField(name, value)

@@ -33,6 +33,7 @@ from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPri
 from lumberjack import Lumberjack
 from contextset import ContextSetList, ContextSet
 
+from copyfield import CopyField
 from crosswalk import Crosswalk
 from xsltcrosswalk import XsltCrosswalk
 from xmlxpath import XmlXPath
@@ -43,5 +44,5 @@ from rssitem import RssItem
 from venturi import Venturi
 from configuration import Configuration, readConfig
 from xml2fields import Xml2Fields
-from xpath2field import XPath2Field, XPathTransform2Field
+from xpath2field import XPath2Field
 

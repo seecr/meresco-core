@@ -41,6 +41,7 @@ import unittest
 
 from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
+from copyfieldtest import CopyFieldTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from cql2lucenequerytest import Cql2LuceneQueryTest
 from documenttest import DocumentTest
@@ -65,7 +66,6 @@ from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
 from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
-from xpathtransform2fieldtest import XPathTransform2FieldTest
 from xslicetest import XSliceTest
 
 from http.basicauthenticationtest import BasicAuthenticationTest

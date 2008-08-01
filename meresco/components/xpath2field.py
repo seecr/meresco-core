@@ -28,20 +28,14 @@
 from meresco.framework import Observable
 
 
-class XPathTransform2Field(Observable):
+class XPath2Field(Observable):
     def __init__(self, attributeXpaths=[], namespaceMap={}):
         Observable.__init__(self)
         self._attributeXpaths = attributeXpaths
         self._namespaceMap = namespaceMap
 
     def add(self, id, partName, lxmlNode):
-        for (xpath, dottedDestinationPath, transformer) in self._attributeXpaths:
+        for (xpath, dottedDestinationPath) in self._attributeXpaths:
             values = lxmlNode.xpath(xpath, namespaces=self._namespaceMap)
             for value in values:
-                newValue = transformer(value)
-                if newValue != None:
-                    self.do.addField(name=dottedDestinationPath, value=newValue)
-
-class XPath2Field(XPathTransform2Field):
-    def __init__(self, attributeXpaths=[], namespaceMap={}):
-        XPathTransform2Field.__init__(self, attributeXpaths=[(xpath, dottedDestinationPath, lambda value:value) for xpath, dottedDestinationPath in attributeXpaths], namespaceMap=namespaceMap)
+                self.do.addField(name=dottedDestinationPath, value=value)
