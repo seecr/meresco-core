@@ -25,23 +25,32 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from cq2utils import CQ2TestCase, CallTrace
 
-from logobserver import LogObserver
-from storagecomponent import StorageComponent, defaultSplit
-from storageharvester import defaultJoin
-from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
-from lumberjack import Lumberjack
-from contextset import ContextSetList, ContextSet
+from meresco.components import XPathTransform2Field
 
-from crosswalk import Crosswalk
-from xsltcrosswalk import XsltCrosswalk
-from xmlxpath import XmlXPath
-from rss import Rss
-from accumulate import Accumulate
-from xmlcompose import XmlCompose
-from rssitem import RssItem
-from venturi import Venturi
-from configuration import Configuration, readConfig
-from xml2fields import Xml2Fields
-from xpath2field import XPath2Field, XPathTransform2Field
+from lxml.etree import parse
+from StringIO import StringIO
 
+class XPathTransform2FieldTest(CQ2TestCase):
+    def testOne(self):
+        observer = CallTrace()
+        x = XPathTransform2Field([('/a/b/text()', 'a.b', lambda value: value.swapcase())], namespaceMap={})
+        x.addObserver(observer)
+
+        node = parse(StringIO("""<a><b>Contents</b></a>"""))
+
+        x.add('id', 'partname', node)
+        self.assertEquals(1, len(observer.calledMethods))
+
+        self.assertEquals("addField(name='a.b', value='cONTENTS')", str(observer.calledMethods[0]))
+
+    def testTransformReturnsNone(self):
+        observer = CallTrace()
+        x = XPathTransform2Field([('/a/b/text()', 'a.b', lambda value:None)], namespaceMap={})
+        x.addObserver(observer)
+
+        node = parse(StringIO("""<a><b>Contents</b></a>"""))
+
+        x.add('id', 'partname', node)
+        self.assertEquals(0, len(observer.calledMethods))

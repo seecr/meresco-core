@@ -65,6 +65,7 @@ from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
 from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
+from xpathtransform2fieldtest import XPathTransform2FieldTest
 from xslicetest import XSliceTest
 
 from http.basicauthenticationtest import BasicAuthenticationTest
@@ -91,7 +92,7 @@ from oai.oaiprovenancetest import OaiProvenanceTest
 from oai.resumptiontokentest import ResumptionTokenTest
 
 from xml2documenttest import Xml2DocumentTest  # --> Xml2Document only in use by OAI; deprecated; needs to be replaced
-                                               #     when OAI is worked on next.            
+                                               #     when OAI is worked on next.
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
 from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest
