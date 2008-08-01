@@ -28,16 +28,22 @@
 
 from meresco.framework import Transparant
 
-class CopyField(Transparant):
-    def __init__(self, matcher, renamer, transform=lambda value:value):
+class _Fieldlet(Transparant):
+    def __init__(self, method):
         Transparant.__init__(self)
-        self._matcher = matcher
-        self._renamer = renamer
-        self._transform = transform
+        self._method = method
 
+class FilterField(_Fieldlet):
     def addField(self, name, value):
-        if self._matcher(name):
-            newValue = self._transform(value)
-            if newValue != None:
-                self.do.addField(self._renamer(name), newValue)
-        self.do.addField(name, value)
+        if self._method(name):
+            self.do.addField(name, value)
+
+class RenameField(_Fieldlet):
+    def addField(self, name, value):
+        self.do.addField(self._method(name), value)
+
+class TransformField(_Fieldlet):
+    def addField(self, name, value):
+        newValue = self._method(value)
+        if newValue != None:
+            self.do.addField(name, newValue)

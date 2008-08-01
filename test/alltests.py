@@ -1,5 +1,4 @@
 #!/usr/bin/env python2.5
-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -41,12 +40,12 @@ import unittest
 
 from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
-from copyfieldtest import CopyFieldTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from cql2lucenequerytest import Cql2LuceneQueryTest
 from documenttest import DocumentTest
 from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
+from fieldletstest import FieldletsTest
 from fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest

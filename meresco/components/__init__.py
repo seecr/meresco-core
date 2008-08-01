@@ -33,7 +33,7 @@ from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPri
 from lumberjack import Lumberjack
 from contextset import ContextSetList, ContextSet
 
-from copyfield import CopyField
+from fieldlets import RenameField, TransformField, FilterField
 from crosswalk import Crosswalk
 from xsltcrosswalk import XsltCrosswalk
 from xmlxpath import XmlXPath
