@@ -35,6 +35,18 @@ class Fields2XmlTest(CQ2TestCase):
         xml = bind_string(transactionDo.calledMethods[0].args[2])
         self.assertEquals('partName', str(xml.childNodes[0].localName))
 
+    def testNamespace(self):
+        transaction = CallTrace('Transaction')
+        transactionDo = CallTrace('TransactionDo')
+        transaction.do = transactionDo
+        
+        f = Fields2XmlTx(transaction, 'extra', namespace="http://meresco.com/namespace/fields/extra")
+        f.addField('__id__', 'identifier')
+        f.addField('key.sub', 'value')
+        f.finalize()
+        
+        self.assertEquals(('identifier', 'extra', '<extra xmlns="http://meresco.com/namespace/fields/extra"><key><sub>value</sub></key></extra>'), transactionDo.calledMethods[0].args)
+
     def testIllegalPartNameRaisesException(self):
         for name in ['this is wrong', '%%@$%*^$^', '/slash', 'dot.dot']:
             try:

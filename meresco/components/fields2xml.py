@@ -8,7 +8,7 @@ from xml.sax.saxutils import escape as escapeXml
 correctNameRe = compile(r'^\w+$')
 
 class Fields2XmlTx(Observable):
-    def __init__(self, transaction, partName):
+    def __init__(self, transaction, partName, namespace=None):
         Observable.__init__(self)
         if not correctNameRe.match(partName):
             raise Fields2XmlException('Invalid name: "%s"' % partName)
@@ -16,6 +16,7 @@ class Fields2XmlTx(Observable):
         self._fields = []
         self._partName = partName
         self._transaction = transaction
+        self._namespace = namespace
         
     def addField(self, name, value):
         if name == '__id__':
@@ -24,7 +25,8 @@ class Fields2XmlTx(Observable):
         self._fields.append((name,value))
 
     def finalize(self):
-        xml = '<%s>%s</%s>' % (self._partName, generateXml(self._fields), self._partName)
+        ns = self._namespace != None and ' xmlns="%s"' % self._namespace or ''
+        xml = '<%s%s>%s</%s>' % (self._partName, ns, generateXml(self._fields), self._partName)
         
         self._transaction.do.store(self._identifier, self._partName, xml)
 
