@@ -30,12 +30,7 @@ class Fields2XmlTx(Observable):
 
 def splitName(name):
     result = name.split('.')
-    if len(result) == 1:
-        return '//', name
     return '//' + '/'.join(result[:-1]), result[-1]
-
-def createTag(tagName, value):
-    return '<%s>%s</%s>' % (tagName, escapeXml(value), tagName)
 
 def _generateXml(fields):
     currentPath = '//'
@@ -49,20 +44,17 @@ def _generateXml(fields):
             if currentPath in parentPath:
                 parentTagsToAdd = [tag for tag in parentPath[len(currentPath):].split('/') if tag]
                 for tag in parentTagsToAdd:
-                    yield('<%s>' % tag)
+                    yield '<%s>' % tag
                 currentPath = parentPath
             else:
                 tag = currentPath.split('/')[-1]
                 currentPath = '/'.join(currentPath.split('/')[:-1])
-                yield('</%s>' % tag)
-                
-                
-        yield createTag(tagName, value)
+                yield '</%s>' % tag
+        yield '<%s>%s</%s>' % (tagName, escapeXml(value), tagName)
     if currentPath != '//':
         parentTagsToRemove = currentPath[len('//'):].split('/')
         for tag in reversed(parentTagsToRemove):
-            yield('</%s>' % tag)
-        
+            yield '</%s>' % tag
 
 def generateXml(fields):
     return ''.join(_generateXml(fields))
