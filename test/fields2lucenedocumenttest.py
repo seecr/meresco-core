@@ -28,9 +28,9 @@
 from unittest import TestCase
 from cq2utils import CallTrace
 from meresco.framework import be, Transparant, Observable
-from meresco.framework import TransactionScope
+from meresco.framework import TransactionScope, TransactionFactory
 
-from meresco.components.lucene import Fields2LuceneDocument
+from meresco.components.lucene import Fields2LuceneDocumentTx
 
 class Fields2LuceneDocumentTest(TestCase):
 
@@ -45,7 +45,7 @@ class Fields2LuceneDocumentTest(TestCase):
             (Observable(),
                 (TransactionScope(),
                     (Splitter(),
-                        (Fields2LuceneDocument(untokenized=['b']),
+                        (TransactionFactory(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['b'])),
                             (self.observert,)
                         )
                     )

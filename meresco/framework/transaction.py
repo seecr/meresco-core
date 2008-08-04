@@ -27,7 +27,25 @@
 ## end license ##
 from meresco.framework import Observable
 
-class Transaction(object):
+class TransactionFactory(Observable):
+
+    def __init__(self, factoryMethod):
+        Observable.__init__(self)
+        self._factoryMethod = factoryMethod
+        self.txs = {}
+
+    def begin(self):
+        self.txs[self.tx.getId()] = self._factoryMethod(self)
+
+    def unknown(self, message, *args, **kwargs):
+        method = getattr(self.txs[self.tx.getId()], message)
+        yield method(*args, **kwargs)
+
+    def commit(self):
+        self.txs[self.tx.getId()].finalize()
+        del self.txs[self.tx.getId()]
+
+class __Transaction__(object):
 
     def getId(self):
         return id(self)
@@ -35,7 +53,7 @@ class Transaction(object):
 class TransactionScope(Observable):
 
     def unknown(self, name, *args, **kwargs):
-        __callstack_var_tx__ = Transaction()
+        __callstack_var_tx__ = __Transaction__()
         self.once.begin()
         for result in self.all.unknown(name, *args, **kwargs):
             yield result

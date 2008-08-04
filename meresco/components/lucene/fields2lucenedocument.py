@@ -25,31 +25,12 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.framework import Observable
 from meresco.components.lucene import Document
-
-class Fields2LuceneDocument(Observable):
-
-    def __init__(self, untokenized=[]):
-        Observable.__init__(self)
-        self._untokenized = untokenized
-        self.txs = {}
-
-    def begin(self):
-        self.txs[self.tx.getId()] = Fields2LuceneDocumentTx(self, self._untokenized)
-
-    def addField(self, name, value):
-        self.txs[self.tx.getId()].addField(name, value)
-
-    def commit(self):
-        self.txs[self.tx.getId()].finalize()
-        del self.txs[self.tx.getId()]
-
 
 class Fields2LuceneDocumentTx(object):
 
-    def __init__(self, parent, untokenized):
-        self.parent = parent
+    def __init__(self, transaction, untokenized):
+        self.transaction = transaction
         self.fields = {}
         self._untokenized = untokenized
 
@@ -64,6 +45,6 @@ class Fields2LuceneDocumentTx(object):
         for name, values in self.fields.items():
             for value in values:
                 document.addIndexedField(name, value, not name in self._untokenized)
-        self.parent.do.addDocument(document)
+        self.transaction.do.addDocument(document)
 
 
