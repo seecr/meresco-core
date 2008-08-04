@@ -47,6 +47,7 @@ from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
 from fieldletstest import FieldletsTest
 from fields2lucenedocumenttest import Fields2LuceneDocumentTest
+from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
