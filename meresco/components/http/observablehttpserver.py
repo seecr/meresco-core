@@ -39,10 +39,22 @@ class ObservableHttpServer(Observable):
         self._port = port
         self._reactor = reactor
         self._timeout = timeout
-        
-    def observer_init(self):
-        server = HttpServer(self._reactor, self._port, self._connect, timeout=self._timeout)
+        self._started = False
 
+    def startServer(self):
+        """Starts server,
+
+        When running a http server on port 80, this method should be called by the
+        root user. In other cases it will be started when initializing all observers,
+        see observer_init()
+        """
+        HttpServer(self._reactor, self._port, self._connect, timeout=self._timeout)
+        self._started = True
+
+    def observer_init(self):
+        if not self._started:
+            self.startServer()
+    
     def _connect(self, **kwargs):
         return self.handleRequest(port=self._port, **kwargs)
 
