@@ -34,12 +34,13 @@ from socket import gethostname
 
 
 class ObservableHttpServer(Observable):
-    def __init__(self, reactor, port, timeout=1):
+    def __init__(self, reactor, port, timeout=1, prio=None):
         Observable.__init__(self)
         self._port = port
         self._reactor = reactor
         self._timeout = timeout
         self._started = False
+        self._prio = prio
 
     def startServer(self):
         """Starts server,
@@ -48,13 +49,15 @@ class ObservableHttpServer(Observable):
         root user. In other cases it will be started when initializing all observers,
         see observer_init()
         """
-        HttpServer(self._reactor, self._port, self._connect, timeout=self._timeout)
+        self._keepHttpServerForTestingSupport = \
+            HttpServer(self._reactor, self._port, self._connect,
+                timeout=self._timeout, prio=self._prio)
         self._started = True
 
     def observer_init(self):
         if not self._started:
             self.startServer()
-    
+
     def _connect(self, **kwargs):
         return self.handleRequest(port=self._port, **kwargs)
 

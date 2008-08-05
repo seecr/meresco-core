@@ -25,8 +25,19 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from sys import getdefaultencoding
+"""Main entry of Meresco
+
+All functionality of Meresco is exposed here.
+"""
+__author__ =  'Seek You Too B.V.'
+__version__=  '2.9'
+__revision__= 7629
+
+__all__ = []
+
+
+from sys import getdefaultencoding as _getdefaultencoding
 from locale import getdefaultlocale, _parse_localename
 
-assert getdefaultencoding() == 'utf-8'
+assert _getdefaultencoding() == 'utf-8'
 assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"

@@ -25,7 +25,9 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+from socket import socket
 from cq2utils import CQ2TestCase, CallTrace
+from weightless import Reactor
 
 from meresco.components.http.observablehttpserver import ObservableHttpServer
 
@@ -41,7 +43,7 @@ class ObservableHttpServerTest(CQ2TestCase):
         self.assertEquals('handleRequest', method.name)
         self.assertEquals(0, len(method.args))
         self.assertEquals(7, len(method.kwargs))
-        
+
     def testHandleRequest(self):
         observer = CallTrace('Observer')
         s = ObservableHttpServer(CallTrace('Reactor'), 1024)
@@ -58,4 +60,30 @@ class ObservableHttpServerTest(CQ2TestCase):
         self.assertEquals(1, len(arguments))
         self.assertEquals(['key'], arguments.keys())
         self.assertEquals(['value'], arguments['key'])
-        
+
+    def testServerWithPrio(self):
+        prios = []
+        class MyServer(object):
+            def handleRequest(self, *args, **kwargs):
+                yield 'HALLO'
+        class MyReactor(Reactor):
+            def addReader(self, *args, **kwargs):
+                prios.append(('read', kwargs['prio']))
+                return Reactor.addReader(self, *args, **kwargs)
+            def addWriter(self, *args, **kwargs):
+                prios.append(('write', kwargs['prio']))
+                return Reactor.addWriter(self, *args, **kwargs)
+        reactor = MyReactor()
+        s = ObservableHttpServer(reactor, 2000, prio=3)
+        s.addObserver(MyServer())
+        s.observer_init()
+        sok = socket()
+        sok.connect(('localhost', 2000))
+        sok.send('GET / HTTP/1.0\r\n\r\n')
+        reactor.step()
+        self.assertEquals([('read', 3)], prios)
+        reactor.step().step()
+        self.assertEquals([('read', 3), ('read', 3)], prios)
+        reactor.step().step()
+        self.assertEquals([('read', 3), ('read', 3), ('write', 3)], prios)
+
