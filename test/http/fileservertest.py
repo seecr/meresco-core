@@ -44,7 +44,7 @@ class FileServerTest(TestCase):
 
     def testServeNoneExistingFile(self):
         fileServer = FileServer(self.directory)
-        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/doesNotExist", Method="GET", Headers={}))
+        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), path="/doesNotExist", Method="GET", Headers={}))
 
         self.assertTrue("HTTP/1.0 404 Not Found" in response, response)
         self.assertTrue("<title>404 Not Found</title>" in response)
@@ -72,7 +72,7 @@ class FileServerTest(TestCase):
         f.close()
 
         fileServer = FileServer(self.directory)
-        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/someFile", Method="GET", Headers={}))
+        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), path="/someFile", Method="GET", Headers={}))
 
         self.assertTrue("HTTP/1.0 200 OK" in response)
         self.assertTrue("Some Contents" in response)
@@ -83,7 +83,7 @@ class FileServerTest(TestCase):
         f.close()
 
         fileServer = FileServer(self.directory)
-        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), RequestURI="/someFile", Method="GET", Headers={}))
+        response = ''.join(fileServer.handleRequest(port=80, Client=('localhost', 9000), path="/someFile", Method="GET", Headers={}))
 
         self.assertTrue("Date: " in response)
         self.assertTrue("Last-Modified: " in response)

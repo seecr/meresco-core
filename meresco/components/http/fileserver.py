@@ -44,23 +44,23 @@ class FileServer:
     def __init__(self, documentRoot):
         self._documentRoot = documentRoot
 
-    def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
+    def handleRequest(self, path, port=None, Client=None, Method=None, Headers=None, **kwargs):
 
-        if not self.fileExists(RequestURI):
+        if not self.fileExists(path):
             yield httputils.notFoundHtml
             for line in ['<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">',
 "<html><head>",
 "<title>404 Not Found</title>",
 "</head><body>",
 "<h1>Not Found</h1>",
-"<p>The requested URL %s was not found on this server.</p>" % RequestURI,
+"<p>The requested URL %s was not found on this server.</p>" % path,
 "<hr>",
 "<address>Weightless Server at localhost Port 8080</address>",
 "</body></html>"]:
                 yield line
             raise StopIteration
 
-        filename = self._filenameFor(RequestURI)
+        filename = self._filenameFor(path)
         ext = filename.split(".")[-1]
         try:
             contentType = mimetypes.types_map["." + ext]
