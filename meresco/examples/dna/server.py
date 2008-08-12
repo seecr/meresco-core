@@ -5,7 +5,7 @@ from os import makedirs
 
 from meresco.framework import be, Observable, TransactionScope, TransactionFactory, Transparant
 
-from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, TransformField, Venturi, Amara2Lxml, RewritePartname
+from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, TransformField, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem
 from meresco.components.drilldown import Drilldown, SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
 from meresco.components.http import PathFilter, ObservableHttpServer
 from meresco.components.http.webrequestserver import WebRequestServer
@@ -71,6 +71,8 @@ def dna(reactor,  host, portNumber, databasePath):
             (drilldownComponent,)
         )
 
+    serverUrl = 'http://%s:%s' % (host, portNumber)
+
     return \
         (Observable(),
             (ObservableHttpServer(reactor, portNumber),
@@ -101,7 +103,28 @@ def dna(reactor,  host, portNumber, databasePath):
                             )
                         )
                     )
-                )
+                ),
+                (PathFilter('/rss'),
+                    (Rss(   title = 'Meresco',
+                            description = 'RSS feed for Meresco',
+                            link = 'http://meresco.org',
+                            maximumRecords = 15),
+                        (CQL2LuceneQuery(unqualifiedTermFields),
+                            indexHelix
+                        ),
+                        (RssItem(
+                                nsMap={
+                                    'dc': "http://purl.org/dc/elements/1.1/",
+                                    'oai_dc': "http://www.openarchives.org/OAI/2.0/oai_dc/"
+                                },
+                                title = ('dc', '/oai_dc:dc/dc:title/text()'),
+                                description = ('dc', '/oai_dc:dc/dc:description/text()'),
+                                linkTemplate = serverUrl +   '/sru?operation=searchRetrieve&version=1.1&query=dc.identifier%%3D%(identifier)s',
+                                identifier = ('dc', '/oai_dc:dc/dc:identifier/text()')),
+                            (storageComponent, )
+                        ),
+                    )
+                ),
             )
         )
 
