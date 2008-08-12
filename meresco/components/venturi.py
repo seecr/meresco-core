@@ -47,7 +47,6 @@ class Venturi(Observable):
                 yield self.all.add(identifier, partname, part)
             except Exception, e:
                 pass
-        self.do.finish()
 
     def _findPart(self, identifier, partname, lxmlNode, partXPath):
         matches = lxmlNode.xpath(partXPath, self._namespaceMap)
