@@ -5,7 +5,7 @@
  About Components, Application DNA and Jackson Pipelines
 ------------------------------------------------------
 :Date: 2008-08-11
-:Revision: $Revision: 0 $
+:Revision: $Revision$
 :Authors:
     - Erik J. Groeneveld
 :Contact: info@cq2.org
