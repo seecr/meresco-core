@@ -44,7 +44,7 @@ class VenturiTest(CQ2TestCase):
             namespaceMap={})
         v.addObserver(interceptor)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add', 'add'], [m.name for m in interceptor.calledMethods])
         self.assertEquals(('identifier', 'partone'), interceptor.calledMethods[0].args[:2])
         self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
         self.assertEquals(('identifier', 'parttwo',), interceptor.calledMethods[1].args[:2])
@@ -61,13 +61,13 @@ class VenturiTest(CQ2TestCase):
             namespaceMap={})
         v.addObserver(interceptor)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
         self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
 
     def testReadFromStorage(self):
         inputEvent = fromstring('<document/>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
-        storage = CallTrace('Storage', ignoredAttributes=['add', 'finish'])
+        storage = CallTrace('Storage', ignoredAttributes=['add'])
         storage.returnValues['getStream'] = StringIO('<some>message</some>')
         v = Venturi(
             should=[('partone', '/document/part[@name="partone"]/text()')],
@@ -75,7 +75,7 @@ class VenturiTest(CQ2TestCase):
         v.addObserver(interceptor)
         v.addObserver(storage)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
         self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
         self.assertEquals(('identifier', 'partone'), storage.calledMethods[0].args)
 
@@ -87,13 +87,13 @@ class VenturiTest(CQ2TestCase):
             namespaceMap={})
         v.addObserver(interceptor)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
         self.assertEquals('<one/>', tostring(interceptor.calledMethods[0].args[2]))
     
     def testCouldHaveInStorage(self):
         inputEvent = fromstring('<document><other/></document>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
-        storage = CallTrace('Storage', ignoredAttributes=['add', 'finish'])
+        storage = CallTrace('Storage', ignoredAttributes=['add'])
         storage.returnValues['getStream'] = StringIO('<one/>')
         v = Venturi(
             could=[('one', '/document/one')],
@@ -101,14 +101,14 @@ class VenturiTest(CQ2TestCase):
         v.addObserver(interceptor)
         v.addObserver(storage)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
         self.assertEquals('<one/>', tostring(interceptor.calledMethods[0].args[2]))
         self.assertEquals(('identifier', 'one'), storage.calledMethods[0].args)
 
     def testCouldHaveButDoesnot(self):
         inputEvent = fromstring('<document><other/></document>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
-        storage = CallTrace('Storage', ignoredAttributes=['add', 'finish'])
+        storage = CallTrace('Storage', ignoredAttributes=['add'])
         storage.exceptions['getStream'] = MyException('Not Available')
         v = Venturi(
             should=[('other', '/document/other')],
@@ -117,7 +117,7 @@ class VenturiTest(CQ2TestCase):
         v.addObserver(interceptor)
         v.addObserver(storage)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
         self.assertEquals(('identifier', 'other',), interceptor.calledMethods[0].args[:2])
 
     def testXpathReturnsMultipleResults(self):
@@ -140,7 +140,7 @@ class VenturiTest(CQ2TestCase):
             namespaceMap={'prefixone':'ns1', 'prefixtwo':'ns2'})
         v.addObserver(interceptor)
         list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'add', 'finish'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['add', 'add'], [m.name for m in interceptor.calledMethods])
         
 
 class MyException(Exception):
