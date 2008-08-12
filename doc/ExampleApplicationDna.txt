@@ -1,0 +1,161 @@
+.. -*- coding: utf-8 -*-
+.. This documentation is written using reStructuredText. See http://docutils.sf.net
+
+=========================================
+Documentation in reStructuredText HOWTO
+=========================================
+--------------------------------------------------------------------------------------
+This document will help you creating documentation based on reStructuredText format.
+--------------------------------------------------------------------------------------
+
+:Authors: Johan Jonkers
+:Organization: `Seek You Too`_
+:Version: 0.1
+:Copyright: 2008 by Seek You Too
+:License: |by-nc-nd|_ Attribution-Noncommercial-No Derivative Works 3.0 License
+
+.. _`Seek You Too`: http://www.cq2.nl
+.. |by-nc-nd| image:: images/by-nc-nd.png
+.. _by-nc-nd: http://creativecommons.org/licenses/by-nc-nd/3.0/
+
+.. meta::
+    :Revision: $LastChangedRevision: 7918 $
+    :Date: $LastChangedDate: 2008-08-12 09:45:02 +0200 (Tue, 12 Aug 2008) $
+
+:Document History:
+
+    * 2008-08-12,   J.B. Jonkers (CQ2),  version 0.1,    Initial version
+
+
+.. |ea| replace:: Example Application
+.. contents:: Table of Contents
+.. section-numbering::
+
+
+Introduction
+============
+
+This document describes the |ea| supplied with Meresco. It also will try to establish the path of the data as it travels from the originating OAI repository to the end-user.
+The |ea| consists out of a server which provides:
+
+    * SRU Query support
+    * SRU Update support
+    * SRU Term Drilldown
+    * RSS support
+
+Relation between datasource and searchengine
+============================================
+
+The |ea| uses the output of the Meresco harvester as input for indexing records. Currently the |ea| can index OAI Dublin Core. The XML Hierarchy of the OAI Dublin Core record is flattened and can be queried; by doing so, Meresco creates a one on one representation of the original data and the fields upon which can be queried.
+
+For example, the following OAI Dublin Core record:
+
+::
+
+    <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/">
+        <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">The title</dc:title>
+    </oai_dc/dc>
+
+Can be queried for after indexing by Meresco with the statement:
+
+::
+
+    dc.title="The title"
+
+Structure
+=========
+
+The basic structure of the Example Server is that there is an ObservableHttpServer which is observed by three PathFilters. These PathFilters determine based on the path of the request if the call should be let through or not.
+
+SRU Query and SRU Term Drilldown support
+----------------------------------------
+
+The support for SRU queries is provided by the following part of the |ea| DNA:
+
+::
+
+    ...
+    unqualifiedTermFields = [('dc', 1.0)]
+    DRILLDOWN_PREFIX = 'drilldown.'
+    drilldownFieldnames = ['drilldown.dc.subject']
+    drilldownComponent = Drilldown(drilldownFieldnames)
+    indexHelix = \
+        (LuceneIndex(join(databasePath, 'index'), timer=reactor),
+            (drilldownComponent,)
+        )
+    ...
+    (Sru(   host=host, port=portNumber,
+            defaultRecordSchema='dc', defaultRecordPacking='xml'),
+        (CQL2LuceneQuery(unqualifiedTermFields),
+            indexHelix
+        ),
+        (storageComponent,),
+        (SRUDrilldownAdapter(),
+            (SRUTermDrilldown(),
+                (DrilldownRequestFieldnameMap(
+                    lambda field: DRILLDOWN_PREFIX + field,
+                    lambda field: field[len(DRILLDOWN_PREFIX):]),
+                        (drilldownComponent,)
+                )
+            )
+        )
+    )
+
+This part of the |ea| DNA will convert the arguments specified in the URL into a SRU query. Next the query will be converted from CQL to the native Lucene format after will it will be executed.
+The query will result into just the identifiers of the records that match. These identifiers are then fetched from the storage in the request record-schema and the result will be rendered uing the specified record-packing.
+In addition to answering queries, this part of the |ea| will also answer SRU Term Drilldown queries. During the index process, fields marked to be suitable for drilldown have been indexed under a different fieldname suitable for drilldown. This fieldname is the originalfield name with a 'drilldown.' prefix. The SRU Term drilldown query contains the name of the field by which the enduser know the field and thus it will need to have the 'drilldown.' prefix prepended. This is done by the DrilldownRequestFieldnameMap component before the fieldnames are passed to the drilldown component.
+
+SRU Update support
+------------------
+
+The support for SRU Update is provided by the following part of the |ea| DNA:
+
+::
+
+    ...
+    fields2LuceneDocument = \
+        (TransactionFactory(lambda tx:
+                Fields2LuceneDocumentTx(tx, untokenized=drilldownFieldnames)),
+            index
+        )
+    indexingHelix = \
+        (Transparant(),
+            fields2LuceneDocument,
+            (FilterField(lambda name:
+                    DRILLDOWN_PREFIX + name in drilldownFieldnames),
+                (RenameField(lambda name: DRILLDOWN_PREFIX + name),
+                    fields2LuceneDocument
+                )
+            )
+        )
+    ...
+    (WebRequestServer(),
+        (SRURecordUpdate(),
+            (Amara2Lxml(),
+                (TransactionScope(),
+                    (Venturi(
+                        should=[
+                            ('metadata', '/document:document/document:part[@name="metadata"]/text()')
+                        ],
+                        namespaceMap={
+                            'document': 'http://meresco.com/namespace/harvester/document'}),
+
+                        (XmlXPath(['/oai:metadata/oai_dc:dc']),
+                            (XmlPrintLxml(),
+                                (RewritePartname('dc'),
+                                    (storageComponent,)
+                                )
+                            ),
+                            (Xml2Fields(),
+                                indexingHelix,
+                                (RenameField(lambda name: "dc"),
+                                    indexingHelix
+                                ),
+                            ),
+                        ),
+                    )
+                )
+            )
+        )
+    )
+
