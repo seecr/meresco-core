@@ -103,6 +103,7 @@ The support for SRU queries is provided by the following part of the |ea| DNA:
 
 This part of the |ea| DNA will convert the arguments specified in the URL into a SRU query. Next the query will be converted from CQL to the native Lucene format after will it will be executed.
 The query will result into just the identifiers of the records that match. These identifiers are then fetched from the storage in the request record-schema and the result will be rendered uing the specified record-packing.
+
 In addition to answering queries, this part of the |ea| will also answer SRU Term Drilldown queries. During the index process, fields marked to be suitable for drilldown have been indexed under a different fieldname suitable for drilldown. This fieldname is the originalfield name with a 'drilldown.' prefix. The SRU Term drilldown query contains the name of the field by which the enduser know the field and thus it will need to have the 'drilldown.' prefix prepended. This is done by the DrilldownRequestFieldnameMap component before the fieldnames are passed to the drilldown component.
 
 SRU Update support
@@ -159,3 +160,22 @@ The support for SRU Update is provided by the following part of the |ea| DNA:
         )
     )
 
+The SRURecordUpdate component currently in Meresco is one of the older components present and is therefor not completely up to data when it comes to how its used in with the other components. As a first step towards getting the component up to date, two wrapper components have been created so that to the other components the SRURecordUpdate component seems to work like any other component.
+
+The record that is offered for indexing by the external harvesting source (in most cases this will most likely be the meresco harvester) is accepted and the SRUUpdate protocol envelope is removed. The data contained within this envelope should have the following XML structure:
+
+::
+
+    <document xmlns="http://meresco.com/namespace/harvester/document">
+        <part name="my_data1">&lt;data1/&gt;</part>
+        <part name="my_data2">&lt;data2/&gt;</part>
+        <part name="my_data3">&lt;data3/&gt;</part>
+        ...
+    </document>
+
+The TransactionScope component will start a new transaction and pass on the data. After the data has been processed and no error occured, the TransactionScope will signal for the changes to be commited.
+The Venturi component will perform xpath queries in the data it receives. If an xpath query returns a result, the result of that query will be passed on the the observers. The name specified in front of the xpath query will be passed along as the partname of the xpath query result.
+
+Next the XmlXPath component will filter out the OAI DC tag which will then be stored in the storage under the name 'dc'. The Xml2Fields component will flatten the XML and create the labels which will be indexed by the index later on.
+
+The observant reader will have noticed a variable called 'unqualifiedTermFields' in the previous chapter. The unqualifiedTermFields is a list of fields which will be queried if there is no field specified in the query. A good practise is to index data under the label of the root tag and to use that as a default field. In order to do this with Meresco, the RenameField component will add an additional label named after the root tag and copy the contents.
