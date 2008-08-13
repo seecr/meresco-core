@@ -179,3 +179,14 @@ The Venturi component will perform xpath queries in the data it receives. If an 
 Next the XmlXPath component will filter out the OAI DC tag which will then be stored in the storage under the name 'dc'. The Xml2Fields component will flatten the XML and create the labels which will be indexed by the index later on.
 
 The observant reader will have noticed a variable called 'unqualifiedTermFields' in the previous chapter. The unqualifiedTermFields is a list of fields which will be queried if there is no field specified in the query. A good practise is to index data under the label of the root tag and to use that as a default field. In order to do this with Meresco, the RenameField component will add an additional label named after the root tag and copy the contents.
+
+
+RSS
+===
+
+To do.
+
+Running a server
+================
+
+To do.
