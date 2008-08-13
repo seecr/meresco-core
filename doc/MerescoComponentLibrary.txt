@@ -4,10 +4,11 @@
 ---------------------------------------------------------
  About Components, Application DNA and Jackson Pipelines
 ---------------------------------------------------------
+:Identifier: $URL$
 :Date: $Date$
 :Revision: $Revision$
-:Authors:
-    - Erik J. Groeneveld
+:Authors: Erik J. Groeneveld
+:Last changed by: $LastChangedBy$
 :Contact: info@cq2.org
 :Copyright: © Seek You Too
 :License: http://creativecommons.org/licenses/by-nc-nd/3.0/
