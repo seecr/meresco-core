@@ -1,10 +1,10 @@
 ===========================
  Meresco Component Library
 ===========================
-------------------------------------------------------
+---------------------------------------------------------
  About Components, Application DNA and Jackson Pipelines
-------------------------------------------------------
-:Date: 2008-08-11
+---------------------------------------------------------
+:Date: $Date$
 :Revision: $Revision$
 :Authors:
     - Erik J. Groeneveld
@@ -84,7 +84,7 @@ The Component Library is the result of over a decade of learning and well over a
 
 
 The Component Library
-==================
+=====================
 
 Base Technologies
 -----------------
@@ -132,7 +132,7 @@ Jackson Structured Programming (JSP)
 Introduced more than 30 years ago by Michal Jackson to enable the processing of large amounts of data with a system containing only limited memory, it's relevance for today's web-servers is striking.  JSP describes a way of connecting coroutines to efficiently process datarecords while maintaining a simple code base. The Component Library supports and recommends the use of JSP, although this is not obligatory.  For more information, the reader is refered to the web.
 
 Components
--------
+----------
 A component might send messages (or *use* interfaces), implement messages (or *support* interfaces) or do both.
 
 Implementing messages
@@ -225,7 +225,7 @@ Configuration
 -------------
 
 Component Instantiation
-~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~
 Component instantiation is normal Python object instantiation by calling constructors.  The constructors take configuration information.  Important: see `Component Design Guidelines`_ for some guidelines on this topic!
 
 Simple Observer configuration
@@ -265,7 +265,7 @@ DNA strings such as above can be activated by calling ``be``, for example::
 This will cause the relations as described by the ``dna`` to be activated, which will cause all obeservers being registered with the proper observables.
 
 Component Design Guidelines
-------------------------
+---------------------------
 There is no obligation to provide constructors, nor are there any rules as to what must be accepted or not.  However, the Library's purpose is to get rid of feeding dependencies, classes or factories to components using constructors, so it is recommended to avoid these and use ``self.[all|any|do]`` instead, see (1) below.  Also, it is not forbidden but avoid reading configuration information from the environment or files but instead make each configuration option an argument of the constructor, see (2) below.
 
 So instead of::
@@ -289,3 +289,4 @@ and make sure that ``MyComponent`` is configured with a storage listening to sav
 
     myComponent = MyComponent()
     myComponent.addObserver(storage)
+
