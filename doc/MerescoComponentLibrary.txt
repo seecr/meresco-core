@@ -4,7 +4,7 @@
 ---------------------------------------------------------
  About Components, Application DNA and Jackson Pipelines
 ---------------------------------------------------------
-:Identifier: $Id:: MerescoComponentLibrary.txt $
+:Identifier: $Id::                             $
 :Date: $Date::                     $
 :Revision: $Revision$
 :Authors: Erik J. Groeneveld
