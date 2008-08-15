@@ -68,6 +68,8 @@ from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
 from xslicetest import XSliceTest
 
+from framework.transactiontest import TransactionTest
+
 from http.basicauthenticationtest import BasicAuthenticationTest
 from http.fileservertest import FileServerTest
 from http.pathfiltertest import PathFilterTest

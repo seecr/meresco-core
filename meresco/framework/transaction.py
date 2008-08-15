@@ -38,8 +38,11 @@ class TransactionFactory(Observable):
         self.txs[self.tx.getId()] = self._factoryMethod(self)
 
     def unknown(self, message, *args, **kwargs):
-        method = getattr(self.txs[self.tx.getId()], message)
-        yield method(*args, **kwargs)
+        try:
+            method = getattr(self.txs[self.tx.getId()], message)
+            yield method(*args, **kwargs)
+        except AttributeError:
+            pass
 
     def commit(self):
         self.txs[self.tx.getId()].finalize()
