@@ -46,6 +46,25 @@ class Session(UserDict):
     def unsetLink(self, caption, key, value):
         return '<a href="?%s">%s</a>' % (urlencode({key: '-' + repr(value)}), caption)
 
+class ArgumentsInSession(Observable):
+    
+    def handleRequest(self, session, arguments = {}, *args, **kwargs):
+        for k,v in arguments.items():
+            if not k in session:
+                session[k] = []
+            for value in v:
+                try:
+                    sign, value = value[0], eval(value[1:], {'__builtins__': {}})
+                except Exception, e:
+                    yield 'HTTP/1.0 400 Bad Request\r\n\r\n' + str(e)
+                    return
+                if sign == '+':
+                    if not value in session[k]:
+                        session[k].append(value)
+                elif sign == '-' and value in session[k]:
+                        session[k].remove(value)
+        yield self.all.handleRequest(session=session, *args, **kwargs)
+
 class SessionHandler(Observable):
     def __init__(self, secretSeed):
         Observable.__init__(self)
@@ -65,22 +84,7 @@ class SessionHandler(Observable):
             self._sessions[sessionid] = session
         extraHeader = 'Set-Cookie: session=%s; path=/' % sessionid
 
-        for k,v in arguments.items():
-            if not k in session:
-                session[k] = []
-            for value in v:
-                try:
-                    sign, value = value[0], eval(value[1:], {'__builtins__': {}})
-                except Exception, e:
-                    yield 'HTTP/1.0 400 Bad Request\r\n\r\n' + str(e)
-                    return
-                if sign == '+':
-                    if not value in session[k]:
-                        session[k].append(value)
-                elif sign == '-' and value in session[k]:
-                        session[k].remove(value)
-
-        result = self.all.handleRequest(session=session, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
+        result = self.all.handleRequest(session=session, arguments=arguments, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
         alreadyDone = False
         for iets in result:
             if not alreadyDone and CRLF in iets:

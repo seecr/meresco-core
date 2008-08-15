@@ -102,46 +102,6 @@ class SessionHandlerTest(TestCase):
         result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={})))
         self.assertEquals("""<a href="?key=%2B%28%27a+simple+tuple%27%2C%29">linktitle</a>""", result)
 
-    def testParseAndSetSessionVars(self):
-        arguments = {}
-        def handleRequest(session=None, *args, **kwargs):
-            arguments.update(session)
-            yield 'goodbye'
-        self.observer.handleRequest = handleRequest
-        list(self.handler.handleRequest(arguments={'key': ["+('a simple tuple',)"]}, Client=('127.0.0.1', 12345)))
-        self.assertEquals(2, len(arguments))
-        self.assertTrue('key' in arguments)
-        self.assertEquals( [('a simple tuple',)], arguments['key'])
-
-    def testParseAndSetAndRemoveSessionVars2(self):
-        arguments = {}
-        def handleRequest(session=None, *args, **kwargs):
-            arguments.update(session)
-            yield 'goodbye'
-        self.observer.handleRequest = handleRequest
-        list(self.handler.handleRequest(arguments={'aap': ["+'noot'"]}, Client=('127.0.0.1', 12345)))
-        self.assertEquals( ['noot'], arguments['aap'])
-        list(self.handler.handleRequest(arguments={'aap': ["-'noot'"]}, Client=('127.0.0.1', 12345)))
-        self.assertEquals( [], arguments['aap'])
-
-    def testDoNotEvalAnything(self):
-        response = ''.join(self.handler.handleRequest(arguments={'key': ["+exit(0)"]}, Client=('127.0.0.1', 12345)))
-        self.assertEquals("HTTP/1.0 400 Bad Request\r\n\r\nname 'exit' is not defined", response)
-
-    def testAddOnlyOnce(self):
-        sessions = []
-        def handleRequest(session=None, *args, **kwargs):
-            sessions.append(session)
-            yield 'goodbye'
-        self.observer.handleRequest = handleRequest
-        args = {'arguments': {'aap': ["+'noot'"]}, 'Client': ('127.0.0.1', 12345)}
-        list(self.handler.handleRequest(**args))
-        self.assertEquals(['noot'], sessions[0]['aap'])
-        headers = {'Cookie': 'session=%s' % sessions[0]['id']}
-        list(self.handler.handleRequest(Headers=headers, **args))
-        self.assertEquals(sessions[0], sessions[1])
-        self.assertEquals(['noot'], sessions[0]['aap'])
-
 # Cookie bevat:
 # - id (session)
 # - time/date
