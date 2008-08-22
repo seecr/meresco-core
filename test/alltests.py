@@ -43,7 +43,6 @@ from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from cql2lucenequerytest import Cql2LuceneQueryTest
 from documenttest import DocumentTest
-from drilldownfilterstest import DrilldownFiltersTest
 from drilldowntest import DrilldownTest
 from fieldletstest import FieldletsTest
 from fields2lucenedocumenttest import Fields2LuceneDocumentTest

@@ -25,10 +25,17 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from lucenerawdocsets import LuceneRawDocSets
-from drilldown import Drilldown
-from drilldownfieldnames import DrilldownFieldnames
-from srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown
-#backwards compatibility rename
-DrilldownRequestFieldnameMap = DrilldownFieldnames
+from meresco.framework.observable import Observable
 
+class DrilldownFieldnames(Observable):
+    def __init__(self, lookup, reverse):
+        Observable.__init__(self)
+        self.lookup = lookup
+        self.reverse = reverse
+
+    def drilldown(self, docNumbers, fieldsAndMaximums):
+        translatedFields = ((self.lookup(field), maximum, sort)
+            for (field, maximum, sort) in fieldsAndMaximums)
+        drilldownResults = self.any.drilldown(docNumbers, translatedFields)
+        return [(self.reverse(field), termCounts)
+            for field, termCounts in drilldownResults]

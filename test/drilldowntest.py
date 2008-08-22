@@ -30,7 +30,7 @@ from PyLucene import Term, TermQuery, IndexReader, MatchAllDocsQuery
 from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.components.lucene import Document
-from meresco.components.drilldown import Drilldown
+from meresco.components.drilldown import Drilldown, DrilldownFieldnames
 from meresco.components.drilldown.drilldown import FieldMatrix
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
@@ -207,3 +207,18 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals('field_0', results[0][0])
         self.assertEquals('field_1', results[1][0])
 
+    def testDrilldownFieldnames(self):
+        d = DrilldownFieldnames(
+            lookup=lambda name: 'drilldown.'+name,
+            reverse=lambda name: name[len('drilldown.'):])
+        observer = CallTrace('drilldown')
+        observer.returnValues['drilldown'] = [('drilldown.field1', [('term1',1)]),('drilldown.field2', [('term2', 2)])]
+        d.addObserver(observer)
+        hits = CallTrace('Hits')
+
+        result = list(d.drilldown(hits, [('field1', 0, True),('field2', 3, False)]))
+
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals([('drilldown.field1', 0, True),('drilldown.field2', 3, False)], list(observer.calledMethods[0].args[1]))
+
+        self.assertEquals([('field1', [('term1',1)]),('field2', [('term2', 2)])], result)
