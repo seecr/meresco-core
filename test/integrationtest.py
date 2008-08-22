@@ -1,10 +1,16 @@
 #!/usr/bin/env python
 # encoding: utf-8
+import os, sys
+os.system('find .. -name "*.pyc" | xargs rm -f')
+
+from glob import glob
+for path in glob('../deps.d/*'):
+    sys.path.insert(0, path)
+
+sys.path.insert(0, "..")
 
 from os import system
-from sys import path, exit, exc_info
-
-path.insert(0, '..')
+from sys import exit, exc_info
 
 from os.path import isdir, isfile
 

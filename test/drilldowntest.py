@@ -62,7 +62,7 @@ class DrilldownTest(CQ2TestCase):
         drilldown = Drilldown(['field_0'])
         reader = IndexReader.open(self.tempdir)
         drilldown.indexStarted(reader)
-        field, results = drilldown.drilldown(Row([0]), [('field_0', 10)]).next()
+        field, results = drilldown.drilldown(Row([0]), [('field_0', 10, False)]).next()
         self.assertEquals('field_0', field)
         self.assertEquals([('this is term_0', 1)], list(results))
 
@@ -79,7 +79,7 @@ class DrilldownTest(CQ2TestCase):
         queryResults = self.index.executeQuery(TermQuery(Term("field_1", "inquery")))
         self.assertEquals(3, len(queryResults))
 
-        drilldownResult = list(drilldown.drilldown(queryResults.bitMatrixRow(), [('field_0', 0), ('field_1', 0)]))
+        drilldownResult = list(drilldown.drilldown(queryResults.bitMatrixRow(), [('field_0', 0, False), ('field_1', 0, False)]))
 
         self.assertEquals(2, len(drilldownResult))
         result = dict(drilldownResult)
@@ -126,7 +126,7 @@ class DrilldownTest(CQ2TestCase):
 
         def assertDrilldown(expected, query):
             row = self.index.executeQuery(query).bitMatrixRow()
-            results = list(drilldown.drilldown(row, [('value', 0)]))
+            results = list(drilldown.drilldown(row, [('value', 0, False)]))
             self.assertEquals(1, len(results))
             fieldname, result = results[0]
             self.assertEquals(expected, list(result))
@@ -180,7 +180,7 @@ class DrilldownTest(CQ2TestCase):
         drilldown = Drilldown()
         drilldown.indexStarted(reader)
         hits = self.index.executeQuery(MatchAllDocsQuery()).bitMatrixRow()
-        results = list(drilldown.drilldown(hits, [('field_0', 0)]))
+        results = list(drilldown.drilldown(hits, [('field_0', 0, False)]))
         self.assertEquals('field_0', results[0][0])
         results = list(drilldown.drilldown(hits))
         self.assertEquals('field_0', results[0][0])
@@ -206,4 +206,4 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals(2, len(results))
         self.assertEquals('field_0', results[0][0])
         self.assertEquals('field_1', results[1][0])
-        
+

@@ -41,24 +41,24 @@ class FieldMatrix(object):
         self._totalTerms = 0
         self._totalTermLength = 0
         for term, docIds in terms:
-            rowNr = self._matrix.addRow(docIds)
-            self._addTermToTrie(rowNr, term)
+            rowId = self._matrix.addRow(docIds)
+            self._addTermToTrie(rowId, term)
 
     def addDocument(self, docId, terms):
         for term in terms:
-            rowNr = self._term2row.get(term, None)
-            if rowNr != None:
-                self._matrix.appendToRow(rowNr, docId)
+            rowId = self._term2row.get(term, None)
+            if rowId != None:
+                self._matrix.appendToRow(rowId, docId)
 
             else:
-                rowNr = self._matrix.addRow([docId])
-                self._addTermToTrie(rowNr, term)
+                rowId = self._matrix.addRow([docId])
+                self._addTermToTrie(rowId, term)
 
-    def _addTermToTrie(self, rowNr, term):
+    def _addTermToTrie(self, rowId, term):
         if type(term) == unicode:
             term = term.encode('utf-8')
-        self._row2term[rowNr] = term
-        self._term2row[term] = rowNr
+        self._row2term[rowId] = term
+        self._term2row[term] = rowId
         self._totalTerms += 1
         self._totalTermLength += len(term)
 
@@ -67,21 +67,21 @@ class FieldMatrix(object):
         self._matrix.deleteColumn(docId)
 
     def allRowCardinalities(self):
-        for nr, occurences in self._matrix.rowCardinalities():
-            yield self._row2term[nr], occurences
-        
+        for rowId, occurences in self._matrix.rowCardinalities():
+            yield self._row2term[rowId], occurences
 
-    def drilldown(self, row, maxResults = 0):
-        drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults)
-        for nr, occurences in drilldownResults:
-            yield self._row2term[nr], occurences
+
+    def drilldown(self, row, maxResults=0, sorted=False):
+        drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults, sorted)
+        for rowId, occurences in drilldownResults:
+            yield self._row2term[rowId], occurences
 
     def prefixDrilldown(self, prefix, row, maximumResults=0):
         raise Exception("not implemented, we've turned offf prefixDrilldown to find (maybe) a bug in the C code")
-        rowNrs = self._trie.getValues(prefix, caseSensitive=False)
-        drilldownResults = self._matrix.combinedRowCardinalitiesForRowNrs(rowNrs, row, maximumResults)
-        for nr, occurences in drilldownResults:
-            yield self._trie.getTerm(nr), occurences
+        rowIds = self._trie.getValues(prefix, caseSensitive=False)
+        drilldownResults = self._matrix.combinedRowCardinalitiesForRowNrs(rowIds, row, maximumResults)
+        for rowId, occurences in drilldownResults:
+            yield self._trie.getTerm(rowId), occurences
 
 class Drilldown(object):
 
@@ -111,14 +111,16 @@ class Drilldown(object):
         self.loadDocSets(convertor.getDocSets())
 
     def drilldown(self, row, drilldownFieldnamesAndMaximumResults=[]):
+
         if not drilldownFieldnamesAndMaximumResults:
-            drilldownFieldnamesAndMaximumResults = [(fieldname, 0)
+            drilldownFieldnamesAndMaximumResults = [(fieldname, 0, False)
                 for fieldname in self._actualDrilldownFieldnames]
-                    
-        for fieldname, maximumResults in drilldownFieldnamesAndMaximumResults:
+
+        for fieldname, maximumResults, sorted in drilldownFieldnamesAndMaximumResults:
             if fieldname not in self._actualDrilldownFieldnames:
                 raise DrilldownException("No Docset For Field %s, legal docsets: %s" % (fieldname, self._actualDrilldownFieldnames))
-            yield fieldname, self._fieldMatrices[fieldname].drilldown(row, maximumResults)
+
+            yield fieldname, self._fieldMatrices[fieldname].drilldown(row, maximumResults, sorted)
 
     def rowCardinalities(self):
         for fieldname in self._actualDrilldownFieldnames:

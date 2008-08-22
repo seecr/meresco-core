@@ -67,8 +67,8 @@ class SRUTermDrilldown(Observable):
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:
-                return l[0], DEFAULT_MAXIMUM_TERMS
-            return l[0], int(l[1])
+                return l[0], DEFAULT_MAXIMUM_TERMS, False
+            return l[0], int(l[1]), False
 
         fieldsAndMaximums = arguments.get('x-term-drilldown', [''])[0].split(",")
         fieldMaxTuples = (splitTermAndMaximum(s) for s in fieldsAndMaximums)

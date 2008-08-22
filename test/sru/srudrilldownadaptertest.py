@@ -77,7 +77,7 @@ class SRUTermDrilldownTest(CQ2TestCase):
     <dd:item count="2">value2_1</dd:item>
     <dd:item count="1">value2_2</dd:item>
 </dd:navigator></dd:term-drilldown>""", "".join(result))
-        self.assertEquals([('field0', 1), ('field1', 2), ('field2', 3)], list(self.processed_tuples))
+        self.assertEquals([('field0', 1, False), ('field1', 2, False), ('field2', 3, False)], list(self.processed_tuples))
         self.assertEquals("Hits are simply passed", self.processed_hits)
 
     def testSRUTermDrilldownNoMaximums(self):
@@ -86,7 +86,7 @@ class SRUTermDrilldownTest(CQ2TestCase):
         adapter.addObserver(self)
         hits = CallTrace("Hits")
         list(adapter.extraResponseData(arguments, hits))
-        self.assertEquals([('field0', 10), ('field1', 10), ('field2', 10)], list(self.processed_tuples))
+        self.assertEquals([('field0', 10, False), ('field1', 10, False), ('field2', 10, False)], list(self.processed_tuples))
 
     def drilldown(self, hits, tuples):
         self.processed_hits = hits
