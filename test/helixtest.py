@@ -26,7 +26,7 @@
 #
 ## end license ##
 from unittest import TestCase
-from meresco.framework import Observable, findHelix
+from meresco.framework import Observable, findHelix, link, be
 
 class HelixTest(TestCase):
 
@@ -36,18 +36,18 @@ class HelixTest(TestCase):
         component1 = MyComponent()
         component2 = HisComponent()
         component3 = MyComponent()
-        dna = [component1, (component2, [component3])]
+        dna = (component1, (component2, (component3,)))
         helix = findHelix(dna, MyComponent)
-        self.assertEquals(component1, helix.next())
-        self.assertEquals(component3, helix.next())
+        self.assertEquals((component1,(component2, (component3,))), helix.next())
+        self.assertEquals((component3,), helix.next())
 
     def testSimple(self):
         class MyComponent(Observable): pass
         component1 = MyComponent()
         component2 = MyComponent()
-        dna = [(component1,), (component2,)]
+        dna = (component1, (component2,))
         helix = findHelix(dna, MyComponent)
-        self.assertEquals((component1,), helix.next())
+        self.assertEquals((component1, (component2,)), helix.next())
         self.assertEquals((component2,), helix.next())
 
     def testDifferentClasses(self):
@@ -55,11 +55,11 @@ class HelixTest(TestCase):
         class HisComponent(Observable): pass
         component1 = MyComponent()
         component2 = HisComponent()
-        dna = [component1, component2]
+        dna = (component1, (component2,))
         helix = findHelix(dna, MyComponent)
-        self.assertEquals(component1, helix.next())
+        self.assertEquals((component1, (component2,)), helix.next())
         helix = findHelix(dna, HisComponent)
-        self.assertEquals(component2, helix.next())
+        self.assertEquals((component2,), helix.next())
 
     def testLayeredClasses(self):
         class MyComponent(Observable): pass
@@ -67,9 +67,19 @@ class HelixTest(TestCase):
         component1 = MyComponent()
         component2 = HisComponent()
         component3 = MyComponent()
-        dna = [component1, (component2, [component3])]
+        dna = (component1, (component2, (component3,)))
         helix = findHelix(dna, MyComponent)
-        self.assertEquals(component1, helix.next())
-        self.assertEquals(component3, helix.next())
+        self.assertEquals((component1, (component2, (component3,))), helix.next())
+        self.assertEquals((component3,), helix.next())
         helix = findHelix(dna, HisComponent)
-        self.assertEquals((component2,[component3]), helix.next())
+        self.assertEquals((component2, (component3,)), helix.next())
+
+    #def testLink(self):
+        #class MyComponent(Observable): pass
+        #class HisComponent(Observable): pass
+        #component1 = MyComponent()
+        #component2 = HisComponent()
+        #component3 = MyComponent()
+        #dna = (component1, (component2, (component3,)), link(component2))
+        #lifeForm = be(dna)
+        #self.assertEquals((component1, (component2, (component3,)), component2), lifeForm)

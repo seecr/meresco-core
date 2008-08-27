@@ -30,5 +30,5 @@ from observable import Observable, Transparant, be
 from observer import ObserverFunction
 from generatorutils import decorate, compose
 from resource import Resource
-from helix import findHelix
+from helix import findHelix, link
 from transaction import TransactionScope, TransactionFactory

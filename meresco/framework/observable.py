@@ -29,18 +29,6 @@ from sys import exc_info
 from generatorutils import compose
 from inspect import currentframe
 
-def be(strand):
-    strandsDone = set()
-    return _beWithDoneStrands(strand, strandsDone)
-
-def _beWithDoneStrands(strand, strandsDone):
-    head = strand[0]
-    tail = strand[1:]
-    if not id(strand) in strandsDone and tail:
-        head.addStrand(tail, strandsDone)
-        strandsDone.add(id(strand))
-    return head
-
 class Defer:
     def __init__(self, observable, defereeType):
         self._observable = observable
@@ -120,6 +108,18 @@ class OnceMessage(DeferredMessage):
             if isinstance(observer, Observable):
                 self._callonce(observer._observers, args, kwargs, done)
 
+def be(strand):
+    helicesDone = set()
+    return _beRecursive(strand, helicesDone)
+
+def _beRecursive(helix, helicesDone):
+    component = helix[0]
+    strand = helix[1:]
+    if not id(helix) in helicesDone and strand:
+        component.addStrand(strand, helicesDone)
+        helicesDone.add(id(helix))
+    return component
+
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
@@ -143,9 +143,9 @@ class Observable(object):
     def addObserver(self, observer):
         self._observers.append(observer)
 
-    def addStrand(self, strand, strandsDone):
+    def addStrand(self, strand, helicesDone):
         for helix in strand:
-            self.addObserver(_beWithDoneStrands(helix, strandsDone))
+            self.addObserver(_beRecursive(helix, helicesDone))
 
     def printTree(self, depth=0):
         def printInColor(ident, color, text):
