@@ -31,4 +31,5 @@ from lucenetools import unlock
 from document import Document
 from cqlparsetreetolucenequery import Composer
 from cql2lucenequery import CQL2LuceneQuery
+from string2cql import String2CQL
 from fields2lucenedocument import Fields2LuceneDocumentTx

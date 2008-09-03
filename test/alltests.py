@@ -41,13 +41,13 @@ import unittest
 from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
-from cql2lucenequerytest import Cql2LuceneQueryTest
 from documenttest import DocumentTest
 from drilldowntest import DrilldownTest
 from fieldletstest import FieldletsTest
 from fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
+from helixtest import HelixTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
@@ -57,6 +57,7 @@ from observabletest import ObservableTest
 from observablehttpservertest import ObservableHttpServerTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
+from resourcetest import ResourceTest
 from rsstest import RssTest
 from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
@@ -67,6 +68,10 @@ from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
 from xslicetest import XSliceTest
 
+from dictionary.transformtest import TransformTest
+from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
+from dictionary.xpath2dicttest import XPath2DictTest
+
 from framework.transactiontest import TransactionTest
 
 from http.basicauthenticationtest import BasicAuthenticationTest
@@ -75,6 +80,9 @@ from http.pathfiltertest import PathFilterTest
 from http.pathrenametest import PathRenameTest
 from http.sessionhandlertest import SessionHandlerTest
 from http.argumentsinsessiontest import ArgumentsInSessionTest
+
+from lucene.cql2lucenequerytest import Cql2LuceneQueryTest
+from lucene.string2cqltest import String2CQLTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
@@ -103,12 +111,7 @@ from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
 from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
 
-from dictionary.transformtest import TransformTest
-from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
-from dictionary.xpath2dicttest import XPath2DictTest
 
-from resourcetest import ResourceTest
-from helixtest import HelixTest
 
 if __name__ == '__main__':
         unittest.main()
