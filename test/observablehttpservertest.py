@@ -49,7 +49,7 @@ class ObservableHttpServerTest(CQ2TestCase):
         s = ObservableHttpServer(CallTrace('Reactor'), 1024)
         s.addObserver(observer)
 
-        list(s.handleRequest(RequestURI='http://localhost/path?key=value#fragment'))
+        list(s.handleRequest(RequestURI='http://localhost/path?key=value&emptykey#fragment'))
         self.assertEquals(1, len(observer.calledMethods))
         method = observer.calledMethods[0]
         self.assertEquals('handleRequest', method.name)
@@ -57,9 +57,10 @@ class ObservableHttpServerTest(CQ2TestCase):
         self.assertEquals(7, len(method.kwargs))
         self.assertTrue('arguments' in method.kwargs, method.kwargs)
         arguments = method.kwargs['arguments']
-        self.assertEquals(1, len(arguments))
-        self.assertEquals(['key'], arguments.keys())
+        self.assertEquals(2, len(arguments))
+        self.assertEquals(['emptykey', 'key'], sorted(arguments.keys()))
         self.assertEquals(['value'], arguments['key'])
+        self.assertEquals([''], arguments['emptykey'])
 
     def testServerWithPrio(self):
         prios = []

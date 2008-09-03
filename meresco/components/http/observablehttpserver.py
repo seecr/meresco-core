@@ -63,7 +63,7 @@ class ObservableHttpServer(Observable):
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         scheme, netloc, path, query, fragments = urlsplit(RequestURI)
-        arguments = parse_qs(query)
+        arguments = parse_qs(query, keep_blank_values=True)
         requestArguments = {
             'scheme': scheme, 'netloc': netloc, 'path': path, 'query': query, 'fragments': fragments,
             'arguments': arguments,
