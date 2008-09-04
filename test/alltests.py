@@ -47,7 +47,6 @@ from fieldletstest import FieldletsTest
 from fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
-from helixtest import HelixTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
@@ -70,6 +69,7 @@ from dictionary.transformtest import TransformTest
 from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
 from dictionary.xpath2dicttest import XPath2DictTest
 
+from framework.helixtest import HelixTest
 from framework.observabletest import ObservableTest
 from framework.transactiontest import TransactionTest
 
