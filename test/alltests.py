@@ -53,8 +53,6 @@ from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
-from observabletest import ObservableTest
-from observablehttpservertest import ObservableHttpServerTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from resourcetest import ResourceTest
@@ -72,6 +70,7 @@ from dictionary.transformtest import TransformTest
 from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
 from dictionary.xpath2dicttest import XPath2DictTest
 
+from framework.observabletest import ObservableTest
 from framework.transactiontest import TransactionTest
 
 from http.basicauthenticationtest import BasicAuthenticationTest
@@ -80,6 +79,7 @@ from http.pathfiltertest import PathFilterTest
 from http.pathrenametest import PathRenameTest
 from http.sessionhandlertest import SessionHandlerTest
 from http.argumentsinsessiontest import ArgumentsInSessionTest
+from http.observablehttpservertest import ObservableHttpServerTest
 
 from lucene.cql2lucenequerytest import Cql2LuceneQueryTest
 from lucene.string2cqltest import String2CQLTest
