@@ -113,11 +113,13 @@ def be(strand):
     return _beRecursive(strand, helicesDone)
 
 def _beRecursive(helix, helicesDone):
+    if callable(helix):
+        helix = helix(helicesDone)
     component = helix[0]
     strand = helix[1:]
-    if not id(helix) in helicesDone and strand:
+    if not helix in helicesDone and strand:
         component.addStrand(strand, helicesDone)
-        helicesDone.add(id(helix))
+        helicesDone.add(helix)
     return component
 
 class Observable(object):

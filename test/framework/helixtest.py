@@ -74,12 +74,12 @@ class HelixTest(TestCase):
         helix = findHelix(dna, HisComponent)
         self.assertEquals((component2, (component3,)), helix.next())
 
-    #def testLink(self):
-        #class MyComponent(Observable): pass
-        #class HisComponent(Observable): pass
-        #component1 = MyComponent()
-        #component2 = HisComponent()
-        #component3 = MyComponent()
-        #dna = (component1, (component2, (component3,)), link(component2))
-        #lifeForm = be(dna)
-        #self.assertEquals((component1, (component2, (component3,)), component2), lifeForm)
+    def testLink(self):
+        class MyComponent(Observable): pass
+        class HisComponent(Observable): pass
+        component1 = MyComponent()
+        component2 = HisComponent()
+        component3 = MyComponent()
+        dna = (component1, (component2, (component3,)), link(HisComponent))
+        lifeForm = be(dna)
+        self.assertEquals([component2, component2], lifeForm._observers)

@@ -36,4 +36,9 @@ def findHelix(dna, clazz):
             yield helix
 
 def link(clazz):
-    return 'a'
+    def helper(helices):
+        for helix in helices:
+            if type(helix[0]) == clazz:
+                return helix
+        raise 'Invalid link: no such component %s' % clazz
+    return helper
