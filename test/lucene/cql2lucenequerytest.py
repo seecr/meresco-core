@@ -52,4 +52,7 @@ class Cql2LuceneQueryTest(TestCase):
         self.assertEquals({'clause': 'term1'}, self.dict)
         convertor.executeCQL(parseString("(term)"))
         self.assertEquals({'clause': 'term'}, self.dict)
+        convertor.executeCQL(parseString('field exact "term with spaces"'))
+        self.assertEquals({'clause': 'field exact "term with spaces"'}, self.dict)
+
 

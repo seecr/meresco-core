@@ -33,6 +33,8 @@ from meresco.framework import compose
 
 from meresco.components.statistics import AggregatorException
 
+NAMESPACE="http://meresco.com/namespace/meresco/statistics"
+
 class StatisticsXml(object):
 
     def __init__(self, statistics):
@@ -40,7 +42,7 @@ class StatisticsXml(object):
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         yield self._htmlHeader()
-        yield "<statistics><header>%s" % self._serverTime()
+        yield '<statistics xmlns="%s"><header>%s' % (NAMESPACE, self._serverTime())
         arguments = self._parseArguments(RequestURI)
 
         try:

@@ -40,7 +40,7 @@ class ClauseCollector(CqlVisitor):
         else:
             if result[0] == "(":
                 return result[1]
-            self._logger(clause = "%s %s %s" % (result[0][0], result[1], result[2].lower()))
+            self._logger(clause = "%s %s %s" % (result[0][0], result[1], quot(result[2].lower())))
         return result
 
     def visitRELATION(self, node):
@@ -49,3 +49,8 @@ class ClauseCollector(CqlVisitor):
             return result[0]
         relation, ((modifier, comparitor, value),) = result
         return "%s/%s%s%s" % (relation, modifier, comparitor, value)
+
+def quot(aString):
+    if ' ' in aString:
+        return '"%s"' % aString
+    return aString
