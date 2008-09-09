@@ -39,7 +39,6 @@ from crosswalk import Crosswalk
 from xsltcrosswalk import XsltCrosswalk
 from xmlxpath import XmlXPath
 from rss import Rss
-from accumulate import Accumulate
 from xmlcompose import XmlCompose
 from rssitem import RssItem
 from venturi import Venturi

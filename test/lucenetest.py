@@ -39,7 +39,6 @@ from cq2utils import CQ2TestCase, CallTrace
 from meresco.components.lucene.document import Document, IDFIELD
 
 from meresco.components.lucene import LuceneIndex, CQL2LuceneQuery
-from meresco.components.dictionary import  DocumentDict, DocumentField
 from meresco.components.lucene.cqlparsetreetolucenequery import Composer
 
 from cqlparser import parseString
@@ -373,14 +372,12 @@ class LuceneTest(CQ2TestCase):
 
 
     def testAddIsAlsoDeleteCausesBug(self):
-        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
         reopen = self._luceneIndex._reopenIndex
         self._luceneIndex._reopenIndex = lambda: None
 
         def add(value):
-            dd = DocumentDict()
-            dd.add("value", value)
-            doc = Dict2Doc()._dict2Doc("theIdIsTheSame", dd)
+            doc = Document("theIdIsTheSame")
+            doc.addIndexedField('value', value)
             self._luceneIndex.addDocument(doc)
 
         for i in range(100):
@@ -388,14 +385,12 @@ class LuceneTest(CQ2TestCase):
             reopen()
 
     def testMultipleAddsWithoutReopenIsEvenDifferent(self):
-        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
         reopen = self._luceneIndex._reopenIndex
         self._luceneIndex._reopenIndex = lambda: None
 
         def add(value):
-            dd = DocumentDict()
-            dd.add("value", value)
-            doc = Dict2Doc()._dict2Doc("theIdIsTheSame", dd)
+            doc = Document("theIdIsTheSame")
+            doc.addIndexedField('value', value)
             self._luceneIndex.addDocument(doc)
 
         for i in range(100):

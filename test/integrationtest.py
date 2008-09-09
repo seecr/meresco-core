@@ -77,7 +77,7 @@ class IntegrationTest(CQ2TestCase):
         result = self.doDrilldown('dc.rights="Open Source"', 'dc.subject')
         navigator = result.extraResponseData.drilldown.term_drilldown.navigator
 
-        self.assertEquals(1, len(navigator))
+        self.assertEquals(1, len(navigator), result.xml())
         self.assertEquals('dc.subject', str(navigator.name))
         self.assertEquals(2, len(navigator.item))
         itemValues = [(item.count, str(item)) for item in navigator.item]

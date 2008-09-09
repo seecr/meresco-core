@@ -109,66 +109,9 @@ class DrilldownTest(CQ2TestCase):
             self.assertTrue("non-increasing" in str(e))
 
     def testDrilldownBitwiseAddIntegration(self):
-
         #"""This Test was created by KvS/JJ on 29/02/2008 and has a limited life span. It is bloated because we didn't understand everything yet. Feel free to toss it"""
-        from meresco.components.dictionary import DocumentDict, DocumentField, Dict2Doc
-        from cq2utils import CallTrace
-
-        drilldown = Drilldown(['value'])
-        drilldown.loadDocSets([("value", [])])
-        self.index.addObserver(drilldown)
-
-        def add(id, value):
-            dd = DocumentDict()
-            dd.add("value", value)
-            doc = Dict2Doc()._dict2Doc(id, dd)
-            self.index.addDocument(doc)
-
-        def assertDrilldown(expected, query):
-            row = self.index.executeQuery(query).bitMatrixRow()
-            results = list(drilldown.drilldown(row, [('value', 0, False)]))
-            self.assertEquals(1, len(results))
-            fieldname, result = results[0]
-            self.assertEquals(expected, list(result))
-
-        def values(l):
-            return [('value%s' % i, 1) for i in l]
-
-        for i in range(20):
-            add('id%s' % i, 'value%s' % i)
-
-        assertDrilldown(values(range(20)), MatchAllDocsQuery())
-        for i in range(20):
-            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
-
-        whatsLeft = range(20)
-        for id in [0, 4 ,8, 11, 18, 19]:
-            self.index.delete("id%s" % id)
-            whatsLeft.remove(id)
-
-        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
-        for i in whatsLeft:
-            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
-
-        for i in range(20, 110):
-            add('id%s' % i, 'value%s' % i)
-        self.index._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asList()
-
-        whatsLeft = whatsLeft + range(20, 110)
-        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
-        for i in whatsLeft:
-            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
-
-        for i in range(110, 120):
-            add('id%s' % i, 'value%s' % i)
-        whatsLeft = whatsLeft + range(110, 120)
-
-        self.index.delete("id%s" % 115)
-        whatsLeft.remove(115)
-
-        assertDrilldown(values(whatsLeft), MatchAllDocsQuery())
-        for i in whatsLeft:
-            assertDrilldown(values([i]), TermQuery(Term("value", "value%s" % i)))
+        #" I did toss it, regards, Thijs 09-09-2008"
+        pass
 
     def testDynamicDrilldownFields(self):
         self.addUntokenized([

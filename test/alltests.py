@@ -38,7 +38,6 @@ sys.path.insert(0, "..")
 
 import unittest
 
-from accumulatetest import AccumulateTest
 from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from documenttest import DocumentTest
@@ -64,10 +63,6 @@ from xmlpumptest import XmlPumpTest
 from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
 from xslicetest import XSliceTest
-
-from dictionary.transformtest import TransformTest
-from dictionary.alldotsplittedprefixestest import AllDotSplittedPrefixesTest
-from dictionary.xpath2dicttest import XPath2DictTest
 
 from framework.helixtest import HelixTest
 from framework.observabletest import ObservableTest
