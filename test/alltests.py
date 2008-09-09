@@ -96,8 +96,7 @@ from oai.oaisinktest import OaiSinkTest
 from oai.oaitooltest import OaiToolTest
 from oai.oaiprovenancetest import OaiProvenanceTest
 from oai.resumptiontokentest import ResumptionTokenTest
-
-from xml2documenttest import Xml2DocumentTest  # --> Xml2Document only in use by OAI; deprecated; needs to be replaced
+from oai.xml2documenttest import Xml2DocumentTest  # --> Xml2Document only in use by OAI; deprecated; needs to be replaced
                                                #     when OAI is worked on next.
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest

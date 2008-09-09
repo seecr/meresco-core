@@ -108,11 +108,6 @@ class DrilldownTest(CQ2TestCase):
         except Exception, e:
             self.assertTrue("non-increasing" in str(e))
 
-    def testDrilldownBitwiseAddIntegration(self):
-        #"""This Test was created by KvS/JJ on 29/02/2008 and has a limited life span. It is bloated because we didn't understand everything yet. Feel free to toss it"""
-        #" I did toss it, regards, Thijs 09-09-2008"
-        pass
-
     def testDynamicDrilldownFields(self):
         self.addUntokenized([
             ('0', {'field_0': 'this is term_0', 'field_1': 'inquery'}),
