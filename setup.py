@@ -32,13 +32,14 @@ setup(
     packages=[
         'meresco',
         'meresco.components',
-        'meresco.components.dictionary',
         'meresco.components.drilldown',
         'meresco.components.http',
         'meresco.components.lucene',
         'meresco.components.oai',
         'meresco.components.sru',
         'meresco.components.xml_generic',
+        'meresco.examples',
+        'meresco.examples.dna',
         'meresco.framework',
     ],
     package_data={
