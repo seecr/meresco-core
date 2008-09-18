@@ -65,6 +65,10 @@ class Fields2LuceneDocumentTest(TestCase):
         self.assertTrue('c' in document.fields())
         self.assertTrue('__id__' in document.fields())
 
+    def testOtherTransactionMethodsLikeDeleteDoNoTriggerFields2LuceneDocumentToAddEmptyDocument(self):
+        self.body.do.delete('recordIdentifier')
+        self.assertEquals(["begin()", "commit()"], map(str, self.observert.calledMethods))
+
     def testMultipleValuesForSameKey(self):
         list(self.body.all.addFields([('__id__', 'ID'), ('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
         self.assertEquals(3, len(self.observert.calledMethods))

@@ -40,6 +40,8 @@ class Fields2LuceneDocumentTx(object):
         self.fields[name].append(value)
 
     def finalize(self):
+        if not self.fields.keys():
+            return
         document = Document(self.fields['__id__'][0])
         del self.fields['__id__']
         for name, values in self.fields.items():
