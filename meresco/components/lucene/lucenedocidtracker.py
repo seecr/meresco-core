@@ -7,6 +7,11 @@ class SegmentInfo(object):
         self.offset = offset
     def __repr__(self):
         return '%d@%d' % (self.length, self.offset)
+    def __eq__(self, other):
+        return \
+            type(other) == SegmentInfo and \
+            other.length == self.length and \
+            other.offset == self.offset
 
 class LuceneDocIdTracker(object):
     """
@@ -68,6 +73,40 @@ class LuceneDocIdTracker(object):
 
     def flush(self):
         self._flushRamSegments()
+
+    def save(self, filename):
+        f = open(filename, 'w')
+        f.write(str(self._mergeFactor))
+        f.write('\n')
+        f.write(str(self._nextDocId))
+        f.write('\n')
+        f.write(str(self._segmentInfo))
+        f.close()
+
+    @classmethod
+    def load(clazz, filename):
+        result = LuceneDocIdTracker(0)
+        f = open(filename)
+        result._mergeFactor = int(f.next().strip())
+        result._nextDocId = int(f.next().strip())
+        segments = [segment.split("@") for segment in f.next().strip()[1:-1].split(",")]
+        for segmentData in segments:
+            length, offset = map(int, segmentData)
+            result._segmentInfo.append(SegmentInfo(length, offset))
+
+        return result
+
+    def __eq__(self, other):
+        return type(other) == type(self) and \
+            self._mergeFactor == other._mergeFactor and \
+            self._nextDocId == other._nextDocId and \
+            self._docIds == other._docIds and \
+            self._segmentInfo == other._segmentInfo and \
+            self._ramSegmentsInfo == other._ramSegmentsInfo
+
+    def __repr__(self):
+        return 'tracker:' + repr(self._mergeFactor) + '/' + repr(self._nextDocId) + repr(self._segmentInfo) + repr(self._ramSegmentsInfo)
+
 
 class LuceneDocIdTrackerDecorator(object):
 
