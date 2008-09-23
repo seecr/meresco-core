@@ -196,6 +196,9 @@ class LuceneIndex(Observable):
         if self._bitwise:
             self.do.indexStarted(self._readerResource)
 
+    def isOptimized(self):
+        return self._readerResource.isOptimized()
+
 def documentDictToFieldsAndTermsList(documentDict):
     """Waar dit hoort weten we nog niet zo goed.
     * Let op dat hier ook impliciet in zit dat rechterkanten maar 1 keer voorkomen (set)

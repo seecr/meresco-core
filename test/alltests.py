@@ -49,6 +49,8 @@ from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
+from lucenedocidtrackertest import LuceneDocIdTrackerTest
+from lucenedocidtrackerdecoratortest import LuceneDocIdTrackerDecoratorTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from lucenetest import LuceneTest
 from storagecomponenttest import StorageComponentTest
