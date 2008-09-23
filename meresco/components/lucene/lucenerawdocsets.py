@@ -48,12 +48,12 @@ class LuceneRawDocSets(object):
                     if not fieldname.startswith('__')]
         self._reader = aLuceneIndexReader
 
-    def getDocSets(self):
+    def getDocSets(self, docIdMap=None):
         termDocs = self._reader.termDocs()
         for field in sorted(self._fieldNames):
-            yield (field, self._luceneRawDocSetsForField(field, termDocs))
+            yield (field, self._luceneRawDocSetsForField(field, termDocs, docIdMap))
 
-    def _luceneRawDocSetsForField(self, field, termDocs):
+    def _luceneRawDocSetsForField(self, field, termDocs, docIdMap):
         termEnum = self._reader.terms(Term(field, ''))
         while True:
             term = termEnum.term()
@@ -68,7 +68,10 @@ class LuceneRawDocSets(object):
                     break
                 docIds.extend(docIdsBatch)
             if len(docIds) > 0:
-                yield (term.text(), docIds)
+                if docIdMap != None:
+                    yield (term.text(), [docIdMap[docId] for docId in docIds])
+                else:
+                    yield (term.text(), docIds)
             if not termEnum.next():
                 break
 

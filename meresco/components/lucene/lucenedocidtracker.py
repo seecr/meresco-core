@@ -1,4 +1,5 @@
 from itertools import takewhile, dropwhile
+from meresco.components.lucene.lucenerawdocsets import LuceneRawDocSets
 
 class SegmentInfo(object):
     def __init__(self, length, offset):
@@ -12,12 +13,14 @@ class LuceneDocIdTracker(object):
         This class tracks docids for Lucene version 2.2.0
                                                     =====
     """
-    def __init__(self, mergeFactor):
+    def __init__(self, mergeFactor, maxDoc=0):
         self._mergeFactor = mergeFactor
-        self._nextDocId = 0
-        self._docIds = []
+        self._nextDocId = maxDoc
+        self._docIds = range(maxDoc)
         self._segmentInfo = []
         self._ramSegmentsInfo = []
+        if maxDoc > 0:
+            self._segmentInfo.append(SegmentInfo(maxDoc, 0))
 
     def next(self):
         self._ramSegmentsInfo.append(SegmentInfo(1, len(self._docIds)))
@@ -74,7 +77,7 @@ class LuceneDocIdTrackerDecorator(object):
         maxBufferedDocs = luceneIndex.getMaxBufferedDocs()
         assert mergeFactor == maxBufferedDocs, 'mergeFactor != maxBufferedDocs'
         self._lucene = luceneIndex
-        self._tracker = LuceneDocIdTracker(mergeFactor)
+        self._tracker = LuceneDocIdTracker(mergeFactor, luceneIndex.docCount())
 
     def addDocument(self, doc):
         self._lucene.addDocument(doc)
@@ -89,7 +92,8 @@ class LuceneDocIdTrackerDecorator(object):
         return HitsDecorator(hits, self._tracker._docIds)
 
     def getDocSets(self, fieldNames):
-        pass
+        convertor = LuceneRawDocSets(self._lucene.getReader(), fieldNames)
+        return convertor.getDocSets(self._tracker._docIds)
 
 class HitsDecorator(object):
 
