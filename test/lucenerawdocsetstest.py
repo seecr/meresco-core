@@ -28,7 +28,7 @@
 from unittest import TestCase
 from cq2utils import CQ2TestCase
 
-from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
+from meresco.components.lucene.lucenerawdocsets import LuceneRawDocSets
 from meresco.components.lucene.lucene import LuceneIndex
 from meresco.components.lucene.document import Document
 

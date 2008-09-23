@@ -33,7 +33,7 @@ from meresco.components.lucene import Document
 from meresco.components.drilldown import Drilldown, DrilldownFieldnames
 from meresco.components.drilldown.drilldown import FieldMatrix
 from meresco.components.lucene.lucene import LuceneIndex
-from meresco.components.drilldown.lucenerawdocsets import LuceneRawDocSets
+from meresco.components.lucene.lucenerawdocsets import LuceneRawDocSets
 
 from timerfortestsupport import TimerForTestSupport
 

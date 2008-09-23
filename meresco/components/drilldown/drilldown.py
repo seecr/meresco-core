@@ -26,7 +26,7 @@
 #
 ## end license ##
 from bitmatrix import BitMatrix
-from lucenerawdocsets import LuceneRawDocSets
+from meresco.components.lucene.lucenerawdocsets import LuceneRawDocSets
 from time import time
 
 class DrilldownException(Exception):
