@@ -87,6 +87,23 @@ class DrilldownTest(CQ2TestCase):
         self.assertEquals(set([("this is term_0", 1), ("this is term_1", 2)]), set(result['field_0']))
         self.assertEquals([("inquery", 3)], list(result['field_1']))
 
+    def testSorting(self):
+        self.addUntokenized([
+            ('0', {'field0': 'term1'}),
+            ('1', {'field0': 'term1'}),
+            ('2', {'field0': 'term2'}),
+            ('3', {'field0': 'term0'})])
+        reader = IndexReader.open(self.tempdir)
+        convertor = LuceneRawDocSets(reader, ['field0'])
+        drilldown = Drilldown(['field0'])
+        drilldown.loadDocSets(convertor.getDocSets())
+        queryResults = self.index.executeQuery(MatchAllDocsQuery())
+        ddData = list(drilldown.drilldown(queryResults.bitMatrixRow(), [('field0', 0, False)]))
+        self.assertEquals([('term0',1), ('term1',2), ('term2',1)], ddData[0][1])
+        ddData = list(drilldown.drilldown(queryResults.bitMatrixRow(), [('field0', 0, True)]))
+        self.assertEquals([('term1',2), ('term0',1), ('term2',1)], ddData[0][1])
+
+
     def testAppendToRow(self):
         fieldMatrix = FieldMatrix([])
 

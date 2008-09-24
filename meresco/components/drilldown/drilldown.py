@@ -73,8 +73,12 @@ class FieldMatrix(object):
 
     def drilldown(self, row, maxResults=0, sorted=False):
         drilldownResults = self._matrix.combinedRowCardinalities(row, maxResults, sorted)
-        for rowId, occurences in drilldownResults:
-            yield self._row2term[rowId], occurences
+        results = [(self._row2term[rowId], occurences) for rowId, occurences in drilldownResults]
+        #for rowId, occurences in drilldownResults:
+        #    yield self._row2term[rowId], occurences
+        if not sorted: # if not sorted on occurences then sort alpha
+           results.sort(key=lambda x: x[0])
+        return results
 
     def prefixDrilldown(self, prefix, row, maximumResults=0):
         raise Exception("not implemented, we've turned offf prefixDrilldown to find (maybe) a bug in the C code")
