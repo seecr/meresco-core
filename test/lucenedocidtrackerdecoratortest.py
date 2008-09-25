@@ -5,17 +5,19 @@ from meresco.components.lucene.lucenedocidtracker import LuceneDocIdTrackerDecor
 from glob import glob
 from time import time
 from cq2utils.profileit import profile
+from meresco.components.lucene import LuceneIndex, Document as XDocument
 
 class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
 
     def testAssertIndexIsOptimized(self):
-        writer = IndexWriter(self.tempdir, StandardAnalyzer(), True)
-        reader = IndexReader.open(self.tempdir)
+        class Index:
+            isOptimized = lambda self: False
+            getDirectory = lambda sself: self.tempdir
         try:
-            LuceneDocIdTrackerDecorator(reader)
+            LuceneDocIdTrackerDecorator(Index())
             self.fail('must raise exception')
         except Exception, e:
-            self.assertEquals('index must be optimized', str(e))
+            self.assertEquals('index must be optimized or tracker state must be present in directory', str(e))
 
     def testAssertMergeFactorAndMaxBufferedDocs(self):
         writer = IndexWriter(self.tempdir, StandardAnalyzer(), True)
@@ -28,6 +30,7 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
             isOptimized = reader.isOptimized
             getMergeFactor = writer.getMergeFactor
             getMaxBufferedDocs = writer.getMaxBufferedDocs
+            getDirectory = lambda sself: self.tempdir
         try:
             LuceneDocIdTrackerDecorator(Index())
             self.fail('must raise exception')
@@ -37,19 +40,20 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
     def testDecorateLucene(self):
         doc = Document()
         doc.add(Field('__id__', "one", Field.Store.YES, Field.Index.UN_TOKENIZED))
-        lucene = CallTrace('Lucene', returnValues={'getMergeFactor': 15, 'getMaxBufferedDocs': 15, 'isOptimized': True, 'docCount': 0})
+        lucene = CallTrace('Lucene', returnValues={'getMergeFactor': 15, 'getMaxBufferedDocs': 15, 'isOptimized': True, 'docCount': 0, 'getDirectory': self.tempdir})
         wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
         result = wrappedLucene.addDocument(doc)
         self.assertEquals(0, result)
         result = wrappedLucene.addDocument(doc)
         self.assertEquals(1, result)
         self.assertEquals('isOptimized()', str(lucene.calledMethods[0]))
-        self.assertEquals('getMergeFactor()', str(lucene.calledMethods[1]))
-        self.assertEquals('getMaxBufferedDocs()', str(lucene.calledMethods[2]))
-        self.assertEquals('addDocument(<class Document>)', str(lucene.calledMethods[4]))
+        self.assertEquals('getDirectory()', str(lucene.calledMethods[1]))
+        self.assertEquals('getMergeFactor()', str(lucene.calledMethods[2]))
+        self.assertEquals('getMaxBufferedDocs()', str(lucene.calledMethods[3]))
+        self.assertEquals('addDocument(<class Document>)', str(lucene.calledMethods[6]))
 
     def testDecorateLuceneDelete(self):
-        lucene = CallTrace('Lucene', returnValues={'getMergeFactor': 2, 'getMaxBufferedDocs': 2, 'delete': 1, 'isOptimized': True, 'docCount': 0})
+        lucene = CallTrace('Lucene', returnValues={'getMergeFactor': 2, 'getMaxBufferedDocs': 2, 'delete': 1, 'isOptimized': True, 'docCount': 0, 'getDirectory': self.tempdir})
         wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
         wrappedLucene.addDocument('doc0')
         wrappedLucene.addDocument('doc1')
@@ -59,12 +63,12 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
         wrappedLucene.addDocument('doc3')     # triggers merge
         result = wrappedLucene.delete('doc2') # nr 1 according to lucene
         self.assertEquals(2, result)
-        self.assertEquals("delete('doc1')", str(lucene.calledMethods[7]))
-        self.assertEquals("delete('doc2')", str(lucene.calledMethods[9]))
+        self.assertEquals("delete('doc1')", str(lucene.calledMethods[8]))
+        self.assertEquals("delete('doc2')", str(lucene.calledMethods[10]))
 
     def testQuery(self):
         innerHits = CallTrace('hits', returnValues={'bitMatrixRow': [0]})
-        lucene = CallTrace('Lucene', returnValues={'getMergeFactor': 2, 'getMaxBufferedDocs': 2, 'delete': 0, 'executeQuery': innerHits, 'isOptimized': True, 'docCount': 0})
+        lucene = CallTrace('Lucene', returnValues={'getMergeFactor': 2, 'getMaxBufferedDocs': 2, 'delete': 0, 'executeQuery': innerHits, 'isOptimized': True, 'docCount': 0, 'getDirectory': self.tempdir})
         wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
         wrappedLucene.addDocument('doc0')
         hits = wrappedLucene.executeQuery(self, 'query', sortBy=None, sortDescending=None)
@@ -72,26 +76,21 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
         self.assertEquals([0], docset)
         self.assertEquals('bitMatrixRow([0])', str(innerHits.calledMethods[0]))
 
-    def XXXXXXXXXXXXXXXXXXtestReadLuceneDocSetsAndMapThem(self):
-        writer = IndexWriter(self.tempdir, StandardAnalyzer(), True)
-        writer.setMergeFactor(2)
-        writer.setMaxBufferedDocs(2)
-        for i in range(3):
-            doc = Document()
-            doc.add(Field('field', 'term%s' % i, Field.Store.YES, Field.Index.UN_TOKENIZED))
-            writer.addDocument(doc)
-        writer.deleteDocuments(Term('field', 'term1'))
-        doc = Document()
-        doc.add(Field('field', 'term3', Field.Store.YES, Field.Index.UN_TOKENIZED))
-        writer.addDocument(doc)
-        writer.flush()
-        reader = IndexReader.open(self.tempdir)
-        class Index(object):
-            isOptimized = lambda self: False
-            getMergeFactor = writer.getMergeFactor
-            getMaxBufferedDocs = writer.getMaxBufferedDocs
-            getReader = lambda self: reader
-        wrappedLucene = LuceneDocIdTrackerDecorator(Index())
+    def testReadLuceneDocSetsAndMapThem(self):
+        lucene = LuceneIndex(self.tempdir, CallTrace('timer'))
+        wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
+        for i in range(13):
+            doc = XDocument(str(i))
+            doc.addIndexedField('field', 'term%s' % i, tokenize = False)
+            wrappedLucene.addDocument(doc)
+        #wrappedLucene.delete(str(1))
+        doc = XDocument('14')
+        doc.addIndexedField('field', 'term3', tokenize = False)
+        wrappedLucene.addDocument(doc)
+        wrappedLucene.close()
+
+        lucene = LuceneIndex(self.tempdir, CallTrace('timer'))
+        wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
         docsets = wrappedLucene.getDocSets(['field'])
         self.assertEquals([('field', [(u'term0', [0]), (u'term2', [2]), (u'term3', [3])])], [(x, list(y)) for (x, y) in docsets])
 
@@ -112,6 +111,7 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
             docCount = reader.numDocs
             delete = lambda self, appId: 1
             addDocument = lambda self, doc: None
+            getDirectory = lambda sself: self.tempdir
         wrappedLucene = LuceneDocIdTrackerDecorator(Index())
         docsets = wrappedLucene.getDocSets(['field'])
         self.assertEquals([('field', [(u'term0', [0]), (u'term1', [1]), (u'term2', [2])])], [(x, list(y)) for (x, y) in docsets])

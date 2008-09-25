@@ -147,16 +147,16 @@ class LuceneIndex(Observable):
                 self.do.addDocument(mappedId, fieldAndTermsList)
 
     def _delete(self, anId):
+        docId = self._docIdForId(anId)
         if self._bitwise:
-            docId = self._docIdForId(anId)
             if not docId == None:
                 self._storedDeletesForReopen.append(docId)
-
         self._writer.deleteDocuments(Term(IDFIELD, anId))
+        return docId
 
     @lastUpdateTimeoutToken
     def delete(self, anId):
-        self._delete(anId)
+        return self._delete(anId)
 
     @lastUpdateTimeoutToken
     def addDocument(self, aDocument):
@@ -197,7 +197,16 @@ class LuceneIndex(Observable):
             self.do.indexStarted(self._readerResource)
 
     def isOptimized(self):
-        return self._readerResource.isOptimized()
+        return self.docCount() == 0 or self._readerResource.isOptimized()
+
+    def getDirectory(self):
+        return self._directoryName
+
+    def getMergeFactor(self):
+        return self._writer.getMergeFactor()
+
+    def getMaxBufferedDocs(self):
+        return self._writer.getMaxBufferedDocs()
 
 def documentDictToFieldsAndTermsList(documentDict):
     """Waar dit hoort weten we nog niet zo goed.

@@ -127,13 +127,14 @@ class LuceneDocIdTracker(object):
 class LuceneDocIdTrackerDecorator(object):
 
     def __init__(self, luceneIndex):
-        assert luceneIndex.isOptimized(), 'index must be optimized'
+        optimized = luceneIndex.isOptimized()
+        directory = luceneIndex.getDirectory()
+        assert isfile(join(directory, 'segments')) or optimized, 'index must be optimized or tracker state must be present in directory'
         mergeFactor = luceneIndex.getMergeFactor()
         maxBufferedDocs = luceneIndex.getMaxBufferedDocs()
         assert mergeFactor == maxBufferedDocs, 'mergeFactor != maxBufferedDocs'
-        self._lucene = luceneIndex
-        directory = luceneIndex.getDirectory()
         self._tracker = LuceneDocIdTracker(mergeFactor, luceneIndex.docCount(), directory)
+        self._lucene = luceneIndex
 
     def addDocument(self, doc):
         self._lucene.addDocument(doc)
@@ -141,6 +142,7 @@ class LuceneDocIdTrackerDecorator(object):
 
     def delete(self, identifier):
         docId = self._lucene.delete(identifier)
+        print '========', docId
         return self._tracker.deleteDocId(docId)
 
     def executeQuery(self, *args, **kwargs):
