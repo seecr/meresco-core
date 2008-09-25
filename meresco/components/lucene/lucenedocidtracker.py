@@ -27,7 +27,7 @@ class LuceneDocIdTracker(object):
         self._segmentInfo = []
         self._nextDocId = maxDoc
         self._docIds = range(maxDoc)
-        if isfile(join(directory, 'segments')):
+        if isfile(join(directory, 'tracker.segments')):
             self._load()
         else:
             if maxDoc > 0:
@@ -82,7 +82,7 @@ class LuceneDocIdTracker(object):
         self._flushRamSegments()
 
     def _save(self):
-        filename = join(self._directory, 'segments')
+        filename = join(self._directory, 'tracker.segments')
         f = open(filename, 'w')
         f.write(str(self._mergeFactor))
         f.write('\n')
@@ -98,7 +98,7 @@ class LuceneDocIdTracker(object):
         f.close()
 
     def _load(self):
-        f = open(join(self._directory, 'segments'))
+        f = open(join(self._directory, 'tracker.segments'))
         self._mergeFactor = int(f.next().strip())
         self._nextDocId = int(f.next().strip())
         segments = [segment.split("@") for segment in f.next().strip()[1:-1].split(",")]
@@ -129,7 +129,7 @@ class LuceneDocIdTrackerDecorator(object):
     def __init__(self, luceneIndex):
         optimized = luceneIndex.isOptimized()
         directory = luceneIndex.getDirectory()
-        assert isfile(join(directory, 'segments')) or optimized, 'index must be optimized or tracker state must be present in directory'
+        assert isfile(join(directory, 'tracker.segments')) or optimized, 'index must be optimized or tracker state must be present in directory'
         mergeFactor = luceneIndex.getMergeFactor()
         maxBufferedDocs = luceneIndex.getMaxBufferedDocs()
         assert mergeFactor == maxBufferedDocs, 'mergeFactor != maxBufferedDocs'
@@ -149,11 +149,11 @@ class LuceneDocIdTrackerDecorator(object):
         return HitsDecorator(hits, self._tracker._docIds)
 
     def getDocSets(self, fieldNames):
-        convertor = LuceneRawDocSets(self._lucene.getReader(), fieldNames)
+        convertor = LuceneRawDocSets(self._lucene.getIndexReader(), fieldNames)
         return convertor.getDocSets(self._tracker._docIds)
 
     def close(self):
-        pass
+        self._lucene.close()
 
 class HitsDecorator(object):
 

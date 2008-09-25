@@ -5,7 +5,7 @@ from meresco.components.lucene.lucenedocidtracker import LuceneDocIdTrackerDecor
 from glob import glob
 from time import time
 from cq2utils.profileit import profile
-from meresco.components.lucene import LuceneIndex, Document as XDocument
+from meresco.components.lucene import LuceneIndex2, Document2 as XDocument
 
 class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
 
@@ -77,9 +77,9 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
         self.assertEquals('bitMatrixRow([0])', str(innerHits.calledMethods[0]))
 
     def testReadLuceneDocSetsAndMapThem(self):
-        lucene = LuceneIndex(self.tempdir, CallTrace('timer'))
+        lucene = LuceneIndex2(self.tempdir, CallTrace('timer'))
         wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
-        for i in range(13):
+        for i in range(3):
             doc = XDocument(str(i))
             doc.addIndexedField('field', 'term%s' % i, tokenize = False)
             wrappedLucene.addDocument(doc)
@@ -88,12 +88,10 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
         doc.addIndexedField('field', 'term3', tokenize = False)
         wrappedLucene.addDocument(doc)
         wrappedLucene.close()
-
-        lucene = LuceneIndex(self.tempdir, CallTrace('timer'))
+        lucene = LuceneIndex2(self.tempdir, CallTrace('timer'))
         wrappedLucene = LuceneDocIdTrackerDecorator(lucene)
         docsets = wrappedLucene.getDocSets(['field'])
         self.assertEquals([('field', [(u'term0', [0]), (u'term2', [2]), (u'term3', [3])])], [(x, list(y)) for (x, y) in docsets])
-
 
     def testReadLuceneDocSetsFromOptimizedIndex(self):
         writer = IndexWriter(self.tempdir, StandardAnalyzer(), True)
@@ -107,7 +105,7 @@ class LuceneDocIdTrackerDecoratorTest(CQ2TestCase):
             isOptimized = reader.isOptimized
             getMergeFactor = writer.getMergeFactor
             getMaxBufferedDocs = writer.getMaxBufferedDocs
-            getReader = lambda self: reader
+            getIndexReader = lambda self: reader
             docCount = reader.numDocs
             delete = lambda self, appId: 1
             addDocument = lambda self, doc: None
