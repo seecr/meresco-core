@@ -5,7 +5,9 @@ from meresco.components.lucene.lucenedocidtracker import LuceneDocIdTracker
 from glob import glob
 from time import time
 from cq2utils.profileit import profile
-
+from os import mkdir
+from os.path import join, isdir
+from shutil import rmtree
 
 #import sys, os
 #sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
@@ -31,7 +33,7 @@ class LuceneDocIdTrackerTest(CQ2TestCase):
     def setMergeFactor(self, mergeFactor):
         self.writer.setMergeFactor(mergeFactor)
         self.writer.setMaxBufferedDocs(mergeFactor)
-        self.tracker = LuceneDocIdTracker(mergeFactor)
+        self.tracker = LuceneDocIdTracker(mergeFactor, directory = self.createTrackerDir())
 
     def testDefaultMergeFactor(self):
         mergeFactor = self.writer.getMergeFactor()
@@ -131,11 +133,11 @@ class LuceneDocIdTrackerTest(CQ2TestCase):
             print 'Failed test sequence written to "%s"' % name
             raise
 
-    def testPickupStateWhereLuceneLeftIt(self):
+    def testPickupStateFromOptimizedIndex(self):
         s0 = [100, 101, 102]
         self.processDocs(s0)
         self.writer.optimize()
-        self.tracker = LuceneDocIdTracker(self.writer.getMergeFactor(), self.writer.docCount())
+        self.tracker = LuceneDocIdTracker(self.writer.getMergeFactor(), self.writer.docCount(), self.createTrackerDir())
         s1 = [-100, 103, 104, 105, 106]
         self.processDocs(s1)
         foundIds, foundDocs = self.findAll()
@@ -145,15 +147,59 @@ class LuceneDocIdTrackerTest(CQ2TestCase):
         s0 = range(100, 200)
         self.processDocs(s0)
         self.writer.optimize()
-        self.tracker = LuceneDocIdTracker(self.writer.getMergeFactor(), self.writer.docCount())
+        self.tracker = LuceneDocIdTracker(self.writer.getMergeFactor(), self.writer.docCount(), self.createTrackerDir())
         s1 = [-100, 1001, 1002]
         self.processDocs(s1)
         foundIds, foundDocs = self.findAll()
         self.assertMap(s0 + s1, foundIds, foundDocs)
 
+    def testEquals(self):
+        mkdir(self.tempdir+'/1')
+        mkdir(self.tempdir+'/2')
+        self.assertEquals(LuceneDocIdTracker(3, directory='p'), LuceneDocIdTracker(3, directory='x'))
+        self.assertNotEquals(LuceneDocIdTracker(2, directory='p'), LuceneDocIdTracker(3, directory='x'))
+        t1 = LuceneDocIdTracker(2, directory=self.tempdir+'/1')
+        t2 = LuceneDocIdTracker(2, directory=self.tempdir+'/2')
+        t1.next() # ramsegments
+        self.assertNotEquals(t1, t2)
+        t2.next()
+        self.assertEquals(t1, t2)
+        t1.deleteDocId(0)
+        self.assertNotEquals(t1, t2)
+        t2.deleteDocId(0)
+        self.assertEquals(t1, t2)
+        t1.next() # segments
+        self.assertNotEquals(t1, t2)
+        t2.next()
+        self.assertEquals(t1, t2)
+
     def testSaveAndLoad(self):
         s0 = [100, 101, 102]
         self.processDocs(s0)
-        self.tracker.save(self.tempdir + "/tracker")
-        tracker = LuceneDocIdTracker.load(self.tempdir + "/tracker")
+        self.tracker.flush()
+        tracker = LuceneDocIdTracker(mergeFactor=2, directory=self.tempdir + "/tracker")
         self.assertEquals(self.tracker, tracker)
+
+    def testFlushOnMergeAndOnCloseJustLikeLucene(self):
+        # let both tracker and writer create 1 segment of 100..101 and keep 102 in memory
+        self.processDocs([100, 101, 102])
+        tracker = LuceneDocIdTracker(mergeFactor=2, directory=self.tempdir + "/tracker")
+        hits = IndexSearcher(self.tempdir).search(MatchAllDocsQuery())
+        self.assertEquals(2, len(hits))
+        self.assertEquals(len(hits), tracker._segmentInfo[0].length)
+        self.assertEquals(0, len(tracker._ramSegmentsInfo))
+
+        # let both tracker and writer flush 102 to disk
+        self.writer.close()
+        self.tracker.close()
+        tracker = LuceneDocIdTracker(mergeFactor=2, directory=self.tempdir + "/tracker")
+        hits = IndexSearcher(self.tempdir).search(MatchAllDocsQuery())
+        self.assertEquals(3, len(hits))
+        self.assertEquals(len(hits), tracker._segmentInfo[0].length)
+        self.assertEquals(0, len(tracker._ramSegmentsInfo))
+
+    def createTrackerDir(self):
+        name = join(self.tempdir, 'tracker')
+        isdir(name) and rmtree(name)
+        mkdir(name)
+        return name

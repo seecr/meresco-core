@@ -1,5 +1,6 @@
 from itertools import takewhile, dropwhile
 from meresco.components.lucene.lucenerawdocsets import LuceneRawDocSets
+from os.path import join, isfile
 
 class SegmentInfo(object):
     def __init__(self, length, offset):
@@ -18,14 +19,19 @@ class LuceneDocIdTracker(object):
         This class tracks docids for Lucene version 2.2.0
                                                     =====
     """
-    def __init__(self, mergeFactor, maxDoc=0):
+    def __init__(self, mergeFactor, maxDoc=0, directory=None):
+        assert directory != None
+        self._directory = directory
         self._mergeFactor = mergeFactor
+        self._ramSegmentsInfo = []
+        self._segmentInfo = []
         self._nextDocId = maxDoc
         self._docIds = range(maxDoc)
-        self._segmentInfo = []
-        self._ramSegmentsInfo = []
-        if maxDoc > 0:
-            self._segmentInfo.append(SegmentInfo(maxDoc, 0))
+        if isfile(join(directory, 'segments')):
+            self._load()
+        else:
+            if maxDoc > 0:
+                self._segmentInfo.append(SegmentInfo(maxDoc, 0))
 
     def next(self):
         self._ramSegmentsInfo.append(SegmentInfo(1, len(self._docIds)))
@@ -41,6 +47,7 @@ class LuceneDocIdTracker(object):
             self._segmentInfo.append(self._ramSegmentsInfo[0])
             self._ramSegmentsInfo = []
             self._maybeMerge(self._segmentInfo, lower = 0, upper = self._mergeFactor)
+        self._save()
 
     def _maybeMerge(self, segments, lower, upper):
         reversedSegments = reversed(segments)
@@ -52,7 +59,7 @@ class LuceneDocIdTracker(object):
 
     def _merge(self, segments, newOffset, lower, upper):
         merged = [docid for docid in self._docIds[newOffset:] if docid >= 0]
-        del self._docIds[newOffset:]
+        del self._docIds[newOffset:] # ook op disk
         self._docIds.extend(merged)
         newLength = len(merged)
         si = SegmentInfo(newLength, newOffset)
@@ -74,7 +81,8 @@ class LuceneDocIdTracker(object):
     def flush(self):
         self._flushRamSegments()
 
-    def save(self, filename):
+    def _save(self):
+        filename = join(self._directory, 'segments')
         f = open(filename, 'w')
         f.write(str(self._mergeFactor))
         f.write('\n')
@@ -83,18 +91,24 @@ class LuceneDocIdTracker(object):
         f.write(str(self._segmentInfo))
         f.close()
 
-    @classmethod
-    def load(clazz, filename):
-        result = LuceneDocIdTracker(0)
-        f = open(filename)
-        result._mergeFactor = int(f.next().strip())
-        result._nextDocId = int(f.next().strip())
+        lastSegmentIndex = len(self._segmentInfo) - 1
+        filename = join(self._directory, str(lastSegmentIndex) + '.docids')
+        f = open(filename, 'w')
+        f.write(repr(self._docIds[self._segmentInfo[lastSegmentIndex].offset:]))
+        f.close()
+
+    def _load(self):
+        f = open(join(self._directory, 'segments'))
+        self._mergeFactor = int(f.next().strip())
+        self._nextDocId = int(f.next().strip())
         segments = [segment.split("@") for segment in f.next().strip()[1:-1].split(",")]
         for segmentData in segments:
             length, offset = map(int, segmentData)
-            result._segmentInfo.append(SegmentInfo(length, offset))
-
-        return result
+            self._segmentInfo.append(SegmentInfo(length, offset))
+        for i in range(len(self._segmentInfo)):
+            f = open(join(self._directory, str(i) + '.docids'))
+            self._docIds.extend(eval(f.read()))
+            f.close()
 
     def __eq__(self, other):
         return type(other) == type(self) and \
@@ -107,6 +121,8 @@ class LuceneDocIdTracker(object):
     def __repr__(self):
         return 'tracker:' + repr(self._mergeFactor) + '/' + repr(self._nextDocId) + repr(self._segmentInfo) + repr(self._ramSegmentsInfo)
 
+    def close(self):
+        self.flush()
 
 class LuceneDocIdTrackerDecorator(object):
 
@@ -116,7 +132,8 @@ class LuceneDocIdTrackerDecorator(object):
         maxBufferedDocs = luceneIndex.getMaxBufferedDocs()
         assert mergeFactor == maxBufferedDocs, 'mergeFactor != maxBufferedDocs'
         self._lucene = luceneIndex
-        self._tracker = LuceneDocIdTracker(mergeFactor, luceneIndex.docCount())
+        directory = luceneIndex.getDirectory()
+        self._tracker = LuceneDocIdTracker(mergeFactor, luceneIndex.docCount(), directory)
 
     def addDocument(self, doc):
         self._lucene.addDocument(doc)
@@ -133,6 +150,9 @@ class LuceneDocIdTrackerDecorator(object):
     def getDocSets(self, fieldNames):
         convertor = LuceneRawDocSets(self._lucene.getReader(), fieldNames)
         return convertor.getDocSets(self._tracker._docIds)
+
+    def close(self):
+        raise NotImplemented()
 
 class HitsDecorator(object):
 
