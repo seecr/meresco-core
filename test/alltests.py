@@ -108,6 +108,9 @@ from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
 
 
+from lucene2test import Lucene2Test
+from document2test import Document2Test
+from indexfacadetest import IndexFacadeTest
 
 if __name__ == '__main__':
         unittest.main()

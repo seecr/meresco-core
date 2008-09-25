@@ -142,7 +142,6 @@ class LuceneDocIdTrackerDecorator(object):
 
     def delete(self, identifier):
         docId = self._lucene.delete(identifier)
-        print '========', docId
         return self._tracker.deleteDocId(docId)
 
     def executeQuery(self, *args, **kwargs):
@@ -154,7 +153,7 @@ class LuceneDocIdTrackerDecorator(object):
         return convertor.getDocSets(self._tracker._docIds)
 
     def close(self):
-        raise NotImplemented()
+        pass
 
 class HitsDecorator(object):
 

@@ -33,3 +33,8 @@ from cqlparsetreetolucenequery import Composer
 from cql2lucenequery import CQL2LuceneQuery
 from string2cql import String2CQL
 from fields2lucenedocument import Fields2LuceneDocumentTx
+
+from lucenedocidtracker import LuceneDocIdTrackerDecorator
+from lucene2 import LuceneIndex2
+from document2 import Document2
+from indexfacade import IndexFacade
