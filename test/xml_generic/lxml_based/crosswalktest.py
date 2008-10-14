@@ -49,7 +49,7 @@ class CrosswalkTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.crosswalk = Crosswalk()
-        self.validate = Validate(join(abspath(dirname(xml_genericpath)), 'schemas-lom', 'lomCcNbc.xsd'))
+        self.validate = Validate(join(abspath(dirname(xml_genericpath)), 'schemas-lom', 'lomCc.xsd'))
         self.crosswalk.addObserver(self.validate)
         self.observer = CallTrace()
         self.validate.addObserver(self.observer)

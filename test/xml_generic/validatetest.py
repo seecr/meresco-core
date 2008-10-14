@@ -41,7 +41,7 @@ class ValidateTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.validate = Validate(join(abspath(dirname(xml_genericpath)), 'schemas-lom', 'lomCcNbc.xsd'))
+        self.validate = Validate(join(abspath(dirname(xml_genericpath)), 'schemas-lom', 'lomCc.xsd'))
         self.exception = None
         self.args = None
         class Interceptor:
