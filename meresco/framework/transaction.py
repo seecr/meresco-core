@@ -27,6 +27,9 @@
 ## end license ##
 from meresco.framework import Observable
 
+class TransactionException(Exception):
+    pass
+
 class TransactionFactory(Observable):
 
     def __init__(self, factoryMethod):
@@ -48,6 +51,10 @@ class TransactionFactory(Observable):
         self.txs[self.tx.getId()].finalize()
         del self.txs[self.tx.getId()]
 
+    def rollback(self):
+        self.txs[self.tx.getId()].rollback()
+        del self.txs[self.tx.getId()]
+
 class __Transaction__(object):
 
     def getId(self):
@@ -58,7 +65,11 @@ class TransactionScope(Observable):
     def unknown(self, name, *args, **kwargs):
         __callstack_var_tx__ = __Transaction__()
         self.once.begin()
-        for result in self.all.unknown(name, *args, **kwargs):
-            yield result
-        self.once.commit()
+        try:
+            for result in self.all.unknown(name, *args, **kwargs):
+                yield result
+            self.once.commit()
+        except TransactionException, te:
+            self.once.rollback()
+
 

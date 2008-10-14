@@ -28,7 +28,7 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.framework import TransactionFactory, be, Observable, compose, TransactionScope
+from meresco.framework import TransactionFactory, be, Observable, compose, TransactionScope, TransactionException
 
 class TransactionTest(TestCase):
     def testOne(self):
@@ -85,8 +85,31 @@ class TransactionTest(TestCase):
 
         self.assertEquals(['finalize'], methodsCalled)
 
+    def testTransactionExceptionRollsbackTransaction(self):
+        traces = []
+        def factoryMethod(tx):
+            trace = CallTrace('transaction')
+            traces.append(trace)
+            return trace
 
-
-
-
+        class CallTwoMethods(Observable):
+            def twice(self, argument1, argument2):
+                yield self.all.methodOne(argument1)
+                raise TransactionException()
+                yield self.all.methodTwo(argument2)
         
+        dna = \
+            (Observable(),
+                (TransactionScope(),
+                    (CallTwoMethods(),
+                        (TransactionFactory(factoryMethod),)
+                    )
+                )
+            )
+        body = be(dna)
+
+        list(compose(body.all.twice('one', 'two')))
+
+        self.assertEquals(1, len(traces))
+        self.assertEquals(2, len(traces[0].calledMethods))
+        self.assertEquals(['methodOne', 'rollback'], [m.name for m in traces[0].calledMethods])

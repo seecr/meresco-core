@@ -84,3 +84,8 @@ class Fields2LuceneDocumentTest(TestCase):
         self.assertTrue(document._document.getField('a').isTokenized())
         self.assertFalse(document._document.getField('b').isTokenized())
 
+    def testRollback(self):
+        fields = Fields2LuceneDocumentTx(CallTrace('Transaction'), [])
+        fields.rollback()
+        #assert that Fields2LuceneDocumentTx has a rollback method
+

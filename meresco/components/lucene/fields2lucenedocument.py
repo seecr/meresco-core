@@ -49,4 +49,7 @@ class Fields2LuceneDocumentTx(object):
                 document.addIndexedField(name, value, not name in self._untokenized)
         self.transaction.do.addDocument(document)
 
+    def rollback(self):
+        pass
+
 
