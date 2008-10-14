@@ -57,7 +57,7 @@
 		<xs:complexType name="VCard">
 			<xs:simpleContent>
 				<xs:restriction base="VCard">
-					<xs:pattern value="\s*BEGIN:VCARD\s*(\i+(;\i+(=\i+)?)?:.*\n)+\s*END:VCARD\s*"/>
+					<xs:pattern value="\s*BEGIN:VCARD\s*([\i\-]+(;\i+(=[\i,]+)?)?:.*\n)+\s*END:VCARD\s*"/>
 				</xs:restriction>
 			</xs:simpleContent>
 		</xs:complexType>
