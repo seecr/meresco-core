@@ -50,7 +50,7 @@ class SRUQuery:
         self.startRecord = int(startRecord)
 
         maximumRecords = arguments.get('maximumRecords', ['10'])[0]
-        if not maximumRecords.isdigit() or int(maximumRecords) < 1:
+        if not maximumRecords.isdigit() or int(maximumRecords) < 0:
             raise SRUQueryParameterException('maximumRecords')
         self.maximumRecords = int(maximumRecords)
 
