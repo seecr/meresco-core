@@ -112,6 +112,8 @@ from lucene2test import Lucene2Test
 from document2test import Document2Test
 from indexfacadetest import IndexFacadeTest
 
+from ngramtest import NGramTest
+
 if __name__ == '__main__':
         unittest.main()
         os.system('find .. -name "*.pyc" | xargs rm -f')
