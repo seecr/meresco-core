@@ -57,12 +57,14 @@ def listTerms(reader, fields):
 
 if __name__ == '__main__':
     args = argv[1:]
-    index = 'index'
-    reader = IndexReader.open(index)
-    fields = findFields(reader)
-    if '--fields' in args:
-        printFields(fields)
-    elif '--terms' in args:
-        listTerms(reader, fields)
+    if len(args) < 1:
+        print 'Usage: %s <index directory name> --fields | --terms' % basename(argv[0])    
     else:
-        print 'Usage: %s --fields | --terms' % basename(argv[0])
+        index = args[0]
+        reader = IndexReader.open(index)
+        fields = findFields(reader)
+        if '--fields' in args:
+            printFields(fields)
+        elif '--terms' in args:
+            listTerms(reader, fields)
+

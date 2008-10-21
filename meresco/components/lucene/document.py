@@ -34,20 +34,19 @@ class DocumentException(Exception):
     """Generic Document Exception"""
     pass
 
-class Document:
+class Document(object):
 
     def __init__(self, anId):
         self.identifier = anId
         if not self._isValidFieldValue(anId):
-            raise DocumentException('Empty ID')
-
+            raise DocumentException("Invalid ID: '%s'" % anId)
         self._document = PyLucene.Document()
         self._document.add(PyLucene.Field(IDFIELD, anId, PyLucene.Field.Store.YES, PyLucene.Field.Index.UN_TOKENIZED))
         self._fields = [IDFIELD]
         self.pokedDict = []
 
     def _isValidFieldValue(self, anObject):
-        return type(anObject) == str and anObject.strip()
+        return isinstance(anObject, basestring) and anObject.strip()
 
     def fields(self):
         return self._fields

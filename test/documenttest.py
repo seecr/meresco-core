@@ -46,14 +46,17 @@ class DocumentTest(unittest.TestCase):
             d = Document(' ')
             self.fail()
         except DocumentException,e:
-            self.assertEquals('Empty ID', str(e))
+            self.assertEquals("Invalid ID: ' '", str(e))
 
     def testIdMustBeString(self):
         try:
             d = Document(1234)
             self.fail()
         except DocumentException,e:
-            self.assertEquals('Empty ID', str(e))
+            self.assertEquals("Invalid ID: '1234'", str(e))
+
+    def testIdCanBeUnicode(self):
+        d = Document(u'havefun')
 
     def testAddInvalidField(self):
         d = Document('1234')

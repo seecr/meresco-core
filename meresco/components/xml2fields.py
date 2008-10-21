@@ -27,14 +27,20 @@
 ## end license ##
 
 from meresco.framework import Observable
+from warnings import warn
 
 def removeNamespace(tagName):
     return '}' in tagName and tagName.split('}')[1] or tagName
 
+
 class Xml2Fields(Observable):
 
     def add(self, id, partName, lxmlNode):
+        """deprecated"""
         self.do.addField('__id__', id)
+        self.addXml(lxmlNode)
+
+    def addXml(self, lxmlNode):
         if hasattr(lxmlNode, 'getroot'):
             lxmlNode = lxmlNode.getroot()
         return self._fillDict(lxmlNode, '')
@@ -49,7 +55,4 @@ class Xml2Fields(Observable):
             self.do.addField(fieldname, value)
         for child in aNode.getchildren():
             self._fillDict(child, fieldname)
-
-    def unknown(self, *args, **kwargs):
-        return self.all.unknown(*args, ** kwargs)
 
