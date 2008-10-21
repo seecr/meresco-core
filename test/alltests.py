@@ -41,18 +41,20 @@ import unittest
 from contextsettest import ContextSetTest
 from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from documenttest import DocumentTest
+from document2test import Document2Test
 from drilldowntest import DrilldownTest
 from fieldletstest import FieldletsTest
 from fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
+from indexfacadetest import IndexFacadeTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
 from lucenedocidtrackertest import LuceneDocIdTrackerTest
 #from lucenedocidtrackerdecoratortest import LuceneDocIdTrackerDecoratorTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
-from lucenetest import LuceneTest
+from ngramtest import NGramTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from resourcetest import ResourceTest
@@ -79,6 +81,8 @@ from http.argumentsinsessiontest import ArgumentsInSessionTest
 from http.observablehttpservertest import ObservableHttpServerTest
 
 from lucene.cql2lucenequerytest import Cql2LuceneQueryTest
+from lucene.lucenetest import LuceneTest
+from lucene.lucene2test import Lucene2Test
 from lucene.string2cqltest import String2CQLTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
@@ -107,12 +111,6 @@ from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
 from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
 
-
-from lucene2test import Lucene2Test
-from document2test import Document2Test
-from indexfacadetest import IndexFacadeTest
-
-from ngramtest import NGramTest
 
 if __name__ == '__main__':
         unittest.main()
