@@ -55,39 +55,29 @@ def lastUpdateTimeoutToken(method):
 
 class LuceneIndex(Observable):
 
-    def __init__(self, directoryName, timer, bitwise=False):
+    def __init__(self, directoryName, timer):
         Observable.__init__(self)
-        self._bitwise = bitwise
         self._directoryName = directoryName
         self._timer = timer
-
-        self._storedForReopen = {}
-        self._storedDeletesForReopen = []
         if not isdir(self._directoryName):
             makedirs(self._directoryName)
         indexExists = IndexReader.indexExists(self._directoryName)
         self._writer = IndexWriter(
             self._directoryName,
             IncludeStopWordAnalyzer(), not indexExists)
-        if bitwise:
-            self._writer.optimize()                             # create a consistent state
         self._lastUpdateTimeoutToken = None
         self._readerResource = self._openReader()
+        self._existingFieldNames = self._readerResource.getFieldNames(IndexReader.FieldOption.ALL)
         self._searcher = self._openSearcher()
-
-        if bitwise:
-            self._docIdsAsOriginal = IncNumberMap(self._readerResource.numDocs())
-        else:
-            self._docIdsAsOriginal = None
 
     def observer_init(self):
         self.do.indexStarted(self._readerResource)
 
-    def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None, map=None):
-        return Hits(self._searcher, self._readerResource, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending), map)
+    def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
+        return Hits(self._searcher, self._readerResource, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
 
     def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending, self._docIdsAsOriginal)
+        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending)
 
     def _lastUpdateTimeout(self):
         try:
@@ -114,43 +104,15 @@ class LuceneIndex(Observable):
 
     def _reopenIndex(self):
         self._reOpenWriter()
-        #self._readerResource.close()
         self._readerResource = None
         self._readerResource = self._openReader()
+        self._existingFieldNames = self._readerResource.getFieldNames(IndexReader.FieldOption.ALL)
         self._searcher.close()
         self._searcher = self._openSearcher()
-
-        if self._bitwise:
-            self._doBitwiseExtensions()
-        else:
-            self.do.indexStarted(self._readerResource)
-
-    def _doBitwiseExtensions(self):
-        docIds = []
-        for id, documentDict in self._storedForReopen.items():
-            fieldAndTermsList = documentDictToFieldsAndTermsList(documentDict)
-            docId = self._docIdForId(id)
-            if docId != None:
-                docIds.append((docId, fieldAndTermsList))
-        self._storedForReopen = {}
-
-        for docId in self._storedDeletesForReopen:
-            mappedId = self._docIdsAsOriginal.get(docId)
-            self.do.deleteDocument(mappedId)
-            self._docIdsAsOriginal.delete(docId)
-        self._storedDeletesForReopen = []
-
-        if docIds:
-            docIds = sorted(docIds)
-            for docId, fieldAndTermsList in docIds:
-                mappedId = self._docIdsAsOriginal.add(docId)
-                self.do.addDocument(mappedId, fieldAndTermsList)
+        self.do.indexStarted(self._readerResource)
 
     def _delete(self, anId):
         docId = self._docIdForId(anId)
-        if self._bitwise:
-            if not docId == None:
-                self._storedDeletesForReopen.append(docId)
         self._writer.deleteDocuments(Term(IDFIELD, anId))
         return docId
 
@@ -165,11 +127,6 @@ class LuceneIndex(Observable):
         aDocument.validate()
         aDocument.addToIndexWith(self._writer)
 
-        if self._bitwise:
-            self._storedForReopen[aDocument.identifier] = aDocument.pokedDict
-            if len(self._storedForReopen) >= 250:
-                self._reopenIndex()
-
     def docCount(self):
         return self._readerResource.numDocs()
 
@@ -180,11 +137,12 @@ class LuceneIndex(Observable):
         return IndexSearcher(self._readerResource._subject)
 
     def _getPyLuceneSort(self, sortBy, sortDescending):
-        return sortBy and Sort(sortBy, bool(sortDescending)) or None
+        if sortBy and sortBy in self._existingFieldNames:
+            return Sort(sortBy, bool(sortDescending))
+        return None
 
     def close(self):
         self._writer.close()
-        #self._readerResource.close()
         self._readerResource = None
         self._searcher.close()
 
@@ -193,8 +151,6 @@ class LuceneIndex(Observable):
 
     def start(self):
         self._reopenIndex()
-        if self._bitwise:
-            self.do.indexStarted(self._readerResource)
 
     def isOptimized(self):
         return self.docCount() == 0 or self._readerResource.isOptimized()
@@ -207,15 +163,3 @@ class LuceneIndex(Observable):
 
     def getMaxBufferedDocs(self):
         return self._writer.getMaxBufferedDocs()
-
-def documentDictToFieldsAndTermsList(documentDict):
-    """Waar dit hoort weten we nog niet zo goed.
-    * Let op dat hier ook impliciet in zit dat rechterkanten maar 1 keer voorkomen (set)
-    * en dat we hier de strip() doen
-    """
-    result = {}
-    for documentField in documentDict:
-        if not documentField.key in result:
-            result[documentField.key] = set([])
-        result[documentField.key].add(documentField.value.strip())
-    return result.items()

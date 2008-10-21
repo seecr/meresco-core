@@ -43,7 +43,7 @@ class DrilldownTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.index = LuceneIndex(self.tempdir, timer=TimerForTestSupport(), bitwise=True)
+        self.index = LuceneIndex(self.tempdir, timer=TimerForTestSupport())
 
     def tearDown(self):
         self.index.close()

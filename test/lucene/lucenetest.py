@@ -355,22 +355,6 @@ class LuceneTest(CQ2TestCase):
                 fileCount = newFileCount
                 docsAdded = 0
 
-    #bitwise extension version:
-    #def testCallAddDocumentAfterReopen(self):
-        #d = Document("anId")
-        #d.addIndexedField('field', 'value')
-        #d.pokedDict = DocumentDict()
-        #d.pokedDict.addField(DocumentField('field', 'value'))
-        #self._luceneIndex.addDocument(d)
-        #observer = CallTrace()
-        #self._luceneIndex.addObserver(observer)
-        #self._luceneIndex._reopenIndex()
-        #self.assertEquals(1, len(observer.calledMethods))
-        #self.assertEquals('addDocument', observer.calledMethods[0].name)
-        #self.assertEquals(0, observer.calledMethods[0].args[0])
-        #self.assertEquals([('field', set(['value']))], observer.calledMethods[0].args[1])
-
-
     def testAddIsAlsoDeleteCausesBug(self):
         reopen = self._luceneIndex._reopenIndex
         self._luceneIndex._reopenIndex = lambda: None
@@ -412,3 +396,35 @@ class LuceneTest(CQ2TestCase):
         hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'value')))
         self.assertEquals(len(hits), 1)
         self.assertEquals(['id0'], list(hits))
+
+    def testSorting(self):
+        myDocument = Document('id0')
+        myDocument.addIndexedField('field1', 'one')
+        myDocument.addIndexedField('field2', 'a')
+        self._luceneIndex.addDocument(myDocument)
+        myDocument = Document('id1')
+        myDocument.addIndexedField('field1', 'one')
+        myDocument.addIndexedField('field2', 'b')
+        self._luceneIndex.addDocument(myDocument)
+        self.timerCallbackMethod()
+        
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='field2', sortDescending=False)
+        self.assertEquals(len(hits), 2)
+        self.assertEquals(['id0', 'id1'], list(hits))
+
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='field2', sortDescending=True)
+        self.assertEquals(len(hits), 2)
+        self.assertEquals(['id1', 'id0'], list(hits))
+
+    def testSortingNonExistingField(self):
+        myDocument = Document('id0')
+        myDocument.addIndexedField('field1', 'one')
+        self._luceneIndex.addDocument(myDocument)
+        myDocument = Document('id1')
+        myDocument.addIndexedField('field1', 'one')
+        self._luceneIndex.addDocument(myDocument)
+        self.timerCallbackMethod()
+        
+        hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='doesNotExist', sortDescending=False)
+        self.assertEquals(len(hits), 2)
+        self.assertEquals(['id0', 'id1'], list(hits))
