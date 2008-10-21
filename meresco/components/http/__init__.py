@@ -35,3 +35,4 @@ from ipfilter import IpFilter
 from basichttphandler import BasicHttpHandler
 from basicauthentication import BasicAuthentication
 from sessionhandler import SessionHandler, ArgumentsInSession
+from apachelogger import ApacheLogger
