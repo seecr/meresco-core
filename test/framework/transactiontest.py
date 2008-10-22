@@ -28,7 +28,7 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.framework import TransactionFactory, be, Observable, compose, TransactionScope, TransactionException
+from meresco.framework import ResourceManager, be, Observable, compose, TransactionScope, TransactionException, Transaction
 
 class TransactionTest(TestCase):
     def testOne(self):
@@ -42,12 +42,12 @@ class TransactionTest(TestCase):
             def twice(self, argument1, argument2):
                 yield self.all.methodOne(argument1)
                 yield self.all.methodTwo(argument2)
-        
+
         dna = \
             (Observable(),
                 (TransactionScope(),
                     (CallTwoMethods(),
-                        (TransactionFactory(factoryMethod),)
+                        (ResourceManager(factoryMethod),)
                     )
                 )
             )
@@ -56,60 +56,55 @@ class TransactionTest(TestCase):
         list(compose(body.all.twice('one', 'two')))
 
         self.assertEquals(1, len(traces))
-        self.assertEquals(3, len(traces[0].calledMethods))
-        self.assertEquals(['methodOne', 'methodTwo', 'finalize'], [m.name for m in traces[0].calledMethods])
+        self.assertEquals(['methodOne', 'methodTwo', 'commit'], [m.name for m in traces[0].calledMethods])
 
-    def testTransactionFactoryHandlesAttributeError(self):
-        methodsCalled = []
-        class Mock(object):
-            def finalize(self):
-                methodsCalled.append('finalize')
-            def exists(self):
-                methodsCalled.append('exists')
+    def testResourceManagerHandlesAttributeError(self):
+        class ResourceTransaction(object):
+            def __init__(self, tx):
+                pass
+        txfactory = ResourceManager(ResourceTransaction)
+        __callstack_var_tx__ = CallTrace('TransactionScope')
+        txfactory.begin(__callstack_var_tx__)
+        try:
+            txfactory.unknown('doesnotexist')
+        except AttributeError:
+            self.fail('ResourceManager must ignore unknown methods.')
 
-        factory = TransactionFactory(lambda tx: Mock())
-        __callstack_var_tx__ = CallTrace('Transaction')
-        observable = Observable()
-        observable.addObserver(factory)
-        observable.once.begin()
-        list(observable.all.exists())
-        observable.once.commit()
+    def testJoinOnlyOnce(self):
+        commitCalled = []
+        class MockResource(object):
+            def commit(self):
+                commitCalled.append(1)
+        tx = Transaction()
+        resource = MockResource()
+        tx.join(resource)
+        tx.join(resource)
+        tx.commit()
+        self.assertEquals(1, len(commitCalled))
 
-        self.assertEquals(['exists', 'finalize'], methodsCalled)
-
-        methodsCalled = []
-
-        observable.once.begin()
-        list(observable.all.doesNotExist())
-        observable.once.commit()
-
-        self.assertEquals(['finalize'], methodsCalled)
 
     def testTransactionExceptionRollsbackTransaction(self):
-        traces = []
+        resourceTxs = []
         def factoryMethod(tx):
-            trace = CallTrace('transaction')
-            traces.append(trace)
-            return trace
+            resourceTx = CallTrace('resourceTx')
+            resourceTxs.append(resourceTx)
+            return resourceTx
 
         class CallTwoMethods(Observable):
             def twice(self, argument1, argument2):
                 yield self.all.methodOne(argument1)
                 raise TransactionException()
                 yield self.all.methodTwo(argument2)
-        
+
         dna = \
             (Observable(),
                 (TransactionScope(),
                     (CallTwoMethods(),
-                        (TransactionFactory(factoryMethod),)
+                        (ResourceManager(factoryMethod),)
                     )
                 )
             )
         body = be(dna)
-
         list(compose(body.all.twice('one', 'two')))
-
-        self.assertEquals(1, len(traces))
-        self.assertEquals(2, len(traces[0].calledMethods))
-        self.assertEquals(['methodOne', 'rollback'], [m.name for m in traces[0].calledMethods])
+        self.assertEquals(1, len(resourceTxs), resourceTxs)
+        self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])

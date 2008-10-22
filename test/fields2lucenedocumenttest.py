@@ -28,7 +28,7 @@
 from unittest import TestCase
 from cq2utils import CallTrace
 from meresco.framework import be, Transparant, Observable
-from meresco.framework import TransactionScope, TransactionFactory
+from meresco.framework import TransactionScope, ResourceManager
 
 from meresco.components.lucene import Fields2LuceneDocumentTx
 
@@ -45,7 +45,7 @@ class Fields2LuceneDocumentTest(TestCase):
             (Observable(),
                 (TransactionScope(),
                     (Splitter(),
-                        (TransactionFactory(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['b'])),
+                        (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['b'])),
                             (self.observert,)
                         )
                     )
@@ -55,10 +55,10 @@ class Fields2LuceneDocumentTest(TestCase):
 
     def testOne(self):
         list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('b', '2'), ('c', '3')]))
-        self.assertEquals(3, len(self.observert.calledMethods))
-        self.assertEquals('begin()', str(self.observert.calledMethods[0]))
+        self.assertEquals(2, len(self.observert.calledMethods))
+        self.assertEquals('begin(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
-        self.assertEquals('commit()', str(self.observert.calledMethods[2]))
+
         document = self.observert.calledMethods[1].args[0]
         self.assertTrue('a' in document.fields())
         self.assertTrue('b' in document.fields())
@@ -67,14 +67,14 @@ class Fields2LuceneDocumentTest(TestCase):
 
     def testOtherTransactionMethodsLikeDeleteDoNoTriggerFields2LuceneDocumentToAddEmptyDocument(self):
         self.body.do.delete('recordIdentifier')
-        self.assertEquals(["begin()", "commit()"], map(str, self.observert.calledMethods))
+        self.assertEquals(["begin(<meresco.framework.transaction.Transaction>)"], map(str, self.observert.calledMethods))
 
     def testMultipleValuesForSameKey(self):
         list(self.body.all.addFields([('__id__', 'ID'), ('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
-        self.assertEquals(3, len(self.observert.calledMethods))
-        self.assertEquals('begin()', str(self.observert.calledMethods[0]))
+        self.assertEquals(2, len(self.observert.calledMethods), self.observert.calledMethods)
+        self.assertEquals('begin(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
-        self.assertEquals('commit()', str(self.observert.calledMethods[2]))
+
         document = self.observert.calledMethods[1].args[0]
         self.assertEquals([u'TermOne', u'TermTwo'],  document._document.getValues('a'))
 

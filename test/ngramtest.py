@@ -1,7 +1,7 @@
 #-*- coding: utf-8
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.framework import Observable, TransactionScope, TransactionFactory, be
+from meresco.framework import Observable, TransactionScope, ResourceManager, be
 from meresco.components.ngram import NGramFieldlet, NGramQuery, ngrams, LevenshteinSuggester, RatioSuggester
 from meresco.components.lucene import LuceneIndex, Fields2LuceneDocumentTx
 from meresco.components import Xml2Fields
@@ -32,7 +32,7 @@ class NGramTest(CQ2TestCase):
                 (TransactionScope(),
                     (Xml2Fields(),
                         (NGramFieldlet(2, 'ngrams'),
-                            (TransactionFactory(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['ngrams'])),
+                            (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['ngrams'])),
                                 (index,)
                             )
                         )

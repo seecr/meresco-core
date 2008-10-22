@@ -30,15 +30,17 @@ from meresco.framework import Observable
 class TransactionException(Exception):
     pass
 
-class TransactionFactory(Observable):
+class ResourceManager(Observable):
 
-    def __init__(self, factoryMethod):
+    def __init__(self, resourceTxFactory):
         Observable.__init__(self)
-        self._factoryMethod = factoryMethod
+        self._resourceTxFactory = resourceTxFactory
         self.txs = {}
 
-    def begin(self):
-        self.txs[self.tx.getId()] = self._factoryMethod(self)
+    def begin(self, tx):
+        resourceTx = self._resourceTxFactory(self)
+        tx.join(resourceTx)
+        self.txs[self.tx.getId()] = resourceTx
 
     def unknown(self, message, *args, **kwargs):
         try:
@@ -47,29 +49,36 @@ class TransactionFactory(Observable):
         except AttributeError:
             pass
 
-    def commit(self):
-        self.txs[self.tx.getId()].finalize()
-        del self.txs[self.tx.getId()]
+class Transaction(object):
 
-    def rollback(self):
-        self.txs[self.tx.getId()].rollback()
-        del self.txs[self.tx.getId()]
-
-class __Transaction__(object):
+    def __init__(self):
+        self.resourceTxs = []
 
     def getId(self):
         return id(self)
 
+    def join(self, resourceTx):
+        if resourceTx not in self.resourceTxs:
+            self.resourceTxs.append(resourceTx)
+
+    def commit(self):
+        for resourceTx in self.resourceTxs:
+            resourceTx.commit()
+
+    def rollback(self):
+        for resourceTx in self.resourceTxs:
+            resourceTx.rollback()
+
 class TransactionScope(Observable):
 
     def unknown(self, name, *args, **kwargs):
-        __callstack_var_tx__ = __Transaction__()
-        self.once.begin()
+        __callstack_var_tx__ = Transaction()
+        self.once.begin(__callstack_var_tx__)
         try:
             for result in self.all.unknown(name, *args, **kwargs):
                 yield result
-            self.once.commit()
+            __callstack_var_tx__.commit()
         except TransactionException, te:
-            self.once.rollback()
+            __callstack_var_tx__.rollback()
 
 
