@@ -53,6 +53,7 @@ class Transaction(object):
 
     def __init__(self):
         self.resourceTxs = []
+        self.locals = {}
 
     def getId(self):
         return id(self)

@@ -54,7 +54,7 @@ class NGramFieldlet(Transparant):
 
     def addField(self, name, value):
         for word in unicode(value).split():
-            self.do.addField('__id__', word)
+            self.tx.locals['id'] = word
             for ngram in self._ngram(word):
                 self.do.addField(self._fieldName, ngram)
 

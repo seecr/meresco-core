@@ -37,7 +37,6 @@ class Xml2Fields(Observable):
 
     def add(self, id, partName, lxmlNode):
         """deprecated"""
-        self.do.addField('__id__', id)
         self.addXml(lxmlNode)
 
     def addXml(self, lxmlNode):

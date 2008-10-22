@@ -38,15 +38,14 @@ class Venturi(Observable):
         self._could = could
 
     def add(self, identifier, name, lxmlNode):
+        self.tx.locals['id'] = identifier
         for partname, partXPath in self._should:
             part = self._findPart(identifier, partname, lxmlNode, partXPath)
             yield self.all.add(identifier, partname, part)
         for partname, partXPath in self._could:
-            try:
-                part = self._findPart(identifier, partname, lxmlNode, partXPath)
+            part = self._findPart(identifier, partname, lxmlNode, partXPath)
+            if part:
                 yield self.all.add(identifier, partname, part)
-            except Exception, e:
-                pass
 
     def _findPart(self, identifier, partname, lxmlNode, partXPath):
         matches = lxmlNode.xpath(partXPath, self._namespaceMap)
@@ -54,7 +53,11 @@ class Venturi(Observable):
         if len(matches) == 1:
             return self._convert(matches[0])
         else:
-            return parse(self.any.getStream(identifier, partname))
+            try:
+                stream = self.any.getStream(identifier, partname)
+            except KeyError:
+                return None
+            return parse(stream)
 
     def _convert(self, anObject):
         if type(anObject) == _Element:

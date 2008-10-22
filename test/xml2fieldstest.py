@@ -48,15 +48,13 @@ class Xml2FieldsTest(TestCase):
 
     def testOneField(self):
         self.observable.do.add('id0','partName', parselxml('<fields><tag>value</tag></fields>'))
-        self.assertEquals(2, len(self.observer.calledMethods))
-        self.assertEquals("addField('__id__', 'id0')", str(self.observer.calledMethods[0]))
-        self.assertEquals("addField('fields.tag', 'value')", str(self.observer.calledMethods[1]))
+        self.assertEquals(1, len(self.observer.calledMethods))
+        self.assertEquals("addField('fields.tag', 'value')", str(self.observer.calledMethods[0]))
 
     def testDoNotIncludeNamespaces(self):
         self.observable.do.add('id0','partName', parselxml('<fields xmlns="aap"><tag>value</tag></fields>'))
-        self.assertEquals(2, len(self.observer.calledMethods))
-        self.assertEquals("addField('__id__', 'id0')", str(self.observer.calledMethods[0]))
-        self.assertEquals("addField('fields.tag', 'value')", str(self.observer.calledMethods[1]))
+        self.assertEquals(1, len(self.observer.calledMethods))
+        self.assertEquals("addField('fields.tag', 'value')", str(self.observer.calledMethods[0]))
 
     def testMultiLevel(self):
         node = parselxml("""<lom>
@@ -65,8 +63,7 @@ class Xml2FieldsTest(TestCase):
             </general>
         </lom>""")
         self.observable.do.add('id', 'legacy partname', node)
-        self.assertEquals("addField('__id__', 'id')", str(self.observer.calledMethods[0]))
-        self.assertEquals("addField('lom.general.title', 'The title')", str(self.observer.calledMethods[1]))
+        self.assertEquals("addField('lom.general.title', 'The title')", str(self.observer.calledMethods[0]))
 
     def testMultipleValuesForField(self):
 
@@ -75,6 +72,6 @@ class Xml2FieldsTest(TestCase):
             <name>Name Two</name>
         </tag>""")
         self.observable.do.add('id', 'legacy partname', node)
-        self.assertEquals(3, len(self.observer.calledMethods))
-        self.assertEquals("addField('tag.name', 'Name One')", str(self.observer.calledMethods[1]))
-        self.assertEquals("addField('tag.name', 'Name Two')", str(self.observer.calledMethods[2]))
+        self.assertEquals(2, len(self.observer.calledMethods))
+        self.assertEquals("addField('tag.name', 'Name One')", str(self.observer.calledMethods[0]))
+        self.assertEquals("addField('tag.name', 'Name Two')", str(self.observer.calledMethods[1]))

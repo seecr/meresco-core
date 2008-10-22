@@ -37,12 +37,13 @@ class Fields2LuceneDocumentTest(TestCase):
     def setUp(self):
         self.observert = CallTrace('Observert', ignoredAttributes=['_observers'])
         class Splitter(Transparant):
-            def addFields(this, tupleList):
+            def addFields(this, tupleList, identifier='fixedId'):
+                this.tx.locals['id'] = identifier
                 for item in tupleList:
                     this.any.addField(*item)
 
         dna = \
-            (Observable(),
+            (Transparant(),
                 (TransactionScope(),
                     (Splitter(),
                         (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['b'])),
@@ -54,7 +55,7 @@ class Fields2LuceneDocumentTest(TestCase):
         self.body = be(dna)
 
     def testOne(self):
-        list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('b', '2'), ('c', '3')]))
+        list(self.body.all.addFields([('a', '1'), ('b', '2'), ('c', '3')]))
         self.assertEquals(2, len(self.observert.calledMethods))
         self.assertEquals('begin(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
@@ -70,7 +71,7 @@ class Fields2LuceneDocumentTest(TestCase):
         self.assertEquals(["begin(<meresco.framework.transaction.Transaction>)"], map(str, self.observert.calledMethods))
 
     def testMultipleValuesForSameKey(self):
-        list(self.body.all.addFields([('__id__', 'ID'), ('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
+        list(self.body.all.addFields([('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
         self.assertEquals(2, len(self.observert.calledMethods), self.observert.calledMethods)
         self.assertEquals('begin(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
@@ -79,7 +80,7 @@ class Fields2LuceneDocumentTest(TestCase):
         self.assertEquals([u'TermOne', u'TermTwo'],  document._document.getValues('a'))
 
     def testTokenizedIsNotForgotten(self):
-        list(self.body.all.addFields([('__id__', 'ID'), ('a', '1'), ('a', 'termone termtwo'), ('b', 'termone termtwo')]))
+        list(self.body.all.addFields([('a', '1'), ('a', 'termone termtwo'), ('b', 'termone termtwo')]))
         document = self.observert.calledMethods[1].args[0]
         self.assertTrue(document._document.getField('a').isTokenized())
         self.assertFalse(document._document.getField('b').isTokenized())
@@ -89,3 +90,7 @@ class Fields2LuceneDocumentTest(TestCase):
         fields.rollback()
         #assert that Fields2LuceneDocumentTx has a rollback method
 
+    def testDocumentContainsIdFromTransactionScope(self):
+        self.body.do.addFields([('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')], 'theIdentifier')
+        doc = self.observert.calledMethods[1].args[0]
+        self.assertEquals('theIdentifier', doc.identifier)

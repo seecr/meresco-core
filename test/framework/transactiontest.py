@@ -82,7 +82,6 @@ class TransactionTest(TestCase):
         tx.commit()
         self.assertEquals(1, len(commitCalled))
 
-
     def testTransactionExceptionRollsbackTransaction(self):
         resourceTxs = []
         def factoryMethod(tx):
@@ -108,3 +107,8 @@ class TransactionTest(TestCase):
         list(compose(body.all.twice('one', 'two')))
         self.assertEquals(1, len(resourceTxs), resourceTxs)
         self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
+
+    def testTransactionLocals(self):
+        tx = Transaction()
+        tx.locals['myvar'] = 'value'
+        self.assertEquals('value', tx.locals['myvar'])

@@ -14,6 +14,16 @@ from PyLucene import BooleanQuery, BooleanClause, IndexReader, IndexWriter, Inde
 
 PUCH_WORDS = ['capuche', 'capuches', 'Capuchin', 'capuchins', 'Mapuche', 'Pampuch', 'puchera', 'pucherite', 'capuched', 'capuchin', 'puchero', 'PUC', 'Kampuchea', 'kampuchea', 'Puchanahua', 'sepuchral', 'puca', 'puce', 'puces', 'Puck', 'puck', 'pucka', 'pucks', 'Pupuluca', 'Puccini', 'puccini', 'puccoon', 'puceron', 'Pucida', 'pucker', 'puckish', 'puckle', 'SPUCDL', 'Chuch', 'Punch', 'punch', 'cappuccino', 'capucine', 'catapuce', 'catepuce', 'depucel', 'leucopus', 'mucopus', 'praepuce', 'prepuce', 'prepuces', 'Puccinia', 'puccinoid', 'puccoons', 'pucelage', 'pucellas', 'pucelle', 'puckball', 'puckered', 'puckerel', 'puckerer', 'puckering', 'puckers', 'puckery', 'Puckett', 'puckfist', 'puckfoist', 'puckishly', 'pucklike', 'puckling', 'puckrel', 'pucksey', 'puckster', 'sapucaia', 'unpucker', 'Vespucci', 'vespucci', 'Chucho', 'aneuch', 'aucht', 'bauch', 'bouch', 'Bruch', 'Buch', 'Buchan', 'buch', 'cauch', 'Chuck', 'chuck', 'couch', 'Cuchan', 'duchan', 'duchy', 'Eucha', 'Fauch', 'fuchi', 'Fuchs', 'heuch', 'hucho', 'Jauch', 'kauch', 'leuch', 'louch', 'Lucho', 'Manouch', 'mouch', 'much', 'nauch', 'nonsuch', 'nouche', 'nucha', 'ouch', 'pouch', 'Rauch', 'ruche', 'sauch', 'snouch', 'such', 'teuch', 'touch', 'touch-', 'touche', 'touchy', 'tuchis', 'tuchit', 'Uchean', 'Uchee', 'Uchish', 'vouch', 'wauch']
 
+def createNGramHelix(observert):
+    return be(
+        (Observable(),
+            (TransactionScope(),
+                (NGramFieldlet(2, 'ngrams'),
+                    (observert,)
+                )
+            )
+        )
+    )
 
 
 
@@ -44,7 +54,7 @@ class NGramTest(CQ2TestCase):
             )
         x = be(dna)
         xmlNode = parse(StringIO('<node><subnode>ideeën</subnode></node>'))
-        list(x.all.addXml(xmlNode))
+        x.do.addXml(xmlNode)
         index.start()
         hits = index.executeQuery(ngramQuery('ideeen'))
         self.assertEquals(1, index.docCount())
@@ -69,15 +79,23 @@ class NGramTest(CQ2TestCase):
 
     def testNGramFieldLet(self):
         observert = CallTrace('Observert')
-        ngramFieldlet = NGramFieldlet(2, 'ngrams')
-        ngramFieldlet.addObserver(observert)
-        ngramFieldlet.addField('field0', 'term0')
+        ngramFieldlet = createNGramHelix(observert)
+        ngramFieldlet.do.addField('field0', 'term0')
         self.assertEquals(5, len(observert.calledMethods))
-        self.assertEquals("addField('__id__', 'term0')", str(observert.calledMethods[0]))
+        self.assertEquals("begin(<meresco.framework.transaction.Transaction>)", str(observert.calledMethods[0]))
         self.assertEquals("addField('ngrams', 'te')", str(observert.calledMethods[1]))
         self.assertEquals("addField('ngrams', 'er')", str(observert.calledMethods[2]))
         self.assertEquals("addField('ngrams', 'rm')", str(observert.calledMethods[3]))
         self.assertEquals("addField('ngrams', 'm0')", str(observert.calledMethods[4]))
+
+    def testWordisIDinTransactionScope(self):
+        txlocals = {}
+        class Observert(Observable):
+            def addField(self, *args):
+                txlocals.update(self.tx.locals)
+        x = createNGramHelix(Observert())
+        x.do.addField('field0', 'term0')
+        self.assertEquals({'id': u'term0'}, txlocals)
 
     def testNgramQuery(self):
         ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (x for x in ['term0', 'term1'])})

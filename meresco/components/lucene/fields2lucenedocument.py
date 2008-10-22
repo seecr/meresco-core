@@ -29,8 +29,8 @@ from meresco.components.lucene import Document
 
 class Fields2LuceneDocumentTx(object):
 
-    def __init__(self, transaction, untokenized):
-        self.transaction = transaction
+    def __init__(self, resourceManager, untokenized):
+        self.resourceManager = resourceManager
         self.fields = {}
         self._untokenized = untokenized
 
@@ -42,12 +42,11 @@ class Fields2LuceneDocumentTx(object):
     def commit(self):
         if not self.fields.keys():
             return
-        document = Document(self.fields['__id__'][0])
-        del self.fields['__id__']
+        document = Document(self.resourceManager.tx.locals['id'])
         for name, values in self.fields.items():
             for value in values:
                 document.addIndexedField(name, value, not name in self._untokenized)
-        self.transaction.do.addDocument(document)
+        self.resourceManager.do.addDocument(document)
 
     def rollback(self):
         pass

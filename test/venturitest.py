@@ -32,116 +32,106 @@ from cq2utils import CQ2TestCase, CallTrace
 from lxml.etree import fromstring, tostring
 
 from meresco.components.venturi import Venturi
+from meresco.framework import TransactionScope, be, Observable
 from weightless import compose
+
+def createVenturiHelix(should, could, *observers, **kwargs):
+    return be(
+        (Observable(),
+            (TransactionScope(),
+                (Venturi(
+                        should=should,
+                        could=could,
+                        namespaceMap=kwargs.get('namespaceMap', {})),)
+                    +tuple((observer,) for observer in observers)
+            )
+        )
+    )
 
 class VenturiTest(CQ2TestCase):
     def testOutline(self):
         inputEvent = fromstring("""<document><part name="partone">&lt;some&gt;message&lt;/some&gt;</part><part name="parttwo"><second>message</second></part></document>""")
         interceptor = CallTrace('Interceptor')
-        v = Venturi(
-            should=[('partone', '/document/part[@name="partone"]/text()'),
-                    ('parttwo', '/document/part/second')],
-            namespaceMap={})
-        v.addObserver(interceptor)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals(('identifier', 'partone'), interceptor.calledMethods[0].args[:2])
-        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
-        self.assertEquals(('identifier', 'parttwo',), interceptor.calledMethods[1].args[:2])
-        secondXml = interceptor.calledMethods[1].args[2]
+        v = createVenturiHelix([('partone', '/document/part[@name="partone"]/text()'), ('parttwo', '/document/part/second')], [], interceptor)
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add', 'add'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(('identifier', 'partone'), interceptor.calledMethods[1].args[:2])
+        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[1].args[2]))
+        self.assertEquals(('identifier', 'parttwo',), interceptor.calledMethods[2].args[:2])
+        secondXml = interceptor.calledMethods[2].args[2]
         self.assertEquals('<second>message</second>', tostring(secondXml))
         self.assertEquals('second', secondXml.getroot().tag)
-        
+
 
     def testOnlyPassPartsSpecified(self):
         inputEvent = fromstring("""<document><part name="partone">&lt;some&gt;message&lt;/some&gt;</part><part name="parttwo"><second/></part></document>""")
         interceptor = CallTrace('Interceptor')
-        v = Venturi(
-            should=[('partone', '/document/part[@name="partone"]/text()')],
-            namespaceMap={})
-        v.addObserver(interceptor)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
+        v = createVenturiHelix([('partone', '/document/part[@name="partone"]/text()')], [], interceptor)
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[1].args[2]))
 
     def testReadFromStorage(self):
         inputEvent = fromstring('<document/>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
         storage = CallTrace('Storage', ignoredAttributes=['add'])
         storage.returnValues['getStream'] = StringIO('<some>message</some>')
-        v = Venturi(
-            should=[('partone', '/document/part[@name="partone"]/text()')],
-            namespaceMap={})
-        v.addObserver(interceptor)
-        v.addObserver(storage)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[0].args[2]))
-        self.assertEquals(('identifier', 'partone'), storage.calledMethods[0].args)
+        v = createVenturiHelix([('partone', '/document/part[@name="partone"]/text()')], [], interceptor, storage)
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[1].args[2]))
+        self.assertEquals(('identifier', 'partone'), storage.calledMethods[1].args)
 
     def testCouldHave(self):
         inputEvent = fromstring('<document><one/></document>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
-        v = Venturi(
-            could=[('one', '/document/one')],
-            namespaceMap={})
-        v.addObserver(interceptor)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals('<one/>', tostring(interceptor.calledMethods[0].args[2]))
-    
+        v = createVenturiHelix([], [('one', '/document/one')], interceptor)
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<one/>', tostring(interceptor.calledMethods[1].args[2]))
+
     def testCouldHaveInStorage(self):
         inputEvent = fromstring('<document><other/></document>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
         storage = CallTrace('Storage', ignoredAttributes=['add'])
         storage.returnValues['getStream'] = StringIO('<one/>')
-        v = Venturi(
-            could=[('one', '/document/one')],
-            namespaceMap={})
-        v.addObserver(interceptor)
-        v.addObserver(storage)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals('<one/>', tostring(interceptor.calledMethods[0].args[2]))
-        self.assertEquals(('identifier', 'one'), storage.calledMethods[0].args)
+        v = createVenturiHelix([], [('one', '/document/one')], interceptor, storage)
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals('<one/>', tostring(interceptor.calledMethods[1].args[2]))
+        self.assertEquals(('identifier', 'one'), storage.calledMethods[1].args)
 
     def testCouldHaveButDoesnot(self):
         inputEvent = fromstring('<document><other/></document>')
         interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
         storage = CallTrace('Storage', ignoredAttributes=['add'])
-        storage.exceptions['getStream'] = MyException('Not Available')
-        v = Venturi(
-            should=[('other', '/document/other')],
-            could=[('one', '/document/one')],
-            namespaceMap={})
-        v.addObserver(interceptor)
-        v.addObserver(storage)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals(('identifier', 'other',), interceptor.calledMethods[0].args[:2])
+        storage.exceptions['getStream'] = KeyError('Part not available')
+        v = createVenturiHelix([('other', '/document/other')], [('one', '/document/one')], interceptor, storage)
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add'], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(('identifier', 'other',), interceptor.calledMethods[1].args[:2])
 
     def testXpathReturnsMultipleResults(self):
         inputEvent = fromstring('<document><one/><two/></document>')
-        v = Venturi(
-            should=[('one', '/document/*')],
-            namespaceMap={})
+        v = createVenturiHelix([('one', '/document/*')], [])
         try:
-            list(compose(v.add('identifier', 'document', inputEvent)))
-            self.fail()
+            list(v.all.add('identifier', 'document', inputEvent))
+            self.fail('no good no')
         except Exception, e:
             self.assertEquals("XPath '/document/*' should return atmost one result.", str(e))
 
     def testNamespace(self):
         inputEvent = fromstring('<document xmlns="ns1" xmlns:ns2="ns2"><ns2:one/><two/></document>')
         interceptor = CallTrace('Interceptor')
-        v = Venturi(
-            should=[('one', '/prefixone:document/prefixtwo:one'),
-                    ('two', '/prefixone:document/prefixone:two')],
-            namespaceMap={'prefixone':'ns1', 'prefixtwo':'ns2'})
-        v.addObserver(interceptor)
-        list(compose(v.add('identifier', 'document', inputEvent)))
-        self.assertEquals(['add', 'add'], [m.name for m in interceptor.calledMethods])
-        
+        v = createVenturiHelix([('one', '/prefixone:document/prefixtwo:one'), ('two','/prefixone:document/prefixone:two')], [], interceptor, namespaceMap={'prefixone':'ns1', 'prefixtwo':'ns2'})
+        list(v.all.add('identifier', 'document', inputEvent))
+        self.assertEquals(['begin', 'add', 'add'], [m.name for m in interceptor.calledMethods])
 
-class MyException(Exception):
-    pass
+    def testTransactionScopeFilledWithIdentifier(self):
+        ids = []
+        class TempComponent(Observable):
+            def add(this, oldStyleId, partname, data):
+                ids.append(this.tx.locals['id'])
+        v = createVenturiHelix([('PARTNAME', '/document')],[], TempComponent())
+        v.do.add('ID', 'PARTNAME', fromstring('<document><other/></document>'))
+        self.assertEquals(1, len(ids))
