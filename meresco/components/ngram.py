@@ -1,6 +1,7 @@
 from meresco.framework import Transparant,  Observable
 from PyLucene import BooleanQuery, BooleanClause, TermQuery, Term
 from Levenshtein import distance, ratio
+from itertools import islice
 
 def ngrams(word, N=2):
     for n in range(2, N+1):
@@ -23,36 +24,31 @@ class NGramQuery(Observable):
         return query
 
 class _Suggestion(Observable):
-    def __init__(self, items, threshold, maximumCount):
+    def __init__(self, samples, threshold, maxResults):
         Observable.__init__(self)
-        self._items = items
-        self._maximumCount = maximumCount
+        self._samples = samples
+        self._maxResults = maxResults
         self._threshold = threshold
 
-    def suggestionsFor(self, word):
-        hits = self.any.executeQuery(word)
-        for i, hit in enumerate(hits):
-            if i > self._items:
-                break
-            yield hit
+    def _suggestionsFor(self, word, sortkey):
+        candidates = islice(self.any.executeQuery(word), self._samples)
+        results = sorted(candidates, key=sortkey)
+        if results and results[0] == word:
+            return results[1:self._maxResults+1]
+        else:
+            return results[:self._maxResults]
 
 class LevenshteinSuggester(_Suggestion):
     def suggestionsFor(self, word):
         word = unicode(word)
-        result = _Suggestion.suggestionsFor(self, word)
-        result = sorted(result, key=lambda term: distance(unicode(term), word))
-        result = result[:self._maximumCount]
-        result = [term for term in result if distance(unicode(term), word) <= self._threshold]
-        return result
+        result = self._suggestionsFor(word, lambda term: distance(unicode(term), word))
+        return [term for term in result if distance(unicode(term), word) <= self._threshold]
 
 class RatioSuggester(_Suggestion):
     def suggestionsFor(self, word):
         word = unicode(word)
-        result = _Suggestion.suggestionsFor(self, word)
-        result = sorted(result, key=lambda term: ratio(unicode(term), word), reverse=True)
-        result = result[:self._maximumCount]
-        result = [term for term in result if ratio(unicode(term), word) > self._threshold]
-        return result
+        result = self._suggestionsFor(word, lambda term: 1-ratio(unicode(term), word))
+        return [term for term in result if ratio(unicode(term), word) > self._threshold]
 
 class NGramFieldlet(Transparant):
     def __init__(self, n, fieldName):
