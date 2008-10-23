@@ -42,7 +42,7 @@ class NGramTest(CQ2TestCase):
                 (TransactionScope(),
                     (Xml2Fields(),
                         (NGramFieldlet(2, 'ngrams'),
-                            (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['ngrams'])),
+                            (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=[])),
                                 (index,)
                             )
                         )
@@ -53,10 +53,10 @@ class NGramTest(CQ2TestCase):
                 )
             )
         x = be(dna)
-        xmlNode = parse(StringIO('<node><subnode>ideeën</subnode></node>'))
+        xmlNode = parse(StringIO(u'<node><subnode>ideeën</subnode></node>'))
         x.do.addXml(xmlNode)
         index.start()
-        hits = index.executeQuery(ngramQuery('ideeen'))
+        hits = index.executeQuery(ngramQuery(u'ideeën'))
         self.assertEquals(1, index.docCount())
         self.assertEquals('ideeën', hits[0])
 
@@ -81,12 +81,9 @@ class NGramTest(CQ2TestCase):
         observert = CallTrace('Observert')
         ngramFieldlet = createNGramHelix(observert)
         ngramFieldlet.do.addField('field0', 'term0')
-        self.assertEquals(5, len(observert.calledMethods))
+        self.assertEquals(2, len(observert.calledMethods))
         self.assertEquals("begin(<meresco.framework.transaction.Transaction>)", str(observert.calledMethods[0]))
-        self.assertEquals("addField('ngrams', 'te')", str(observert.calledMethods[1]))
-        self.assertEquals("addField('ngrams', 'er')", str(observert.calledMethods[2]))
-        self.assertEquals("addField('ngrams', 'rm')", str(observert.calledMethods[3]))
-        self.assertEquals("addField('ngrams', 'm0')", str(observert.calledMethods[4]))
+        self.assertEquals("addField('ngrams', 'te er rm m0')", str(observert.calledMethods[1]))
 
     def testWordisIDinTransactionScope(self):
         txlocals = {}
@@ -117,31 +114,49 @@ class NGramTest(CQ2TestCase):
         self.assertEquals('some_fieldname:te some_fieldname:er some_fieldname:rm some_fieldname:m0', str(ngramindex.calledMethods[0].arguments[0]))
         ngramindex.returnValues['executeQuery'] = ['term2', 'term9']
 
-    def assertSuggestions(self, expected, term, count, suggesterClass):
+    def assertSuggestions(self, expected, term, suggester):
         ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (x for x in PUCH_WORDS)})
         ngramQuery = NGramQuery(2, 'ngrams')
         ngramQuery.addObserver(ngramindex)
-
-        suggester = suggesterClass()
         suggester.addObserver(ngramQuery)
-
-        results = suggester.suggestionsFor(term, count)
+        results = suggester.suggestionsFor(term)
         self.assertEquals(expected, list(results))
 
     def testLevenshtein(self):
-        self.assertSuggestions(['puca', 'puce', 'puck', 'punch', 'Buch'], 'puch', 5, LevenshteinSuggester)
+        self.assertSuggestions(['puca', 'puce', 'puck', 'punch', 'puces'], 'puch', LevenshteinSuggester(50, 3, 5))
 
     def testRatio(self):
-        self.assertSuggestions(['punch', 'pouch', 'puca', 'puce', 'puck'], 'puch', 5, RatioSuggester)
+        self.assertSuggestions(['punch', 'puca', 'puce', 'puck', 'capuche'], 'puch', RatioSuggester(50, 0.6, 5))
+
+    def testThresholdRatio(self):
+        self.assertSuggestions([], 'puch', RatioSuggester(50, 0.9, 5))
+        self.assertSuggestions(['punch'], 'puch', RatioSuggester(50, 0.8, 5))
+        self.assertSuggestions(['punch', 'puca', 'puce', 'puck', 'capuche'], 'puch', RatioSuggester(50, 0.7, 5))
+        self.assertSuggestions(['punch', 'puca', 'puce', 'puck', 'capuche'], 'puch', RatioSuggester(50, 0.6, 5))
+        self.assertSuggestions(['punch', 'puca', 'puce', 'puck', 'capuche'], 'puch', RatioSuggester(50, 0.5, 5))
+
+
+    def testThresholdLevenshtein(self):
+        self.assertSuggestions([], 'puch', LevenshteinSuggester(50, 0, 5))
+        self.assertSuggestions(['puca', 'puce', 'puck', 'punch'], 'puch', LevenshteinSuggester(50, 1, 5))
+        self.assertSuggestions(['puca', 'puce', 'puck', 'punch', 'puces'], 'puch', LevenshteinSuggester(50, 2, 5))
+        self.assertSuggestions(['puca', 'puce', 'puck', 'punch', 'puces'], 'puch', LevenshteinSuggester(50, 3, 5))
+        self.assertSuggestions(['puca', 'puce', 'puck', 'punch', 'puces', 'Puck', 'pucka'], 'puch', LevenshteinSuggester(50, 4, 7))
+
 
     def XXXXXXXXtestIntegrationWords(self):
-        #index = IndexWriter('index', StandardAnalyzer(), True)
-        #f = open('/usr/share/dict/words')
-        #for word in f:
-            ##print word
-            #addWord(index, word.strip().decode('iso 8859-1'))
-        #index.flush()
-        #index.close()
+        def addWord(index, word):
+            d = Document()
+            d.add(Field('term', word, Field.Store.YES, Field.Index.TOKENIZED))
+            d.add(Field('ngrams', ' '.join(ngrams(word)), Field.Store.NO, Field.Index.TOKENIZED))
+            index.addDocument(d)
+        index = IndexWriter('index', StandardAnalyzer(), True)
+        f = open('/usr/share/dict/words')
+        for word in f:
+            #print word
+            addWord(index, word.strip().decode('iso 8859-1'))
+        index.flush()
+        index.close()
 
         searcher = IndexSearcher('index')
 
@@ -174,3 +189,42 @@ class NGramTest(CQ2TestCase):
 
 
 
+    def XXXXtestIntegrationLiveWords(self):
+        def addWord(index, word):
+            d = Document()
+            d.add(Field('term', word, Field.Store.YES, Field.Index.TOKENIZED))
+            d.add(Field('ngrams', ' '.join(ngrams(word)), Field.Store.NO, Field.Index.TOKENIZED))
+            index.addDocument(d)
+        index = IndexWriter('index2', StandardAnalyzer(), True)
+        f = open('/home/meresco/words.txt')
+        for word in f:
+            #print word
+            addWord(index, word.strip().decode('iso 8859-1'))
+        index.flush()
+        index.close()
+
+        searcher = IndexSearcher('index2')
+
+        def ngramQuery(word, N=2):
+            query = BooleanQuery()
+            for ngram in ngrams(word, N):
+                query.add(BooleanClause(TermQuery(Term('ngrams', ngram)), BooleanClause.Occur.SHOULD))
+            return query
+
+        for word in ['Nederland', 'Rafael', 'config', 'susceptibility' ]:
+            print "'%s', did you mean:" % word
+            for N in range(2,4):
+                hits = iter(searcher.search(ngramQuery(word, N=N)))
+                suggestions = []
+                for n in range(50): #seems roughly good in this test for 'grnt'
+                    hit = hits.next()
+                    score = hit.getScore()
+                    term = hit.get('term')
+                    suggestions.append((term, score, distance(unicode(term), unicode(word)), ratio(unicode(term), unicode(word))))
+                if word == 'puch':
+                    print [x[0] for x in suggestions]
+                levenSuggs = sorted(suggestions, key=lambda x: x[2])[:5]
+                ratioSuggs = sorted(suggestions, key=lambda x: x[3], reverse=True)[:5]
+                print '    Score:', ', '.join('%s (%.1f)' % (sugg[0], sugg[1]) for sugg in suggestions[:5])
+                print '    Leven (n=%d):'%N, ', '.join('%s (%.1f)' % (sugg[0], sugg[2]) for sugg in levenSuggs if sugg[2] < 5)
+                print '    Ratio (n=%d):'%N, ', '.join('%s (%.1f)' % (sugg[0], sugg[3]) for sugg in ratioSuggs if sugg[3] > 0.65)

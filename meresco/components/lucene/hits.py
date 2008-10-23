@@ -26,24 +26,12 @@
 #
 ## end license ##
 from meresco.components.lucene import document
-from meresco.components.lucene.xslice import XSlice
 
 from PyLucene import QueryFilter, IndexSearcher
 from bitmatrix import JavaBitSetRow, Row, MappedRow
 
-DEFAULT_FETCHED_DOCS_COUNT = 10
 
-class Hits:
-    """Remake of Lucene's hits object, with added 'TeddyIds' functionality
-    Provides high performance access to both
-        - docNumbers (without fetching the associated document
-            - Using the special method docNumbers
-        - TeddyIds (the associated document is fetched)
-            - These ids are returned for __getitem__, __getslice__ and __iter__
-        - __len__ is equal for these two approaches
-
-    Implementation hint: the performance benefit is achieved because we know exactly how many documents will be needed. Note the positions of self._loadScoreDocs() in the code
-    """
+class Hits(object):
 
     def __init__(self, searcher, reader, pyLuceneQuery, pyLuceneSort, docIdsMap=None):
         self._reader = reader
@@ -51,14 +39,10 @@ class Hits:
         self._pyLuceneQuery = pyLuceneQuery
         self._pyLuceneSort = pyLuceneSort
         self._docIdsMap = docIdsMap
-
-        #attributes for high-performance remake of PyLucene
-        self._weight = None
-        self._scoreDocs = []
-        self._totalHits = self._loadScoreDocs(DEFAULT_FETCHED_DOCS_COUNT)
+        self.hits = self._doQuery()
 
     def __len__(self):
-        return self._totalHits
+        return len(self.hits)
 
     def bitMatrixRow(self):
         queryFilter = QueryFilter(self._pyLuceneQuery)
@@ -70,36 +54,17 @@ class Hits:
         return JavaBitSetRow(bits)
 
     def __getslice__(self, start, stop):
-        self._loadScoreDocs(min(len(self), stop))
-        return XSlice(self)[start:stop]
+        return (self[i] for i in xrange(start, min(len(self),stop)))
 
     def __iter__(self):
         return self[:]
 
     def __getitem__(self, i):
-        return self._getTeddyId(i)
+        return self.hits[i].get(document.IDFIELD)
 
-    def _getTeddyId(self, hitPosition):
-        luceneId = self._scoreDocs[hitPosition].doc
-        luceneDoc = self._searcher.doc(luceneId)
-        return luceneDoc.get(document.IDFIELD)
-
-    def _loadScoreDocs(self, nrOfDocs):
-        """Loads scoredocs, returns total amount of docs."""
-        if nrOfDocs <= max(len(self._scoreDocs), 1):
-            return
-
-        weight = self._getWeight()
+    def _doQuery(self):
         if self._pyLuceneSort:
-            topDocs = self._searcher.search(weight, None, nrOfDocs, self._pyLuceneSort)
+            hits = self._searcher.search(self._pyLuceneQuery, self._pyLuceneSort)
         else:
-            topDocs = self._searcher.search(weight, None, nrOfDocs)
-        self._scoreDocs = topDocs.scoreDocs
-        return topDocs.totalHits
-
-    def _getWeight(self):
-        """Hocus-pocus PyLucene attribute required for expert/low level access methods - cached locally"""
-        if self._weight == None:
-            self._weight = self._pyLuceneQuery.weight(self._searcher)
-        return self._weight
-
+            hits = self._searcher.search(self._pyLuceneQuery)
+        return hits

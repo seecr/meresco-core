@@ -35,27 +35,25 @@ from xml.sax.saxutils import escape as escapeXml
 correctNameRe = compile(r'^\w+$')
 
 class Fields2XmlTx(Observable):
-    def __init__(self, transaction, partName, namespace=None):
+    def __init__(self, resourceManager, partName, namespace=None):
         Observable.__init__(self)
         if not correctNameRe.match(partName):
             raise Fields2XmlException('Invalid name: "%s"' % partName)
         self._identifier = None
         self._fields = []
         self._partName = partName
-        self._transaction = transaction
+        self._resourceManager = resourceManager
         self._namespace = namespace
-        
+
     def addField(self, name, value):
-        if name == '__id__':
-            self._identifier = value
-            return
         self._fields.append((name,value))
 
-    def finalize(self):
+    def commit(self):
         ns = self._namespace != None and ' xmlns="%s"' % self._namespace or ''
         xml = '<%s%s>%s</%s>' % (self._partName, ns, generateXml(self._fields), self._partName)
-        
-        self._transaction.do.store(self._identifier, self._partName, xml)
+
+        identifier = self._resourceManager.tx.locals['id']
+        self._resourceManager.do.store(identifier, self._partName, xml)
 
 def splitName(name):
     result = name.split('.')
@@ -67,7 +65,7 @@ def _generateXml(fields):
         for namePart in name.split('.'):
             if not correctNameRe.match(namePart):
                 raise Fields2XmlException('Invalid name: "%s"' % name)
-            
+
         parentPath, tagName = splitName(name)
         while parentPath != currentPath:
             if currentPath in parentPath:

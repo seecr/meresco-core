@@ -23,28 +23,36 @@ class NGramQuery(Observable):
         return query
 
 class _Suggestion(Observable):
-    def suggestionsFor(self, word, count, algorithm, reverse):
+    def __init__(self, items, threshold, maximumCount):
+        Observable.__init__(self)
+        self._items = items
+        self._maximumCount = maximumCount
+        self._threshold = threshold
+
+    def suggestionsFor(self, word):
         hits = self.any.executeQuery(word)
-        return (term for term, distance in sorted(
-            ((term, algorithm(term, word)) for term in hits),
-            key=lambda (term, distance): distance, reverse=reverse)[:count])
+        for i, hit in enumerate(hits):
+            if i > self._items:
+                break
+            yield hit
 
 class LevenshteinSuggester(_Suggestion):
-    def suggestionsFor(self, word, count):
-        return _Suggestion.suggestionsFor(self,
-            word,
-            count,
-            lambda term, word: distance(unicode(term), unicode(word)),
-            False)
+    def suggestionsFor(self, word):
+        word = unicode(word)
+        result = _Suggestion.suggestionsFor(self, word)
+        result = sorted(result, key=lambda term: distance(unicode(term), word))
+        result = result[:self._maximumCount]
+        result = [term for term in result if distance(unicode(term), word) <= self._threshold]
+        return result
 
 class RatioSuggester(_Suggestion):
-    def suggestionsFor(self, word, count):
-        return _Suggestion.suggestionsFor(self,
-            word,
-            count,
-            lambda term, word: ratio(unicode(term), unicode(word)),
-            True)
-
+    def suggestionsFor(self, word):
+        word = unicode(word)
+        result = _Suggestion.suggestionsFor(self, word)
+        result = sorted(result, key=lambda term: ratio(unicode(term), word), reverse=True)
+        result = result[:self._maximumCount]
+        result = [term for term in result if ratio(unicode(term), word) > self._threshold]
+        return result
 
 class NGramFieldlet(Transparant):
     def __init__(self, n, fieldName):
@@ -55,8 +63,10 @@ class NGramFieldlet(Transparant):
     def addField(self, name, value):
         for word in unicode(value).split():
             self.tx.locals['id'] = word
-            for ngram in self._ngram(word):
-                self.do.addField(self._fieldName, ngram)
+            ngrams = ' '.join(self._ngram(word))
+            self.do.addField(self._fieldName, ngrams)
+            #for ngram in self._ngram(word):
+                #self.do.addField(self._fieldName, ngram)
 
     def _ngram(self, word):
         for n in range(2, self._n+1):

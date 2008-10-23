@@ -35,27 +35,31 @@ from amara.binderytools import bind_string
 class Fields2XmlTest(CQ2TestCase):
     def testOne(self):
         transaction = CallTrace('Transaction')
+        tx = CallTrace('TX')
+        tx.locals = {'id': 'identifier'}
+        transaction.tx = tx
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
         f = Fields2XmlTx(transaction, 'extra')
 
-        f.addField('__id__', 'identifier')
         f.addField('key.sub', 'value')
-        f.finalize()
+        f.commit()
 
         self.assertEquals(['store'], [m.name for m in transactionDo.calledMethods])
         self.assertEquals(('identifier', 'extra', '<extra><key><sub>value</sub></key></extra>'), transactionDo.calledMethods[0].args)
 
     def testPartNameIsDefinedAtInitialization(self):
         transaction = CallTrace('Transaction')
+        tx = CallTrace('TX')
+        tx.locals = {'id': 'otherIdentifier'}
+        transaction.tx = tx        
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
         f = Fields2XmlTx(transaction, 'partName')
-        f.addField('__id__', 'otherIdentifier')
         f.addField('key.sub', 'value')
-        f.finalize()
+        f.commit()
         
         self.assertEquals('otherIdentifier', transactionDo.calledMethods[0].args[0])
         self.assertEquals('partName', transactionDo.calledMethods[0].args[1])
@@ -64,13 +68,15 @@ class Fields2XmlTest(CQ2TestCase):
 
     def testNamespace(self):
         transaction = CallTrace('Transaction')
+        tx = CallTrace('TX')
+        tx.locals = {'id': 'identifier'}
+        transaction.tx = tx        
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
         f = Fields2XmlTx(transaction, 'extra', namespace="http://meresco.com/namespace/fields/extra")
-        f.addField('__id__', 'identifier')
         f.addField('key.sub', 'value')
-        f.finalize()
+        f.commit()
         
         self.assertEquals(('identifier', 'extra', '<extra xmlns="http://meresco.com/namespace/fields/extra"><key><sub>value</sub></key></extra>'), transactionDo.calledMethods[0].args)
 

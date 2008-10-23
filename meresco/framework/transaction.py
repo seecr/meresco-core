@@ -72,11 +72,11 @@ class Transaction(object):
 
 class TransactionScope(Observable):
 
-    def unknown(self, name, *args, **kwargs):
+    def unknown(self, message, *args, **kwargs):
         __callstack_var_tx__ = Transaction()
         self.once.begin(__callstack_var_tx__)
         try:
-            for result in self.all.unknown(name, *args, **kwargs):
+            for result in self.all.unknown(message, *args, **kwargs):
                 yield result
             __callstack_var_tx__.commit()
         except TransactionException, te:

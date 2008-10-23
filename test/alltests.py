@@ -62,11 +62,11 @@ from rsstest import RssTest
 from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
 from statisticsxmltest import StatisticsXmlTest
+from tokenizefieldlettest import TokenizeFieldletTest
 from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
 from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
-from xslicetest import XSliceTest
 
 from framework.helixtest import HelixTest
 from framework.observabletest import ObservableTest

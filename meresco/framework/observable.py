@@ -61,7 +61,10 @@ class DeferredMessage:
                     exType, exValue, exTraceback = exc_info()
                     raise exType, exValue, exTraceback.tb_next # skip myself from traceback
             elif hasattr(observer, 'unknown'):
-                responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
+                try:
+                    responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
+                except TypeError, e:
+                    raise TypeError(str(e) + ' on ' + str(observer))
                 if responses:
                     try:
                         for response in responses:

@@ -25,18 +25,16 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.components.lucene import document
+from cq2utils import CQ2TestCase, CallTrace
 
-class XSlice:
-    """XSlice wraps around a list-like object (supporting __getitem__) to enable taking slices of this list that are generators (no copying until needed)."""
-        
-    def __init__(self, aList):
-        self._list = aList
-        
-    def __len__(self):
-        return len(self._list)
-    
-    def __getslice__(self, start, stop):
-        stop = min(len(self), stop)
-        for i in xrange(start, stop):
-            yield self._list[i]
+from meresco.framework import be, Observable
+
+
+from string import punctuation
+
+class TokenizeFieldlet(Observable):
+    def addField(self, name, value):
+        for word in value.split():
+            word = word.strip(punctuation)
+            if len(word) > 1:
+                self.do.addField(name, word.lower())

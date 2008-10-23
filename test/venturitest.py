@@ -73,13 +73,14 @@ class VenturiTest(CQ2TestCase):
 
     def testReadFromStorage(self):
         inputEvent = fromstring('<document/>')
-        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['isAvailable', 'getStream', 'unknown'])
         storage = CallTrace('Storage', ignoredAttributes=['add'])
-        storage.returnValues['getStream'] = StringIO('<some>message</some>')
+        storage.returnValues['isAvailable'] = (True, True)
+        storage.returnValues['getStream'] = StringIO('<some>this is partone</some>')
         v = createVenturiHelix([('partone', '/document/part[@name="partone"]/text()')], [], interceptor, storage)
-        list(v.all.add('identifier', 'document', inputEvent))
+        v.do.add('identifier', 'document', inputEvent)
         self.assertEquals(['begin', 'add'], [m.name for m in interceptor.calledMethods])
-        self.assertEquals('<some>message</some>', tostring(interceptor.calledMethods[1].args[2]))
+        self.assertEquals('<some>this is partone</some>', tostring(interceptor.calledMethods[1].args[2]))
         self.assertEquals(('identifier', 'partone'), storage.calledMethods[1].args)
 
     def testCouldHave(self):
@@ -92,8 +93,9 @@ class VenturiTest(CQ2TestCase):
 
     def testCouldHaveInStorage(self):
         inputEvent = fromstring('<document><other/></document>')
-        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['isAvailable', 'getStream', 'unknown'])
         storage = CallTrace('Storage', ignoredAttributes=['add'])
+        storage.returnValues['isAvailable'] = (True, True)
         storage.returnValues['getStream'] = StringIO('<one/>')
         v = createVenturiHelix([], [('one', '/document/one')], interceptor, storage)
         list(v.all.add('identifier', 'document', inputEvent))
@@ -103,7 +105,7 @@ class VenturiTest(CQ2TestCase):
 
     def testCouldHaveButDoesnot(self):
         inputEvent = fromstring('<document><other/></document>')
-        interceptor = CallTrace('Interceptor', ignoredAttributes=['getStream', 'unknown'])
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['isAvailable', 'getStream', 'unknown'])
         storage = CallTrace('Storage', ignoredAttributes=['add'])
         storage.exceptions['getStream'] = KeyError('Part not available')
         v = createVenturiHelix([('other', '/document/other')], [('one', '/document/one')], interceptor, storage)

@@ -53,11 +53,10 @@ class Venturi(Observable):
         if len(matches) == 1:
             return self._convert(matches[0])
         else:
-            try:
-                stream = self.any.getStream(identifier, partname)
-            except KeyError:
+            if self.any.isAvailable(identifier, partname) == (True, True):
+                return parse(self.any.getStream(identifier, partname))
+            else:
                 return None
-            return parse(stream)
 
     def _convert(self, anObject):
         if type(anObject) == _Element:
