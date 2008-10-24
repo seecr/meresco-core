@@ -110,7 +110,7 @@ def createDatabase(port):
     recordPacking = 'xml'
     start = time()
     print "Creating database in", integrationTempdir
-    sourceFiles = glob('sahara_output/*.updateRequest')
+    sourceFiles = glob('harvester_output/*.updateRequest')
     for updateRequestFile in sorted(sourceFiles):
         print 'Sending:', updateRequestFile
         header, body = postRequest(reactor, port, '/update', open(updateRequestFile).read())

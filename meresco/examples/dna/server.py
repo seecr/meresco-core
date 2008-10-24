@@ -30,7 +30,7 @@ from sys import stdout
 from os.path import join, isdir
 from os import makedirs
 
-from meresco.framework import be, Observable, TransactionScope, TransactionFactory, Transparant
+from meresco.framework import be, Observable, TransactionScope, ResourceManager, Transparant
 
 from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, TransformField, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem
 from meresco.components.drilldown import Drilldown, SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
@@ -51,7 +51,7 @@ unqualifiedTermFields = [('dc', 1.0)]
 
 def createUploadHelix(index, storageComponent):
     fields2LuceneDocument = \
-        (TransactionFactory(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=drilldownFieldnames)),
+        (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=drilldownFieldnames)),
             index
         )
 
