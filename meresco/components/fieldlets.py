@@ -42,7 +42,7 @@ class RenameField(_Fieldlet):
     def addField(self, name, value):
         self.do.addField(self._method(name), value)
 
-class TransformField(_Fieldlet):
+class TransformFieldValue(_Fieldlet):
     def addField(self, name, value):
         newValue = self._method(value)
         if newValue != None:

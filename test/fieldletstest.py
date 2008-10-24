@@ -28,7 +28,7 @@
 from cq2utils import CQ2TestCase, CallTrace
 
 from meresco.framework import be, Observable
-from meresco.components import RenameField, TransformField, FilterField
+from meresco.components import RenameField, TransformFieldValue, FilterField
 
 
 class FieldletsTest(CQ2TestCase):
@@ -50,10 +50,10 @@ class FieldletsTest(CQ2TestCase):
 
         self.assertEquals("addField('fieldname.fieldname', 'x')", str(self.observert.calledMethods[0]))
 
-    def testTransformFieldWithTransform(self):
+    def testTransformFieldValueWithTransform(self):
         dna = be(
             (Observable(),
-                (TransformField(lambda value: 'transform ' + value),
+                (TransformFieldValue(lambda value: 'transform ' + value),
                     (self.observert, )
                 )
             )
@@ -65,10 +65,10 @@ class FieldletsTest(CQ2TestCase):
         self.assertEquals("addField('f', 'transform x')", str(self.observert.calledMethods[0]))
 
 
-    def testDoNotTransformFieldForTransformWithNoneResult(self):
+    def testDoNotTransformFieldValueForTransformWithNoneResult(self):
         dna = be(
             (Observable(),
-                (TransformField(lambda value: None),
+                (TransformFieldValue(lambda value: None),
                     (self.observert, )
                 )
             )
@@ -87,17 +87,17 @@ class FieldletsTest(CQ2TestCase):
                     )
                 ),
                 (FilterField(lambda name:name in ['name2']),
-                    (TransformField(lambda value: value.upper()),
+                    (TransformFieldValue(lambda value: value.upper()),
                         (RenameField(lambda name:'normalize.'+name),
                             (self.observert,)
                         )
                     ),
-                    (TransformField(lambda value: None),
+                    (TransformFieldValue(lambda value: None),
                         (RenameField(lambda name:'normalize2.'+name),
                             (self.observert,)
                         )
                     ),
-                    (TransformField(lambda value: value),
+                    (TransformFieldValue(lambda value: value),
                         (RenameField(lambda name:'normalize3.'+name),
                             (self.observert,)
                         )
