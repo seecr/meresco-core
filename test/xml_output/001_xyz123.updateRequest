@@ -1,0 +1,11 @@
+<updateRequest>
+    <srw:version xmlns:srw="http://www.loc.gov/zing/srw/">1.0</srw:version>
+    <ucp:action xmlns:ucp="http://www.loc.gov/ucp">info:srw/action/1/replace</ucp:action>
+    <ucp:recordIdentifier xmlns:ucp="http://www.loc.gov/ucp">meresco:record:1</ucp:recordIdentifier>
+    <srw:record xmlns:srw="http://www.loc.gov/zing/srw/">
+        <srw:recordPacking>xml</srw:recordPacking>
+        <srw:recordSchema>xml_based</srw:recordSchema>
+        <srw:recordData><x xmlns="http://example.org/namespace"><y><z>123</z></y></x>
+        </srw:recordData>
+    </srw:record>
+</updateRequest>
