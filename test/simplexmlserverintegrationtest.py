@@ -53,7 +53,7 @@ from cq2utils import CQ2TestCase, getRequest, postRequest, wheelOfTime
 
 from meresco.framework import be
 
-from meresco.examples.dna.simplexmlserver import dna, config
+from meresco.examples.dna.simplexmlserver import dna
 
 integrationTempdir = '/tmp/meresco-simple-xml-server-integration-test'
 reactor = Reactor()
@@ -106,7 +106,7 @@ if __name__ == '__main__':
         system('mkdir --parents '+ integrationTempdir)
 
     port = randint(50000,60000)
-    server = be(dna(reactor, config['host'], portNumber=port, databasePath=integrationTempdir))
+    server = be(dna(reactor, 'localhost', portNumber=port, databasePath=integrationTempdir))
     server.once.observer_init()
 
     if '--fast' in argv and isdir(integrationTempdir):

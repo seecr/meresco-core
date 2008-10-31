@@ -120,21 +120,20 @@ def dna(reactor,  host, portNumber, databasePath):
             )
         )
 
-config = {
-    'host': 'localhost',
-    'port': 8000
-}
 
 if __name__ == '__main__':
     databasePath = '/tmp/meresco'
+    host = 'localhost'
+    port = 8000
+
     if not isdir(databasePath):
         makedirs(databasePath)
 
     reactor = Reactor()
-    server = be(dna(reactor, config['host'], config['port'], databasePath))
+    server = be(dna(reactor, host, port, databasePath))
     server.once.observer_init()
 
-    print "Server listening on", config['host'], "at port", config['port']
+    print "Server listening on", host, "at port", port
     print "   - database:", databasePath, "\n"
     stdout.flush()
     reactor.loop()
