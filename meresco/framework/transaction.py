@@ -49,6 +49,9 @@ class ResourceManager(Observable):
         except AttributeError:
             pass
 
+    def end(self, tx):
+        self.txs.pop(self.tx.getId())
+
 class Transaction(object):
 
     def __init__(self):
@@ -81,5 +84,5 @@ class TransactionScope(Observable):
             __callstack_var_tx__.commit()
         except TransactionException, te:
             __callstack_var_tx__.rollback()
-
+        self.once.end(__callstack_var_tx__)
 

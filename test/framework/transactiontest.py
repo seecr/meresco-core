@@ -82,6 +82,19 @@ class TransactionTest(TestCase):
         tx.commit()
         self.assertEquals(1, len(commitCalled))
 
+    def testFreeTransaction(self):
+        resourceManager = ResourceManager(lambda tx: CallTrace())
+        dna = \
+            (Observable(),
+                (TransactionScope(),
+                    (resourceManager,)
+                )
+            )
+        body = be(dna)
+        self.assertEquals(0, len(resourceManager.txs))
+        body.do.something()
+        self.assertEquals(0, len(resourceManager.txs))
+
     def testTransactionExceptionRollsbackTransaction(self):
         resourceTxs = []
         def factoryMethod(tx):

@@ -81,9 +81,10 @@ class NGramTest(CQ2TestCase):
         observert = CallTrace('Observert')
         ngramFieldlet = createNGramHelix(observert)
         ngramFieldlet.do.addField('field0', 'term0')
-        self.assertEquals(2, len(observert.calledMethods))
+        self.assertEquals(3, len(observert.calledMethods))
         self.assertEquals("begin(<meresco.framework.transaction.Transaction>)", str(observert.calledMethods[0]))
-        self.assertEquals("addField('ngrams', 'te er rm m0')", str(observert.calledMethods[1]))
+        self.assertEquals('addField', observert.calledMethods[1].name)
+        self.assertEquals(('ngrams', 'te er rm m0'), observert.calledMethods[1].args)
 
     def testWordisIDinTransactionScope(self):
         txlocals = {}
