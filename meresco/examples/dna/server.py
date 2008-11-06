@@ -32,7 +32,7 @@ from os import makedirs
 
 from meresco.framework import be, Observable, TransactionScope, ResourceManager, Transparant
 
-from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, TransformField, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem
+from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem
 from meresco.components.drilldown import Drilldown, SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
 from meresco.components.http import PathFilter, ObservableHttpServer
 from meresco.components.http.webrequestserver import WebRequestServer
