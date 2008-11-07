@@ -10,7 +10,11 @@
 :Last changed by: $LastChangedBy$
 :Contact: info@cq2.org
 :Copyright: © Seek You Too
-:License: http://creativecommons.org/licenses/by-nc-nd/3.0/
+:License: |by-nc-nd|_ Attribution-Noncommercial-No Derivative Works 3.0 License
+
+.. |by-nc-nd| image:: http://i.creativecommons.org/l/by-nc-nd/3.0/88x31.png
+    :alt:
+.. _by-nc-nd: http://creativecommons.org/licenses/by-nc-nd/3.0/
 
 .. contents::
 .. section-numbering::
@@ -19,7 +23,7 @@ Introduction
 ============
 Meresco features a generic Component Library to pull components together in order to create a functional system. The type of systems it creates varies from simple metadata storage, to full blown service providers.
 
-The Component Library is one of its kind. It is one of the simplest Plug & Play solutions around, yet it makes many hard issues such as dependencies, configuration and dataflow easy to deal with.  Also, it yields a very efficient high-performance application. 
+The Component Library is one of its kind. It is one of the simplest Plug & Play solutions around, yet it makes many hard issues such as dependencies, configuration and dataflow easy to deal with.  Also, it yields a very efficient high-performance application.
 
 Problems
 --------
