@@ -109,7 +109,7 @@ class OaiJazzLucene(Observable):
     def add(self, id, name, record, *nodes):
         self.any.deletePart(id, 'tombstone')
         sets, prefixes, na, na = self.getPreviousRecord(id)
-        prefixes.add(name)
+        prefixes.add(name) # partName automagically becomes a metadataPrefix
         self.updateAllPrefixes(name, record)
         if record.localName == "header" and record.namespaceURI == "http://www.openarchives.org/OAI/2.0/" and getattr(record, 'setSpec', None):
             sets.update(str(s) for s in record.setSpec)
