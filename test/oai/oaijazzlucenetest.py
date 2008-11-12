@@ -315,3 +315,14 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
         self.assertEquals("2007-09-23T00:00:00Z", self.jazz._fixUntilDate("2007-09-22"))
         self.assertEquals("2008-01-01T00:00:00Z", self.jazz._fixUntilDate("2007-12-31"))
         self.assertEquals("2004-02-29T00:00:00Z", self.jazz._fixUntilDate("2004-02-28"))
+
+    #
+    # JJ/TJ: start developing a new interface for oai
+    #
+    def testAddOaiRecord(self):
+        self.jazz.addOaiRecord('identifier', sets=[('setSpec', 'setName')], metadataFormats=[('prefix','schema', 'namespace')])
+        result = self.jazz.listAll()
+        self.assertEquals(['identifier'], list(result))
+        self.assertEquals(['identifier'], list(self.jazz.oaiSelect(prefix='prefix')))
+        self.assertEquals(['identifier'], list(self.jazz.oaiSelect(oaiSet='setSpec',prefix='prefix')))
+        self.assertEquals([], list(self.jazz.oaiSelect(oaiSet='unknown',prefix='prefix')))
