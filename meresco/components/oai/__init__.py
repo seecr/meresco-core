@@ -36,4 +36,5 @@ from oaigetrecord import OaiGetRecord
 from oaijazzlucene import OaiJazzLucene
 from oaiprovenance import OaiProvenance
 from uniquenumbergenerator import UniqueNumberGenerator
+from fields2oairecord import Fields2OaiRecordTx
 

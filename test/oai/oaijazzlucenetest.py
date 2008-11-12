@@ -331,3 +331,10 @@ class OaiJazzLuceneIntegrationTest(CQ2TestCase):
         self.jazz.addOaiRecord('id1', sets=[], metadataFormats=[('prefix','schema', 'namespace')])
         self.jazz.addOaiRecord('id2', sets=[], metadataFormats=[('prefix','schema', 'namespace')])
         self.assertEquals(['id1', 'id2'], list(self.jazz.oaiSelect(prefix='prefix')))
+
+    def testAddOaiRecordWithNoMetadataFormats(self):
+        try:
+            self.jazz.addOaiRecord('identifier', sets=[('setSpec', 'setName')], metadataFormats=[])
+            self.fail()
+        except Exception, e:
+            self.assertTrue('metadataFormat' in str(e))

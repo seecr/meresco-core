@@ -112,6 +112,7 @@ class OaiJazzLucene(Observable):
         self.any.deletePart(identifier, 'tombstone')
         setSpecs, prefixes, na, na = self.getPreviousRecord(identifier)
         prefixes.update(prefix for prefix, schema, namespace in metadataFormats)
+        assert prefixes, 'No metadataFormat specified for record with identifier "%s"' % identifier
         setSpecs.update(setSpec for setSpec, setName in sets)
         setSpecs = self._flattenSetHierarchy(setSpecs)
         self._updateAllPrefixes2(metadataFormats)

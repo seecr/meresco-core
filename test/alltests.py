@@ -91,6 +91,7 @@ from sru.srutest import SruTest
 from sru.srwtest import SrwTest
 
 #from oai.oaicomponenttest import OaiComponentTest
+from oai.fields2oairecordtest import Fields2OaiRecordTest
 from oai.oaijazzlucenetest import OaiJazzLuceneTest, OaiJazzLuceneIntegrationTest
 from oai.oaigetrecordtest import OaiGetRecordTest
 from oai.oaiidentifytest import OaiIdentifyTest
