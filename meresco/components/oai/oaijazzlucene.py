@@ -33,6 +33,7 @@ from re import compile
 from cq2utils.xmlutils import findNamespaces
 
 from amara.binderytools import bind_string, bind_stream
+from lxml.etree import parse
 
 from PyLucene import BooleanQuery, BooleanClause, ConstantScoreRangeQuery, Term, TermQuery, MatchAllDocsQuery
 
@@ -41,7 +42,7 @@ from meresco.components import XmlParseAmara
 from meresco.components.oai.xml2document import Xml2Document
 
 def createOaiMeta(sets, prefixes, stamp, unique):
-    yield '<oaimeta xmlns:t="http://www.cq2.nl/teddy">'
+    yield '<oaimeta xmlns="http://meresco.com/namespace/meresco/oai/meta" xmlns:t="http://www.cq2.nl/teddy">'
     yield   '<sets>'
     for set in sets:
         yield '<setSpec t:tokenize="false">%s</setSpec>' % set
@@ -118,23 +119,23 @@ class OaiJazzLucene(Observable):
         self.updateOaiMeta(identifier, setSpecs, prefixes)
         
 
-    def add(self, id, name, record, *nodes):
-        self.any.deletePart(id, 'tombstone')
-        sets, prefixes, na, na = self.getPreviousRecord(id)
-        prefixes.add(name) # partName automagically becomes a metadataPrefix
-        self.updateAllPrefixes(name, record)
+    def add(self, id, name, record):
+        # This is the old way of adding data to OAI. Some self-learning stuff
+        # is still applied, this should be refactored to special components
+        # addOaiRecord will be the new way today.
+        sets=set()
         if record.localName == "header" and record.namespaceURI == "http://www.openarchives.org/OAI/2.0/" and getattr(record, 'setSpec', None):
-            sets.update(str(s) for s in record.setSpec)
-            sets = self._flattenSetHierarchy(sets)
-            self._updateAllSets(sets)
+            sets.update((str(s), str(s)) for s in record.setSpec)
 
-        for node in nodes:
-            if node.localName == "header" and node.namespaceURI == "http://www.openarchives.org/OAI/2.0/" and getattr(node, 'setSpec', None):
-                sets.update(str(s) for s in node.setSpec)
-                sets = self._flattenSetHierarchy(sets)
-                self._updateAllSets(sets)
+        if 'amara.bindery.root_base' in str(type(record)):
+            record = record.childNodes[0]
+        ns2xsd = self.findSchema(record)
+        nsmap = findNamespaces(record)
+        ns = nsmap[record.prefix]
+        schema, namespace = (ns2xsd.get(ns,''), ns)
+        metadataFormats=[(name, schema, namespace)]
 
-        self.updateOaiMeta(id, sets, prefixes)
+        self.addOaiRecord(identifier=id, sets=sets, metadataFormats=metadataFormats)
 
     def delete(self, id):
         self.any.store(id, 'tombstone', '<tombstone/>')
@@ -188,15 +189,15 @@ class OaiJazzLucene(Observable):
     def getAllSets(self):
         allSets = set()
         if (True, True) == self.any.isAvailable('__all_sets__', '__sets__'):
-            setsXml = bind_stream(self.any.getStream('__all_sets__', '__sets__'))
-            allSets.update(str(setSpec) for setSpec in setsXml.__sets__.setSpec)
+            setsXml = parse(self.any.getStream('__all_sets__', '__sets__'))
+            allSets.update(setsXml.xpath('/sets:__sets__/sets:setSpec/text()', {'sets':'http://meresco.com/namespace/meresco/oai/sets'}))
         return allSets
 
     def _updateAllSets(self, sets):
         allSets = self.getAllSets()
         allSets.update(sets)
         spec= '<setSpec>%s</setSpec>'
-        setsXml = '<__sets__>' + ''.join(spec % set for set in allSets) + '</__sets__>'
+        setsXml = '<__sets__ xmlns="http://meresco.com/namespace/meresco/oai/sets">' + ''.join(spec % set for set in allSets) + '</__sets__>'
         self.any.store('__all_sets__', '__sets__', setsXml)
 
     def _getAllPrefixes(self):
