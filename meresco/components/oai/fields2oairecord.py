@@ -12,8 +12,9 @@ class Fields2OaiRecordTx(object):
             self._metadataFormats.add(value)
 
     def commit(self):
-        identifier = self.resourceManager.tx.locals['id']
-        self.resourceManager.do.addOaiRecord(identifier=identifier, sets=self._sets, metadataFormats = self._metadataFormats)
+        if self._metadataFormats:
+            identifier = self.resourceManager.tx.locals['id']
+            self.resourceManager.do.addOaiRecord(identifier=identifier, sets=self._sets, metadataFormats = self._metadataFormats)
 
     def rollback(self):
         pass

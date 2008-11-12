@@ -23,3 +23,18 @@ class Fields2OaiRecordTest(CQ2TestCase):
                 'metadataFormats': set([('prefix', 'schema', 'namespace')]),
                 'sets': set([('setSpec', 'setName')])},
             rm.calledMethods[0].kwargs)
+
+    def testNothing(self):
+        transaction = CallTrace('Transaction')
+        rm = CallTrace('ResourceManager')
+        rm.tx = transaction
+        rm.do = rm
+        transaction.locals = {'id':'identifier'}
+        
+        tx = Fields2OaiRecordTx(rm)
+        
+        tx.addField('set', ('setSpec', 'setName'))
+        tx.commit()
+
+        self.assertEquals(0, len(rm.calledMethods))
+        

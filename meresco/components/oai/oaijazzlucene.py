@@ -86,39 +86,20 @@ class OaiJazzLucene(Observable):
             anIndex.close()
         self.close = close
 
-    def _gettime(self):
-        return gmtime()
-
-    def updateOaiMeta(self, id, sets, prefixes):
-        unique = self._numberGenerator.next()
-        stamp =  strftime('%Y-%m-%dT%H:%M:%SZ', self._gettime())
-        newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
-        metaRecord = ''.join(newOaiMeta)
-        self.do.add(id, 'oaimeta', str(metaRecord))
-
-    def getPreviousRecord(self, id):
-        sets = set()
-        prefixes = set()
-        stamp = unique = None
-        if (True, True) == self.any.isAvailable(id, 'oaimeta'):
-            data = ''.join(self.any.getStream(id, 'oaimeta'))
-            sets, prefixes, stamp, unique = parseOaiMeta(data)
-        return sets, prefixes, stamp, unique
-
-    def storeOaiInformation(self, *args, **kwargs):
-        self.add(*args, **kwargs)
+    #def storeOaiInformation(self, *args, **kwargs):
+        #self.add(*args, **kwargs)
 
     def addOaiRecord(self, identifier, sets=[], metadataFormats=[]):
         self.any.deletePart(identifier, 'tombstone')
-        setSpecs, prefixes, na, na = self.getPreviousRecord(identifier)
+        setSpecs, prefixes, na, na = self._getPreviousRecord(identifier)
         prefixes.update(prefix for prefix, schema, namespace in metadataFormats)
         assert prefixes, 'No metadataFormat specified for record with identifier "%s"' % identifier
         setSpecs.update(setSpec for setSpec, setName in sets)
         setSpecs = self._flattenSetHierarchy(setSpecs)
-        self._updateAllPrefixes2(metadataFormats)
+        self.__updateAllPrefixes2(metadataFormats)
         self._updateAllSets(setSpecs)
-        self.updateOaiMeta(identifier, setSpecs, prefixes)
-        
+        self._updateOaiMeta(identifier, setSpecs, prefixes)
+
 
     def add(self, id, name, record):
         # This is the old way of adding data to OAI. Some self-learning stuff
@@ -130,7 +111,7 @@ class OaiJazzLucene(Observable):
 
         if 'amara.bindery.root_base' in str(type(record)):
             record = record.childNodes[0]
-        ns2xsd = self.findSchema(record)
+        ns2xsd = self._findSchema(record)
         nsmap = findNamespaces(record)
         ns = nsmap[record.prefix]
         schema, namespace = (ns2xsd.get(ns,''), ns)
@@ -140,8 +121,8 @@ class OaiJazzLucene(Observable):
 
     def delete(self, id):
         self.any.store(id, 'tombstone', '<tombstone/>')
-        sets, prefixes, na, na = self.getPreviousRecord(id)
-        self.updateOaiMeta(id, sets, prefixes)
+        sets, prefixes, na, na = self._getPreviousRecord(id)
+        self._updateOaiMeta(id, sets, prefixes)
 
     def oaiSelect(self, oaiSet=None, prefix='oai_dc', continueAt='0', oaiFrom=None, oaiUntil=None):
         def addRange(root, field, lo, hi, inclusive):
@@ -166,8 +147,75 @@ class OaiJazzLucene(Observable):
 
         return self.any.executeQuery(query, 'oaimeta.unique')
 
+    def getAllPrefixes(self):
+        return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
+
+    def getUnique(self, id):
+        sets, prefixes, stamp, unique = self._getPreviousRecord(id)
+        return unique
+
+    def getDatestamp(self, id):
+        sets, prefixes, stamp, unique = self._getPreviousRecord(id)
+        return stamp
+
+    def getSets(self, id):
+        sets, prefixes, stamp, unique = self._getPreviousRecord(id)
+        return list(sets)
+
+    def getParts(self, id):
+        sets, prefixes, stamp, unique = self._getPreviousRecord(id)
+        return list(prefixes)
+
+    def isDeleted(self, id):
+        ignored, hasTombStone = self.any.isAvailable(id, 'tombstone')
+        return hasTombStone
+
+    def isAvailable(self, id):
+        hasRecord, hasMeta = self.any.isAvailable(id, 'oaimeta')
+        return hasRecord and hasMeta
+
+    def listSets(self):
+        return list(self._getAllSets())
+
+###############################################################################
+    # test only?
     def listAll(self):
         return self.any.executeQuery(MatchAllDocsQuery())
+
+###############################################################################
+
+    def _findSchema(self, record):
+        if 'amara.bindery.root_base' in str(type(record)):
+            record = record.childNodes[0]
+        ns2xsd = {}
+        if hasattr(record, 'schemaLocation'):
+            nsXsdList = record.schemaLocation.split()
+            for n in range(0, len(nsXsdList), 2):
+                ns2xsd[nsXsdList[n]] = nsXsdList[n+1]
+        return ns2xsd
+
+    def __updateAllPrefixes2(self, metadataFormats):
+        allPrefixes = self._getAllPrefixes()
+        for prefix, schema, namespace in metadataFormats:
+            if prefix not in allPrefixes:
+               allPrefixes[prefix] = (schema, namespace)
+        prefixesXml = '<ListMetadataFormats>%s</ListMetadataFormats>' % \
+            ''.join(prefixTemplate % (prefix, xsd, ns) \
+                for prefix, (xsd, ns) in allPrefixes.items())
+        self.any.store('__all_prefixes__', '__prefixes__', prefixesXml)
+
+    def _updateAllPrefixes(self, prefix, record):
+        if 'amara.bindery.root_base' in str(type(record)):
+            record = record.childNodes[0]
+        allPrefixes = self._getAllPrefixes()
+        ns2xsd = self._findSchema(record)
+        nsmap = findNamespaces(record)
+        ns = nsmap[record.prefix]
+        newPrefixInfo = (ns2xsd.get(ns,''), ns)
+        if prefix not in allPrefixes:
+            allPrefixes[prefix] = newPrefixInfo
+        prefixesXml = '<ListMetadataFormats>' + ''.join(prefixTemplate % (prefix, xsd, ns) for prefix, (xsd, ns) in allPrefixes.items()) + '</ListMetadataFormats>'
+        self.any.store('__all_prefixes__', '__prefixes__', prefixesXml)
 
     def _fixUntilDate(self, aString):
         dateRE = compile('^\d{4}-\d{2}-\d{2}$')
@@ -187,7 +235,7 @@ class OaiJazzLucene(Observable):
                 result.add(':'.join(parts[:i]))
         return result
 
-    def getAllSets(self):
+    def _getAllSets(self):
         allSets = set()
         if (True, True) == self.any.isAvailable('__all_sets__', '__sets__'):
             setsXml = parse(self.any.getStream('__all_sets__', '__sets__'))
@@ -195,7 +243,7 @@ class OaiJazzLucene(Observable):
         return allSets
 
     def _updateAllSets(self, sets):
-        allSets = self.getAllSets()
+        allSets = self._getAllSets()
         allSets.update(sets)
         spec= '<setSpec>%s</setSpec>'
         setsXml = '<__sets__ xmlns="http://meresco.com/namespace/meresco/oai/sets">' + ''.join(spec % set for set in allSets) + '</__sets__>'
@@ -209,67 +257,21 @@ class OaiJazzLucene(Observable):
                 allPrefixes[str(info.metadataPrefix)] = (str(info.schema), str(info.metadataNamespace))
         return allPrefixes
 
-    def getAllPrefixes(self):
-        return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
+    def _gettime(self):
+        return gmtime()
 
-    def findSchema(self, record):
-        if 'amara.bindery.root_base' in str(type(record)):
-            record = record.childNodes[0]
-        ns2xsd = {}
-        if hasattr(record, 'schemaLocation'):
-            nsXsdList = record.schemaLocation.split()
-            for n in range(0, len(nsXsdList), 2):
-                ns2xsd[nsXsdList[n]] = nsXsdList[n+1]
-        return ns2xsd
+    def _updateOaiMeta(self, id, sets, prefixes):
+        unique = self._numberGenerator.next()
+        stamp =  strftime('%Y-%m-%dT%H:%M:%SZ', self._gettime())
+        newOaiMeta = createOaiMeta(sets, prefixes, stamp, unique)
+        metaRecord = ''.join(newOaiMeta)
+        self.do.add(id, 'oaimeta', str(metaRecord))
 
-    def _updateAllPrefixes2(self, metadataFormats):
-        allPrefixes = self._getAllPrefixes()
-        for prefix, schema, namespace in metadataFormats:
-            if prefix not in allPrefixes:
-               allPrefixes[prefix] = (schema, namespace)
-        prefixesXml = '<ListMetadataFormats>%s</ListMetadataFormats>' % \
-            ''.join(prefixTemplate % (prefix, xsd, ns) \
-                for prefix, (xsd, ns) in allPrefixes.items())
-        self.any.store('__all_prefixes__', '__prefixes__', prefixesXml)
-        
-    def updateAllPrefixes(self, prefix, record):
-        if 'amara.bindery.root_base' in str(type(record)):
-            record = record.childNodes[0]
-        allPrefixes = self._getAllPrefixes()
-        ns2xsd = self.findSchema(record)
-        nsmap = findNamespaces(record)
-        ns = nsmap[record.prefix]
-        newPrefixInfo = (ns2xsd.get(ns,''), ns)
-        if prefix not in allPrefixes:
-            allPrefixes[prefix] = newPrefixInfo
-        prefixesXml = '<ListMetadataFormats>' + ''.join(prefixTemplate % (prefix, xsd, ns) for prefix, (xsd, ns) in allPrefixes.items()) + '</ListMetadataFormats>'
-        self.any.store('__all_prefixes__', '__prefixes__', prefixesXml)
-
-    def getUnique(self, id):
-        sets, prefixes, stamp, unique = self.getPreviousRecord(id)
-        return unique
-
-    def getDatestamp(self, id):
-        sets, prefixes, stamp, unique = self.getPreviousRecord(id)
-        return stamp
-
-    def getSets(self, id):
-        sets, prefixes, stamp, unique = self.getPreviousRecord(id)
-        return list(sets)
-
-    def getParts(self, id):
-        sets, prefixes, stamp, unique = self.getPreviousRecord(id)
-        return list(prefixes)
-
-    def isDeleted(self, id):
-        ignored, hasTombStone = self.any.isAvailable(id, 'tombstone')
-        return hasTombStone
-
-    def isAvailable(self, id):
-        hasRecord, hasMeta = self.any.isAvailable(id, 'oaimeta')
-        return hasRecord and hasMeta
-
-    def listSets(self):
-        return list(self.getAllSets())
-
-
+    def _getPreviousRecord(self, id):
+        sets = set()
+        prefixes = set()
+        stamp = unique = None
+        if (True, True) == self.any.isAvailable(id, 'oaimeta'):
+            data = ''.join(self.any.getStream(id, 'oaimeta'))
+            sets, prefixes, stamp, unique = parseOaiMeta(data)
+        return sets, prefixes, stamp, unique
