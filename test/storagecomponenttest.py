@@ -76,12 +76,25 @@ class StorageComponentTest(CQ2TestCase):
         self.storageComponent.write(stream, "some:thing:anId-123", "somePartName")
         self.assertEquals('read string', stream.getvalue())
 
-    def testDelete(self):
+    def testDeleteParts(self):
         identifier = ('some:thing:anId-123','somePartName')
         self.storage.put(identifier).close()
         self.assertTrue(identifier in self.storage)
         self.storageComponent.deletePart('some:thing:anId-123', 'somePartName')
         self.assertFalse(identifier in self.storage)
+
+    def testDelete(self):
+        identifier = ('some:thing:anId-123','somePartName')
+        self.storage.put(identifier).close()
+        self.assertTrue(identifier in self.storage)
+        self.storageComponent.delete('some:thing:anId-123')
+        self.assertTrue(identifier in self.storage)
+
+        self.storageComponent = StorageComponent(self.tempdir, revisionControl=True, partsRemovedOnDelete=['somePartName'])
+        self.storage = self.storageComponent._storage
+        self.storageComponent.delete('some:thing:anId-123')
+        self.assertFalse(identifier in self.storage)
+           
 
     def testDeleteNonexisting(self):
         identifier = ('some:thing:anId-123','somePartName.xml')

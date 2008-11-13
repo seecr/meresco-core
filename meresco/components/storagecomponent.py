@@ -40,9 +40,10 @@ def defaultJoin(parts):
     return id, partName
 
 class StorageComponent(object):
-    def __init__(self, directory, split=defaultSplit, join=defaultJoin, revisionControl=False):
+    def __init__(self, directory, split=defaultSplit, join=defaultJoin, revisionControl=False, partsRemovedOnDelete=[]):
         assert type(directory) == str, 'Please use directory as first parameter'
         self._storage = HierarchicalStorage(Storage(directory, revisionControl=revisionControl, ), split, join)
+        self._partsRemovedOnDelete = partsRemovedOnDelete
 
     def store(self, *args, **kwargs):
         return self.add(*args, **kwargs)
@@ -53,6 +54,10 @@ class StorageComponent(object):
             sink.send(someString)
         finally:
             return sink.close()
+
+    def delete(self, id):
+        for partName in self._partsRemovedOnDelete:
+            self.deletePart(id, partName)
 
     def deletePart(self, id, partName):
         if (id, partName) in self._storage:
