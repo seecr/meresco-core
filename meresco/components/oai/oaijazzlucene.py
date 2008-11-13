@@ -86,9 +86,6 @@ class OaiJazzLucene(Observable):
             anIndex.close()
         self.close = close
 
-    #def storeOaiInformation(self, *args, **kwargs):
-        #self.add(*args, **kwargs)
-
     def addOaiRecord(self, identifier, sets=[], metadataFormats=[]):
         self.any.deletePart(identifier, 'tombstone')
         setSpecs, prefixes, na, na = self._getPreviousRecord(identifier)

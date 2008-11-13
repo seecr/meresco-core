@@ -105,7 +105,7 @@ class OaiGetRecordTest(OaiTestCase):
 
         self.subject.addObserver(MockOaiJazz(
             isAvailableDefault=(True, False),
-            isAvailableAnswer=[(None, "oai_dc", (True, True))],
+            isAvailableAnswer=[(None, "oai_dc", (True, False))],
             deleted=['oai:ident']))
         self.observable.any.getRecord(self.request)
         self.assertTrue("deleted" in self.stream.getvalue(), self.stream.getvalue())

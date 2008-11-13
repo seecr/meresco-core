@@ -41,7 +41,7 @@ class OaiRecordVerb(OaiVerb):
         if writeBody:
             webRequest.write('<record>')
 
-        webRequest.write("""<header %s>
+        webRequest.write("""<header%s>
             <identifier>%s</identifier>
             <datestamp>%s</datestamp>
             %s
