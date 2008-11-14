@@ -101,7 +101,7 @@ class OaiListMetadataFormatsTest(OaiTestCase):
 
     def testListMetadataFormatsNonExistingId(self):
         class Observer:
-            def isAvailable(*args):
+            def oaiRecordExists(*args):
                 return False
             def getAllPrefixes(*args):
                 return []

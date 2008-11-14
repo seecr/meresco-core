@@ -167,7 +167,7 @@ class OaiJazzLucene(Observable):
         ignored, hasTombStone = self.any.isAvailable(id, 'tombstone')
         return hasTombStone
 
-    def isAvailable(self, id):
+    def oaiRecordExists(self, id):
         hasRecord, hasMeta = self.any.isAvailable(id, 'oaimeta')
         return hasRecord and hasMeta
 
