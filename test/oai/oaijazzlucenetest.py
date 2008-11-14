@@ -27,8 +27,7 @@
 ## end license ##
 from unittest import TestCase
 from time import strftime, gmtime, sleep
-from cq2utils.cq2testcase import CQ2TestCase
-from cq2utils.calltrace import CallTrace
+from cq2utils import CQ2TestCase, CallTrace
 
 from os.path import join
 from PyLucene import BooleanQuery

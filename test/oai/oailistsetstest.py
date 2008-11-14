@@ -30,7 +30,8 @@ from os.path import join
 from cq2utils.calltrace import CallTrace
 
 from oaitestcase import OaiTestCase
-from meresco.components.oai import OaiListSets, OaiJazzLucene
+from meresco.components.oai import OaiJazzLucene
+from meresco.components.oai.oailistsets import OaiListSets
 from meresco.components.lucene import LuceneIndex
 from meresco.components import StorageComponent
 
@@ -38,8 +39,7 @@ class OaiListSetsTest(OaiTestCase):
     def getSubject(self):
         return OaiListSets()
 
-    def testNonsenseArguments(self):
-        self.assertBadArgument('listSets', {'verb': ['ListSets'], 'nonsense': ['aDate'], 'nonsense': ['more nonsense'], 'bla': ['b']}, 'Argument(s) "bla", "nonsense" is/are illegal.')
+
 
     def testListSetsNoArguments(self):
         mockJazz = CallTrace(returnValues = {'listSets': ['some:name:id_0', 'some:name:id_1']})
@@ -54,5 +54,3 @@ class OaiListSetsTest(OaiTestCase):
  </ListSets>""", self.stream.getvalue())
         self.assertFalse('<resumptionToken' in self.stream.getvalue())
 
-    def testResumptionTokensNotSupported(self):
-        self.assertBadArgument('listSets', {'verb': ['ListSets'], 'resumptionToken': ['someResumptionToken']}, errorCode = "badResumptionToken")

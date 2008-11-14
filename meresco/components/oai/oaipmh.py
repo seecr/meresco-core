@@ -26,11 +26,39 @@
 #
 ## end license ##
 
-from meresco.framework import Observable
+from meresco.framework import be, Transparant, Observable
+from oaiidentify import OaiIdentify
+from oailist import OaiList
+from oaigetrecord import OaiGetRecord
+from oailistmetadataformats import OaiListMetadataFormats
+from oailistsets import OaiListSets
+from oaisink import OaiSink
 
-class OaiMain(Observable):
+class OaiPmh(Transparant):
+    def __init__(self, repositoryName, adminEmail):
+        Transparant.__init__(self)
+        outside = self
+        self._internalObserverTree = be(
+            (Observable(),
+                (OaiIdentify(repositoryName=repositoryName, adminEmail=adminEmail), ),
+                (OaiList(),
+                    (outside,)
+                ),
+                (OaiGetRecord(),
+                    (outside,)
+                ),
+                (OaiListMetadataFormats(),
+                    (outside,)
+                ),
+                (OaiListSets(),
+                    (outside,)
+                ),
+                (OaiSink(), )
+            )
+        )
+
 
     def handleRequest(self, webrequest):
         verb = webrequest.args.get('verb',[None])[0]
         message = verb and verb[0].lower() + verb[1:] or ''
-        return self.any.unknown(message, webrequest)
+        return self._internalObserverTree.any.unknown(message, webrequest)

@@ -26,13 +26,7 @@
 #
 ## end license ##
 
-from oaimain import OaiMain
-from oaisink import OaiSink
-from oaiidentify import OaiIdentify
-from oailistmetadataformats import OaiListMetadataFormats
-from oailist import OaiList
-from oailistsets import OaiListSets
-from oaigetrecord import OaiGetRecord
+from oaipmh import OaiPmh
 from oaijazzlucene import OaiJazzLucene
 from oaiprovenance import OaiProvenance
 from uniquenumbergenerator import UniqueNumberGenerator

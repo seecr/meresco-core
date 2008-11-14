@@ -41,20 +41,6 @@ class OaiGetRecordTest(OaiTestCase):
         oaigetrecord.addObserver(ObserverFunction(lambda: [('oai_dc', '', '')], 'getAllPrefixes'))
         return oaigetrecord
 
-    def testGetRecordNoArguments(self):
-        self.assertBadArgument('getRecord', {'verb': ['GetRecord']}, 'Missing argument(s) "identifier" and "metadataPrefix".')
-
-    def testGetNoMetadataPrefix(self):
-        self.assertBadArgument('getRecord', {'verb': ['GetRecord'], 'identifier': ['oai:ident']}, 'Missing argument(s) "metadataPrefix".')
-
-    def testGetNoIdentifierArgument(self):
-        self.assertBadArgument('getRecord', {'verb': ['GetRecord'], 'metadataPrefix': ['oai_dc']}, 'Missing argument(s) "identifier".')
-
-    def testNonsenseArgument(self):
-        self.assertBadArgument('getRecord', {'verb': ['GetRecord'], 'metadataPrefix': ['aPrefix'], 'identifier': ['anIdentifier'], 'nonsense': ['bla']}, 'Argument(s) "nonsense" is/are illegal.')
-
-    def testDoubleArguments(self):
-        self.assertBadArgument('getRecord', {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident', '2']}, 'Argument "identifier" may not be repeated.')
 
     def testGetRecordNotAvailable(self):
         self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}

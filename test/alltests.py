@@ -95,12 +95,10 @@ from sru.srwtest import SrwTest
 from oai.fields2oairecordtest import Fields2OaiRecordTest
 from oai.oaijazzlucenetest import OaiJazzLuceneTest, OaiJazzLuceneIntegrationTest
 from oai.oaigetrecordtest import OaiGetRecordTest
-from oai.oaiidentifytest import OaiIdentifyTest
 from oai.oailistmetadataformatstest import OaiListMetadataFormatsTest
 from oai.oailistsetstest import OaiListSetsTest
 from oai.oailisttest import OaiListTest
-from oai.oaimaintest import OaiMainTest
-from oai.oaisinktest import OaiSinkTest
+from oai.oaipmhtest import OaiPmhTest
 from oai.oaitooltest import OaiToolTest
 from oai.oaiprovenancetest import OaiProvenanceTest
 from oai.resumptiontokentest import ResumptionTokenTest
