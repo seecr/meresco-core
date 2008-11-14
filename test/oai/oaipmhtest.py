@@ -44,8 +44,8 @@ class OaiPmhTest(OaiTestCase):
 
     def getSubject(self):
         oaipmh = OaiPmh(repositoryName='The Repository Name', adminEmail='admin@email.extension')
-        self.storageProvenanceAndOaiJazz = CallTrace('Observers')
-        oaipmh.addObserver(self.storageProvenanceAndOaiJazz)
+        self.observer = CallTrace('Observers')
+        oaipmh.addObserver(self.observer)
         return oaipmh
 
     def testIdentify(self):
@@ -64,6 +64,22 @@ class OaiPmhTest(OaiTestCase):
         self.assertEquals('1970-01-01T00:00:00Z', xpath(response, '/oai:OAI-PMH/oai:Identify/oai:earliestDatestamp/text()'))
         self.assertEquals('persistent', xpath(response, '/oai:OAI-PMH/oai:Identify/oai:deletedRecord/text()'))
 
+    def testGetRecordUsesObservers(self):
+        self.request.args = {'verb':['GetRecord'], 'metadataPrefix': ['oai_dc'], 'identifier': ['oai:ident']}
+        self.observer.returnValues['getAllPrefixes'] = [('oai_dc', 'schema', 'namespace')]
+        self.observer.returnValues['isAvailable'] = (True, True)
+        self.observer.returnValues['getDatestamp'] = '2008-11-14T15:43:00Z'
+        self.observer.ignoredAttributes.append('provenance')
+        def write(sink, identifier, partName):
+            sink.write('<oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:dc="http://purl.org/dc/elements/1.1/" xsi:schemaLocation="http://www.openarchives.org/OAI/2.0/oai_dc/ http://www.openarchives.org/OAI/2.0/oai_dc.xsd"/>')
+        self.observer.write = write
+
+        self.observable.do.handleRequest(self.request)
+        
+        result = self.stream.getvalue()
+        self.assertValidString(result)
+        self.assertEquals(['isDeleted', 'getAllPrefixes', 'isAvailable', 'isDeleted', 'getDatestamp', 'getSets', 'unknown'], [m.name for m in self.observer.calledMethods])
+        
     def assertBadArgument(self, arguments, additionalMessage = '', errorCode = "badArgument"):
         self.request.args = arguments
 

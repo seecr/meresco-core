@@ -29,8 +29,6 @@
 from time import gmtime, strftime
 from xml.sax.saxutils import escape as xmlEscape
 
-DONE = 1
-
 class OaiVerb(object):
 
     def __init__(self, supportedVerbs, argsDef):
@@ -58,7 +56,6 @@ class OaiVerb(object):
         webRequest.write('</%s>' % self._verb)
 
         self.writeFooter(webRequest)
-        return DONE
 
     def preProcess(self, webRequest):
         """Hook"""
@@ -97,7 +94,7 @@ class OaiVerb(object):
             self.writeRequestArgs(webRequest)
         webRequest.write(ERROR % locals())
         self.writeFooter(webRequest)
-        return DONE
+        return statusCode
 
     def writeFooter(self, webRequest):
         webRequest.write(OAIFOOTER)
