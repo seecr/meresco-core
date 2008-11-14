@@ -34,8 +34,8 @@ class MockOaiJazz:
         self._isAvailableAnswer = isAvailableAnswer
         self.oaiSelectArguments = {}
 
-    def oaiSelect(self, *args, **kwargs):
-        self.oaiSelectArguments = args
+    def oaiSelect(self, sets=[], prefix=None, continueAt=None, oaiFrom=None, oaiUntil=None):
+        self.oaiSelectArguments = (sets, prefix, continueAt, oaiFrom, oaiUntil)
         return self._selectAnswer
 
     def getUnique(self, id):

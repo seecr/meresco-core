@@ -121,7 +121,7 @@ class OaiJazzLucene(Observable):
         sets, prefixes, na, na = self._getPreviousRecord(id)
         self._updateOaiMeta(id, sets, prefixes)
 
-    def oaiSelect(self, oaiSet=None, prefix='oai_dc', continueAt='0', oaiFrom=None, oaiUntil=None):
+    def oaiSelect(self, sets=[], prefix='oai_dc', continueAt='0', oaiFrom=None, oaiUntil=None):
         def addRange(root, field, lo, hi, inclusive):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
             root.add(range, BooleanClause.Occur.MUST)
@@ -139,8 +139,8 @@ class OaiJazzLucene(Observable):
             oaiFrom = oaiFrom or None
             oaiUntil = oaiUntil and self._fixUntilDate(oaiUntil) or None
             addRange(query, 'oaimeta.stamp', oaiFrom, oaiUntil, True)
-        if oaiSet:
-            query.add(TermQuery(Term('oaimeta.sets.setSpec', oaiSet)), BooleanClause.Occur.MUST)
+        if sets:
+            query.add(TermQuery(Term('oaimeta.sets.setSpec', sets[0])), BooleanClause.Occur.MUST)
 
         return self.any.executeQuery(query, 'oaimeta.unique')
 

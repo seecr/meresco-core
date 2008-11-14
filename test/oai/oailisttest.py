@@ -119,8 +119,8 @@ class OaiListTest(OaiTestCase):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL', 'SET'))]}
 
         observer = CallTrace('RecordAnswering')
-        def oaiSelect(set, prefix, continueAt, oaiFrom, oaiUntil):
-            self.assertEquals('SET', set)
+        def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil):
+            self.assertEquals('SET', sets[0])
             self.assertEquals('oai_dc', prefix)
             self.assertEquals('10', continueAt)
             self.assertEquals('FROM', oaiFrom)
@@ -135,7 +135,7 @@ class OaiListTest(OaiTestCase):
     def testResumptionTokensAreProduced(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z'], 'set': ['SET']}
         observer = CallTrace('RecordAnswering')
-        def oaiSelect(set, prefix, continueAt, oaiFrom, oaiUntil):
+        def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil):
             return map(lambda i: 'id_%i' % i, range(1000))
         def writeRecord(*args, **kwargs):
             pass
