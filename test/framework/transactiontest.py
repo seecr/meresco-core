@@ -105,7 +105,7 @@ class TransactionTest(TestCase):
         class CallTwoMethods(Observable):
             def twice(self, argument1, argument2):
                 yield self.all.methodOne(argument1)
-                raise ValueError()
+                self.tx.abort()
                 yield self.all.methodTwo(argument2)
 
         dna = \
@@ -117,11 +117,7 @@ class TransactionTest(TestCase):
                 )
             )
         body = be(dna)
-        try:
-            list(compose(body.all.twice('one', 'two')))
-            self.fail()
-        except ValueError:
-            pass
+        list(compose(body.all.twice('one', 'two')))
         self.assertEquals(1, len(resourceTxs), resourceTxs)
         self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
 

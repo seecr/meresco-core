@@ -82,6 +82,9 @@ class Transaction(object):
             resourceManager = self._resourceManagers.pop(0)
             resourceManager.rollback()
 
+    def abort(self):
+        raise TransactionException()
+
 class TransactionScope(Observable):
     def __init__(self, transactionName):
         Observable.__init__(self)
@@ -94,7 +97,6 @@ class TransactionScope(Observable):
             for result in self.all.unknown(message, *args, **kwargs):
                 yield result
             __callstack_var_tx__.commit()
-        except:
+        except TransactionException:
             __callstack_var_tx__.rollback()
-            raise
 
