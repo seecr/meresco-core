@@ -44,7 +44,6 @@ from documenttest import DocumentTest
 from document2test import Document2Test
 from drilldowntest import DrilldownTest
 from fieldletstest import FieldletsTest
-from fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
 from hitstest import HitsTest
@@ -54,7 +53,6 @@ from logobservertest import LogObserverTest
 from lucenedocidtrackertest import LuceneDocIdTrackerTest
 #from lucenedocidtrackerdecoratortest import LuceneDocIdTrackerDecoratorTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
-from ngramtest import NGramTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from resourcetest import ResourceTest
@@ -81,9 +79,12 @@ from http.argumentsinsessiontest import ArgumentsInSessionTest
 from http.observablehttpservertest import ObservableHttpServerTest
 
 from lucene.cql2lucenequerytest import Cql2LuceneQueryTest
+from lucene.fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from lucene.lucenetest import LuceneTest
 from lucene.lucene2test import Lucene2Test
 from lucene.string2cqltest import String2CQLTest
+
+from ngram.ngramtest import NGramTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest

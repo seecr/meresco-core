@@ -51,7 +51,7 @@ unqualifiedTermFields = [('dc', 1.0)]
 
 def createUploadHelix(index, storageComponent):
     fields2LuceneDocument = \
-        (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=drilldownFieldnames)),
+        (ResourceManager('document', lambda resourceManager: Fields2LuceneDocumentTx(resourceManager, untokenized=drilldownFieldnames)),
             index
         )
 
@@ -66,25 +66,27 @@ def createUploadHelix(index, storageComponent):
         )
 
     return \
-        (Venturi(
-            should=[
-                ('metadata', '/document:document/document:part[@name="metadata"]/text()')
-            ],
-            namespaceMap={'document': 'http://meresco.com/namespace/harvester/document'}),
+        (TransactionScope('document'),
+            (Venturi(
+                should=[
+                    ('metadata', '/document:document/document:part[@name="metadata"]/text()')
+                ],
+                namespaceMap={'document': 'http://meresco.com/namespace/harvester/document'}),
 
-            (XmlXPath(['/oai:metadata/oai_dc:dc']),
-                (XmlPrintLxml(),
-                    (RewritePartname('dc'),
-                        (storageComponent,)
-                    )
-                ),
-                (Xml2Fields(),
-                    indexingHelix,
-                    (RenameField(lambda name: "dc"),
-                        indexingHelix
+                (XmlXPath(['/oai:metadata/oai_dc:dc']),
+                    (XmlPrintLxml(),
+                        (RewritePartname('dc'),
+                            (storageComponent,)
+                        )
+                    ),
+                    (Xml2Fields(),
+                        indexingHelix,
+                        (RenameField(lambda name: "dc"),
+                            indexingHelix
+                        ),
                     ),
                 ),
-            ),
+            )
         )
 
 def dna(reactor,  host, portNumber, databasePath):
@@ -124,9 +126,7 @@ def dna(reactor,  host, portNumber, databasePath):
                     (WebRequestServer(),
                         (SRURecordUpdate(),
                             (Amara2Lxml(),
-                                (TransactionScope(),
-                                    createUploadHelix(indexHelix, storageComponent)
-                                )
+                                createUploadHelix(indexHelix, storageComponent)
                             )
                         )
                     )

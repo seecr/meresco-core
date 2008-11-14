@@ -91,7 +91,7 @@ def dna(reactor,  host, portNumber, databasePath):
                                 ),
                                 # Start a new transaction in which the given xml
                                 # will be indexed.
-                                (TransactionScope(),
+                                (TransactionScope('record'),
                                     # Every transaction needs an identifier. The
                                     # identifier provided by the SRURecordUpdate
                                     # will be set into the transaction.
@@ -105,7 +105,7 @@ def dna(reactor,  host, portNumber, databasePath):
                                             # collection of fields. Once all
                                             # fields have been created, commit
                                             # the transaction.
-                                            (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=[])),
+                                            (ResourceManager('record', lambda resourceManager: Fields2LuceneDocumentTx(resourceManager, untokenized=[])),
                                                 # Commit the created fields
                                                 # into the index.
                                                 indexHelix

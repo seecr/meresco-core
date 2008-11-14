@@ -32,57 +32,69 @@ class TransactionException(Exception):
 
 class ResourceManager(Observable):
 
-    def __init__(self, resourceTxFactory):
+    def __init__(self, transactionName, resourceTxFactory):
         Observable.__init__(self)
         self._resourceTxFactory = resourceTxFactory
+        self._transactionName = transactionName
         self.txs = {}
 
-    def begin(self, tx):
+    def begin(self):
+        if self.tx.name != self._transactionName:
+            return
         resourceTx = self._resourceTxFactory(self)
-        tx.join(resourceTx)
+        self.tx.join(self)
         self.txs[self.tx.getId()] = resourceTx
 
     def unknown(self, message, *args, **kwargs):
-        try:
-            method = getattr(self.txs[self.tx.getId()], message)
+        method = getattr(self.txs[self.tx.getId()], message, None)
+        if method != None:
             yield method(*args, **kwargs)
-        except AttributeError:
-            pass
 
-    def end(self, tx):
-        self.txs.pop(self.tx.getId())
+    def commit(self):
+        resourceTx = self.txs.pop(self.tx.getId())
+        resourceTx.commit()
+        
+    def rollback(self):
+        resourceTx = self.txs.pop(self.tx.getId())
+        resourceTx.rollback()
 
 class Transaction(object):
 
-    def __init__(self):
-        self.resourceTxs = []
+    def __init__(self, name):
+        self._resourceManagers = []
         self.locals = {}
+        self.name = name
 
     def getId(self):
         return id(self)
 
-    def join(self, resourceTx):
-        if resourceTx not in self.resourceTxs:
-            self.resourceTxs.append(resourceTx)
+    def join(self, resourceManager):
+        if resourceManager not in self._resourceManagers:
+            self._resourceManagers.append(resourceManager)
 
     def commit(self):
-        for resourceTx in self.resourceTxs:
-            resourceTx.commit()
+        while self._resourceManagers:
+            resourceManager = self._resourceManagers.pop(0)
+            resourceManager.commit()
 
     def rollback(self):
-        for resourceTx in self.resourceTxs:
-            resourceTx.rollback()
+        while self._resourceManagers:
+            resourceManager = self._resourceManagers.pop(0)
+            resourceManager.rollback()
 
 class TransactionScope(Observable):
+    def __init__(self, transactionName):
+        Observable.__init__(self)
+        self._transactionName = transactionName
 
     def unknown(self, message, *args, **kwargs):
-        __callstack_var_tx__ = Transaction()
-        self.once.begin(__callstack_var_tx__)
+        __callstack_var_tx__ = Transaction(self._transactionName)
+        self.once.begin()
         try:
             for result in self.all.unknown(message, *args, **kwargs):
                 yield result
             __callstack_var_tx__.commit()
-        except TransactionException, te:
+        except:
             __callstack_var_tx__.rollback()
-        self.once.end(__callstack_var_tx__)
+            raise
 

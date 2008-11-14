@@ -363,7 +363,7 @@ class ObservableTest(unittest.TestCase):
                 yield 'B'
         dna = \
             (Observable(),
-                (TransactionScope(),
+                (TransactionScope('name'),
                     (MyTxParticipant(),)
                 )
             )
@@ -383,16 +383,16 @@ class ObservableTest(unittest.TestCase):
     def testTransactionCommit(self):
         collected = {}
         class MyFirstTxParticipant(Transparant):
-            def begin(self, tx):
-                tx.join(self)
+            def begin(self):
+                self.tx.join(self)
             def doSomething(self):
                 collected[self.tx.getId()] = ['first']
                 yield self.any.doSomething()
             def commit(self):
                 collected[self.tx.getId()].append('done 1')
         class MySecondTxParticipant(Observable):
-            def begin(self, tx):
-                tx.join(self)
+            def begin(self):
+                self.tx.join(self)
             def doSomething(self):
                 collected[self.tx.getId()].append('second')
                 yield 'second'
@@ -400,7 +400,7 @@ class ObservableTest(unittest.TestCase):
                 collected[self.tx.getId()].append('done 2')
         dna = \
             (Observable(),
-                (TransactionScope(),
+                (TransactionScope('name'),
                     (MyFirstTxParticipant(),
                         (MySecondTxParticipant(),)
                     )

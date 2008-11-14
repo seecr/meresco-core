@@ -45,9 +45,9 @@ class TransactionTest(TestCase):
 
         dna = \
             (Observable(),
-                (TransactionScope(),
+                (TransactionScope("transactionName"),
                     (CallTwoMethods(),
-                        (ResourceManager(factoryMethod),)
+                        (ResourceManager("transactionName", factoryMethod),)
                     )
                 )
             )
@@ -62,9 +62,9 @@ class TransactionTest(TestCase):
         class ResourceTransaction(object):
             def __init__(self, tx):
                 pass
-        txfactory = ResourceManager(ResourceTransaction)
+        txfactory = ResourceManager('transaction', ResourceTransaction)
         __callstack_var_tx__ = CallTrace('TransactionScope')
-        txfactory.begin(__callstack_var_tx__)
+        txfactory.begin()
         try:
             txfactory.unknown('doesnotexist')
         except AttributeError:
@@ -75,7 +75,7 @@ class TransactionTest(TestCase):
         class MockResource(object):
             def commit(self):
                 commitCalled.append(1)
-        tx = Transaction()
+        tx = Transaction('name')
         resource = MockResource()
         tx.join(resource)
         tx.join(resource)
@@ -83,10 +83,10 @@ class TransactionTest(TestCase):
         self.assertEquals(1, len(commitCalled))
 
     def testFreeTransaction(self):
-        resourceManager = ResourceManager(lambda tx: CallTrace())
+        resourceManager = ResourceManager('name', lambda resourceManager: CallTrace())
         dna = \
             (Observable(),
-                (TransactionScope(),
+                (TransactionScope('name'),
                     (resourceManager,)
                 )
             )
@@ -105,23 +105,27 @@ class TransactionTest(TestCase):
         class CallTwoMethods(Observable):
             def twice(self, argument1, argument2):
                 yield self.all.methodOne(argument1)
-                raise TransactionException()
+                raise ValueError()
                 yield self.all.methodTwo(argument2)
 
         dna = \
             (Observable(),
-                (TransactionScope(),
+                (TransactionScope('name'),
                     (CallTwoMethods(),
-                        (ResourceManager(factoryMethod),)
+                        (ResourceManager('name', factoryMethod),)
                     )
                 )
             )
         body = be(dna)
-        list(compose(body.all.twice('one', 'two')))
+        try:
+            list(compose(body.all.twice('one', 'two')))
+            self.fail()
+        except ValueError:
+            pass
         self.assertEquals(1, len(resourceTxs), resourceTxs)
         self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
 
     def testTransactionLocals(self):
-        tx = Transaction()
+        tx = Transaction('name')
         tx.locals['myvar'] = 'value'
         self.assertEquals('value', tx.locals['myvar'])

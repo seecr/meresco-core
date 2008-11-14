@@ -44,9 +44,10 @@ class Fields2LuceneDocumentTest(TestCase):
 
         dna = \
             (Transparant(),
-                (TransactionScope(),
+                (TransactionScope('name'),
                     (Splitter(),
-                        (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=['b'])),
+                        (ResourceManager('name',
+                        lambda resourceManager: Fields2LuceneDocumentTx(resourceManager, untokenized=['b'])),
                             (self.observert,)
                         )
                     )
@@ -56,10 +57,9 @@ class Fields2LuceneDocumentTest(TestCase):
 
     def testOne(self):
         list(self.body.all.addFields([('a', '1'), ('b', '2'), ('c', '3')]))
-        self.assertEquals(3, len(self.observert.calledMethods))
-        self.assertEquals('begin(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[0]))
+        self.assertEquals(2, len(self.observert.calledMethods))
+        self.assertEquals('begin()', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
-        self.assertEquals('end(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[2]))
 
         document = self.observert.calledMethods[1].args[0]
         self.assertTrue('a' in document.fields())
@@ -69,15 +69,13 @@ class Fields2LuceneDocumentTest(TestCase):
 
     def testOtherTransactionMethodsLikeDeleteDoNoTriggerFields2LuceneDocumentToAddEmptyDocument(self):
         self.body.do.delete('recordIdentifier')
-        self.assertEquals(['begin(<meresco.framework.transaction.Transaction>)', 'end(<meresco.framework.transaction.Transaction>)'], map(str, self.observert.calledMethods))
+        self.assertEquals(['begin()'], map(str, self.observert.calledMethods))
 
     def testMultipleValuesForSameKey(self):
         list(self.body.all.addFields([('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
-        self.assertEquals(3, len(self.observert.calledMethods), self.observert.calledMethods)
-        self.assertEquals('begin(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[0]))
+        self.assertEquals(2, len(self.observert.calledMethods), self.observert.calledMethods)
+        self.assertEquals('begin()', str(self.observert.calledMethods[0]))
         self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
-        self.assertEquals('end(<meresco.framework.transaction.Transaction>)', str(self.observert.calledMethods[2]))
-        
 
         document = self.observert.calledMethods[1].args[0]
         self.assertEquals([u'TermOne', u'TermTwo'],  document._document.getValues('a'))

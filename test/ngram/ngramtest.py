@@ -17,7 +17,7 @@ PUCH_WORDS = ['capuche', 'capuches', 'Capuchin', 'capuchins', 'Mapuche', 'Pampuc
 def createNGramHelix(observert):
     return be(
         (Observable(),
-            (TransactionScope(),
+            (TransactionScope('ngram'),
                 (NGramFieldlet(2, 'ngrams'),
                     (observert,)
                 )
@@ -39,10 +39,10 @@ class NGramTest(CQ2TestCase):
         index = LuceneIndex(self.tempdir, reactor)
         dna = \
             (Observable(),
-                (TransactionScope(),
+                (TransactionScope('ngram'),
                     (Xml2Fields(),
                         (NGramFieldlet(2, 'ngrams'),
-                            (ResourceManager(lambda tx: Fields2LuceneDocumentTx(tx, untokenized=[])),
+                            (ResourceManager('ngram', lambda resourceManager: Fields2LuceneDocumentTx(resourceManager, untokenized=[])),
                                 (index,)
                             )
                         )
@@ -81,8 +81,8 @@ class NGramTest(CQ2TestCase):
         observert = CallTrace('Observert')
         ngramFieldlet = createNGramHelix(observert)
         ngramFieldlet.do.addField('field0', 'term0')
-        self.assertEquals(3, len(observert.calledMethods))
-        self.assertEquals("begin(<meresco.framework.transaction.Transaction>)", str(observert.calledMethods[0]))
+        self.assertEquals(2, len(observert.calledMethods))
+        self.assertEquals("begin()", str(observert.calledMethods[0]))
         self.assertEquals('addField', observert.calledMethods[1].name)
         self.assertEquals(('ngrams', 'te er rm m0'), observert.calledMethods[1].args)
 
