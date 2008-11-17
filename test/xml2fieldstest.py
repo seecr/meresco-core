@@ -75,3 +75,16 @@ class Xml2FieldsTest(TestCase):
         self.assertEquals(2, len(self.observer.calledMethods))
         self.assertEquals("addField('tag.name', 'Name One')", str(self.observer.calledMethods[0]))
         self.assertEquals("addField('tag.name', 'Name Two')", str(self.observer.calledMethods[1]))
+
+    def testIgnoreCommentsAndEmptyTags(self):
+        node = parselxml("""<tag>
+            <!-- comment line, ignore me -->
+            <name>Name One</name>
+            <name>Name Two</name>
+            <name>
+            </name>
+        </tag>""")
+        self.observable.do.add('id', 'legacy partname', node)
+        self.assertEquals(2, len(self.observer.calledMethods))
+        self.assertEquals("addField('tag.name', 'Name One')", str(self.observer.calledMethods[0]))
+        self.assertEquals("addField('tag.name', 'Name Two')", str(self.observer.calledMethods[1]))

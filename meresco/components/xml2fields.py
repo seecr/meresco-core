@@ -28,6 +28,7 @@
 
 from meresco.framework import Observable
 from warnings import warn
+from lxml.etree import _Element
 
 def removeNamespace(tagName):
     return '}' in tagName and tagName.split('}')[1] or tagName
@@ -45,6 +46,9 @@ class Xml2Fields(Observable):
         return self._fillDict(lxmlNode, '')
 
     def _fillDict(self, aNode, parentName):
+        if type(aNode) != _Element:
+            return
+
         if parentName:
             parentName += '.'
         localName = removeNamespace(aNode.tag)

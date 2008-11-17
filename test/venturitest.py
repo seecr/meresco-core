@@ -29,11 +29,16 @@
 from StringIO import StringIO
 
 from cq2utils import CQ2TestCase, CallTrace
-from lxml.etree import fromstring, tostring
+from lxml.etree import parse, tostring
 
 from meresco.components.venturi import Venturi
 from meresco.framework import TransactionScope, be, Observable
 from weightless import compose
+
+
+def fromstring(aString):
+    xmlParsed = parse(StringIO(aString))
+    return xmlParsed
 
 def createVenturiHelix(should, could, *observers, **kwargs):
     return be(
