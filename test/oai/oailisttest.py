@@ -49,13 +49,14 @@ class OaiListTest(OaiTestCase):
     def testListRecordsUsingMetadataPrefix(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockOaiJazz(
+        mockoaijazz = MockOaiJazz(
             selectAnswer=['id_0&0', 'id_1&1'],
             isAvailableDefault=(True,True),
             isAvailableAnswer=[
                 (None, 'oai_dc', (True,False)),
-                (None, '__tombstone__', (True, False))]))
-
+                (None, '__tombstone__', (True, False))])
+        self.subject.addObserver(mockoaijazz)
+        
         self.observable.any.listRecords(self.request)
 
         self.assertEqualsWS(self.OAIPMH % """
@@ -82,6 +83,8 @@ class OaiListTest(OaiTestCase):
    </record>
  </ListRecords>""" , self.stream.getvalue())
         self.assertTrue(self.stream.getvalue().find('<resumptionToken') == -1)
+        self.assertFalse(mockoaijazz.oaiSelectArguments[0])
+        
 
     def testListRecordsWithoutProvenance(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc']}

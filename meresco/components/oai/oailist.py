@@ -119,7 +119,12 @@ Error and Exception Conditions
         if not self._metadataPrefix in [prefix for prefix, na, na in self.any.getAllPrefixes()]:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
 
-        self._queryResult = self.any.oaiSelect(sets=[self._set], prefix=self._metadataPrefix, continueAt=self._continueAt, oaiFrom=self._from, oaiUntil=self._until)
+        self._queryResult = self.any.oaiSelect(
+            sets=self._set and [self._set] or None,
+            prefix=self._metadataPrefix,
+            continueAt=self._continueAt,
+            oaiFrom=self._from,
+            oaiUntil=self._until)
         if len(self._queryResult) == 0:
             return self.writeError(webRequest, 'noRecordsMatch')
 
