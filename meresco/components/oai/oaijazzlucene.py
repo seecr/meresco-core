@@ -140,8 +140,14 @@ class OaiJazzLucene(Observable):
             oaiUntil = oaiUntil and self._fixUntilDate(oaiUntil) or None
             addRange(query, 'oaimeta.stamp', oaiFrom, oaiUntil, True)
         if sets:
-            query.add(TermQuery(Term('oaimeta.sets.setSpec', sets[0])), BooleanClause.Occur.MUST)
-
+            if len(sets) == 1:
+                query.add(TermQuery(Term('oaimeta.sets.setSpec', sets[0])), BooleanClause.Occur.MUST)
+            
+            else:
+                setQuery = BooleanQuery()
+                for set in sets:
+                    setQuery.add(TermQuery(Term('oaimeta.sets.setSpec', set)), BooleanClause.Occur.SHOULD)
+                query.add(setQuery, BooleanClause.Occur.MUST)
         return self.any.executeQuery(query, 'oaimeta.unique')
 
     def getAllPrefixes(self):
