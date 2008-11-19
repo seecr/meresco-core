@@ -291,11 +291,11 @@ class MockListeners:
         self.executeCQLResult = executeCQLResult
         self.writtenRecords = []
 
-    def executeCQL(self, cqlQuery, sortKey, sortDirection):
+    def executeCQL(self, cqlAbstractSyntaxTree, sortBy, sortDescending):
         self.executeCQLCalled = True
-        self.cqlQuery = cqlQuery
-        self.sortKey = sortKey
-        self.sortDirection = sortDirection
+        self.cqlQuery = cqlAbstractSyntaxTree
+        self.sortKey = sortBy
+        self.sortDirection = sortDescending
         return self.executeCQLResult
 
     def yieldRecord(self, recordId, recordSchema):

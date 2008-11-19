@@ -40,4 +40,4 @@ class String2CQLTest(TestCase):
         s.executeCQLString('term1')
 
         self.assertEquals(1, len(observer.calledMethods))
-        self.assertEquals(["CQL_QUERY(SCOPED_CLAUSE(SEARCH_CLAUSE(SEARCH_TERM(TERM('term1')))))"], [str(a) for a in observer.calledMethods[0].args])
+        self.assertEquals("CQL_QUERY(SCOPED_CLAUSE(SEARCH_CLAUSE(SEARCH_TERM(TERM('term1')))))", str(observer.calledMethods[0].kwargs['cqlAbstractSyntaxTree']))

@@ -237,7 +237,10 @@ class Sru(Observable):
         SRU_IS_ONE_BASED = 1
 
         #KvS/TJ: volgende 'parseCQL(sruQuery.query)' is natuurlijk beetje jammer, volgende keer dat we hier langskomen: a. in sruquery dat resultaat opslaan en dan b. hier gebruiken.
-        hits = self.any.executeCQL(parseCQL(sruQuery.query), sruQuery.sortBy,  sruQuery.sortDirection)
+        hits = self.any.executeCQL(
+            cqlAbstractSyntaxTree=parseCQL(sruQuery.query),
+            sortBy=sruQuery.sortBy,
+            sortDescending=sruQuery.sortDescending)
         yield self._startResults(len(hits))
 
         recordsWritten = 0

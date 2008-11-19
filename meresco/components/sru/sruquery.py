@@ -62,7 +62,7 @@ class SRUQuery:
         self.query = query
         
         sortKeys = arguments.get('sortKeys', [''])[0]
-        self.sortBy, self.sortDirection = self._parseSort(sortKeys)
+        self.sortBy, self.sortDescending = self._parseSort(sortKeys)
         
         self.recordSchema = arguments.get('recordSchema', [''])[0]
         if self.recordSchema == '':

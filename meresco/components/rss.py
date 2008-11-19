@@ -92,7 +92,7 @@ class Rss(Observable):
 
 
     def _yieldResults(self, sruQuery):
-        hits = self.any.executeCQL(parseCQL(sruQuery.query), sruQuery.sortBy,  sruQuery.sortDirection)
+        hits = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL(sruQuery.query), sortBy=sruQuery.sortBy,  sortDescending=sruQuery.sortDescending)
 
         SRU_IS_ONE_BASED = 1 #And our RSS plugin is closely based on SRU
         start = sruQuery.startRecord - SRU_IS_ONE_BASED
