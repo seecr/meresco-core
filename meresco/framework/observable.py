@@ -125,6 +125,19 @@ def _beRecursive(helix, helicesDone):
         helicesDone.add(helix)
     return component
 
+def _getCallstackVar(name):
+    stackVarName = '__callstack_var_%s__' % name
+    frame = currentframe().f_back
+    while stackVarName not in frame.f_locals:
+        frame = frame.f_back
+    return frame.f_locals[stackVarName]
+    
+def getCallstackVar(name):
+    try:
+        return _getCallstackVar(name)
+    except AttributeError:
+        raise AttributeError("Callstack variable '%s' not found." % name)
+
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
@@ -136,12 +149,8 @@ class Observable(object):
             self.__repr__ = lambda: name
 
     def __getattr__(self, name):
-        stackVarName = '__callstack_var_%s__' % name
-        frame = currentframe().f_back
         try:
-            while stackVarName not in frame.f_locals:
-                frame = frame.f_back
-            return frame.f_locals[stackVarName]
+            return _getCallstackVar(name)
         except AttributeError:
             raise AttributeError("'%s' has no attribute '%s'" % (self, name))
 

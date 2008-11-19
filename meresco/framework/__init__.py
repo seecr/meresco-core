@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from observable import Observable, Transparant, be
+from observable import Observable, Transparant, be, getCallstackVar
 from observer import ObserverFunction
 from generatorutils import decorate, compose
 from resource import Resource
