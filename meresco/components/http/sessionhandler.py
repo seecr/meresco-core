@@ -52,9 +52,14 @@ class ArgumentsInSession(Observable):
         for k,v in arguments.items():
             if not k in session:
                 session[k] = []
-            for value in v:
+            for arg in v:
+                if arg[0] in '+-':
+                    sign, source = arg[0], arg[1:]
+                else:
+                    sign = '+'
+                    source = repr(arg)
                 try:
-                    sign, value = value[0], eval(value[1:], {'__builtins__': {}})
+                    value = eval(source, {'__builtins__': {}})
                 except Exception, e:
                     yield 'HTTP/1.0 400 Bad Request\r\n\r\n' + str(e)
                     return

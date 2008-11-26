@@ -81,4 +81,13 @@ class ArgumentsInSessionTest(TestCase):
         response = ''.join(compose(self.argsInSession.handleRequest(session={}, arguments={'key': ["+exit(0)"]})))
         self.assertEquals("HTTP/1.0 400 Bad Request\r\n\r\nname 'exit' is not defined", response)
 
+    def testAddWithoutSignImpliesPlus(self):
+        arguments = {}
+        def handleRequest(session=None, *args, **kwargs):
+            arguments.update(session)
+            yield 'goodbye'
+        self.observer.handleRequest = handleRequest
+        session = {}
+        list(compose(self.argsInSession.handleRequest(session=session, arguments={'aap': ["noot"]})))
+        self.assertEquals( ['noot'], arguments['aap'])
 
