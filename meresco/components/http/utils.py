@@ -32,7 +32,7 @@ ContentTypeRss = "Content-Type: application/rss+xml"
 ContentTypeHtml = "Content-Type: text/html; charset=utf-8"
 
 Ok = "HTTP/1.0 200 Ok" + CRLF
-    
+
 #200
 okXml = "HTTP/1.0 200 OK" + CRLF + \
         ContentTypeXml + CRLF + \
@@ -45,6 +45,11 @@ okRss = "HTTP/1.0 200 OK" + CRLF + \
 okHtml = "HTTP/1.0 200 OK" + CRLF + \
         ContentTypeHtml + CRLF + \
         CRLF
+
+#403
+forbiddenHtml = "HTTP/1.0 403 Forbidden" + CRLF + \
+               ContentTypeHtml + CRLF + \
+               CRLF
 
 #404
 notFoundHtml = "HTTP/1.0 404 Not Found" + CRLF + \

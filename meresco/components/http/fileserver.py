@@ -32,6 +32,7 @@ from stat import ST_MTIME
 from os import stat
 
 from meresco.components.http import utils as httputils
+from meresco.components.http.utils import CRLF
 
 import magic
 magicCookie = magic.open(magic.MAGIC_MIME)
@@ -40,7 +41,39 @@ magicCookie.load()
 import mimetypes
 mimetypes.init()
 
-class FileServer:
+class File(object):
+    def __init__(self, filename):
+        self._filename = filename
+
+    def exists(self):
+        return isfile(self._filename)
+
+    def getHeaders(self, expires=3600):
+        ext = self._filename.split(".")[-1]
+        try:
+            contentType = mimetypes.types_map["." + ext]
+        except KeyError:
+            contentType = "text/plain"
+
+        return {
+            'Date': self._date(),
+            'Expires': self._date(expires),
+            'Last-Modified': formatdate(stat(self._filename)[ST_MTIME]),
+            'Content-Type': contentType
+        }
+
+    def stream(self):
+        fp = open(self._filename)
+        data = fp.read(1024)
+        while data:
+            yield data
+            data = fp.read(1024)
+        fp.close()
+
+    def _date(self, offset=0):
+        return formatdate(mktime(gmtime()) - timezone + offset)
+
+class FileServer(object):
     def __init__(self, documentRoot):
         self._documentRoot = documentRoot
 
@@ -60,32 +93,16 @@ class FileServer:
                 yield line
             raise StopIteration
 
-        filename = self._filenameFor(path)
-        ext = filename.split(".")[-1]
-        try:
-            contentType = mimetypes.types_map["." + ext]
-        except KeyError:
-            contentType = "text/plain"
+        file = File(self._filenameFor(path))
 
-        date = self._date()
-        expires = self._date(3600)
-        lastModified = formatdate(stat(filename)[ST_MTIME])
 
-        yield ('\r\n'.join([
-            'HTTP/1.0 200 OK',
-            'Date: %(date)s',
-            'Expires: %(expires)s',
-            'Last-Modified: %(lastModified)s',
-            'Content-Type: %(contentType)s',
-            '', ''
-        ])) % locals()
+        yield 'HTTP/1.0 200 OK' + CRLF
+        for item in file.getHeaders().items():
+            yield "%s: %s" % item + CRLF
+        yield CRLF
 
-        f = open(filename)
-        data = f.read(1024)
-        while data:
-            yield data
-            data = f.read(1024)
-        f.close()
+        for part in file.stream():
+            yield part
 
     def _filenameFor(self, filename):
         while filename and filename[0] == '/':
@@ -96,8 +113,6 @@ class FileServer:
     def fileExists(self, filename):
         return isfile(self._filenameFor(filename))
 
-    def _date(self, offset=0):
-        return formatdate(mktime(gmtime()) - timezone + offset)
 
 class StringServer(object):
     def __init__(self, aString, contentType):

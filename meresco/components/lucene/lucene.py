@@ -87,6 +87,7 @@ class LuceneIndex(Observable):
 
     def _reOpenWriter(self):
         self._writer.close()
+        self._writer = None
         self._writer = IndexWriter(
             self._directoryName,
             IncludeStopWordAnalyzer(), False)
@@ -108,6 +109,7 @@ class LuceneIndex(Observable):
         self._readerResource = self._openReader()
         self._existingFieldNames = self._readerResource.getFieldNames(IndexReader.FieldOption.ALL)
         self._searcher.close()
+        self._searcher = None
         self._searcher = self._openSearcher()
         self.do.indexStarted(self._readerResource)
 
