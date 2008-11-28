@@ -101,10 +101,6 @@ class Statistics(Observable):
         self._data = Aggregator(Top100sFactory())
         self._readState()
 
-    def __del__(self):
-        if self._txlogFile and not self._txlogFile.closed:
-            self._txlogFile.close()
-
     def unknown(self, message, *args, **kwargs):
         __log__ = {} # to be found on the call stack by Logger
         responses = self.all.unknown(message, *args, **kwargs)
