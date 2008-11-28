@@ -31,7 +31,7 @@ from os import makedirs
 from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort,  StandardTokenizer, StandardFilter, LowerCaseFilter, QueryFilter
 
 from meresco.components.lucene.document import IDFIELD
-from meresco.framework import Observable, Resource
+from meresco.framework import Observable
 
 from bitmatrix import IncNumberMap, JavaBitSetRow, Row, MappedRow
 
@@ -65,15 +65,15 @@ class LuceneIndex(Observable):
             self._directoryName,
             IncludeStopWordAnalyzer(), not indexExists)
         self._lastUpdateTimeoutToken = None
-        self._readerResource = self._openReader()
-        self._existingFieldNames = self._readerResource.getFieldNames(IndexReader.FieldOption.ALL)
+        self._reader = self._openReader()
+        self._existingFieldNames = self._reader.getFieldNames(IndexReader.FieldOption.ALL)
         self._searcher = self._openSearcher()
 
     def observer_init(self):
-        self.do.indexStarted(self._readerResource)
+        self.do.indexStarted(self._reader)
 
     def bitMatrixRow(self, pyLuceneQuery):
-        bits = QueryFilter(pyLuceneQuery).bits(self._readerResource._subject)
+        bits = QueryFilter(pyLuceneQuery).bits(self._reader)
         return JavaBitSetRow(bits)
 
     def executeQuery(self, pyLuceneQuery, start=0, stop=10, sortBy=None, sortDescending=None):
@@ -104,17 +104,17 @@ class LuceneIndex(Observable):
         return None
 
     def getIndexReader(self):
-        return self._readerResource
+        return self._reader
 
     def _reopenIndex(self):
         self._reOpenWriter()
-        self._readerResource = None
-        self._readerResource = self._openReader()
-        self._existingFieldNames = self._readerResource.getFieldNames(IndexReader.FieldOption.ALL)
+        self._reader = None
+        self._reader = self._openReader()
+        self._existingFieldNames = self._reader.getFieldNames(IndexReader.FieldOption.ALL)
         self._searcher.close()
         self._searcher = None
         self._searcher = self._openSearcher()
-        self.do.indexStarted(self._readerResource)
+        self.do.indexStarted(self._reader)
 
     def _delete(self, anId):
         docId = self._docIdForId(anId)
@@ -133,13 +133,13 @@ class LuceneIndex(Observable):
         aDocument.addToIndexWith(self._writer)
 
     def docCount(self):
-        return self._readerResource.numDocs()
+        return self._reader.numDocs()
 
     def _openReader(self):
-        return Resource(IndexReader.open(self._directoryName))
+        return IndexReader.open(self._directoryName)
 
     def _openSearcher(self):
-        return IndexSearcher(self._readerResource._subject)
+        return IndexSearcher(self._reader)
 
     def _getPyLuceneSort(self, sortBy, sortDescending):
         if sortBy and sortBy in self._existingFieldNames:
@@ -148,7 +148,7 @@ class LuceneIndex(Observable):
 
     def close(self):
         self._writer.close()
-        self._readerResource = None
+        self._reader = None
         self._searcher.close()
 
     def __del__(self):
@@ -158,7 +158,7 @@ class LuceneIndex(Observable):
         self._reopenIndex()
 
     def isOptimized(self):
-        return self.docCount() == 0 or self._readerResource.isOptimized()
+        return self.docCount() == 0 or self._reader.isOptimized()
 
     def getDirectory(self):
         return self._directoryName

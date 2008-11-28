@@ -54,7 +54,6 @@ from lucenedocidtrackertest import LuceneDocIdTrackerTest
 from lucenerawdocsetstest import LuceneRawDocSetsTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
-from resourcetest import ResourceTest
 from rsstest import RssTest
 from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
