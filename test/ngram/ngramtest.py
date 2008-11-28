@@ -123,27 +123,30 @@ class NGramTest(CQ2TestCase):
         self.assertEquals({'id': u'term0'}, txlocals)
 
     def testNgramQuery(self):
-        ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (x for x in ['term0', 'term1'])})
+        ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (2, ['term0', 'term1'])})
         ngramQuery = NGramQuery(2, 'ngrams')
         ngramQuery.addObserver(ngramindex)
-        hits = ngramQuery.executeQuery('term0')
+        total, hits = ngramQuery.executeQuery('term0', 1234)
         self.assertEquals(['term0', 'term1'], list(hits))
         self.assertEquals('ngrams:te ngrams:er ngrams:rm ngrams:m0', str(ngramindex.calledMethods[0].arguments[0]))
-        ngramindex.returnValues['executeQuery'] = ['term2', 'term9']
-        hits = ngramQuery.executeQuery('term0')
+        ngramindex.returnValues['executeQuery'] = (2, ['term2', 'term9'])
+        total, hits = ngramQuery.executeQuery('term0',87655)
         self.assertEquals(['term2', 'term9'], list(hits))
 
     def testNgramQueryFieldname(self):
-        ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (x for x in ['term0', 'term1'])})
+        ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (2, ['term0', 'term1'])})
         ngramQuery = NGramQuery(2, 'some_fieldname')
         ngramQuery.addObserver(ngramindex)
-        hits = ngramQuery.executeQuery('term0')
+        total, hits = ngramQuery.executeQuery('term0',9876)
         self.assertEquals(['term0', 'term1'], list(hits))
         self.assertEquals('some_fieldname:te some_fieldname:er some_fieldname:rm some_fieldname:m0', str(ngramindex.calledMethods[0].arguments[0]))
-        ngramindex.returnValues['executeQuery'] = ['term2', 'term9']
+        ngramindex.returnValues['executeQuery'] = (2,['term2', 'term9'])
 
     def assertSuggestions(self, expected, term, suggester):
-        ngramindex = CallTrace('ngramindex', returnValues = {'executeQuery': (x for x in PUCH_WORDS)})
+        ngramindex = CallTrace('ngramindex')
+        def executeQuery(query, start, stop, *args):
+            return (len(PUCH_WORDS), PUCH_WORDS[:stop])
+        ngramindex.executeQuery = executeQuery
         ngramQuery = NGramQuery(2, 'ngrams')
         ngramQuery.addObserver(ngramindex)
         suggester.addObserver(ngramQuery)

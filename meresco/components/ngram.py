@@ -40,9 +40,8 @@ class NGramQuery(Observable):
         Observable.__init__(self)
         self._fieldName = fieldName
 
-    def executeQuery(self, query):
-        hits = self.any.executeQuery(self.ngramQuery(query))
-        return hits
+    def executeQuery(self, query, samples):
+        return self.any.executeQuery(self.ngramQuery(query), start=0, stop=samples)
 
     def ngramQuery(self, word, N=2):
         query = BooleanQuery()
@@ -58,7 +57,7 @@ class _Suggestion(Observable):
         self._threshold = threshold
 
     def _suggestionsFor(self, word, sortkey):
-        candidates = islice(self.any.executeQuery(word), self._samples)
+        total, candidates = self.any.executeQuery(word, self._samples)
         results = sorted(candidates, key=sortkey)
         if results and results[0] == word:
             return results[1:self._maxResults+1]
