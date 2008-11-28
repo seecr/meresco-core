@@ -142,13 +142,14 @@ class OaiJazzLucene(Observable):
         if sets:
             if len(sets) == 1:
                 query.add(TermQuery(Term('oaimeta.sets.setSpec', sets[0])), BooleanClause.Occur.MUST)
-            
+
             else:
                 setQuery = BooleanQuery()
                 for set in sets:
                     setQuery.add(TermQuery(Term('oaimeta.sets.setSpec', set)), BooleanClause.Occur.SHOULD)
                 query.add(setQuery, BooleanClause.Occur.MUST)
-        return self.any.executeQuery(query, 'oaimeta.unique')
+        total, hits = self.any.executeQuery(query, sortBy='oaimeta.unique')
+        return hits
 
     def getAllPrefixes(self):
         return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
@@ -183,7 +184,8 @@ class OaiJazzLucene(Observable):
 ###############################################################################
     # test only?
     def listAll(self):
-        return self.any.executeQuery(MatchAllDocsQuery())
+        total, hits = self.any.executeQuery(MatchAllDocsQuery())
+        return hits
 
 ###############################################################################
 

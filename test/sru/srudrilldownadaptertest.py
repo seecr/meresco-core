@@ -62,9 +62,10 @@ class SRUTermDrilldownTest(CQ2TestCase):
         arguments = {"x-term-drilldown": ["field0:1,field1:2,field2:3"]}
         adapter = SRUTermDrilldown()
         adapter.addObserver(self)
-        hits = CallTrace("Hits")
-        hits.returnValues['bitMatrixRow'] = "Hits are simply passed"
-        result = adapter.extraResponseData(arguments, hits)
+        hits = ['recordId:1', 'recordId:2']
+        cqlAbstractSyntaxTree = 'cqlAbstractSyntaxTree'
+        
+        result = adapter.extraResponseData(arguments, cqlAbstractSyntaxTree)
         self.assertEqualsWS("""<dd:term-drilldown><dd:navigator name="field0">
     <dd:item count="14">value0_0</dd:item>
 </dd:navigator>
@@ -78,18 +79,22 @@ class SRUTermDrilldownTest(CQ2TestCase):
     <dd:item count="1">value2_2</dd:item>
 </dd:navigator></dd:term-drilldown>""", "".join(result))
         self.assertEquals([('field0', 1, False), ('field1', 2, False), ('field2', 3, False)], list(self.processed_tuples))
-        self.assertEquals("Hits are simply passed", self.processed_hits)
+        self.assertEquals('cqlAbstractSyntaxTree', self.processed_ast)
 
     def testSRUTermDrilldownNoMaximums(self):
         arguments = {"x-term-drilldown": ["field0,field1,field2"]}
         adapter = SRUTermDrilldown()
         adapter.addObserver(self)
         hits = CallTrace("Hits")
-        list(adapter.extraResponseData(arguments, hits))
+        list(adapter.extraResponseData(arguments, []))
         self.assertEquals([('field0', 10, False), ('field1', 10, False), ('field2', 10, False)], list(self.processed_tuples))
 
-    def drilldown(self, hits, tuples):
-        self.processed_hits = hits
+    def bitMatrixRow(self, ast):
+        self.processed_ast = ast
+        return 'row'
+
+    def drilldown(self, row, tuples):
+        self.processed_row = row
         self.processed_tuples = tuples
         return [
             ('field0', [('value0_0', 14)]),
@@ -118,7 +123,7 @@ class SRUFieldDrilldownTest(CQ2TestCase):
     def testDrilldown(self):
         adapter = SRUFieldDrilldown()
         observer = CallTrace("Observer")
-        observer.returnValues["executeCQL"] = "hits with len 16"
+        observer.returnValues["executeCQL"] = (16, range(16))
         adapter.addObserver(observer)
         result = list(adapter.drilldown('original', 'term', ['field0', 'field1']))
 

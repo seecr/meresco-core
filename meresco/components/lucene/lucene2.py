@@ -30,7 +30,6 @@ from os.path import isdir
 from os import makedirs
 from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort,  StandardTokenizer, StandardFilter, LowerCaseFilter
 
-from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
 from meresco.framework import Observable, Resource
 

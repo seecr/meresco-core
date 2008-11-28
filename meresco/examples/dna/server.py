@@ -117,7 +117,10 @@ def dna(reactor,  host, portNumber, databasePath):
                                     lambda field: DRILLDOWN_PREFIX + field,
                                     lambda field: field[len(DRILLDOWN_PREFIX):]),
                                         (drilldownComponent,)
-                                )
+                                ),
+                                (CQL2LuceneQuery(unqualifiedTermFields),
+                                    indexHelix
+                                ),
                             )
                         )
                     )

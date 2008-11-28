@@ -83,7 +83,7 @@ class NGramTest(CQ2TestCase):
         xmlNode = parse(StringIO(u'<node><subnode>ideeën</subnode></node>'))
         x.do.addXml(xmlNode)
         index.start()
-        hits = index.executeQuery(ngramQuery(u'ideeën'))
+        total, hits = index.executeQuery(ngramQuery(u'ideeën'))
         self.assertEquals(1, index.docCount())
         self.assertEquals('ideeën', hits[0])
 

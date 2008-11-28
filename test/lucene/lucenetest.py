@@ -71,7 +71,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(len(hits), 1)
         self.assertEquals(['0123456789'], list(hits))
 
@@ -82,10 +82,10 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(len(hits), 1)
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'sub')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'sub')))
         self.assertEquals(len(hits), 1)
 
     def testAddTwoDocuments(self):
@@ -98,7 +98,7 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
     def testAddDocumentWithTwoValuesForOneField(self):
@@ -110,7 +110,7 @@ class LuceneTest(CQ2TestCase):
         self.timerCallbackMethod()
 
         def check(value):
-            hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', value)))
+            total, hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', value)))
             self.assertEquals(1, len(hits))
         check('value_1')
         check('value_2')
@@ -154,16 +154,16 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
         self._luceneIndex.delete('1')
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(2, len(hits))
 
         self.timerCallbackMethod()
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(1, len(hits))
 
     def testAddDeleteWithoutReopenInBetween(self):
@@ -173,7 +173,7 @@ class LuceneTest(CQ2TestCase):
 
         self._luceneIndex.delete('1')
         self.timerCallbackMethod()
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         self.assertEquals(0, len(hits))
 
     def testIndexReaderResourceManagementKeepsIndexOpenAndClosesItWhenAllRefsAreGone(self):
@@ -181,13 +181,14 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))
         # keep ref to hits, while refreshing/reopening the index after timeout
         self.timerCallbackMethod()
         # now try to get the results,
         try:
             list(hits)
         except JavaError, e:
+            print str(e)
             self.assertEquals('org.apache.lucene.store.AlreadyClosedException: this IndexReader is closed', str(e))
             self.fail('this must not fail on a closed reader')
 
@@ -209,8 +210,8 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
-        hits1 = list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))
-        hits2 = list(queryConvertor.executeCQL(parseString("title = titel")))
+        total1, hits1 = list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))
+        total2, hits2 = list(queryConvertor.executeCQL(parseString("title = titel")))
         self.assertEquals(len(hits1), len(hits2))
         self.assertEquals(['0123456789'], hits1)
         self.assertEquals(['0123456789'], hits2)
@@ -240,9 +241,9 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('title', 'een titel')
         self._luceneIndex.addDocument(myDocument)
         timeCallback = self.timer.calledMethods[0].args[1]
-        self.assertEquals(0, len(list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))))
+        self.assertEquals(0, len(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))[1]))
         timeCallback()
-        self.assertEquals(1, len(list(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel'))))))
+        self.assertEquals(1, len(self._luceneIndex.executeQuery(TermQuery(Term('title', 'titel')))[1]))
         # after callback the old timer will not be removed
         self._luceneIndex.addDocument(myDocument)
         self.assertEquals(['addTimer', 'addTimer'],
@@ -268,8 +269,8 @@ class LuceneTest(CQ2TestCase):
         addDocs(0, 150) #halverwege segment 2. v. grootte honderd
         self._luceneIndex._reopenIndex()
 
-        hits = self._luceneIndex._executeQuery(MatchAllDocsQuery())
-        self.assertEquals(range(150), hits.bitMatrixRow().asList())
+        total, hits = self._luceneIndex.executeQuery(MatchAllDocsQuery())
+        self.assertEquals(range(150), self._luceneIndex.bitMatrixRow(MatchAllDocsQuery()).asList())
 
         #schiet verschillende smaken gaten in segment 1. (wat hierbij al afgerond is)
         for x in range(0, 31, 2):
@@ -289,8 +290,8 @@ class LuceneTest(CQ2TestCase):
 
         docIds = []
         for id in range(220):
-            hits = self._luceneIndex._executeQuery(TermQuery(Term(IDFIELD, str(id))))
-            currentDocIds = hits.bitMatrixRow().asList()
+            total, hits = self._luceneIndex.executeQuery(TermQuery(Term(IDFIELD, str(id))))
+            currentDocIds = self._luceneIndex.bitMatrixRow(TermQuery(Term(IDFIELD, str(id)))).asList()
             if currentDocIds:
                 currentDocId = currentDocIds[0]
                 docIds.append(currentDocId)
@@ -309,7 +310,7 @@ class LuceneTest(CQ2TestCase):
         self.assertTrue(130 in docIds) #hoewel weggegooid, is deze hergebruikt
 
         def luceneState():
-            return self._luceneIndex._executeQuery(MatchAllDocsQuery()).bitMatrixRow().asList()
+            return self._luceneIndex.bitMatrixRow(MatchAllDocsQuery()).asList()
 
         #the following tests that deletes without add do not trigger merges/shifting of docids
         lastDocIds = luceneState()
@@ -389,11 +390,11 @@ class LuceneTest(CQ2TestCase):
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'a')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'a')))
         self.assertEquals(len(hits), 1)
         self.assertEquals(['id0'], list(hits))
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'value')))
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('field', 'value')))
         self.assertEquals(len(hits), 1)
         self.assertEquals(['id0'], list(hits))
 
@@ -407,12 +408,12 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('field2', 'b')
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
-        
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='field2', sortDescending=False)
+
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='field2', sortDescending=False)
         self.assertEquals(len(hits), 2)
         self.assertEquals(['id0', 'id1'], list(hits))
 
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='field2', sortDescending=True)
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='field2', sortDescending=True)
         self.assertEquals(len(hits), 2)
         self.assertEquals(['id1', 'id0'], list(hits))
 
@@ -424,7 +425,35 @@ class LuceneTest(CQ2TestCase):
         myDocument.addIndexedField('field1', 'one')
         self._luceneIndex.addDocument(myDocument)
         self.timerCallbackMethod()
-        
-        hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='doesNotExist', sortDescending=False)
+
+        total, hits = self._luceneIndex.executeQuery(TermQuery(Term('field1', 'one')), sortBy='doesNotExist', sortDescending=False)
         self.assertEquals(len(hits), 2)
         self.assertEquals(['id0', 'id1'], list(hits))
+
+    def testBitMatrixRow(self):
+        document = Document('0')
+        document.addIndexedField('field', 'value')
+        self._luceneIndex.addDocument(document)
+
+        document = Document('1')
+        document.addIndexedField('field', 'nonMatching')
+        self._luceneIndex.addDocument(document)
+
+        document = Document('2')
+        document.addIndexedField('field', 'value')
+        self._luceneIndex.addDocument(document)
+        self.timerCallbackMethod()
+
+        self.assertEquals([0, 2], list(self._luceneIndex.bitMatrixRow(TermQuery(Term('field', 'value'))).asList()))
+
+    def testStartAndStopArguments(self):
+        def addDoc(n):
+            doc = Document(str(n))
+            doc.addIndexedField('field', str(n))
+            self._luceneIndex.addDocument(doc)
+        for n in range(20):
+            addDoc(n)
+        self.timerCallbackMethod()
+        total, hits = self._luceneIndex.executeQuery(MatchAllDocsQuery(), 3, 7)
+        self.assertEquals(7-3, len(hits))
+        self.assertEquals(['3', '4', '5', '6'], hits)

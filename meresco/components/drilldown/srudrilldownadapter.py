@@ -42,28 +42,22 @@ DRILLDOWN_HEADER = """<dd:drilldown
 DRILLDOWN_FOOTER = "</dd:drilldown>"
 
 class SRUDrilldownAdapter(Observable):
-
-    def __init__(self, serverUrl = None):
-        Observable.__init__(self)
-        if serverUrl != None:
-            raise Exception('The use of serverUrl is outdated. Please change your Application is DNA.')
-
-    def extraResponseData(self, arguments, hits):
+    def extraResponseData(self, *args, **kwargs):
         return generatorDecorate(
             DRILLDOWN_HEADER,
-            compose(self.all.extraResponseData(arguments, hits)),
+            compose(self.all.extraResponseData(*args, **kwargs)),
             DRILLDOWN_FOOTER)
 
-    def echoedExtraRequestData(self, arguments):
+    def echoedExtraRequestData(self, *args, **kwargs):
         return generatorDecorate(
             DRILLDOWN_HEADER,
-            compose(self.all.echoedExtraRequestData(arguments)),
+            compose(self.all.echoedExtraRequestData(*args, **kwargs)),
             DRILLDOWN_FOOTER)
 
 
 class SRUTermDrilldown(Observable):
 
-    def extraResponseData(self, arguments, hits):
+    def extraResponseData(self, arguments, cqlAbstractSyntaxTree):
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:
@@ -76,7 +70,9 @@ class SRUTermDrilldown(Observable):
         if fieldsAndMaximums == [""]:
             raise StopIteration
 
-        drilldownResults = self.any.drilldown(hits.bitMatrixRow(), fieldMaxTuples)
+        drilldownResults = self.any.drilldown(
+            self.any.bitMatrixRow(cqlAbstractSyntaxTree),
+            fieldMaxTuples)
         yield "<dd:term-drilldown>"
         for fieldname, termCounts in drilldownResults:
             yield '<dd:navigator name=%s>' % quoteattr(fieldname)
@@ -94,7 +90,7 @@ class SRUTermDrilldown(Observable):
 
 class SRUFieldDrilldown(Observable):
 
-    def extraResponseData(self, arguments, hits):
+    def extraResponseData(self, arguments, cqlAbstractSyntaxTree):
         query = arguments.get('query', [''])[0]
         term = arguments.get('x-field-drilldown', [''])[0]
         fields = arguments.get('x-field-drilldown-fields', [''])[0].split(",")
@@ -111,8 +107,8 @@ class SRUFieldDrilldown(Observable):
 
     def drilldown(self, query, term, fields):
         for field in fields:
-            hits = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL('(%s) AND %s=%s' % (query, field, term)))
-            yield field, len(hits)
+            total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL('(%s) AND %s=%s' % (query, field, term)))
+            yield field, total
 
     def echoedExtraRequestData(self, arguments):
         fieldDrilldown = arguments.get('x-field-drilldown', [''])[0]

@@ -36,6 +36,10 @@ class CQL2LuceneQuery(Observable, Logger):
         Observable.__init__(self)
         self._cqlComposer = Composer(unqualifiedFields)
 
-    def executeCQL(self, cqlAbstractSyntaxTree, sortBy=None, sortDescending=None):
+    def executeCQL(self, cqlAbstractSyntaxTree, *args, **kwargs):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
-        return self.any.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), sortBy, sortDescending)
+        return self.any.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), *args, **kwargs)
+
+    def bitMatrixRow(self, cqlAbstractSyntaxTree, *args, **kwargs):
+        ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
+        return self.any.bitMatrixRow(self._cqlComposer.compose(cqlAbstractSyntaxTree), *args, **kwargs)

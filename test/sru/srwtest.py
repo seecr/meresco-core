@@ -31,7 +31,7 @@ from cq2utils.calltrace import CallTrace
 
 from meresco.components.sru.srw import Srw
 
-from srutest import MockListeners, MockHits
+from srutest import MockListeners
 
 httpResponse = """HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
@@ -47,7 +47,7 @@ echoedSearchRetrieveRequest = """<srw:echoedSearchRetrieveRequest>
 
 searchRetrieveResponse = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">\n<srw:version>1.1</srw:version><srw:numberOfRecords>%i</srw:numberOfRecords>%s</srw:searchRetrieveResponse>"""
 
-wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-dc</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest)
+wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>%s-dc</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest)
 
 SRW_REQUEST = """<SRW:searchRetrieveRequest xmlns:SRW="http://www.loc.gov/zing/srw/">%s</SRW:searchRetrieveRequest>"""
 
@@ -100,7 +100,7 @@ Content-Type: text/xml; charset=utf-8
 
     def testContentType(self):
         component = Srw()
-        component.addObserver(MockListeners(MockHits(0)))
+        component.addObserver(MockListeners([0]))
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ''
         response = "".join(list(component.handleRequest(Body=request)))
         self.assertTrue('text/xml; charset=utf-8' in response, response)
@@ -108,12 +108,10 @@ Content-Type: text/xml; charset=utf-8
     def testNormalOperation(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
         component = Srw()
-        component.addObserver(MockListeners(MockHits(1)))
+        component.addObserver(MockListeners(['recordId']))
         response = "".join(list(component.handleRequest(Body=request)))
-        #self.assertEquals(['searchRetrieve'], self.plugin._arguments['operation'])
-        #self.assertEquals(['1.1'], self.plugin._arguments['version'])
-
-        self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % 'dc.author = "jones" and  dc.title = "smith"', response)
+        
+        self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % ('recordId', 'dc.author = "jones" and  dc.title = "smith"'), response)
 
     def testArgumentsAreNotUnicodeStrings(self):
         """JJ/TJ: unicode strings somehow paralyse server requests.
@@ -142,20 +140,20 @@ Content-Type: text/xml; charset=utf-8
 </SOAP:Envelope>"""
 
         component = Srw()
-        component.addObserver(MockListeners(MockHits(1)))
+        component.addObserver(MockListeners(['recordId']))
         response = "".join(list(component.handleRequest(Body=request)))
 
         echoRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
 <srw:query>dc.author = "jones" and  dc.title = "smith"</srw:query><srw:startRecord>1</srw:startRecord><srw:maximumRecords>10</srw:maximumRecords><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema></srw:echoedSearchRetrieveRequest>"""
 
-        self.assertEqualsWS(httpResponse % soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>0-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>recordId-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
 
 
     def testConstructorVariablesAreUsed(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
         component = Srw(defaultRecordSchema="DEFAULT_RECORD_SCHEMA", defaultRecordPacking="DEFAULT_RECORD_PACKING")
-        component.addObserver(MockListeners(MockHits(1)))
+        component.addObserver(MockListeners([1]))
         response = "".join(list(component.handleRequest(Body=request)))
         self.assertTrue("DEFAULT_RECORD_SCHEMA" in response)
         self.assertTrue("DEFAULT_RECORD_PACKING" in response)

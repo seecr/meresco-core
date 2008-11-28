@@ -203,29 +203,29 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , result)
 
     def testNextRecordPosition(self):
-        hits = MockHits(100)
+        hits = range(100)
         observer = MockListeners(hits)
 
         component = Sru('', '', '', '')
         component.addObserver(observer)
-        result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra&startRecord=10&maximumRecords=15')))
+        result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra&startRecord=11&maximumRecords=15')))
+        self.assertTrue("<srw:nextRecordPosition>26</srw:nextRecordPosition>" in result, result)
 
-        self.assertTrue("<srw:nextRecordPosition>25</srw:nextRecordPosition>" in result, result)
+        self.assertEquals(10, observer.start) # SRU is 1 based
+        self.assertEquals(25, observer.stop)
 
     def testSearchRetrieve(self):
         arguments = {'version':['1.1'], 'operation':['searchRetrieve'],  'query':['field=value'], 'x-recordSchema':['extra']}
         'database'
-        hits = MockHits(2)
-        observer = MockListeners(hits)
-
+        observer = MockListeners(['0','1'])
         component = Sru('', '', '', '')
         component.addObserver(observer)
         result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra')))
 
         self.assertTrue(observer.executeCQLCalled)
         self.assertEquals('field=value', cqlCompose(observer.cqlQuery))
-        self.assertEquals(0, hits.slice_start)
-        self.assertEquals(10, hits.slice_stop)
+        self.assertEquals(0, observer.start)
+        self.assertEquals(10, observer.stop)
 
         self.assertEquals(4, len(observer.writtenRecords))
         self.assertEquals(('0', 'dc'), observer.writtenRecords[0])
@@ -291,26 +291,16 @@ class MockListeners:
         self.executeCQLResult = executeCQLResult
         self.writtenRecords = []
 
-    def executeCQL(self, cqlAbstractSyntaxTree, sortBy, sortDescending):
+    def executeCQL(self, cqlAbstractSyntaxTree, start=0, stop=10, sortBy=None, sortDescending=None):
         self.executeCQLCalled = True
         self.cqlQuery = cqlAbstractSyntaxTree
         self.sortKey = sortBy
         self.sortDirection = sortDescending
-        return self.executeCQLResult
+        self.start = start
+        self.stop = stop
+        return len(self.executeCQLResult), self.executeCQLResult[start:stop]
 
     def yieldRecord(self, recordId, recordSchema):
         self.writtenRecords.append((recordId, recordSchema))
         yield "<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema)
 
-class MockHits:
-
-    def __init__(self, size):
-        self.size = size
-
-    def __len__(self):
-        return self.size
-
-    def __getslice__(self, start, stop):
-        self.slice_start = start
-        self.slice_stop = stop
-        return [str(i) for i in range(start, min(self.size, stop))]

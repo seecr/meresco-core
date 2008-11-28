@@ -220,14 +220,14 @@ class Sru(Observable):
             yield chunk
         yield '</srw:echoedSearchRetrieveRequest>'
 
-    def _writeExtraResponseData(self, arguments, hits):
+    def _writeExtraResponseData(self, arguments, cqlAbstractSyntaxTree):
         return decorate('<srw:extraResponseData>',
-            self._extraResponseDataTryExcept(arguments, hits),
+            self._extraResponseDataTryExcept(arguments, cqlAbstractSyntaxTree),
             '</srw:extraResponseData>')
 
-    def _extraResponseDataTryExcept(self, arguments, hits):
+    def _extraResponseDataTryExcept(self, arguments, cqlAbstractSyntaxTree):
         try:
-            stuffs = compose(self.all.extraResponseData(arguments, hits))
+            stuffs = compose(self.all.extraResponseData(arguments, cqlAbstractSyntaxTree))
             for stuff in stuffs:
                 yield stuff
         except Exception, e:
@@ -236,16 +236,18 @@ class Sru(Observable):
     def _doSearchRetrieve(self, sruQuery, arguments):
         SRU_IS_ONE_BASED = 1
 
-        #KvS/TJ: volgende 'parseCQL(sruQuery.query)' is natuurlijk beetje jammer, volgende keer dat we hier langskomen: a. in sruquery dat resultaat opslaan en dan b. hier gebruiken.
-        hits = self.any.executeCQL(
-            cqlAbstractSyntaxTree=parseCQL(sruQuery.query),
+        start = sruQuery.startRecord - SRU_IS_ONE_BASED
+        cqlAbstractSyntaxTree = parseCQL(sruQuery.query)
+        total, recordIds = self.any.executeCQL(
+            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
+            start=start,
+            stop=start + sruQuery.maximumRecords,
             sortBy=sruQuery.sortBy,
             sortDescending=sruQuery.sortDescending)
-        yield self._startResults(len(hits))
+        yield self._startResults(total)
 
         recordsWritten = 0
-        start = sruQuery.startRecord - SRU_IS_ONE_BASED
-        for recordId in hits[start: start + sruQuery.maximumRecords]:
+        for recordId in recordIds:
             if not recordsWritten:
                 yield '<srw:records>'
             yield self._writeResult(sruQuery, recordId)
@@ -254,11 +256,11 @@ class Sru(Observable):
         if recordsWritten:
             yield '</srw:records>'
             nextRecordPosition = start + recordsWritten
-            if nextRecordPosition < len(hits):
+            if nextRecordPosition < total:
                 yield '<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % (nextRecordPosition + SRU_IS_ONE_BASED)
 
         yield self._writeEchoedSearchRetrieveRequest(arguments)
-        yield self._writeExtraResponseData(arguments, hits)
+        yield self._writeExtraResponseData(arguments=arguments, cqlAbstractSyntaxTree=cqlAbstractSyntaxTree)
         yield self._endResults()
 
     def _startResults(self, numberOfRecords):
@@ -301,7 +303,7 @@ class Sru(Observable):
             yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking))
             yield '</recordData>'
         yield '</srw:extraRecordData>'
-    
+
     def _yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
         generator = self.all.yieldRecord(recordId, recordSchema)
         if recordPacking == 'xml':

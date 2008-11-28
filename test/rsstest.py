@@ -33,7 +33,7 @@ from urllib import urlencode
 
 from meresco.components.rss import Rss
 
-from sru.srutest import MockListeners, MockHits
+from sru.srutest import MockListeners
 
 
 RSS_HEAD = """HTTP/1.0 200 OK
@@ -55,7 +55,7 @@ RSS = RSS_HEAD % """<title>Test title</title>
 class RssTest(CQ2TestCase):
 
     def testNoResults(self):
-        observer = MockListeners(MockHits(0))
+        observer = MockListeners([])
 
         rss = Rss(
             title = 'Test title',
@@ -73,7 +73,7 @@ class RssTest(CQ2TestCase):
         def getRecord(recordId):
             yield '<item><title>Test Title</title><link>Test Identifier</link><description>Test Description</description></item>'
 
-        listeners = MockListeners(MockHits(1))
+        listeners = MockListeners([1])
         listeners.getRecord = getRecord
 
         rss = Rss(
@@ -115,7 +115,7 @@ class RssTest(CQ2TestCase):
         xml = bind_string(result[result.index("<?xml"):])
         self.assertEquals('ERROR Test title', str(xml.rss.channel.title))
         self.assertTrue('''An error occurred 'MANDATORY parameter 'query' not supplied or empty''' in str(xml.rss.channel.description), str(xml.rss.channel.description))
-        
+
 
     def assertMaxAndSort(self, maximumRecords, sortKey, sortDirection, rssArgs, sruArgs):
         rss = Rss(
@@ -128,12 +128,12 @@ class RssTest(CQ2TestCase):
         def getRecord(recordId):
             recordIds.append(recordId)
             return '<item/>'
-        queryResponder = MockListeners(MockHits(100))
+        queryResponder = MockListeners(range(100))
         queryResponder.getRecord = getRecord
         rss.addObserver(queryResponder)
-        
+
         result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery&' + urlencode(sruArgs))))
-        
+
         self.assertEquals(sortKey, queryResponder.sortKey)
         self.assertEquals(sortDirection, queryResponder.sortDirection)
         self.assertEquals(maximumRecords, len(recordIds))
@@ -147,9 +147,9 @@ class RssTest(CQ2TestCase):
         self.assertMaxAndSort(10, 'sortable', True, rssArgs={'sortKeys':'sortable,,1'}, sruArgs={})
         self.assertMaxAndSort(10, 'othersortable', False, rssArgs={'sortKeys':'sortable,,1'}, sruArgs={'sortKeys':'othersortable,,0'})
         self.assertMaxAndSort(10, 'othersortable', False, rssArgs={}, sruArgs={'sortKeys':'othersortable,,0'})
-        
+
     def testContentType(self):
-        listeners = MockListeners(MockHits(0))
+        listeners = MockListeners([0])
         rss = Rss(title = 'Title', description = 'Description', link = 'Link')
         rss.addObserver(listeners)
 

@@ -28,13 +28,12 @@
 
 from os.path import isdir
 from os import makedirs
-from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort,  StandardTokenizer, StandardFilter, LowerCaseFilter
+from PyLucene import IndexReader, IndexWriter, IndexSearcher, StandardAnalyzer, Term, TermQuery, Sort,  StandardTokenizer, StandardFilter, LowerCaseFilter, QueryFilter
 
-from meresco.components.lucene.hits import Hits
 from meresco.components.lucene.document import IDFIELD
 from meresco.framework import Observable, Resource
 
-from bitmatrix import IncNumberMap
+from bitmatrix import IncNumberMap, JavaBitSetRow, Row, MappedRow
 
 class LuceneException(Exception):
     pass
@@ -73,11 +72,17 @@ class LuceneIndex(Observable):
     def observer_init(self):
         self.do.indexStarted(self._readerResource)
 
-    def _executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return Hits(self._searcher, self._readerResource, pyLuceneQuery, self._getPyLuceneSort(sortBy, sortDescending))
+    def bitMatrixRow(self, pyLuceneQuery):
+        bits = QueryFilter(pyLuceneQuery).bits(self._readerResource._subject)
+        return JavaBitSetRow(bits)
 
-    def executeQuery(self, pyLuceneQuery, sortBy=None, sortDescending=None):
-        return self._executeQuery(pyLuceneQuery, sortBy, sortDescending)
+    def executeQuery(self, pyLuceneQuery, start=0, stop=10, sortBy=None, sortDescending=None):
+        sortField = self._getPyLuceneSort(sortBy, sortDescending)
+        if sortField:
+            hits = self._searcher.search(pyLuceneQuery, sortField)
+        else:
+            hits = self._searcher.search(pyLuceneQuery)
+        return len(hits), [hits[i].get(IDFIELD) for i in range(start,min(len(hits),stop))]
 
     def _lastUpdateTimeout(self):
         try:
@@ -93,12 +98,10 @@ class LuceneIndex(Observable):
             IncludeStopWordAnalyzer(), False)
 
     def _docIdForId(self, id):
-        hits = self._executeQuery(TermQuery(Term(IDFIELD, id)))
-        oneElementList = hits.bitMatrixRow().asList()
-        if len(oneElementList) == 0:
-            return None
-        assert len(oneElementList) == 1
-        return oneElementList[0]
+        hits = self.executeQuery(TermQuery(Term(IDFIELD, id)))
+        if len(hits) == 1:
+            return hits[0]
+        return None
 
     def getIndexReader(self):
         return self._readerResource
