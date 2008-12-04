@@ -30,7 +30,7 @@ from time import time
 from cq2utils import CQ2TestCase
 from os import makedirs
 from os.path import isfile, join
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, TopResults
 
 class StatisticsTest(CQ2TestCase):
 
@@ -142,14 +142,14 @@ class StatisticsTest(CQ2TestCase):
 
     def testCrashInWriteSnapshotAfterWriteRecovery(self):
         snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {'0': Top100s({('keys',): {('the old one',): 3}})}
+        theOldOne = {'0': TopResults(data={('keys',): {('the old one',): 3}})}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
 
         open(self.tempdir + '/txlog', 'w').write('keys:should_not_appear\n')
 
         snapshotFile = open(self.tempdir + '/snapshot.writing.done', 'w')
-        theNewOne = {'0': Top100s({('keys',): {('the new one',): 3}})}
+        theNewOne = {'0': TopResults(data={('keys',): {('the new one',): 3}})}
         pickle.dump(theNewOne, snapshotFile)
         snapshotFile.close()
 
@@ -403,7 +403,7 @@ class StatisticsTest(CQ2TestCase):
 
         root1.merge(root2)
 
-        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2}}, root1.get(TopResults(), None, None)._data)
 
         
     def testMergeTreeWherePartsHaveAlreadyBeenAggregated(self):
@@ -417,13 +417,13 @@ class StatisticsTest(CQ2TestCase):
         root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
         root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
         
-        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
-        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(TopResults(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(TopResults(), None, None)._data)
 
         root1.merge(root2)
         
 
-        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root1.get(TopResults(), None, None)._data)
 
     def testMergeTreeWherePartsHaveAlreadyBeenAggregatedTheOtherWayAround(self):
         stats1 = self.createStatsdirForMergeTests('stats1')
@@ -436,11 +436,11 @@ class StatisticsTest(CQ2TestCase):
         root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
         root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
         
-        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
-        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(TopResults(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(TopResults(), None, None)._data)
         root2.merge(root1)
         
-        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root2.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root2.get(TopResults(), None, None)._data)
 
     def testMergeStatistics(self):
         stats1 = self.createStatsdirForMergeTests('stats1')
@@ -454,7 +454,11 @@ class StatisticsTest(CQ2TestCase):
         stats1.merge(stats2)
         self.assertEquals({('sru',): 2, ('srw',): 3, ('rss',):1}, stats1.get(('protocol',)))
 
-    
+    def testExtendResults(self):
+        one = TopResults({('keys',):{'a':10, 'b':10, 'c':5}}, nrOfResults=3)
+        two = TopResults({('keys',):{'c':6, 'd':7, 'e':8}}, nrOfResults=3)
+        one.extend(two)
+        self.assertEquals({'a':10, 'b':10, 'c':11}, one._data[('keys',)])
     
 
         
@@ -463,6 +467,3 @@ class ListFactory(object):
         return []
     def doAdd(self, values, value):
         values.append(value)
-    def doExtend(self, values0, values1):
-        values0.extend(values1)
-
