@@ -101,6 +101,9 @@ class Statistics(Observable):
         self._data = Aggregator(Top100sFactory())
         self._readState()
 
+    def merge(self, rhsStatistics):
+        self._data.merge(rhsStatistics._data)
+
     def unknown(self, message, *args, **kwargs):
         __log__ = {} # to be found on the call stack by Logger
         responses = self.all.unknown(message, *args, **kwargs)
@@ -225,6 +228,17 @@ class AggregatorNode(object):
         self._children = {}
         self._aggregated = True
 
+    def merge(self, rhsNode):
+        if self._aggregated:
+            rhsNode._aggregate()
+        self._xxxFactory.doExtend(self._values, rhsNode._values)
+        for rhsTime, rhsChild in rhsNode._children.items():
+            if rhsTime in self._children:
+                self._children[rhsTime].merge(rhsChild)
+            else:
+                self._children[rhsTime] = rhsChild
+
+
     def add(self, time, data, depth):
         if len(time) == 0:
             self._xxxFactory.doAdd(self._values, data)
@@ -275,15 +289,18 @@ class AggregatorNode(object):
             child.get(result, left, right)
         return result
 
-    def __resssssspr__(self):
+    def __repr__(self):
         return "\nAggregatorNode Children:\n%s \nvalues:%s\n" % (self._children, self._values)
 
 class Aggregator(object):
 
     def __init__(self, xxxFactory):
-        self._aggregationQueues = [[], [], [], [], [], [], []]
-        self._root = AggregatorNode(xxxFactory, self._aggregationQueues)
+        aggregationQueues = [[], [], [], [], [], [], []]
+        self._root = AggregatorNode(xxxFactory, aggregationQueues)
         self._xxxFactory = xxxFactory
+
+    def merge(self, rhsAggregator):
+        self._root.merge(rhsAggregator._root)
 
     def add(self, data):
         self._addAt(gmtime()[:6], data)
