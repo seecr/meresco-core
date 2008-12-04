@@ -28,7 +28,8 @@
 import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
-from os.path import isfile
+from os import makedirs
+from os.path import isfile, join
 from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s
 
 class StatisticsTest(CQ2TestCase):
@@ -365,7 +366,119 @@ class StatisticsTest(CQ2TestCase):
             pass
         self.assertEquals(["value00", "value01"], aggregator.get((2000, 1, 1, 0), (2000, 1, 1, 0)))
 
+    def createStatsdirForMergeTests(self, name):
+        statsDir = join(self.tempdir, name)
+        makedirs(statsDir)
+        stats = Statistics(statsDir, [('protocol',)])
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats._process({'protocol':['sru']})
+        stats._process({'protocol':['srw']})
+        return stats
 
+
+    def testMergeNode(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+
+        leaf1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]._children[0]
+        leaf2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]._children[0]
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, leaf1._values._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, leaf2._values._data)
+
+        leaf1.merge(leaf2)
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2}}, leaf1._values._data)
+
+        self.assertEquals(False, leaf2._aggregated)
+        self.assertEquals(False, leaf1._aggregated)
+
+    def testMergeTree(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+
+        root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]
+        root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]
+
+        self.assertEquals({}, root1._values._data)
+        self.assertEquals({}, root2._values._data)
+
+        root1.merge(root2)
+
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2}}, root1.get(Top100s(), None, None)._data)
+
+        
+    def testMergeTreeWherePartsHaveAlreadyBeenAggregated(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+        stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
+        stats1._process({'protocol':['srw']})
+        stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
+        stats1._process({'protocol':['rss']})
+
+
+        root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
+        root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
+        
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
+
+        root1.merge(root2)
+        
+
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+
+    def testMergeTreeWherePartsHaveAlreadyBeenAggregatedTheOtherWayAround(self):
+        stats1Dir = join(self.tempdir, 'stats1')
+        stats2Dir = join(self.tempdir, 'stats2')
+        makedirs(stats1Dir)
+        makedirs(stats2Dir)
+        stats1 = Statistics(stats1Dir, [('protocol',)])
+        stats1._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats1._process({'protocol':['sru', ]})
+        stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
+        stats1._process({'protocol':['srw']})
+        stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
+        stats1._process({'protocol':['rss']})
+
+        stats2 = Statistics(stats2Dir, [('protocol',)])
+        stats2._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats2._process({'protocol':['srw']})
+        stats2._process({'protocol':['sru']})
+
+        root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
+        root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
+        
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
+        root2.merge(root1)
+        
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2, ('rss',):1}}, root2.get(Top100s(), None, None)._data)
+
+    def testMergeStatistics(self):
+        stats1Dir = join(self.tempdir, 'stats1')
+        stats2Dir = join(self.tempdir, 'stats2')
+        makedirs(stats1Dir)
+        makedirs(stats2Dir)
+        stats1 = Statistics(stats1Dir, [('protocol',)])
+        stats1._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats1._process({'protocol':['sru', ]})
+        stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
+        stats1._process({'protocol':['srw']})
+        stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
+        stats1._process({'protocol':['rss']})
+
+        stats2 = Statistics(stats2Dir, [('protocol',)])
+        stats2._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats2._process({'protocol':['srw']})
+        stats2._process({'protocol':['sru']})
+
+        self.assertEquals({('sru',): 1, ('srw',): 1, ('rss',):1}, stats1.get(('protocol',)))
+        stats1.merge(stats2)
+        self.assertEquals({('sru',): 2, ('srw',): 2, ('rss',):1}, stats1.get(('protocol',)))
+
+    
+    
+
+        
 class ListFactory(object):
     def doInit(self):
         return []
