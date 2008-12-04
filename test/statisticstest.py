@@ -414,7 +414,6 @@ class StatisticsTest(CQ2TestCase):
         stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
         stats1._process({'protocol':['rss']})
 
-
         root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
         root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
         
@@ -427,53 +426,33 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
 
     def testMergeTreeWherePartsHaveAlreadyBeenAggregatedTheOtherWayAround(self):
-        stats1Dir = join(self.tempdir, 'stats1')
-        stats2Dir = join(self.tempdir, 'stats2')
-        makedirs(stats1Dir)
-        makedirs(stats2Dir)
-        stats1 = Statistics(stats1Dir, [('protocol',)])
-        stats1._clock = lambda: (1970, 1, 1, 0, 0, 0)
-        stats1._process({'protocol':['sru', ]})
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
         stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
         stats1._process({'protocol':['srw']})
         stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
         stats1._process({'protocol':['rss']})
-
-        stats2 = Statistics(stats2Dir, [('protocol',)])
-        stats2._clock = lambda: (1970, 1, 1, 0, 0, 0)
-        stats2._process({'protocol':['srw']})
-        stats2._process({'protocol':['sru']})
 
         root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
         root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
         
-        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
         self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
         root2.merge(root1)
         
-        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2, ('rss',):1}}, root2.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root2.get(Top100s(), None, None)._data)
 
     def testMergeStatistics(self):
-        stats1Dir = join(self.tempdir, 'stats1')
-        stats2Dir = join(self.tempdir, 'stats2')
-        makedirs(stats1Dir)
-        makedirs(stats2Dir)
-        stats1 = Statistics(stats1Dir, [('protocol',)])
-        stats1._clock = lambda: (1970, 1, 1, 0, 0, 0)
-        stats1._process({'protocol':['sru', ]})
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
         stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
         stats1._process({'protocol':['srw']})
         stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
         stats1._process({'protocol':['rss']})
 
-        stats2 = Statistics(stats2Dir, [('protocol',)])
-        stats2._clock = lambda: (1970, 1, 1, 0, 0, 0)
-        stats2._process({'protocol':['srw']})
-        stats2._process({'protocol':['sru']})
-
-        self.assertEquals({('sru',): 1, ('srw',): 1, ('rss',):1}, stats1.get(('protocol',)))
+        self.assertEquals({('sru',): 1, ('srw',): 2, ('rss',):1}, stats1.get(('protocol',)))
         stats1.merge(stats2)
-        self.assertEquals({('sru',): 2, ('srw',): 2, ('rss',):1}, stats1.get(('protocol',)))
+        self.assertEquals({('sru',): 2, ('srw',): 3, ('rss',):1}, stats1.get(('protocol',)))
 
     
     
