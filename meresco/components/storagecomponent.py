@@ -96,6 +96,13 @@ class StorageComponent(object):
                 yield identifier
                 lastIdentifier = identifier
 
-    def listIdentifiers(self):
+    def _listIdentifiersByPartName(self, partName):
+        for identifier, partname in self._storage:
+            if partName == partname:
+                yield identifier
+
+    def listIdentifiers(self, partName=None):
         """Use an ifilter to hide the generator so it won't be consumed by compose"""
+        if partName:
+            return ifilter(None, self._listIdentifiersByPartName(partName))
         return ifilter(None, self._listIdentifiers())

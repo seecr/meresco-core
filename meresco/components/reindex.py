@@ -33,9 +33,17 @@ from StringIO import StringIO
 EMPTYDOC = parse(StringIO('<empty/>'))
 
 class Reindex(Observable):
+    def __init__(self, partName):
+        Observable.__init__(self)
+        self._partName = partName
+
     def reindex(self):
-        for identifier in self.any.listIdentifiers():
-            self.do.add(identifier, 'ignoredName', EMPTYDOC)
+        for identifier in self.any.listIdentifiers(self._partName):
+            try:
+                self.do.add(identifier, 'ignoredName', EMPTYDOC)
+            except:
+                print 'ERROR', identifier
+                raise
             yield identifier
 
 class ReindexConsole(Observable):

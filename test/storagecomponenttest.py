@@ -109,4 +109,7 @@ class StorageComponentTest(CQ2TestCase):
         self.storageComponent.add('some:thing:anId-123','anotherPartName', 'data')
         self.assertEquals(['some:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
         self.storageComponent.add('some:thing:anId-122','anotherPartName', 'data')
-        self.assertEquals(['some:thing:anId-123', 'some:thing:anId-122'], list(self.storageComponent.listIdentifiers()))
+        self.storageComponent.add('any:thing:anId-123','somePartName', 'data')
+        self.assertEquals(['some:thing:anId-123', 'some:thing:anId-122', 'any:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
+        self.assertEquals(['some:thing:anId-123', 'any:thing:anId-123'], list(self.storageComponent.listIdentifiers('somePartName')))
+

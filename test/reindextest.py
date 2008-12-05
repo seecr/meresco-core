@@ -42,7 +42,7 @@ class ReindexTest(CQ2TestCase):
         self.assertEquals(set(['identifier:B', 'identifier:C', 'identifier:A']), set(storage.listIdentifiers()))
         observer = CallTrace('observer')
         reindex = be(
-            (Reindex(),
+            (Reindex('part'),
                 (FilterMessages(allowed=['listIdentifiers']),
                     (storage, ),
                 ),
