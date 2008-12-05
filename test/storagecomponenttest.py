@@ -94,7 +94,7 @@ class StorageComponentTest(CQ2TestCase):
         self.storage = self.storageComponent._storage
         self.storageComponent.delete('some:thing:anId-123')
         self.assertFalse(identifier in self.storage)
-           
+
 
     def testDeleteNonexisting(self):
         identifier = ('some:thing:anId-123','somePartName.xml')
@@ -102,3 +102,11 @@ class StorageComponentTest(CQ2TestCase):
         self.storageComponent.deletePart('some:thing:anId-123', 'somePartName')
         self.assertFalse(identifier in self.storage)
 
+    def testEnumerate(self):
+        self.assertEquals([], list(self.storageComponent.listIdentifiers()))
+        self.storageComponent.add('some:thing:anId-123','somePartName', 'data')
+        self.assertEquals(['some:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
+        self.storageComponent.add('some:thing:anId-123','anotherPartName', 'data')
+        self.assertEquals(['some:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
+        self.storageComponent.add('some:thing:anId-122','anotherPartName', 'data')
+        self.assertEquals(['some:thing:anId-123', 'some:thing:anId-122'], list(self.storageComponent.listIdentifiers()))

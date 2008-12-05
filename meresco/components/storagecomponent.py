@@ -27,6 +27,7 @@
 ## end license ##
 
 from storage import HierarchicalStorage, Storage
+from itertools import ifilter
 
 def defaultSplit((id, partName)):
     result = id.split(':',1)
@@ -87,3 +88,14 @@ class StorageComponent(object):
 
     def getStream(self, id, partName):
         return self._storage.get((id, partName))
+
+    def _listIdentifiers(self):
+        lastIdentifier = None
+        for identifier, partname in self._storage:
+            if identifier != lastIdentifier:
+                yield identifier
+                lastIdentifier = identifier
+
+    def listIdentifiers(self):
+        """Use an ifilter to hide the generator so it won't be consumed by compose"""
+        return ifilter(None, self._listIdentifiers())

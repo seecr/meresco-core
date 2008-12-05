@@ -37,7 +37,7 @@ class Venturi(Observable):
         self._should = should
         self._could = could
 
-    def add(self, identifier, name, lxmlNode):
+    def add(self, identifier=None, name=None, lxmlNode=None):
         self.tx.locals['id'] = identifier
         for partname, partXPath in self._should:
             part = self._findPart(identifier, partname, lxmlNode, partXPath)
@@ -67,4 +67,5 @@ class Venturi(Observable):
         return parse(StringIO(anObject))
 
     def delete(self, id):
+        self.tx.locals['id'] = id
         self.do.delete(id)

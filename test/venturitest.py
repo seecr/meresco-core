@@ -142,3 +142,10 @@ class VenturiTest(CQ2TestCase):
         v = createVenturiHelix([('PARTNAME', '/document')],[], TempComponent())
         v.do.add('ID', 'PARTNAME', fromstring('<document><other/></document>'))
         self.assertEquals(1, len(ids))
+
+    def testDeleteAlsoSetsIdOnTransaction(self):
+        __callstack_var_tx__ = CallTrace('Transaction')
+        __callstack_var_tx__.locals={}
+        v = Venturi(should=[('PARTNAME', '/document')],could=[])
+        v.delete('identifier')
+        self.assertEquals('identifier', __callstack_var_tx__.locals['id'])

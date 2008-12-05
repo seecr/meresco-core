@@ -193,10 +193,22 @@ class ObservableTest(unittest.TestCase):
         observable = Observable()
         class Listener(object):
             def unknown(self, methodName, one):
-                return ["via unknown " + one]
+                return ("via unknown " + one for x in [1])
         observable.addObserver(Listener())
         retval = observable.any.unknown('non_existing_method', 'one')
         self.assertEquals("via unknown one", retval)
+
+    def testUnknownIsEquivalentToNormalCall(self):
+        observable = Observable()
+        class Listener(object):
+            def normal(self):
+                return 'normal'
+            def unknown(self, message, *args, **kwargs):
+                yield self.normal()
+        observable.addObserver(Listener())
+        result1 = observable.any.unknown('normal')
+        result2 = observable.any.unknown('other')
+        self.assertEquals(result1, result2)
 
     def testSyntacticSugarIsPreserved(self):
         class WithUnknown(Observable):

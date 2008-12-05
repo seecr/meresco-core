@@ -131,7 +131,7 @@ def _getCallstackVar(name):
     while stackVarName not in frame.f_locals:
         frame = frame.f_back
     return frame.f_locals[stackVarName]
-    
+
 def getCallstackVar(name):
     try:
         return _getCallstackVar(name)

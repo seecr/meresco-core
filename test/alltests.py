@@ -79,7 +79,6 @@ from http.observablehttpservertest import ObservableHttpServerTest
 from lucene.cql2lucenequerytest import Cql2LuceneQueryTest
 from lucene.fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from lucene.lucenetest import LuceneTest
-#from lucene.lucene2test import Lucene2Test
 from lucene.string2cqltest import String2CQLTest
 
 from ngram.ngramtest import NGramTest
@@ -109,6 +108,8 @@ from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest
 from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
 from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
+
+from reindextest import ReindexTest
 
 
 if __name__ == '__main__':
