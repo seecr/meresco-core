@@ -103,13 +103,13 @@ class StorageComponentTest(CQ2TestCase):
         self.assertFalse(identifier in self.storage)
 
     def testEnumerate(self):
-        self.assertEquals([], list(self.storageComponent.listIdentifiers()))
+        self.assertEquals(set([]), set(self.storageComponent.listIdentifiers()))
         self.storageComponent.add('some:thing:anId-123','somePartName', 'data')
-        self.assertEquals(['some:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
+        self.assertEquals(set(['some:thing:anId-123']), set(self.storageComponent.listIdentifiers()))
         self.storageComponent.add('some:thing:anId-123','anotherPartName', 'data')
-        self.assertEquals(['some:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
+        self.assertEquals(set(['some:thing:anId-123']), set(self.storageComponent.listIdentifiers()))
         self.storageComponent.add('some:thing:anId-122','anotherPartName', 'data')
         self.storageComponent.add('any:thing:anId-123','somePartName', 'data')
-        self.assertEquals(['some:thing:anId-123', 'some:thing:anId-122', 'any:thing:anId-123'], list(self.storageComponent.listIdentifiers()))
-        self.assertEquals(['some:thing:anId-123', 'any:thing:anId-123'], list(self.storageComponent.listIdentifiers('somePartName')))
+        self.assertEquals(set(['some:thing:anId-123', 'some:thing:anId-122', 'any:thing:anId-123']), set(self.storageComponent.listIdentifiers()))
+        self.assertEquals(set(['some:thing:anId-123', 'any:thing:anId-123']), set(self.storageComponent.listIdentifiers('somePartName')))
 
