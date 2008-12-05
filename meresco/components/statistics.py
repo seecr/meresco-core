@@ -52,31 +52,23 @@ class Logger(object):
                     var[key].append(value)
                 return
             frame = frame.f_back
-            
-class TopResults(object):
-    def __init__(self, data=None, nrOfResults=100):
+
+class Top100s(object):
+    def __init__(self, data=None):
         if not data:
             data = {}
         self._data = data
-        self._nrOfResults = nrOfResults
 
     def inc(self, statisticId, occurrence, count=1):
-        self._incrementOnly(statisticId, occurrence, count)
-        self._data[statisticId] = dict(self.getTop(statisticId))
-        
-    def _incrementOnly(self, statisticId, occurrence, count):
-        self._data.setdefault(statisticId, {})
-        self._data[statisticId].setdefault(occurrence, 0)
+        if not statisticId in self._data:
+            self._data[statisticId] = {}
+        if not occurrence in self._data[statisticId]:
+            self._data[statisticId][occurrence] = 0
         self._data[statisticId][occurrence] += count
+        self._data[statisticId] = dict(self.getTop100(statisticId))
 
-    def extend(self, rhsTopResults):
-        for statisticId in rhsTopResults.statisticIds():
-            for occurrence, count in rhsTopResults.getTop(statisticId):
-                self._incrementOnly(statisticId, occurrence, count)
-            self._data[statisticId] = dict(self.getTop(statisticId))
-
-    def getTop(self, statisticId):
-        return sorted(self._data.get(statisticId, {}).items(), cmp=lambda (k1,v1),(k2,v2):cmp(v2,v1))[:self._nrOfResults]
+    def getTop100(self, statisticId):
+        return sorted(self._data.get(statisticId, {}).items(), cmp=lambda (k1,v1),(k2,v2):cmp(v2,v1))[:100]
 
     def statisticIds(self):
         return self._data.keys()
@@ -84,15 +76,17 @@ class TopResults(object):
     def __eq__(self, other):
         return other.__class__ == self.__class__ and other._data == self._data
 
-class TopResultsFactory(object):
-    def __init__(self, nrOfResults=100):
-        self._nrOfResults = nrOfResults
-    
+class Top100sFactory(object):
     def doInit(self):
-        return TopResults(nrOfResults=self._nrOfResults)
+        return Top100s()
 
-    def doAdd(self, topResults, (statistic, fieldValues)):
-        topResults.inc(statistic, fieldValues)
+    def doAdd(self, top100s, (statistic, fieldValues)):
+        top100s.inc(statistic, fieldValues)
+
+    def doExtend(self, left, right):
+        for id in right.statisticIds():
+            for occurrence, count in right.getTop100(id):
+                left.inc(id, occurrence, count)
 
 class Statistics(Observable):
     def __init__(self, path, keys, snapshotInterval=3600):
@@ -104,11 +98,8 @@ class Statistics(Observable):
         self._keys = keys
         self._snapshotInterval = snapshotInterval
         self._lastSnapshot = (1970, 1, 1, 0, 0, 0)
-        self._data = Aggregator(TopResultsFactory())
+        self._data = Aggregator(Top100sFactory())
         self._readState()
-
-    def merge(self, rhsStatistics):
-        self._data.merge(rhsStatistics._data)
 
     def unknown(self, message, *args, **kwargs):
         __log__ = {} # to be found on the call stack by Logger
@@ -124,7 +115,7 @@ class Statistics(Observable):
     def get(self, statisticId, t0=(), t1=()):
         if statisticId not in self._keys:
             raise KeyError('%s not in %s' % (statisticId, self._keys))
-        return dict(self._data.get(t0, t1).getTop(statisticId))
+        return dict(self._data.get(t0, t1).getTop100(statisticId))
         #opruimen: dict staat hier even voor de tests
 
     def _clock(self):
@@ -230,20 +221,9 @@ class AggregatorNode(object):
             return
         for nr, child in self._children.items():
             child._aggregate()
-            self._values.extend(child._values)
+            self._xxxFactory.doExtend(self._values, child._values)
         self._children = {}
         self._aggregated = True
-
-    def merge(self, rhsNode):
-        if self._aggregated:
-            rhsNode._aggregate()
-        self._values.extend(rhsNode._values)
-        for rhsTime, rhsChild in rhsNode._children.items():
-            if rhsTime in self._children:
-                self._children[rhsTime].merge(rhsChild)
-            else:
-                self._children[rhsTime] = rhsChild
-
 
     def add(self, time, data, depth):
         if len(time) == 0:
@@ -264,7 +244,7 @@ class AggregatorNode(object):
 
     def get(self, result, fromTime, toTime):
         if not fromTime and not toTime:
-            result.extend(self._values)
+            self._xxxFactory.doExtend(result, self._values)
             if not self._aggregated:
                 for digit, child in self._children.items():
                     child.get(result, [], [])
@@ -295,18 +275,15 @@ class AggregatorNode(object):
             child.get(result, left, right)
         return result
 
-    def __repr__(self):
+    def __resssssspr__(self):
         return "\nAggregatorNode Children:\n%s \nvalues:%s\n" % (self._children, self._values)
 
 class Aggregator(object):
 
     def __init__(self, xxxFactory):
-        aggregationQueues = [[], [], [], [], [], [], []]
-        self._root = AggregatorNode(xxxFactory, aggregationQueues)
+        self._aggregationQueues = [[], [], [], [], [], [], []]
+        self._root = AggregatorNode(xxxFactory, self._aggregationQueues)
         self._xxxFactory = xxxFactory
-
-    def merge(self, rhsAggregator):
-        self._root.merge(rhsAggregator._root)
 
     def add(self, data):
         self._addAt(gmtime()[:6], data)
