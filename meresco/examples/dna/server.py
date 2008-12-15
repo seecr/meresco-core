@@ -32,12 +32,13 @@ from os import makedirs
 
 from meresco.framework import be, Observable, TransactionScope, ResourceManager, Transparant
 
-from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem
+from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem, Lxml2Amara
 from meresco.components.drilldown import Drilldown, SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
 from meresco.components.http import PathFilter, ObservableHttpServer
 from meresco.components.http.webrequestserver import WebRequestServer
 from meresco.components.lucene import unlock, LuceneIndex, CQL2LuceneQuery, Fields2LuceneDocumentTx
 from meresco.components.sru import Sru, SRURecordUpdate
+from meresco.components.oai import OaiPmh, OaiJazzLucene, UniqueNumberGenerator
 
 from weightless import Reactor
 
@@ -49,7 +50,7 @@ drilldownFieldnames = [
 
 unqualifiedTermFields = [('dc', 1.0)]
 
-def createUploadHelix(index, storageComponent):
+def createUploadHelix(index, storageComponent, oaiJazz):
     fields2LuceneDocument = \
         (ResourceManager('document', lambda resourceManager: Fields2LuceneDocumentTx(resourceManager, untokenized=drilldownFieldnames)),
             index
@@ -69,13 +70,14 @@ def createUploadHelix(index, storageComponent):
         (TransactionScope('document'),
             (Venturi(
                 should=[
-                    ('metadata', '/document:document/document:part[@name="metadata"]/text()')
+                    ('metadata', '/document:document/document:part[@name="metadata"]/text()'),
+                    ('header', '/document:document/document:part[@name="header"]/text()')
                 ],
                 namespaceMap={'document': 'http://meresco.com/namespace/harvester/document'}),
 
                 (XmlXPath(['/oai:metadata/oai_dc:dc']),
                     (XmlPrintLxml(),
-                        (RewritePartname('dc'),
+                        (RewritePartname('oai_dc'),
                             (storageComponent,)
                         )
                     ),
@@ -85,7 +87,17 @@ def createUploadHelix(index, storageComponent):
                             indexingHelix
                         ),
                     ),
+                    (Lxml2Amara(),
+                        (RewritePartname('oai_dc'),
+                            (oaiJazz,)
+                        )
+                    )
                 ),
+                (XmlXPath(['/oai:header']),
+                    (Lxml2Amara(),
+                        (oaiJazz,)
+                    )
+                )
             )
         )
 
@@ -100,13 +112,20 @@ def dna(reactor,  host, portNumber, databasePath):
             (drilldownComponent,)
         )
 
+    oaiIndexPath = join(databasePath, 'oai', 'index')
+    unlock(oaiIndexPath)
+    oaiMetaIndexComponent = LuceneIndex(oaiIndexPath, reactor)
+    oaiMetaStorageComponent = StorageComponent(join(databasePath, 'oai', 'storage'))
+    numberGenerator = UniqueNumberGenerator(join(databasePath, 'oai', 'unique'))
+    oaiJazz = OaiJazzLucene(oaiMetaIndexComponent, oaiMetaStorageComponent, numberGenerator)
+    
     serverUrl = 'http://%s:%s' % (host, portNumber)
 
     return \
         (Observable(),
             (ObservableHttpServer(reactor, portNumber),
                 (PathFilter("/sru"),
-                    (Sru(host=host, port=portNumber, defaultRecordSchema='dc', defaultRecordPacking='xml'),
+                    (Sru(host=host, port=portNumber, defaultRecordSchema='oai_dc', defaultRecordPacking='xml'),
                         (CQL2LuceneQuery(unqualifiedTermFields),
                             indexHelix
                         ),
@@ -129,7 +148,7 @@ def dna(reactor,  host, portNumber, databasePath):
                     (WebRequestServer(),
                         (SRURecordUpdate(),
                             (Amara2Lxml(),
-                                createUploadHelix(indexHelix, storageComponent)
+                                createUploadHelix(indexHelix, storageComponent, oaiJazz)
                             )
                         )
                     )
@@ -147,12 +166,21 @@ def dna(reactor,  host, portNumber, databasePath):
                                     'dc': "http://purl.org/dc/elements/1.1/",
                                     'oai_dc': "http://www.openarchives.org/OAI/2.0/oai_dc/"
                                 },
-                                title = ('dc', '/oai_dc:dc/dc:title/text()'),
-                                description = ('dc', '/oai_dc:dc/dc:description/text()'),
+                                title = ('oai_dc', '/oai_dc:dc/dc:title/text()'),
+                                description = ('oai_dc', '/oai_dc:dc/dc:description/text()'),
                                 linkTemplate = serverUrl +   '/sru?operation=searchRetrieve&version=1.1&query=dc.identifier%%3D%(identifier)s',
-                                identifier = ('dc', '/oai_dc:dc/dc:identifier/text()')),
+                                identifier = ('oai_dc', '/oai_dc:dc/dc:identifier/text()')),
                             (storageComponent, )
                         ),
+                    )
+                ),
+                (PathFilter('/oai'),
+                    (WebRequestServer(),
+                        (OaiPmh(repositoryName='Meresco Example Repository',
+                            adminEmail='admin@example.org'),
+                            (oaiJazz,),
+                            (storageComponent,),
+                        )
                     )
                 ),
             )

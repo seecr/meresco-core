@@ -88,6 +88,18 @@ class IntegrationTest(CQ2TestCase):
         items = [(str(item.title), str(item.description), str(item.link).split('?', 1)[1]) for item in body.rss.channel.item]
         self.assertEquals(2, len(items))
         self.assertEquals([('Example Program 1', 'This is an example program about Search with Meresco', 'operation=searchRetrieve&version=1.1&query=dc.identifier%3Dhttp%3A//meresco.com%3Frecord%3D1'), ('Example Program 2', 'This is an example program about Programming with Meresco', 'operation=searchRetrieve&version=1.1&query=dc.identifier%3Dhttp%3A//meresco.com%3Frecord%3D2')], items)
+    
+    def testOaiIdentify(self):
+        header, body = getRequest(reactor, port, '/oai', {'verb': 'Identify'})
+        self.assertEquals('HTTP/1.0 200 Ok\r\nContent-Type: text/xml; charset=utf-8', header)
+        self.assertEquals('Meresco Example Repository', body.OAI_PMH.Identify.repositoryName)
+        self.assertEquals('admin@example.org', body.OAI_PMH.Identify.adminEmail)
+
+    def testOaiListRecords(self):
+        header, body = getRequest(reactor, port, '/oai', {'verb': 'ListRecords', 'metadataPrefix': 'oai_dc'})
+        self.assertEquals('HTTP/1.0 200 Ok\r\nContent-Type: text/xml; charset=utf-8', header)
+        self.assertEquals(2, len(body.OAI_PMH.ListRecords.record))
+
 
     def doDrilldown(self, query, drilldownField):
         message = self._doQuery({'query':query, 'x-term-drilldown': drilldownField})

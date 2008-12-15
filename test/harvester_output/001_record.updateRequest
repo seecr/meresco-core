@@ -18,7 +18,7 @@
 &lt;dc:language xmlns:dc="http://purl.org/dc/elements/1.1/"&gt;en&lt;/dc:language&gt;
 &lt;dc:rights xmlns:dc="http://purl.org/dc/elements/1.1/"&gt;Open Source&lt;/dc:rights&gt;
 &lt;/oai_dc:dc&gt;&lt;/metadata&gt;
-                </part>
+                </part><part name="header">&lt;header xmlns="http://www.openarchives.org/OAI/2.0/"&gt;&lt;identifier&gt;record:1&lt;/identifier&gt;&lt;datestamp&gt;2008-12-15T14:08:34Z&lt;/datestamp&gt;&lt;/header&gt;</part>
             </document>
         </srw:recordData>
     </srw:record>

@@ -8,7 +8,7 @@ Documentation in reStructuredText HOWTO
 This document will help you creating documentation based on reStructuredText format.
 --------------------------------------------------------------------------------------
 
-:Authors: Johan Jonkers
+:Authors: Johan Jonkers, Thijs Janssen, Tom van der Sommen
 :Organization: `Seek You Too`_
 :Version: 0.1
 :Copyright: 2008 by Seek You Too
@@ -26,6 +26,7 @@ This document will help you creating documentation based on reStructuredText for
 :Document History:
 
     * 2008-08-12,   J.B. Jonkers (CQ2),  version 0.1,    Initial version
+    * 2008-08-12,   T.Janssen, T. van der Sommen (CQ2),  version 0.1.1,    Minor Changes
 
 
 .. |ea| replace:: Example Application
@@ -55,7 +56,7 @@ For example, the following OAI Dublin Core record:
 
     <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/">
         <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">The title</dc:title>
-    </oai_dc/dc>
+    </oai_dc:dc>
 
 Can be queried for after indexing by Meresco with the statement:
 
@@ -86,7 +87,7 @@ The support for SRU queries is provided by the following part of the |ea| DNA:
         )
     ...
     (Sru(   host=host, port=portNumber,
-            defaultRecordSchema='dc', defaultRecordPacking='xml'),
+            defaultRecordSchema='oai_dc', defaultRecordPacking='xml'),
         (CQL2LuceneQuery(unqualifiedTermFields),
             indexHelix
         ),
@@ -144,7 +145,7 @@ The support for SRU Update is provided by the following part of the |ea| DNA:
 
                         (XmlXPath(['/oai:metadata/oai_dc:dc']),
                             (XmlPrintLxml(),
-                                (RewritePartname('dc'),
+                                (RewritePartname('oai_dc'),
                                     (storageComponent,)
                                 )
                             ),
@@ -177,7 +178,7 @@ The record that is offered for indexing by the external harvesting source (in mo
 The TransactionScope component will start a new transaction and pass on the data. After the data has been processed and no error occured, the TransactionScope will signal for the changes to be commited.
 The Venturi component will perform xpath queries in the data it receives. If an xpath query returns a result, the result of that query will be passed on the the observers. The name specified in front of the xpath query will be passed along as the partname of the xpath query result.
 
-Next the XmlXPath component will filter out the OAI DC tag which will then be stored in the storage under the name 'dc'. The Xml2Fields component will flatten the XML and create the labels which will be indexed by the index later on.
+Next the XmlXPath component will filter out the OAI DC tag which will then be stored in the storage under the name 'oai_dc'. The Xml2Fields component will flatten the XML and create the labels which will be indexed by the index later on.
 
 The observant reader will have noticed a variable called 'unqualifiedTermFields' in the previous chapter. The unqualifiedTermFields is a list of fields which will be queried if there is no field specified in the query. A good practise is to index data under the label of the root tag and to use that as a default field. In order to do this with Meresco, the RenameField component will add an additional label named after the root tag and copy the contents.
 
