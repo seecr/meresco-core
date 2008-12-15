@@ -26,17 +26,18 @@
 #
 ## end license ##
 class MockOaiJazz:
-    def __init__(self, selectAnswer = [], setsAnswer = [], deleted=[], isAvailableDefault=(True,True), isAvailableAnswer=[]):
+    def __init__(self, selectAnswer = [], setsAnswer = [], deleted=[], isAvailableDefault=(True,True), isAvailableAnswer=[], selectTotal=5000):
         self._selectAnswer = selectAnswer
         self._setsAnswer = setsAnswer
         self._deleted = deleted
         self._isAvailableDefault = isAvailableDefault
         self._isAvailableAnswer = isAvailableAnswer
+        self._selectTotal = selectTotal
         self.oaiSelectArguments = {}
 
     def oaiSelect(self, sets=[], prefix=None, continueAt=None, oaiFrom=None, oaiUntil=None):
         self.oaiSelectArguments = (sets, prefix, continueAt, oaiFrom, oaiUntil)
-        return self._selectAnswer
+        return self._selectTotal, self._selectAnswer
 
     def getUnique(self, id):
         return 'Unique for test'

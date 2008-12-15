@@ -119,28 +119,28 @@ Error and Exception Conditions
         if not self._metadataPrefix in [prefix for prefix, na, na in self.any.getAllPrefixes()]:
             return self.writeError(webRequest, 'cannotDisseminateFormat')
 
-        self._queryResult = self.any.oaiSelect(
+        self._queryTotals, self._queryRecordIds = self.any.oaiSelect(
             sets=self._set and [self._set] or None,
             prefix=self._metadataPrefix,
             continueAt=self._continueAt,
             oaiFrom=self._from,
             oaiUntil=self._until)
-        if len(self._queryResult) == 0:
+        if self._queryTotals == 0:
             return self.writeError(webRequest, 'noRecordsMatch')
 
     def process(self, webRequest):
-        for i, id in enumerate(self._queryResult):
-            if i == BATCH_SIZE:
-                webRequest.write('<resumptionToken>%s</resumptionToken>' % ResumptionToken(
-                    self._metadataPrefix,
-                    self.any.getUnique(prevId),
-                    self._from,
-                    self._until,
-                    self._set))
-                return
-
-            self.writeRecord(webRequest, id, self._verb == "ListRecords")
-            prevId = id
+        for recordId in self._queryRecordIds:
+            self.writeRecord(webRequest, recordId, self._verb == "ListRecords")
+        
+                        
+        if self._queryTotals > BATCH_SIZE:
+            webRequest.write('<resumptionToken>%s</resumptionToken>' % ResumptionToken(
+                self._metadataPrefix,
+                self.any.getUnique(recordId),
+                self._from,
+                self._until,
+                self._set))
+            return
 
         if self._resumptionToken:
             webRequest.write('<resumptionToken/>')

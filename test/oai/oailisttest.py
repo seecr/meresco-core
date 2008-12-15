@@ -51,6 +51,7 @@ class OaiListTest(OaiTestCase):
 
         mockoaijazz = MockOaiJazz(
             selectAnswer=['id_0&0', 'id_1&1'],
+            selectTotal=2,
             isAvailableDefault=(True,True),
             isAvailableAnswer=[
                 (None, 'oai_dc', (True,False)),
@@ -128,7 +129,7 @@ class OaiListTest(OaiTestCase):
             self.assertEquals('10', continueAt)
             self.assertEquals('FROM', oaiFrom)
             self.assertEquals('UNTIL', oaiUntil)
-            return []
+            return 0, []
 
         observer.oaiSelect = oaiSelect
         self.subject.addObserver(observer)
@@ -139,7 +140,7 @@ class OaiListTest(OaiTestCase):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z'], 'set': ['SET']}
         observer = CallTrace('RecordAnswering')
         def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil):
-            return map(lambda i: 'id_%i' % i, range(1000))
+            return 1000, map(lambda i: 'id_%i' % i, range(1000))
         def writeRecord(*args, **kwargs):
             pass
         observer.oaiSelect = oaiSelect
@@ -161,7 +162,7 @@ class OaiListTest(OaiTestCase):
     def testFinalResumptionToken(self):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '200'))]}
 
-        self.subject.addObserver(MockOaiJazz(selectAnswer=map(lambda i: 'id_%i' % i, range(BATCH_SIZE))))
+        self.subject.addObserver(MockOaiJazz(selectAnswer=map(lambda i: 'id_%i' % i, range(BATCH_SIZE)), selectTotal = BATCH_SIZE))
         self.subject.writeRecord = lambda *args, **kwargs: None
 
         self.observable.any.listRecords(self.request)
@@ -175,7 +176,8 @@ class OaiListTest(OaiTestCase):
         self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0', 'id_1'],
             deleted=['id_1'],
-            isAvailableDefault=(True,False)))
+            isAvailableDefault=(True,False),
+            selectTotal = 2))
 
         self.observable.any.listRecords(self.request)
 
@@ -251,7 +253,8 @@ class OaiListTest(OaiTestCase):
         self.subject.addObserver(MockOaiJazz(
             selectAnswer=['id_0'],
             isAvailableDefault=(True,False),
-            isAvailableAnswer=[(None, 'oai_dc', (True,True))]))
+            isAvailableAnswer=[(None, 'oai_dc', (True,True))],
+            selectTotal=1))
         self.observable.any.listIdentifiers(self.request)
 
         self.assertEqualsWS(self.OAIPMH % """
@@ -267,7 +270,7 @@ class OaiListTest(OaiTestCase):
     def testNoRecordsMatch(self):
         self.request.args = {'verb':['ListIdentifiers'], 'metadataPrefix': ['oai_dc']}
 
-        self.subject.addObserver(MockOaiJazz())
+        self.subject.addObserver(MockOaiJazz(selectTotal = 0))
         self.observable.any.listIdentifiers(self.request)
 
         self.assertTrue(self.stream.getvalue().find("noRecordsMatch") > -1)

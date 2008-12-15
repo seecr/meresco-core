@@ -127,7 +127,7 @@ class OaiJazzLucene(Observable):
             root.add(range, BooleanClause.Occur.MUST)
 
         if self.any.docCount() == 0:
-            return []
+            return 0, []
 
         #It is necessery here to work with the elemental objects, because the query parser transforms everything into lowercase
         query = BooleanQuery()
@@ -148,8 +148,8 @@ class OaiJazzLucene(Observable):
                 for set in sets:
                     setQuery.add(TermQuery(Term('oaimeta.sets.setSpec', set)), BooleanClause.Occur.SHOULD)
                 query.add(setQuery, BooleanClause.Occur.MUST)
-        total, hits = self.any.executeQuery(query, sortBy='oaimeta.unique')
-        return hits
+        total, recordIds = self.any.executeQuery(query, sortBy='oaimeta.unique')
+        return total, recordIds
 
     def getAllPrefixes(self):
         return set((prefix, xsd, ns) for prefix, (xsd, ns) in self._getAllPrefixes().items())
