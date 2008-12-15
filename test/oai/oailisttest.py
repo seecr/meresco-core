@@ -123,12 +123,13 @@ class OaiListTest(OaiTestCase):
         self.request.args = {'verb':['ListRecords'], 'resumptionToken': [str(ResumptionToken('oai_dc', '10', 'FROM', 'UNTIL', 'SET'))]}
 
         observer = CallTrace('RecordAnswering')
-        def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil):
+        def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil, batchSize):
             self.assertEquals('SET', sets[0])
             self.assertEquals('oai_dc', prefix)
             self.assertEquals('10', continueAt)
             self.assertEquals('FROM', oaiFrom)
             self.assertEquals('UNTIL', oaiUntil)
+            self.assertEquals(BATCH_SIZE, batchSize)
             return 0, []
 
         observer.oaiSelect = oaiSelect
@@ -139,8 +140,8 @@ class OaiListTest(OaiTestCase):
     def testResumptionTokensAreProduced(self):
         self.request.args = {'verb':['ListRecords'], 'metadataPrefix': ['oai_dc'], 'from': ['2000-01-01T00:00:00Z'], 'until': ['2000-12-31T00:00:00Z'], 'set': ['SET']}
         observer = CallTrace('RecordAnswering')
-        def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil):
-            return 1000, map(lambda i: 'id_%i' % i, range(1000))
+        def oaiSelect(sets, prefix, continueAt, oaiFrom, oaiUntil, batchSize):
+            return 1000, map(lambda i: 'id_%i' % i, range(batchSize))
         def writeRecord(*args, **kwargs):
             pass
         observer.oaiSelect = oaiSelect

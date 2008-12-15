@@ -117,6 +117,18 @@ class OaiJazzLuceneTest(CQ2TestCase):
         total, results =jazz.oaiSelect(prefix='lom')
         self.assertEquals(3, total)
         self.assertEquals(['124', '121','122'], results)
+
+    def testOaiSelectWithBatchSize(self):
+        jazz = self.realjazz
+        for i in range(123,143):
+            jazz.add('%s' % i, 'oai_dc', bind_string('<oai_dc/>'))
+        total, results =jazz.oaiSelect(prefix='oai_dc', batchSize=200)
+        self.assertEquals(20, total)
+        self.assertEquals(20, len(results))
+        total, results =jazz.oaiSelect(prefix='oai_dc', batchSize=2)
+        self.assertEquals(20, total)
+        self.assertEquals(2, len(results))
+        
     
     def testAddSetInfo(self):
         header = '<header xmlns="http://www.openarchives.org/OAI/2.0/"><setSpec>%s</setSpec></header>'

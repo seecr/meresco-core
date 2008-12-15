@@ -121,7 +121,7 @@ class OaiJazzLucene(Observable):
         sets, prefixes, na, na = self._getPreviousRecord(id)
         self._updateOaiMeta(id, sets, prefixes)
 
-    def oaiSelect(self, sets=[], prefix='oai_dc', continueAt='0', oaiFrom=None, oaiUntil=None):
+    def oaiSelect(self, sets=[], prefix='oai_dc', continueAt='0', oaiFrom=None, oaiUntil=None, batchSize=10):
         def addRange(root, field, lo, hi, inclusive):
             range = ConstantScoreRangeQuery(field, lo, hi, inclusive, inclusive)
             root.add(range, BooleanClause.Occur.MUST)
@@ -148,7 +148,7 @@ class OaiJazzLucene(Observable):
                 for set in sets:
                     setQuery.add(TermQuery(Term('oaimeta.sets.setSpec', set)), BooleanClause.Occur.SHOULD)
                 query.add(setQuery, BooleanClause.Occur.MUST)
-        total, recordIds = self.any.executeQuery(query, sortBy='oaimeta.unique')
+        total, recordIds = self.any.executeQuery(query, sortBy='oaimeta.unique', stop=batchSize)
         return total, recordIds
 
     def getAllPrefixes(self):

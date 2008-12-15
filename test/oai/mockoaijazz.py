@@ -35,8 +35,8 @@ class MockOaiJazz:
         self._selectTotal = selectTotal
         self.oaiSelectArguments = {}
 
-    def oaiSelect(self, sets=[], prefix=None, continueAt=None, oaiFrom=None, oaiUntil=None):
-        self.oaiSelectArguments = (sets, prefix, continueAt, oaiFrom, oaiUntil)
+    def oaiSelect(self, sets=[], prefix=None, continueAt=None, oaiFrom=None, oaiUntil=None, batchSize=0):
+        self.oaiSelectArguments = (sets, prefix, continueAt, oaiFrom, oaiUntil, batchSize)
         return self._selectTotal, self._selectAnswer
 
     def getUnique(self, id):

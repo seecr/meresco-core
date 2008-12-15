@@ -124,7 +124,8 @@ Error and Exception Conditions
             prefix=self._metadataPrefix,
             continueAt=self._continueAt,
             oaiFrom=self._from,
-            oaiUntil=self._until)
+            oaiUntil=self._until,
+            batchSize=BATCH_SIZE)
         if self._queryTotals == 0:
             return self.writeError(webRequest, 'noRecordsMatch')
 
