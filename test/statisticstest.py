@@ -28,7 +28,7 @@
 import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
-from os.path import isfile
+from os.path import isfile, join
 from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s
 
 class StatisticsTest(CQ2TestCase):
@@ -364,6 +364,23 @@ class StatisticsTest(CQ2TestCase):
         except AggregatorException:
             pass
         self.assertEquals(["value00", "value01"], aggregator.get((2000, 1, 1, 0), (2000, 1, 1, 0)))
+
+    def testDataSnapshotStaysCompatible(self):
+        data = """eJyVk01v2zAMhu/8I8kpsKwPx8ddBvRSYGvvhiILmrvUEiylSP/9SNpOs3aHGTAMWhL58H1NORfT
+ezf5APhyccxlurgSJ0gC9u7VTz67eHDxNcXRjyUfcrFlyGVwGb6FgImWT9fguu50Gc5lGLsO4unF
+uwJJwmP5mRTs+6ThadfZJWWI44+Lv/i8g2Rgf04NvY4QtlAfY+8htRBmiqgIIwQEA6GBjLjr9frd
+kpx35Ij6f8o/RyxU5SUNs+StvuKaqwTfU00ND1XF62/2POsRZgMHjzc3wJEFtGRUb4vFWjVrqgXk
+EzHcr+HcT36knZp3JDwIxoWbDzXbXevVh8DCFQVLt2FpMXywa8NJ+L0gj4QMC6X9SpF8TIpNFMnl
+pFwpUt1RJOV9pnBbstlGYR9lu1JUdUdR4itFzTtyE0WxzUrfKOae0vyDwm2pdhNFc20tVorG8k+7
+3x4HuiQteUnREo8fzoXWtGHoh+X80ZBuqLu/H2vxzmm8dDgxc0y9VnNssH10f44Rjx7NMTaNSuZY
+gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
+        f = open(join(self.tempdir, 'snapshot'),'w')
+        from base64 import decodestring
+        from zlib import decompress
+        f.write(decompress(decodestring(data)))
+        f.close()
+        stats = Statistics(self.tempdir, [('key',)])
+        self.assertEquals({('value',): 1}, stats.get(('key',)))
 
 
 class ListFactory(object):
