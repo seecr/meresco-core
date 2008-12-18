@@ -160,7 +160,7 @@ class StatisticsTest(CQ2TestCase):
         self.assertEquals(theNewOne, pickle.load(open(join(self.tempdir, snapshotFilename))))
         self.assertFalse(isfile(self.tempdir + '/txlog'))
     
-    def testCrashInWriteSnapshotAfterWriteRecovery2(self):
+    def testRecoverWhenCrashedJustAfterWritingANewSnapshot(self):
         stats = Statistics(self.tempdir, [('keys',)])
         stats._process({'keys': ['the new one']})
         stats._writeSnapshot()
@@ -495,9 +495,7 @@ gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
 
     def testExtendResults(self):
         one = Top100s({('keys',):dict([('a%02d' % i,10) for i in range(99)] + [('c',5)])})
-        #one._nrOfResults = lambda: 3
         two = Top100s({('keys',):dict([('d%02d' % i,8) for i in range(99)] + [('c',6)])})
-        #two._nrOfResults = lambda: 3
         one.extend(two)
         self.assertEquals(dict([('a%02d' % i,10) for i in range(99)] + [('c',11)]), one._data[('keys',)])
     
