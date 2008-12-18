@@ -28,8 +28,9 @@
 import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
+from os import makedirs
 from os.path import isfile, join
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
 
 class StatisticsTest(CQ2TestCase):
 
@@ -119,7 +120,7 @@ class StatisticsTest(CQ2TestCase):
         stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
         stats._process({'keys': ['2007-12-20']})
         stats._writeSnapshot()
-        self.assertTrue(isfile(self.tempdir + '/snapshot'))
+        self.assertTrue(isfile(join(self.tempdir , snapshotFilename)))
         stats = Statistics(self.tempdir, [('keys',)])
         self.assertEquals({('2007-12-20',): 1}, stats.get(('keys',)))
 
@@ -130,34 +131,36 @@ class StatisticsTest(CQ2TestCase):
         stats._writeSnapshot()
         open(self.tempdir + '/txlog', 'w').write("(1970, 1, 1, 0, 0, 0)\t{'keys': ['from_log']}\n")
 
-        snapshotFile = open(self.tempdir + '/snapshot.writing', 'w')
+        snapshotFile = open(join(self.tempdir, snapshotFilename + '.writing'), 'w')
         snapshotFile.write('boom')
         snapshotFile.close()
 
         stats = Statistics(self.tempdir, [('keys',)])
         self.assertEquals({('the old one',): 1, ('from_log',): 1}, stats.get(('keys',)))
 
-        self.assertFalse(isfile(self.tempdir + '/snapshot.writing'))
+        self.assertFalse(isfile(join(self.tempdir , snapshotFilename + '.writing')))
 
     def testCrashInWriteSnapshotAfterWriteRecovery(self):
-        snapshotFile = open(self.tempdir + '/snapshot', 'wb')
-        theOldOne = {'0': Top100s({('keys',): {('the old one',): 3}})}
+        snapshotFile = open(join(self.tempdir , snapshotFilename), 'wb')
+        theOldOne = {'0': Top100s(data={('keys',): {('the old one',): 3}})}
         pickle.dump(theOldOne, snapshotFile)
         snapshotFile.close()
 
         open(self.tempdir + '/txlog', 'w').write('keys:should_not_appear\n')
 
-        snapshotFile = open(self.tempdir + '/snapshot.writing.done', 'w')
-        theNewOne = {'0': Top100s({('keys',): {('the new one',): 3}})}
+        snapshotFile = open(join(self.tempdir, snapshotFilename + '.writing.done'), 'w')
+        theNewOne = {'0': Top100s(data={('keys',): {('the new one',): 3}})}
         pickle.dump(theNewOne, snapshotFile)
         snapshotFile.close()
 
         stats = Statistics(self.tempdir, [('keys',)])
         self.assertEquals(theNewOne, stats._data)
-        self.assertFalse(isfile(self.tempdir + '/snapshot.writing.done'))
-        self.assertTrue(isfile(self.tempdir + '/snapshot'))
-        self.assertEquals(theNewOne, pickle.load(open(self.tempdir + '/snapshot')))
+        self.assertFalse(isfile(join(self.tempdir, snapshotFilename + '.writing.done')))
+        self.assertTrue(isfile(join(self.tempdir, snapshotFilename)))
+        self.assertEquals(theNewOne, pickle.load(open(join(self.tempdir, snapshotFilename))))
         self.assertFalse(isfile(self.tempdir + '/txlog'))
+        #print stats.get(('keys',))
+        self.fail('Fix this test with Erik???')
 
     def testSelfLog(self):
         class MyObserver(Logger):
@@ -381,13 +384,104 @@ gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
         f.close()
         stats = Statistics(self.tempdir, [('key',)])
         self.assertEquals({('value',): 1}, stats.get(('key',)))
+    
+    def createStatsdirForMergeTests(self, name):
+        statsDir = join(self.tempdir, name)
+        makedirs(statsDir)
+        stats = Statistics(statsDir, [('protocol',)])
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        stats._process({'protocol':['sru']})
+        stats._process({'protocol':['srw']})
+        return stats
 
+    def testMergeNode(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
 
+        leaf1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]._children[0]
+        leaf2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]._children[0]
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, leaf1._values._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, leaf2._values._data)
+
+        leaf1.merge(leaf2)
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2}}, leaf1._values._data)
+
+        self.assertEquals(False, leaf2._aggregated)
+        self.assertEquals(False, leaf1._aggregated)
+
+    def testMergeTree(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+
+        root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]
+        root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]._children[0]
+
+        self.assertEquals({}, root1._values._data)
+        self.assertEquals({}, root2._values._data)
+
+        root1.merge(root2)
+
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 2}}, root1.get(Top100s(), None, None)._data)
+
+        
+    def testMergeTreeWherePartsHaveAlreadyBeenAggregated(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+        stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
+        stats1._process({'protocol':['srw']})
+        stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
+        stats1._process({'protocol':['rss']})
+
+        root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
+        root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
+        
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
+
+        root1.merge(root2)
+        
+
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+
+    def testMergeTreeWherePartsHaveAlreadyBeenAggregatedTheOtherWayAround(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+        stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
+        stats1._process({'protocol':['srw']})
+        stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
+        stats1._process({'protocol':['rss']})
+
+        root1 = stats1._data._root._children[1970]._children[1]._children[1]._children[0]
+        root2 = stats2._data._root._children[1970]._children[1]._children[1]._children[0]
+        
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 2, ('rss',):1}}, root1.get(Top100s(), None, None)._data)
+        self.assertEquals({('protocol',): {('sru',): 1, ('srw',): 1}}, root2.get(Top100s(), None, None)._data)
+        root2.merge(root1)
+        
+        self.assertEquals({('protocol',): {('sru',): 2, ('srw',): 3, ('rss',):1}}, root2.get(Top100s(), None, None)._data)
+
+    def testMergeStatistics(self):
+        stats1 = self.createStatsdirForMergeTests('stats1')
+        stats2 = self.createStatsdirForMergeTests('stats2')
+        stats1._clock = lambda: (1970, 1, 1, 0, 1, 0)
+        stats1._process({'protocol':['srw']})
+        stats1._clock = lambda: (1970, 1, 1, 0, 2, 0)
+        stats1._process({'protocol':['rss']})
+
+        self.assertEquals({('sru',): 1, ('srw',): 2, ('rss',):1}, stats1.get(('protocol',)))
+        stats1.merge(stats2)
+        self.assertEquals({('sru',): 2, ('srw',): 3, ('rss',):1}, stats1.get(('protocol',)))
+
+    def testExtendResults(self):
+        one = Top100s({('keys',):{'a':10, 'b':10, 'c':5}})
+        one._nrOfResults = lambda: 3
+        two = Top100s({('keys',):{'c':6, 'd':7, 'e':8}})
+        two._nrOfResults = lambda: 3
+        one.extend(two)
+        self.assertEquals({'a':10, 'b':10, 'c':11}, one._data[('keys',)])
+    
 class ListFactory(object):
     def doInit(self):
         return []
     def doAdd(self, values, value):
         values.append(value)
-    def doExtend(self, values0, values1):
-        values0.extend(values1)
-
