@@ -28,7 +28,7 @@
 import cPickle as pickle
 from time import time
 from cq2utils import CQ2TestCase
-from os import makedirs
+from os import makedirs, rename
 from os.path import isfile, join
 from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
 
@@ -159,8 +159,29 @@ class StatisticsTest(CQ2TestCase):
         self.assertTrue(isfile(join(self.tempdir, snapshotFilename)))
         self.assertEquals(theNewOne, pickle.load(open(join(self.tempdir, snapshotFilename))))
         self.assertFalse(isfile(self.tempdir + '/txlog'))
-        #print stats.get(('keys',))
-        self.fail('Fix this test with Erik???')
+    
+    def testCrashInWriteSnapshotAfterWriteRecovery2(self):
+        stats = Statistics(self.tempdir, [('keys',)])
+        stats._process({'keys': ['the new one']})
+        stats._writeSnapshot()
+        self.assertEquals({('the new one',):1}, stats.get(('keys',)))
+        rename(join(self.tempdir, snapshotFilename), join(self.tempdir, 'new'))
+        
+        stats = Statistics(self.tempdir, [('keys',)])
+        stats._process({'keys': ['the old one']})
+        stats._writeSnapshot()
+        self.assertEquals({('the old one',):1}, stats.get(('keys',)))
+        rename(join(self.tempdir, snapshotFilename), join(self.tempdir, 'old'))
+        
+        rename(join(self.tempdir, 'old'), join(self.tempdir, snapshotFilename))
+        rename(join(self.tempdir, 'new'), join(self.tempdir, snapshotFilename + '.writing.done'))
+        open(self.tempdir + '/txlog', 'w').write('keys:should_not_appear\n')
+
+        stats = Statistics(self.tempdir, [('keys',)])
+        self.assertFalse(isfile(join(self.tempdir, snapshotFilename + '.writing.done')))
+        self.assertTrue(isfile(join(self.tempdir, snapshotFilename)))
+        self.assertFalse(isfile(self.tempdir + '/txlog'))
+        self.assertEquals({('the new one',):1}, stats.get(('keys',)))
 
     def testSelfLog(self):
         class MyObserver(Logger):
@@ -473,12 +494,12 @@ gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
         self.assertEquals({('sru',): 2, ('srw',): 3, ('rss',):1}, stats1.get(('protocol',)))
 
     def testExtendResults(self):
-        one = Top100s({('keys',):{'a':10, 'b':10, 'c':5}})
-        one._nrOfResults = lambda: 3
-        two = Top100s({('keys',):{'c':6, 'd':7, 'e':8}})
-        two._nrOfResults = lambda: 3
+        one = Top100s({('keys',):dict([('a%02d' % i,10) for i in range(99)] + [('c',5)])})
+        #one._nrOfResults = lambda: 3
+        two = Top100s({('keys',):dict([('d%02d' % i,8) for i in range(99)] + [('c',6)])})
+        #two._nrOfResults = lambda: 3
         one.extend(two)
-        self.assertEquals({'a':10, 'b':10, 'c':11}, one._data[('keys',)])
+        self.assertEquals(dict([('a%02d' % i,10) for i in range(99)] + [('c',11)]), one._data[('keys',)])
     
 class ListFactory(object):
     def doInit(self):
