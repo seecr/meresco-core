@@ -38,8 +38,7 @@ from amara.binderytools import bind_string
 from meresco.components.oai import OaiJazzLucene
 from meresco.components.oai.xml2document import TEDDY_NS, Xml2Document
 from meresco.framework.observable import Observable
-from meresco.components.lucene.document import Document
-from meresco.components.lucene.lucene import LuceneIndex
+from facetindex import Document, LuceneIndex
 from meresco.components.storagecomponent import StorageComponent
 
 from timerfortestsupport import TimerForTestSupport
@@ -73,7 +72,7 @@ class OaiJazzLuceneTest(CQ2TestCase):
         self.mockedjazz.add(self.id, self.partName, bind_string('<empty/>'))
 
         self.assertEquals(1,len(self.index.calledMethods))
-        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.index.calledMethods[0]))
+        self.assertEquals('addDocument(<facetindex.document.Document>)', str(self.index.calledMethods[0]))
 
     def testDeleteIncrementsDatestampAndUnique(self):
         jazz = self.realjazz

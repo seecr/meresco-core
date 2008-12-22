@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from meresco.components.lucene.document import Document
+from facetindex import Document
 from amara import binderytools
 from amara.bindery import is_element
 from meresco.framework.observable import Observable

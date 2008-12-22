@@ -39,5 +39,5 @@ __all__ = []
 from sys import getdefaultencoding as _getdefaultencoding
 from locale import getdefaultlocale, _parse_localename
 
-assert _getdefaultencoding() == 'utf-8'
+assert _getdefaultencoding() == 'utf-8', 'Please ensure that de default encoding is utf-8'
 assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"

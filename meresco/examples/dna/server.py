@@ -33,10 +33,11 @@ from os import makedirs
 from meresco.framework import be, Observable, TransactionScope, ResourceManager, Transparant
 
 from meresco.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem, Lxml2Amara
-from meresco.components.drilldown import Drilldown, SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
+from facetindex import Drilldown, LuceneIndex
+from meresco.components.drilldown import SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
 from meresco.components.http import PathFilter, ObservableHttpServer
 from meresco.components.http.webrequestserver import WebRequestServer
-from meresco.components.lucene import unlock, LuceneIndex, CQL2LuceneQuery, Fields2LuceneDocumentTx
+from meresco.components.lucene import unlock, CQL2LuceneQuery, Fields2LuceneDocumentTx
 from meresco.components.sru import Sru, SRURecordUpdate
 from meresco.components.oai import OaiPmh, OaiJazzLucene, UniqueNumberGenerator
 

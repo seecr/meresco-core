@@ -29,7 +29,7 @@ from os.path import join
 from amara.binderytools import bind_string
 
 from oaitestcase import OaiTestCase
-from meresco.components.lucene import LuceneIndex
+from facetindex import LuceneIndex
 from meresco.components import StorageComponent
 from meresco.components.oai import OaiJazzLucene
 from meresco.components.oai.oailistmetadataformats import OaiListMetadataFormats

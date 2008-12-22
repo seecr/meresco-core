@@ -25,7 +25,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from meresco.components.lucene import Document
+from facetindex import Document
 
 class Fields2LuceneDocumentTx(object):
 

@@ -59,7 +59,7 @@ class Fields2LuceneDocumentTest(TestCase):
         list(self.body.all.addFields([('a', '1'), ('b', '2'), ('c', '3')]))
         self.assertEquals(2, len(self.observert.calledMethods))
         self.assertEquals('begin()', str(self.observert.calledMethods[0]))
-        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
+        self.assertEquals('addDocument(<facetindex.document.Document>)', str(self.observert.calledMethods[1]))
 
         document = self.observert.calledMethods[1].args[0]
         self.assertTrue('a' in document.fields())
@@ -75,7 +75,7 @@ class Fields2LuceneDocumentTest(TestCase):
         list(self.body.all.addFields([('a', 'TermOne'), ('a', 'TermTwo'), ('b', '3')]))
         self.assertEquals(2, len(self.observert.calledMethods), self.observert.calledMethods)
         self.assertEquals('begin()', str(self.observert.calledMethods[0]))
-        self.assertEquals('addDocument(<meresco.components.lucene.document.Document>)', str(self.observert.calledMethods[1]))
+        self.assertEquals('addDocument(<facetindex.document.Document>)', str(self.observert.calledMethods[1]))
 
         document = self.observert.calledMethods[1].args[0]
         self.assertEquals([u'TermOne', u'TermTwo'],  document._document.getValues('a'))
