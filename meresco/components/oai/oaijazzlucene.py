@@ -73,12 +73,12 @@ class OaiJazzLucene(Observable):
     def __init__(self, anIndex, aStorage, aNumberGenerator = None):
         Observable.__init__(self)
         be((self,
+            (aStorage, ),
             (XmlParseAmara(),
                 (Xml2Document(),
                     (anIndex,)
                 )
             ),
-            (aStorage, ),
             )
         )
         self._numberGenerator = aNumberGenerator
