@@ -71,7 +71,7 @@ class SRUTermDrilldown(Observable):
             raise StopIteration
 
         drilldownResults = self.any.drilldown(
-            self.any.bitMatrixRow(cqlAbstractSyntaxTree),
+            self.any.docsetFromQuery(cqlAbstractSyntaxTree),
             fieldMaxTuples)
         yield "<dd:term-drilldown>"
         for fieldname, termCounts in drilldownResults:

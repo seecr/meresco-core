@@ -40,6 +40,6 @@ class CQL2LuceneQuery(Observable, Logger):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
         return self.any.executeQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), *args, **kwargs)
 
-    def bitMatrixRow(self, cqlAbstractSyntaxTree, *args, **kwargs):
+    def docsetFromQuery(self, cqlAbstractSyntaxTree, *args, **kwargs):
         ClauseCollector(cqlAbstractSyntaxTree, self.log).visit()
-        return self.any.bitMatrixRow(self._cqlComposer.compose(cqlAbstractSyntaxTree), *args, **kwargs)
+        return self.any.docsetFromQuery(self._cqlComposer.compose(cqlAbstractSyntaxTree), *args, **kwargs)

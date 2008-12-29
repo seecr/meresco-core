@@ -89,7 +89,7 @@ class SRUTermDrilldownTest(CQ2TestCase):
         list(adapter.extraResponseData(arguments, []))
         self.assertEquals([('field0', 10, False), ('field1', 10, False), ('field2', 10, False)], list(self.processed_tuples))
 
-    def bitMatrixRow(self, ast):
+    def docsetFromQuery(self, ast):
         self.processed_ast = ast
         return 'row'
 
