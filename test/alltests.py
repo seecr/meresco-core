@@ -39,7 +39,6 @@ sys.path.insert(0, "..")
 import unittest
 
 from contextsettest import ContextSetTest
-from cqlparsetreetolucenequerytest import CqlParseTreeToLuceneQueryTest
 from fieldletstest import FieldletsTest
 from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
@@ -69,31 +68,12 @@ from http.sessionhandlertest import SessionHandlerTest
 from http.argumentsinsessiontest import ArgumentsInSessionTest
 from http.observablehttpservertest import ObservableHttpServerTest
 
-from lucene.cql2lucenequerytest import Cql2LuceneQueryTest
-from lucene.fields2lucenedocumenttest import Fields2LuceneDocumentTest
 from lucene.string2cqltest import String2CQLTest
-
-from ngram.ngramtest import NGramTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
 from sru.srutest import SruTest
 from sru.srwtest import SrwTest
-
-#from oai.oaicomponenttest import OaiComponentTest
-from oai.fields2oairecordtest import Fields2OaiRecordTest
-from oai.oaijazzlucenetest import OaiJazzLuceneTest, OaiJazzLuceneIntegrationTest
-from oai.oaigetrecordtest import OaiGetRecordTest
-from oai.oailistmetadataformatstest import OaiListMetadataFormatsTest
-from oai.oailistsetstest import OaiListSetsTest
-from oai.oailisttest import OaiListTest
-from oai.oaipmhtest import OaiPmhTest
-from oai.oaitooltest import OaiToolTest
-from oai.oaiprovenancetest import OaiProvenanceTest
-from oai.resumptiontokentest import ResumptionTokenTest
-from oai.oaisetselecttest import OaiSetSelectTest
-from oai.xml2documenttest import Xml2DocumentTest  # --> Xml2Document only in use by OAI; deprecated; needs to be replaced
-                                               #     when OAI is worked on next.
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
 from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest
