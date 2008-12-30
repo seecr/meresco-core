@@ -47,3 +47,4 @@ from xpath2field import XPath2Field
 from rewritepartname import RewritePartname
 from filtermessages import FilterMessages
 from reindex import Reindex, ReindexConsole
+from parsecql import ParseCQL

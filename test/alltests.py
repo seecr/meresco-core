@@ -44,6 +44,7 @@ from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
+from parsecqltest import ParseCQLTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from rsstest import RssTest
@@ -68,7 +69,6 @@ from http.sessionhandlertest import SessionHandlerTest
 from http.argumentsinsessiontest import ArgumentsInSessionTest
 from http.observablehttpservertest import ObservableHttpServerTest
 
-from lucene.string2cqltest import String2CQLTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest

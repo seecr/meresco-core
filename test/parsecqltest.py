@@ -25,3 +25,19 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
+
+from unittest import TestCase
+from cq2utils import CallTrace
+from meresco.components import ParseCQL
+
+class ParseCQLTest(TestCase):
+    def testOne(self):
+        s = ParseCQL()
+        observer = CallTrace('observer')
+        s.addObserver(observer)
+
+        s.executeCQLString('term1')
+
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals("CQL_QUERY(SCOPED_CLAUSE(SEARCH_CLAUSE(SEARCH_TERM(TERM('term1')))))", str(observer.calledMethods[0].kwargs['cqlAbstractSyntaxTree']))
