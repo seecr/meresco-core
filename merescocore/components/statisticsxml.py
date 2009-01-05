@@ -31,7 +31,7 @@ from urlparse import urlsplit
 from time import mktime, gmtime
 from merescocore.framework import compose
 
-from merescocore.components.statistics import AggregatorException
+from meresco.components.statistics import AggregatorException
 
 NAMESPACE="http://meresco.com/namespace/meresco/statistics"
 

@@ -27,7 +27,7 @@
 ## end license ##
 
 from merescocore.framework.observable import Observable
-from merescocore.components.statistics import Logger
+from meresco.components.statistics import Logger
 
 class PathFilter(Observable, Logger):
     def __init__(self, subPaths, excluding=[]):
