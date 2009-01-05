@@ -27,8 +27,8 @@
 ## end license ##
 
 from unittest import TestCase
-from meresco.components.http import SessionHandler, utils
-from meresco.framework import compose
+from merescocore.components.http import SessionHandler, utils
+from merescocore.framework import compose
 from cq2utils import CallTrace
 
 #Cookies RFC 2109 http://www.ietf.org/rfc/rfc2109.txt

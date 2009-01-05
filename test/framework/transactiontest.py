@@ -28,7 +28,7 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.framework import ResourceManager, be, Observable, compose, TransactionScope, TransactionException, Transaction
+from merescocore.framework import ResourceManager, be, Observable, compose, TransactionScope, TransactionException, Transaction
 
 class TransactionTest(TestCase):
     def testOne(self):

@@ -28,8 +28,8 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.components import Fields2XmlTx
-from meresco.components.fields2xml import Fields2XmlException, generateXml
+from merescocore.components import Fields2XmlTx
+from merescocore.components.fields2xml import Fields2XmlException, generateXml
 from amara.binderytools import bind_string
 
 class Fields2XmlTest(CQ2TestCase):

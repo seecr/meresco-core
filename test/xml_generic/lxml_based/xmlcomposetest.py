@@ -28,10 +28,10 @@
 
 from cq2utils import CQ2TestCase as TestCase
 
-from meresco.framework import Observable
+from merescocore.framework import Observable
 from StringIO import StringIO
 
-from meresco.components import XmlCompose
+from merescocore.components import XmlCompose
 
 class XmlComposeTest(TestCase):
     def testOne(self):

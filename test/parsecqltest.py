@@ -29,7 +29,7 @@
 
 from unittest import TestCase
 from cq2utils import CallTrace
-from meresco.components import ParseCQL
+from merescocore.components import ParseCQL
 
 class ParseCQLTest(TestCase):
     def testOne(self):

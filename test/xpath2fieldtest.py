@@ -27,7 +27,7 @@
 ## end license ##
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.components import XPath2Field
+from merescocore.components import XPath2Field
 
 from lxml.etree import parse
 from StringIO import StringIO

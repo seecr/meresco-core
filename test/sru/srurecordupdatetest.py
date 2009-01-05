@@ -31,7 +31,7 @@ from StringIO import StringIO
 
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.sru.srurecordupdate import SRURecordUpdate
+from merescocore.components.sru.srurecordupdate import SRURecordUpdate
 from amara.binderytools import bind_string
 
 

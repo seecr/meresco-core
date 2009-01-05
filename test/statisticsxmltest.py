@@ -26,8 +26,8 @@
 #
 ## end license ##
 from cq2utils import CQ2TestCase
-from meresco.components.statisticsxml import StatisticsXml
-from meresco.components.statistics import Statistics
+from merescocore.components.statisticsxml import StatisticsXml
+from merescocore.components.statistics import Statistics
 
 class StatisticsXmlTest(CQ2TestCase):
 

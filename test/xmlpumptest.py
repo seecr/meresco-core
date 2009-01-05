@@ -28,12 +28,12 @@
 ## end license ##
 
 from cStringIO import StringIO
-from meresco.framework.observable import Observable, be
+from merescocore.framework.observable import Observable, be
 from cq2utils import CallTrace, CQ2TestCase
 from amara import binderytools
 from lxml.etree import _ElementTree, tostring, parse
 
-from meresco.components import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
+from merescocore.components import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
 
 class XmlPumpTest(CQ2TestCase):
 

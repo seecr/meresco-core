@@ -31,7 +31,7 @@ from cq2utils.calltrace import CallTrace
 from amara.binderytools import bind_string
 from urllib import urlencode
 
-from meresco.components.rss import Rss
+from merescocore.components.rss import Rss
 
 from sru.srutest import MockListeners
 

@@ -27,8 +27,8 @@
 ## end license ##
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.framework import be, Observable
-from meresco.components import RenameField, TransformFieldValue, FilterField
+from merescocore.framework import be, Observable
+from merescocore.components import RenameField, TransformFieldValue, FilterField
 
 
 class FieldletsTest(CQ2TestCase):

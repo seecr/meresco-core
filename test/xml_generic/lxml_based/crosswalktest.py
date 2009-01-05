@@ -36,9 +36,9 @@ from difflib import unified_diff
 from re import match
 from os import remove
 
-from meresco.components import Crosswalk
-from meresco.components.crosswalk import rewriteRules
-from meresco.components.xml_generic import Validate, __file__ as xml_genericpath
+from merescocore.components import Crosswalk
+from merescocore.components.crosswalk import rewriteRules
+from merescocore.components.xml_generic import Validate, __file__ as xml_genericpath
 from os.path import join, dirname, abspath
 
 def readRecord(name):

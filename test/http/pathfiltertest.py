@@ -28,7 +28,7 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.components.http import PathFilter
+from merescocore.components.http import PathFilter
 
 class PathFilterTest(CQ2TestCase):
     def testSimplePath(self):

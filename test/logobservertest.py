@@ -27,10 +27,10 @@
 ## end license ##
 from unittest import TestCase
 
-from meresco.components.logobserver import LogObserver
+from merescocore.components.logobserver import LogObserver
 from cStringIO import StringIO
 from cq2utils.calltrace import CallTrace
-from meresco.framework.observable import Observable
+from merescocore.framework.observable import Observable
 
 class LogObserverTest(TestCase):
 

@@ -28,8 +28,8 @@
 
 from unittest import TestCase
 from cq2utils import CallTrace
-from meresco.components.http import ArgumentsInSession
-from meresco.framework import Observable, compose
+from merescocore.components.http import ArgumentsInSession
+from merescocore.framework import Observable, compose
 
 class ArgumentsInSessionTest(TestCase):
     def setUp(self):

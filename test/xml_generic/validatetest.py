@@ -31,10 +31,10 @@ from cq2utils.cq2testcase import CQ2TestCase
 
 from lxml.etree import parse, _ElementTree
 
-from meresco.components.xml_generic.validate import Validate, ValidateException
-from meresco.framework import Observable
+from merescocore.components.xml_generic.validate import Validate, ValidateException
+from merescocore.framework import Observable
 
-from meresco.components.xml_generic import  __file__ as xml_genericpath
+from merescocore.components.xml_generic import  __file__ as xml_genericpath
 from os.path import join, dirname, abspath
 
 class ValidateTest(CQ2TestCase):

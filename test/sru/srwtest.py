@@ -29,7 +29,7 @@
 from cq2utils.cq2testcase import CQ2TestCase
 from cq2utils.calltrace import CallTrace
 
-from meresco.components.sru.srw import Srw
+from merescocore.components.sru.srw import Srw
 
 from srutest import MockListeners
 

@@ -28,7 +28,7 @@
 
 from unittest import TestCase
 
-from meresco.components.contextset import ContextSet, ContextSetException, ContextSetList
+from merescocore.components.contextset import ContextSet, ContextSetException, ContextSetList
 from cStringIO import StringIO
 
 class ContextSetTest(TestCase):

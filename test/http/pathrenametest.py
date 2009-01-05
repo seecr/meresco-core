@@ -27,8 +27,8 @@
 ## end license ##
 from unittest import TestCase
 from cq2utils import CallTrace
-from meresco.components.http import PathRename
-from meresco.framework import compose, Observable
+from merescocore.components.http import PathRename
+from merescocore.framework import compose, Observable
 
 class PathRenameTest(TestCase):
     def testRename(self):

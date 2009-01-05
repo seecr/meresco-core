@@ -26,7 +26,7 @@
 #
 ## end license ##
 from unittest import TestCase
-from meresco.framework import Observable, findHelix, link, be
+from merescocore.framework import Observable, findHelix, link, be
 
 class HelixTest(TestCase):
 

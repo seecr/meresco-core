@@ -29,7 +29,7 @@ from socket import socket
 from cq2utils import CQ2TestCase, CallTrace
 from weightless import Reactor
 
-from meresco.components.http.observablehttpserver import ObservableHttpServer
+from merescocore.components.http.observablehttpserver import ObservableHttpServer
 
 class ObservableHttpServerTest(CQ2TestCase):
     def testSimpleHandleRequest(self):

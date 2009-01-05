@@ -27,7 +27,7 @@
 ## end license ##
 from unittest import TestCase, main
 
-from meresco.framework.generatorutils import Peek, decorate
+from merescocore.framework.generatorutils import Peek, decorate
 
 class GeneratorUtilsTest(TestCase):
 

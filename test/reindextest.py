@@ -27,8 +27,8 @@
 #
 ## end license ##
 from cq2utils import CQ2TestCase, CallTrace
-from meresco.components import StorageComponent, Reindex, FilterMessages
-from meresco.framework import be
+from merescocore.components import StorageComponent, Reindex, FilterMessages
+from merescocore.framework import be
 
 from os.path import join
 from os import makedirs

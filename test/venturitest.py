@@ -31,8 +31,8 @@ from StringIO import StringIO
 from cq2utils import CQ2TestCase, CallTrace
 from lxml.etree import parse, tostring
 
-from meresco.components.venturi import Venturi
-from meresco.framework import TransactionScope, be, Observable
+from merescocore.components.venturi import Venturi
+from merescocore.framework import TransactionScope, be, Observable
 from weightless import compose
 
 

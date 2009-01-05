@@ -29,8 +29,8 @@ from cq2utils import CQ2TestCase
 from os.path import join
 from lxml.etree import parse, tostring, _ElementTree
 
-from meresco.framework import Observable, be
-from meresco.components import XsltCrosswalk
+from merescocore.framework import Observable, be
+from merescocore.components import XsltCrosswalk
 
 xmlCode = """<?xml version="1.0"?>
 <greeting>

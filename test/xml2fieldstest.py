@@ -28,8 +28,8 @@
 from unittest import TestCase
 from cq2utils import CallTrace
 
-from meresco.framework import Observable
-from meresco.components import Xml2Fields
+from merescocore.framework import Observable
+from merescocore.components import Xml2Fields
 
 from lxml.etree import parse
 from StringIO import StringIO

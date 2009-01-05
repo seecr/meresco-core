@@ -30,7 +30,7 @@ from time import time
 from cq2utils import CQ2TestCase
 from os import makedirs, rename
 from os.path import isfile, join
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
+from merescocore.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
 
 class StatisticsTest(CQ2TestCase):
 

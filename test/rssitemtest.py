@@ -28,7 +28,7 @@
 ## end license ##
 from cq2utils import CQ2TestCase as TestCase
 
-from meresco.components.rssitem import RssItem
+from merescocore.components.rssitem import RssItem
 from StringIO import StringIO
 
 class RssItemTest(TestCase):

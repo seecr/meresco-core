@@ -28,8 +28,8 @@
 
 from cq2utils.cq2testcase import CQ2TestCase
 
-from meresco.components.storageharvester import defaultJoin
-from meresco.components.storagecomponent import defaultSplit
+from merescocore.components.storageharvester import defaultJoin
+from merescocore.components.storagecomponent import defaultSplit
 
 class StorageHarvesterTest(CQ2TestCase):
 

@@ -30,8 +30,8 @@ import sys
 from traceback import format_tb
 from types import GeneratorType
 
-from meresco.framework import Observable, TransactionScope, Transparant
-from meresco.framework.observable import be
+from merescocore.framework import Observable, TransactionScope, Transparant
+from merescocore.framework.observable import be
 from cq2utils.calltrace import CallTrace
 import unittest
 

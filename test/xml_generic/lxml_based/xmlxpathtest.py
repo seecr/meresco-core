@@ -28,9 +28,9 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 from cq2utils.xmlutils import findNamespaces
-from meresco.framework import Observable, be
+from merescocore.framework import Observable, be
 
-from meresco.components import XmlXPath, XmlParseLxml, XmlPrintLxml
+from merescocore.components import XmlXPath, XmlParseLxml, XmlPrintLxml
 from lxml.etree import parse, ElementTree, _ElementTree as ElementTreeType, tostring
 from StringIO import StringIO
 

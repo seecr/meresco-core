@@ -27,12 +27,12 @@
 ## end license ##
 from cq2utils import CQ2TestCase, CallTrace
 
-from meresco.framework import be, Observable
+from merescocore.framework import be, Observable
 
 
 from string import punctuation
 
-from meresco.components.tokenizefieldlet import TokenizeFieldlet
+from merescocore.components.tokenizefieldlet import TokenizeFieldlet
 
 class Tokens(object):
     def __init__(self):

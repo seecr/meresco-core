@@ -32,7 +32,7 @@ from shutil import rmtree
 from tempfile import mkdtemp
 from os import remove
 
-from meresco.components.http.fileserver import FileServer
+from merescocore.components.http.fileserver import FileServer
 
 class FileServerTest(TestCase):
 
