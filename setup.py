@@ -39,7 +39,7 @@ setup(
         'merescocore.examples',
         'merescocore.examples.dna',
         'merescocore.framework',
-        'meresco.components.statistics'
+        'meresco.components'
     ],
     package_data={
         'merescocore.components': ['rules/*.rules'],
