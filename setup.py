@@ -28,23 +28,22 @@
 from distutils.core import setup
 
 setup(
-    name='meresco',
+    name='meresco-core',
     packages=[
-        'meresco',
-        'meresco.components',
-        'meresco.components.drilldown',
-        'meresco.components.http',
-        'meresco.components.lucene',
-        'meresco.components.oai',
-        'meresco.components.sru',
-        'meresco.components.xml_generic',
-        'meresco.examples',
-        'meresco.examples.dna',
-        'meresco.framework',
+        'merescocore',
+        'merescocore.components',
+        'merescocore.components.drilldown',
+        'merescocore.components.http',
+        'merescocore.components.sru',
+        'merescocore.components.xml_generic',
+        'merescocore.examples',
+        'merescocore.examples.dna',
+        'merescocore.framework',
+        'meresco.components.statistics'
     ],
     package_data={
-        'meresco.components': ['rules/*.rules'],
-        'meresco.components.xml_generic': [
+        'merescocore.components': ['rules/*.rules'],
+        'merescocore.components.xml_generic': [
             'schemas/*',
             'schemas-lom/*.xsd',
             'schemas-lom/common/*',
