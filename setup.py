@@ -39,6 +39,7 @@ setup(
         'merescocore.examples',
         'merescocore.examples.dna',
         'merescocore.framework',
+        'meresco',
         'meresco.components'
     ],
     package_data={
