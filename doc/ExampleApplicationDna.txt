@@ -22,7 +22,7 @@ This document describes the |ea| supplied with Meresco.
 .. meta::
     :Revision: $LastChangedRevision$
     :Date: $LastChangedDate$
-    :Last changed by: $LastChangedBy$
+    :LastChangedBy: $LastChangedBy$
 
 :Document History:
 
