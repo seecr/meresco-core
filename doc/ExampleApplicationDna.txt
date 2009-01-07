@@ -20,8 +20,8 @@ This document will help you creating documentation based on reStructuredText for
 .. _by-nc-nd: http://creativecommons.org/licenses/by-nc-nd/3.0/
 
 .. meta::
-    :Revision: $LastChangedRevision: 7918 $
-    :Date: $LastChangedDate: 2008-08-12 09:45:02 +0200 (Tue, 12 Aug 2008) $
+    :Revision: $LastChangedRevision$
+    :Date: $LastChangedDate$
 
 :Document History:
 
