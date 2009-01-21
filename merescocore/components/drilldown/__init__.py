@@ -27,6 +27,4 @@
 ## end license ##
 from drilldownfieldnames import DrilldownFieldnames
 from srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown
-#backwards compatibility rename
-DrilldownRequestFieldnameMap = DrilldownFieldnames
 
