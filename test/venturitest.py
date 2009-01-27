@@ -31,7 +31,7 @@ from StringIO import StringIO
 from cq2utils import CQ2TestCase, CallTrace
 from lxml.etree import parse, tostring
 
-from merescocore.components.venturi import Venturi
+from merescocore.components.venturi import Venturi, VenturiException
 from merescocore.framework import TransactionScope, be, Observable
 from weightless import compose
 
@@ -149,3 +149,19 @@ class VenturiTest(CQ2TestCase):
         v = Venturi(should=[('PARTNAME', '/document')],could=[])
         v.delete('identifier')
         self.assertEquals('identifier', __callstack_var_tx__.locals['id'])
+
+    def testPartInShouldDoesNotExist(self):
+        inputEvent = fromstring('<document/>')
+        interceptor = CallTrace('Interceptor', ignoredAttributes=['begin', 'isAvailable', 'getStream', 'unknown'])
+        storage = CallTrace('Storage', ignoredAttributes=['begin', 'add'])
+        storage.returnValues['isAvailable'] = (False, False)
+        v = createVenturiHelix([('partone', '/document/part[@name="partone"]/text()')], [], interceptor, storage)
+        try:
+            v.do.add('identifier', 'document', inputEvent)
+            self.fail('Expected exception')
+        except VenturiException:
+            pass
+        self.assertEquals([], [m.name for m in interceptor.calledMethods])
+        self.assertEquals(['isAvailable'], [m.name for m in storage.calledMethods])
+        
+        

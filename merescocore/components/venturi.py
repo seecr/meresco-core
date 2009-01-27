@@ -41,10 +41,12 @@ class Venturi(Observable):
         self.tx.locals['id'] = identifier
         for partname, partXPath in self._should:
             part = self._findPart(identifier, partname, lxmlNode, partXPath)
+            if part == None:
+                raise VenturiException("Expected '%s', '%s'" %(partname, partXPath))
             yield self.all.add(identifier, partname, part)
         for partname, partXPath in self._could:
             part = self._findPart(identifier, partname, lxmlNode, partXPath)
-            if part:
+            if part != None:
                 yield self.all.add(identifier, partname, part)
 
     def _findPart(self, identifier, partname, lxmlNode, partXPath):
@@ -69,3 +71,6 @@ class Venturi(Observable):
     def delete(self, id):
         self.tx.locals['id'] = id
         self.do.delete(id)
+
+class VenturiException(Exception):
+    pass
