@@ -34,7 +34,7 @@ class ContextSet:
         self._readStream(aStream)
 
     def _readStream(self, aStream):
-        for k,v in [line.strip().split('\t') for line in aStream if line.strip()]:
+        for k,v in (line.strip().split() for line in aStream if line.strip() and not line.startswith('#')):
             if k not in self._dictionary:
                 self._dictionary[k] = v
             if v not in self._reverseDictionary:

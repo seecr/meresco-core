@@ -39,6 +39,7 @@ sys.path.insert(0, "..")
 import unittest
 
 from contextsettest import ContextSetTest
+from cqlconversiontest import CQLConversionTest
 from fieldletstest import FieldletsTest
 from fields2xmltest import Fields2XmlTest
 from generatorutilstest import GeneratorUtilsTest

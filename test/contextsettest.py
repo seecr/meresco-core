@@ -26,19 +26,23 @@
 #
 ## end license ##
 
-from unittest import TestCase
+from cq2utils import CQ2TestCase, CallTrace
+from os.path import join
 
 from merescocore.components.contextset import ContextSet, ContextSetException, ContextSetList
-from cStringIO import StringIO
+from StringIO import StringIO
 
-class ContextSetTest(TestCase):
+class ContextSetTest(CQ2TestCase):
     def setUp(self):
-        stream = StringIO("\n".join([
-            "\t".join(["query.field1", "actualfield1"]),
-            "\t".join(["field1", "actualfield1"]),
-            "\t".join(["field2", "actualfield2"]),
-            "\t".join(["field2", "actualotherfield2"]),
-            ""]))
+        CQ2TestCase.setUp(self)
+        stream = StringIO("""
+# test contextset file
+query.field1\tactualfield1
+field1 actualfield1
+field2  actualfield2
+field2    actualotherfield2
+
+""")
         self.set = ContextSet('test', stream)
 
     def testLookup(self):
@@ -70,6 +74,4 @@ class ContextSetTest(TestCase):
         self.assertEquals('noreversefield', setlist.reverseLookup('noreversefield'))
         self.assertEquals('unsupportedset.field3', setlist.lookup('unsupportedset.field3'))
 
-
-    #def testApplyReverseContextSets(self):
 
