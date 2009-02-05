@@ -27,7 +27,7 @@
 ## end license ##
 from sys import exc_info
 from generatorutils import compose
-from inspect import currentframe
+from callstackscope import callstackscope
 
 class Defer:
     def __init__(self, observable, defereeType):
@@ -125,19 +125,6 @@ def _beRecursive(helix, helicesDone):
         helicesDone.add(helix)
     return component
 
-def _getCallstackVar(name):
-    stackVarName = '__callstack_var_%s__' % name
-    frame = currentframe().f_back
-    while stackVarName not in frame.f_locals:
-        frame = frame.f_back
-    return frame.f_locals[stackVarName]
-
-def getCallstackVar(name):
-    try:
-        return _getCallstackVar(name)
-    except AttributeError:
-        raise AttributeError("Callstack variable '%s' not found." % name)
-
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
@@ -150,7 +137,7 @@ class Observable(object):
 
     def __getattr__(self, name):
         try:
-            return _getCallstackVar(name)
+            return callstackscope('__callstack_var_%s__' % name)
         except AttributeError:
             raise AttributeError("'%s' has no attribute '%s'" % (self, name))
 

@@ -26,6 +26,7 @@
 #
 ## end license ##
 from merescocore.framework import Observable
+from callstackscope import callstackscope
 
 class TransactionException(Exception):
     pass
@@ -39,23 +40,27 @@ class ResourceManager(Observable):
         self.txs = {}
 
     def begin(self):
-        if self.tx.name != self._transactionName:
+        tx = callstackscope('__callstack_var_tx__')
+        if tx.name != self._transactionName:
             return
         resourceTx = self._resourceTxFactory(self)
-        self.tx.join(self)
-        self.txs[self.tx.getId()] = resourceTx
+        tx.join(self)
+        self.txs[tx.getId()] = resourceTx
 
     def unknown(self, message, *args, **kwargs):
-        method = getattr(self.txs[self.tx.getId()], message, None)
+        tx = callstackscope('__callstack_var_tx__')
+        method = getattr(self.txs[tx.getId()], message, None)
         if method != None:
             yield method(*args, **kwargs)
 
     def commit(self):
-        resourceTx = self.txs.pop(self.tx.getId())
+        tx = callstackscope('__callstack_var_tx__')
+        resourceTx = self.txs.pop(tx.getId())
         resourceTx.commit()
-        
+
     def rollback(self):
-        resourceTx = self.txs.pop(self.tx.getId())
+        tx = callstackscope('__callstack_var_tx__')
+        resourceTx = self.txs.pop(tx.getId())
         resourceTx.rollback()
 
 class Transaction(object):
