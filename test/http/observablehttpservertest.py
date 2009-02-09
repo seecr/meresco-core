@@ -63,6 +63,7 @@ class ObservableHttpServerTest(CQ2TestCase):
         self.assertEquals([''], arguments['emptykey'])
 
     def testServerWithPrio(self):
+        import gc, weakref
         prios = []
         class MyServer(object):
             def handleRequest(self, *args, **kwargs):
@@ -85,6 +86,12 @@ class ObservableHttpServerTest(CQ2TestCase):
         self.assertEquals([('read', 3)], prios)
         reactor.step().step()
         self.assertEquals([('read', 3), ('read', 3)], prios)
-        reactor.step().step()
+        reactor.step()
+        reactor.step()
         self.assertEquals([('read', 3), ('read', 3), ('write', 3)], prios)
+        # one more step to let the connection finalize and all objects reclaimed and avoid garbage
+        reactor.step()
+        gc.collect()
+        garbage = [weakref.ref(o) for o in gc.get_objects() if 'AllMess' in str(type(o))]
+        self.assertEquals([], garbage)
 

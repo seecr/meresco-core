@@ -72,6 +72,8 @@ class DeferredMessage(object):
                     except:
                         exType, exValue, exTraceback = exc_info()
                         raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+                    finally:
+                        responses = None # avoid cycles, see http://www.python.org/dev/peps/pep-0342/
 
 class AllMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
