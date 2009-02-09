@@ -533,6 +533,21 @@ class ObservableTest(unittest.TestCase):
         root.once.methodOnNonObservableSubclass(collector)
         self.assertEquals(['once'], collector)
 
+    def testNoLeakingGeneratorsInCycle(self):
+        import gc
+        from weakref import ref
+        class Responder(Observable):
+            def message(self):
+                return 'response'
+        obs = Observable()
+        obs.addObserver(Responder())
+        result = obs.all.message().next()
+        self.assertEquals('response',result)
+        del obs
+        gc.collect()
+        merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
+        self.assertEquals([], merescoTrackedObjects)
+
 class TestException(Exception):
     pass
 

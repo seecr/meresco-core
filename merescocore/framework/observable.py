@@ -29,13 +29,13 @@ from sys import exc_info
 from generatorutils import compose
 from callstackscope import callstackscope
 
-class Defer:
-    def __init__(self, observable, defereeType):
-        self._observable = observable
+class Defer(object):
+    def __init__(self, observers, defereeType):
+        self._observers = observers
         self._defereeType = defereeType
 
     def __getattr__(self, attr):
-        return self._defereeType(self._observable._observers, attr)
+        return self._defereeType(self._observers, attr)
 
     def unknown(self, message, *args, **kwargs):
         try:
@@ -44,7 +44,7 @@ class Defer:
             exType, exValue, exTraceback = exc_info()
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
-class DeferredMessage:
+class DeferredMessage(object):
     def __init__(self, observers, message):
         self._observers = observers
         self._message = message
@@ -128,10 +128,10 @@ def _beRecursive(helix, helicesDone):
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
-        self.all = Defer(self, AllMessage)
-        self.any = Defer(self, AnyMessage)
-        self.do = Defer(self, DoMessage)
-        self.once = Defer(self, OnceMessage)
+        self.all = Defer(self._observers, AllMessage)
+        self.any = Defer(self._observers, AnyMessage)
+        self.do = Defer(self._observers, DoMessage)
+        self.once = Defer(self._observers, OnceMessage)
         if name:
             self.__repr__ = lambda: name
 

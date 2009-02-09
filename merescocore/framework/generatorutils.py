@@ -39,6 +39,9 @@ def compose(generator):
     except:
         exType, exValue, exTraceback = exc_info()
         raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+    finally:
+        generator = None  # avoid cycles, see http://www.python.org/dev/peps/pep-0342/
+
 
 def decorate(before, generator, after):
     first = generator.next()
