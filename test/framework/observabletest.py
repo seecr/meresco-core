@@ -536,6 +536,10 @@ class ObservableTest(unittest.TestCase):
     def testNoLeakingGeneratorsInCycle(self):
         import gc
         from weakref import ref
+        gc.collect()
+        merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
+        self.assertEquals([], merescoTrackedObjects, 'Start situation is not clean: [] != %s' % merescoTrackedObjects)
+        
         class Responder(Observable):
             def message(self):
                 return 'response'
