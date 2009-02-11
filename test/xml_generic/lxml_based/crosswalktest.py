@@ -91,6 +91,27 @@ class CrosswalkTest(CQ2TestCase):
         newRules = rewriteRules('imsmd', '', rules)
         self.assertEquals(rules[0][-1], newRules[0][-1])
 
+    def testAddCustomNormalizeMethods(self):
+        open(join(self.tempdir, 'my.rules'), 'w').write("""
+inputNamespace = defaultNameSpace = 'CrosswalkTest'
+vocabDict = {}
+rootTagName = 'new'
+sourceNsMap = {
+    'src': inputNamespace
+}
+
+newNsMap = {
+    'dst': inputNamespace
+}
+rules = [
+('dst:two', 'src:one', ('src:sub1', 'src:sub2'), '%s', myNormalizeMethod)
+]
+""")
+        c = Crosswalk(rulesDir=self.tempdir, extraGlobals={'myNormalizeMethod': lambda x,y:(x+' '+y,)})
+        node = parse(StringIO("""<old xmlns="CrosswalkTest"><one><sub1>first</sub1><sub2>second</sub2></one></old>"""))
+        newNode = c.convert(node)
+        self.assertEquals('<new xmlns="CrosswalkTest"><two>first second</two></new>', tostring(newNode))
+
     def testXPathNodeTest(self):
         x = """
         <x>

@@ -47,12 +47,16 @@ def rewrite(pattern, replacement, rules):
     return rules
 
 class Crosswalk(Observable):
-    def __init__(self, argumentKeyword = None, rulesDir=join(abspath(dirname(__file__)), 'rules')):
+    def __init__(self, argumentKeyword = None, rulesDir=join(abspath(dirname(__file__)), 'rules'), extraGlobals={}):
         assert argumentKeyword == None, 'Crosswalk converts any argument that looks like an Lxml ElementTree, usage of argumentKeyword is forbidden.'
 
         Observable.__init__(self)
         self.ruleSet = {}
         self.rulesDir = rulesDir
+        self._globs = {}
+        self._globs.update(extraGlobals)
+        self._globs['rewriteRules']= rewriteRules
+
         if rulesDir:
             for fileName in glob(rulesDir + '/*' + EXTENSION):
                 args = {}
@@ -61,8 +65,8 @@ class Crosswalk(Observable):
                 del args['inputNamespace']
 
     def readConfig(self, ruleSetName, localsDict):
-        globs = {'extend': lambda name: self.readConfig(name, localsDict), 'rewriteRules': rewriteRules}
-        execfile(self.rulesDir + '/' + ruleSetName + EXTENSION, globs, localsDict)
+        self._globs['extend']= lambda name: self.readConfig(name, localsDict)
+        execfile(self.rulesDir + '/' + ruleSetName + EXTENSION, self._globs, localsDict)
 
     def _detectAndConvert(self, anObject):
         if type(anObject) == _ElementTree:
