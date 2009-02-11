@@ -36,11 +36,13 @@ from amara.binderytools import bind_string
 
 from cq2utils.wrappers import wrapp
 
-from merescocore.framework import Observable, compose
+from merescocore.framework import Observable
 from merescocore.components.sru.sruquery import SRUQuery, SRUQueryException
 from merescocore.components.http import utils as httputils
 
 from cqlparser.cqlparser import parseString as parseCQL
+
+from weightless import compose
 
 class BadRequestException(Exception):
     pass

@@ -26,7 +26,7 @@
 #
 ## end license ##
 from sys import exc_info
-from generatorutils import compose
+from weightless import compose
 from callstackscope import callstackscope
 
 class Defer(object):
@@ -56,10 +56,13 @@ class DeferredMessage(object):
         for observer in self._observers:
             if hasattr(observer, self._message):
                 try:
-                    yield getattr(observer, self._message)(*args, **kwargs)
+                    answer = getattr(observer, self._message)(*args, **kwargs)
+                    yield answer
                 except:
                     exType, exValue, exTraceback = exc_info()
                     raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+                finally:
+                    answer = None
             elif hasattr(observer, 'unknown'):
                 try:
                     responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
@@ -73,6 +76,7 @@ class DeferredMessage(object):
                         exType, exValue, exTraceback = exc_info()
                         raise exType, exValue, exTraceback.tb_next # skip myself from traceback
                     finally:
+                        responses.close()# avoid cycles, see http://www.python.org/dev/peps/pep-0342/
                         responses = None # avoid cycles, see http://www.python.org/dev/peps/pep-0342/
 
 class AllMessage(DeferredMessage):
@@ -82,12 +86,16 @@ class AllMessage(DeferredMessage):
 class AnyMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            return DeferredMessage.__call__(self, *args, **kwargs).next()
+            results = DeferredMessage.__call__(self, *args, **kwargs)
+            return results.next()
         except StopIteration:
             raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
         except:
             exType, exValue, exTraceback = exc_info()
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+        finally:
+            results.close()
+            results = None
 
 class DoMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):

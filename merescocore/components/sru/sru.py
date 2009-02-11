@@ -30,11 +30,12 @@ from urlparse import urlsplit
 from urllib import unquote
 from xml.sax.saxutils import escape as xmlEscape
 
-from merescocore.framework import Observable, decorate, compose
+from merescocore.framework import Observable, decorate
 from merescocore.components.sru.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 from merescocore.components.http import utils as httputils
 
 from cqlparser.cqlparser import parseString as parseCQL
+from weightless import compose
 
 VERSION = '1.1'
 

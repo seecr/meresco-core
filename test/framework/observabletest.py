@@ -539,7 +539,7 @@ class ObservableTest(unittest.TestCase):
         gc.collect()
         merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
         self.assertEquals([], merescoTrackedObjects, 'Start situation is not clean: [] != %s' % merescoTrackedObjects)
-        
+
         class Responder(Observable):
             def message(self):
                 return 'response'
@@ -548,6 +548,25 @@ class ObservableTest(unittest.TestCase):
         result = obs.all.message().next()
         self.assertEquals('response',result)
         del obs
+        gc.collect()
+        merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
+        self.assertEquals([], merescoTrackedObjects)
+
+    def testNoLeakingGeneratorsInMultiTransparants(self):
+        import gc
+        from weakref import ref
+        class Responder(Observable):
+            def message(self):
+                return 'response'
+        obs = Observable()
+        t1 = Transparant()
+        t2 = Transparant()
+        obs.addObserver(t1)
+        t1.addObserver(t2)
+        t2.addObserver(Responder())
+        result = obs.any.message()
+        self.assertEquals('response', result)
+        del obs, t1, t2
         gc.collect()
         merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
         self.assertEquals([], merescoTrackedObjects)

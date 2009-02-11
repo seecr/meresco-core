@@ -29,6 +29,8 @@ from cq2utils import CQ2TestCase
 from merescocore.components.statisticsxml import StatisticsXml
 from meresco.components.statistics import Statistics
 
+from weightless import compose
+
 class StatisticsXmlTest(CQ2TestCase):
 
     def testParseTime(self):
@@ -45,9 +47,9 @@ class StatisticsXmlTest(CQ2TestCase):
         s._listKeys = lambda: []
 
         xx = s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')
-        result = "".join(list(s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')))
+        result = "".join(compose(s.handleRequest(RequestURI='http://localhost/statistics?fromTime=garbage')))
         self.assertTrue("<error>Invalid Time Format" in result, result)
-        result = "".join(list(s.handleRequest(RequestURI='http://localhost/statistics?maxResults=garbage')))
+        result = "".join(compose(s.handleRequest(RequestURI='http://localhost/statistics?maxResults=garbage')))
         self.assertTrue("<error>maxResults must be number" in result, result)
 
     def testParseArguments(self):
@@ -68,16 +70,16 @@ class StatisticsXmlTest(CQ2TestCase):
 
     def testNoKeysGivenReturnsKeys(self):
         stats = StatisticsXml(Statistics(self.tempdir, [('a',), ('a','b','c')]))
-        result = "".join(list(stats.handleRequest('uri')))
+        result = "".join(compose(stats.handleRequest('uri')))
         self.assertTrue("""<availableKeys><key><keyElement>a</keyElement></key><key><keyElement>a</keyElement><keyElement>b</keyElement><keyElement>c</keyElement></key></availableKeys></statistics>""" in result, result)
 
     def testInvalidKey(self):
         stats = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
         result = stats.handleRequest(RequestURI="http://localhost/statistics?key=nonExisting")
-        self.assertTrue("""<error>Unknown key: ('nonExisting',)</error>""" in ''.join(result))
+        self.assertTrue("""<error>Unknown key: ('nonExisting',)</error>""" in ''.join(compose(result)))
 
         result = stats.handleRequest(RequestURI="http://localhost/statistics?key=a&key=b&key=d")
-        self.assertTrue("""<error>Unknown key: ('a', 'b', 'd')</error>""" in ''.join(result))
+        self.assertTrue("""<error>Unknown key: ('a', 'b', 'd')</error>""" in ''.join(compose(result)))
 
     def testSorted(self):
         statisticsxml = StatisticsXml('ignored')
@@ -86,7 +88,7 @@ class StatisticsXmlTest(CQ2TestCase):
 
     def testResponseFormat(self):
         statisticsxml = StatisticsXml(Statistics(self.tempdir, [('a',), ('a', 'b', 'c')]))
-        result = ''.join(list(statisticsxml.handleRequest(RequestURI="http://localhost/statistics?key=a&fromTime=2008&toTime=2008-01-01")))
+        result = ''.join(compose(statisticsxml.handleRequest(RequestURI="http://localhost/statistics?key=a&fromTime=2008&toTime=2008-01-01")))
         self.assertTrue("""HTTP/1.0 200 OK""" in result, result)
         self.assertTrue("""<?xml""" in result, result)
         self.assertTrue("""<statistics""" in result, result)

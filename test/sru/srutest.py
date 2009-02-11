@@ -29,7 +29,6 @@
 import unittest
 #remove at the end...
 from merescocore.components.sru.sru import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
-from merescocore.framework import compose
 
 from merescocore.components.sru import Sru
 
@@ -38,6 +37,8 @@ from cStringIO import StringIO
 from cq2utils.cq2testcase import CQ2TestCase
 from cqlparser.cqlcomposer import compose as cqlCompose
 import traceback
+
+from weightless import compose
 
 SUCCESS = "SUCCESS"
 

@@ -28,6 +28,6 @@
 
 from observable import Observable, Transparant, be
 from observer import ObserverFunction
-from generatorutils import decorate, compose
+from generatorutils import decorate
 from helix import findHelix, link
 from transaction import TransactionScope, ResourceManager, TransactionException, Transaction

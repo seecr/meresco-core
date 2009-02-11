@@ -30,8 +30,10 @@ from xml.sax.saxutils import escape as xmlEscape
 from amara.binderytools import bind_string
 
 from cq2utils.amaraextension import getElements
-from merescocore.framework import Observable, compose
+from merescocore.framework import Observable
 from merescocore.components.http import utils as httputils
+
+from weightless import compose
 
 SOAP_XML_URI = "http://schemas.xmlsoap.org/soap/envelope/"
 

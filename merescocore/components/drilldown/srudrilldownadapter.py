@@ -31,7 +31,9 @@ from xml.sax.saxutils import quoteattr, escape
 from cqlparser.cqlparser import parseString as parseCQL
 
 from merescocore.framework.observable import Observable
-from merescocore.framework.generatorutils import compose, generatorDecorate
+from merescocore.framework.generatorutils import generatorDecorate
+
+from weightless import compose
 
 DEFAULT_MAXIMUM_TERMS = 10
 

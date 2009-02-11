@@ -99,9 +99,12 @@ class TransactionScope(Observable):
         __callstack_var_tx__ = Transaction(self._transactionName)
         self.once.begin()
         try:
-            for result in self.all.unknown(message, *args, **kwargs):
+            results = self.all.unknown(message, *args, **kwargs)
+            for result in results:
                 yield result
             __callstack_var_tx__.commit()
         except TransactionException:
             __callstack_var_tx__.rollback()
+        finally:
+            results = None
 

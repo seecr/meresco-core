@@ -122,10 +122,13 @@ class VenturiTest(CQ2TestCase):
         inputEvent = fromstring('<document><one/><two/></document>')
         v = createVenturiHelix([('one', '/document/*')], [])
         try:
-            list(v.all.add('identifier', 'document', inputEvent))
+            result = v.all.add('identifier', 'document', inputEvent)
+            list(result)
             self.fail('no good no')
         except Exception, e:
             self.assertEquals("XPath '/document/*' should return atmost one result.", str(e))
+        finally:
+            result.close()
 
     def testNamespace(self):
         inputEvent = fromstring('<document xmlns="ns1" xmlns:ns2="ns2"><ns2:one/><two/></document>')

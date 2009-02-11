@@ -86,5 +86,7 @@ from reindextest import ReindexTest
 
 
 if __name__ == '__main__':
+    try:
         unittest.main()
+    finally:
         os.system('find .. -name "*.pyc" | xargs rm -f')

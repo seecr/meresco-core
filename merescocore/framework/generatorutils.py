@@ -26,22 +26,6 @@
 #
 ## end license ##
 from sys import exc_info
-from types import GeneratorType
-
-def compose(generator):
-    try:
-        for value in generator:
-            if type(value) == GeneratorType:
-                for nested in compose(value):
-                    yield nested
-            else:
-                yield value
-    except:
-        exType, exValue, exTraceback = exc_info()
-        raise exType, exValue, exTraceback.tb_next # skip myself from traceback
-    finally:
-        generator = None  # avoid cycles, see http://www.python.org/dev/peps/pep-0342/
-
 
 def decorate(before, generator, after):
     first = generator.next()

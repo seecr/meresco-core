@@ -30,7 +30,7 @@ from os import rename, remove
 from os.path import isfile, join
 from inspect import currentframe
 from time import mktime, gmtime
-from merescocore.framework import Observable, compose
+from merescocore.framework import Observable
 
 snapshotFilename = 'snapshot'
 

@@ -29,9 +29,9 @@ from cgi import parse_qs
 from urlparse import urlsplit
 
 from time import mktime, gmtime
-from merescocore.framework import compose
 
 from meresco.components.statistics import AggregatorException
+from weightless import compose
 
 NAMESPACE="http://meresco.com/namespace/meresco/statistics"
 
@@ -70,8 +70,7 @@ class StatisticsXml(object):
                 yield stuff
         else:
             key = tuple(key)
-            for stuff in compose(self._query(fromTime, toTime, key, maxResults)):
-                yield stuff
+            yield compose(self._query(fromTime, toTime, key, maxResults))
 
     def _htmlHeader(self):
         return """HTTP/1.0 200 OK\r\nContent-Type: text/xml\r\n\r\n<?xml version="1.0" encoding="utf-8" ?>"""

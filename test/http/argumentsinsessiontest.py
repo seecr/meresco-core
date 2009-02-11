@@ -29,7 +29,8 @@
 from unittest import TestCase
 from cq2utils import CallTrace
 from merescocore.components.http import ArgumentsInSession
-from merescocore.framework import Observable, compose
+from merescocore.framework import Observable
+from weightless import compose
 
 class ArgumentsInSessionTest(TestCase):
     def setUp(self):
