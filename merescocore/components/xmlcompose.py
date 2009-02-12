@@ -45,7 +45,7 @@ class XmlCompose(Observable):
             if not partname in cachedRecord:
                 cachedRecord[partname] = self._getPart(aRecordId, partname)
             xml = cachedRecord[partname]
-            result = xml.xpath(xPathExpression, self._nsMap)
+            result = xml.xpath(xPathExpression, namespaces=self._nsMap)
             if result:
                 data[tagName] = str(result[0])
         yield self.createRecord(data)
