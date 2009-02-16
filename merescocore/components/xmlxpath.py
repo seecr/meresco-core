@@ -67,7 +67,7 @@ class XmlXPath(Observable):
 
     def _findNewTree(self, elementTree):
         for xpath in self._xpaths:
-            for element in elementTree.xpath(xpath, self._namespacesMap):
+            for element in elementTree.xpath(xpath, namespaces=self._namespacesMap):
                 #to fix root element:
                 buffer = StringIO()
                 ElementTree(element).write(buffer)

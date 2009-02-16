@@ -35,7 +35,7 @@ from merescocore.framework import be, Observable, TransactionScope, ResourceMana
 from merescocore.components import StorageComponent, FilterField, RenameField, XmlParseLxml, XmlXPath, XmlPrintLxml, Xml2Fields, Venturi, Amara2Lxml, RewritePartname, Rss, RssItem, Lxml2Amara
 from merescocomponents.facetindex import Drilldown, LuceneIndex, CQL2LuceneQuery, Fields2LuceneDocumentTx
 from merescocomponents.facetindex.tools import unlock
-from merescocore.components.drilldown import SRUDrilldownAdapter, SRUTermDrilldown, DrilldownRequestFieldnameMap
+from merescocore.components.drilldown import SRUDrilldownAdapter, SRUTermDrilldown, DrilldownFieldnames
 from merescocore.components.http import PathFilter, ObservableHttpServer
 from merescocore.components.http.webrequestserver import WebRequestServer
 from merescocore.components.sru import Sru, SRURecordUpdate
@@ -133,7 +133,7 @@ def dna(reactor,  host, portNumber, databasePath):
                         (storageComponent,),
                         (SRUDrilldownAdapter(),
                             (SRUTermDrilldown(),
-                                (DrilldownRequestFieldnameMap(
+                                (DrilldownFieldnames(
                                     lambda field: DRILLDOWN_PREFIX + field,
                                     lambda field: field[len(DRILLDOWN_PREFIX):]),
                                         (drilldownComponent,)

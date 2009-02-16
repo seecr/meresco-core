@@ -50,7 +50,7 @@ class Venturi(Observable):
                 yield self.all.add(identifier, partname, part)
 
     def _findPart(self, identifier, partname, lxmlNode, partXPath):
-        matches = lxmlNode.xpath(partXPath, self._namespaceMap)
+        matches = lxmlNode.xpath(partXPath, namespaces=self._namespaceMap)
         if len(matches) > 1:
             raise VenturiException("XPath '%s' should return atmost one result." % partXPath)
         if len(matches) == 1:
