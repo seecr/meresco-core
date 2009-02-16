@@ -2,9 +2,9 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
-#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
-#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+#    Copyright (C) 2007-2008 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2008 SURF Foundation. http://www.surf.nl
+#    Copyright (C) 2007-2008 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
@@ -33,11 +33,25 @@ def _emptyGenerator():
 
 class IpFilter(Transparant):
 
-    def __init__(self, whitelist):
+    def __init__(self, allowedIps=[], allowedIpRanges=[]):
         Transparant.__init__(self)
-        self._whitelist = whitelist
+        self._allowedIps = allowedIps
+        self._allowedIpRanges = [(self._convertToNumber(start), self._convertToNumber(end))
+            for start,end in allowedIpRanges]
 
-    def handleRequest(self, *args, **kwargs):
-        if kwargs.get("Client", ["",])[0] in self._whitelist:
+    def handleRequest(self, Client, *args, **kwargs):
+        if Client in self._allowedIps:
             return self.all.handleRequest(*args, **kwargs)
+
+        ipNumber = self._convertToNumber(Client)
+        for (start, end) in self._allowedIpRanges:
+            if start <= ipNumber < end:
+                return self.all.handleRequest(Client, *args, **kwargs)
+
         return _emptyGenerator()
+
+
+    def _convertToNumber(self, ip):
+        a,b,c,d = [int(x) for x in ip.split('.')]
+        return pow(256,3)*a + pow(256,2)*b + pow(256, 1)*c + d
+

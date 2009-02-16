@@ -69,7 +69,7 @@ from http.pathrenametest import PathRenameTest
 from http.sessionhandlertest import SessionHandlerTest
 from http.argumentsinsessiontest import ArgumentsInSessionTest
 from http.observablehttpservertest import ObservableHttpServerTest
-
+from http.ipfiltertest import IpFilterTest
 
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
