@@ -32,7 +32,13 @@ class IpFilterTest(TestCase):
             self.assertEquals(0, len(self.observer.calledMethods))
 
     def testFilterSingleIp(self):
-        pass
+        self.assertValidIp('192.168.1.0', ips=["192.168.1.0"])
+        self.assertInvalidIp('192.168.1.0', ips=["192.168.1.1"])
+        self.assertInvalidIp('172.16.10.1', ips=["192.168.1.0"])
+
+    def testZeroIPs(self):
+        self.assertInvalidIp('0.0.0.0', ips=['192.168.1.1'])
+        self.assertInvalidIp('0.0.0.0', ipranges=[('192.168.1.0', '192.168.1.255')])
 
     def testInRanges(self):
         self.assertValidIp('192.168.1.0', ipranges=[('192.168.1.0', '192.168.1.255')])
