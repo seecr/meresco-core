@@ -24,10 +24,11 @@ class IpFilterTest(TestCase):
             )
         )
 
-        list(dna.all.handleRequest(Client=address))
+        list(dna.all.handleRequest(Client=(address,)))
         if passed:
             self.assertEquals(1, len(self.observer.calledMethods))
             self.assertEquals('handleRequest', self.observer.calledMethods[0].name)
+            self.assertEquals((address,), self.observer.calledMethods[0].kwargs['Client'])
         else:
             self.assertEquals(0, len(self.observer.calledMethods))
 

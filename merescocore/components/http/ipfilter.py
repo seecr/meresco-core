@@ -40,13 +40,14 @@ class IpFilter(Transparant):
             for start,end in allowedIpRanges]
 
     def handleRequest(self, Client, *args, **kwargs):
-        if Client in self._allowedIps:
-            return self.all.handleRequest(*args, **kwargs)
+        ipaddress = Client[0] if Client != None else '0.0.0.0'
+        if ipaddress in self._allowedIps:
+            return self.all.handleRequest(Client=Client, *args, **kwargs)
 
-        ipNumber = self._convertToNumber(Client)
+        ipNumber = self._convertToNumber(ipaddress)
         for (start, end) in self._allowedIpRanges:
             if start <= ipNumber < end:
-                return self.all.handleRequest(Client, *args, **kwargs)
+                return self.all.handleRequest(Client=Client, *args, **kwargs)
 
         return _emptyGenerator()
 
