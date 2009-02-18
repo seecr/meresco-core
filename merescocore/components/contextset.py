@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-class ContextSet:
+class ContextSet(object):
     def __init__(self, name, aStream):
         self.name = name
         self._dictionary = {}
@@ -59,7 +59,7 @@ class ContextSet:
 class ContextSetException(Exception):
     pass
 
-class ContextSetList:
+class ContextSetList(object):
     def __init__(self):
         self._contextsets = {}
 
