@@ -38,10 +38,10 @@ from weightless import Reactor
 from sys import stdout
 from os.path import abspath, dirname, join, isdir, basename
 from os import makedirs
-from meresco.components.http import ObservableHttpServer
-from meresco.components.http.webrequestserver import WebRequestServer
-from meresco.components.sru import SRURecordUpdate
-from meresco.framework import Observable, be
+from merescocore.components.http import ObservableHttpServer
+from merescocore.components.http.webrequestserver import WebRequestServer
+from merescocore.components.sru import SRURecordUpdate
+from merescocore.framework import Observable, be
 from re import compile
 from traceback import format_exc
 from amara.binderytools import bind_stream

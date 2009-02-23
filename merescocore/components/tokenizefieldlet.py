@@ -34,7 +34,7 @@ from string import punctuation
 
 class TokenizeFieldlet(Observable):
     def addField(self, name, value):
-        for word in value.split():
+        for word in unicode(value).split():
             word = word.strip(punctuation)
             if len(word) > 1:
                 self.do.addField(name, word.lower())
