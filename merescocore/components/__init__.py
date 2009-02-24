@@ -49,3 +49,4 @@ from filtermessages import FilterMessages
 from reindex import Reindex, ReindexConsole
 from parsecql import ParseCQL
 from cqlconversion import CQLConversion
+from renamecqlindex import RenameCqlIndex

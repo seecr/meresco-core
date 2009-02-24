@@ -35,23 +35,25 @@ from cqlparser import parseString
 class CQLConversionTest(CQ2TestCase):
     
     def testCQLContextSetConversion(self):
-        myDict = {'fieldone':'translatedfield'}
         observer = CallTrace('observer')
         o = be((Observable(),
-            (CQLConversion(lambda fieldname:myDict.get(fieldname, fieldname)),
+            (CQLConversion(lambda ast:parseString('anotherQuery')),
                 (observer,)
             )
         ))
         o.do.whatever(parseString('afield = value'))
         self.assertEquals(1, len(observer.calledMethods))
         self.assertEquals('whatever', observer.calledMethods[0].name)
-        self.assertEquals((parseString('afield = value'),), observer.calledMethods[0].args)
+        self.assertEquals((parseString('anotherQuery'),), observer.calledMethods[0].args)
 
     def testCQLCanConvert(self):
-        c = CQLConversion(lambda fieldname: 'myfield')
+        c = CQLConversion(lambda ast: ast)
         self.assertTrue(c._canConvert(parseString('field = value')))
         self.assertFalse(c._canConvert('other object'))
 
     def testCQLConvert(self):
-        c = CQLConversion(lambda fieldname: 'myfield')
-        self.assertEquals(parseString('myfield = value'), c._convert(parseString('otherfield = value')))
+        converter = CallTrace('Converter')
+        converter.returnValues['convert'] = parseString('ast')
+        c = CQLConversion(converter.convert)
+        self.assertEquals(parseString('ast'), c._convert(parseString('otherfield = value')))
+        self.assertEquals(['convert'], [m.name for m in converter.calledMethods])
