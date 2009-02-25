@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.5
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -26,31 +27,29 @@
 #
 ## end license ##
 
-from merescocore.framework import Observable
-from lxml.etree import parse
-from StringIO import StringIO
+from cq2utils import CQ2TestCase, CallTrace
+from merescocore.components import ReindexConsole
+from merescocore.framework import be, Observable
 
-EMPTYDOC = parse(StringIO('<empty/>'))
+class ReindexConsoleTest(CQ2TestCase):
 
-class Reindex(Observable):
-    def __init__(self, partName):
-        Observable.__init__(self)
-        self._partName = partName
+    def testArguments(self):
+        observer = CallTrace('observer')
+        dna = be(
+            (Observable(),
+                (ReindexConsole(),
+                    (observer,)
+                )
+            )
+        )
 
-    def reindex(self, identifierMask=''):
-        for identifier in self.any.listIdentifiers(self._partName, identifierMask=identifierMask):
-            try:
-                self.do.add(identifier, 'ignoredName', EMPTYDOC)
-            except:
-                print 'ERROR', identifier
-                raise
-            yield identifier
+        observer.returnValues['reindex'] = (x for x in ['identifier'])
+        result = list(dna.all.handleRequest())
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals("reindex(identifierMask='')", str(observer.calledMethods[0]))
 
-class ReindexConsole(Observable):
-    def handleRequest(self, *args, **kwargs):
-        arguments = kwargs.get('arguments', {})
-        identifierMask=arguments.get('identifierMask', [''])[0]
-        yield "HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n"
-        for id in self.all.reindex(identifierMask=identifierMask):
-            yield id + "\n"
-        yield "done"
+        observer.calledMethods = []
+        observer.returnValues['reindex'] = (x for x in ['identifier'])
+        result = list(dna.all.handleRequest(arguments={'identifierMask': ['ident:ifier:1']}))
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals("reindex(identifierMask='ident:ifier:1')", str(observer.calledMethods[0]))

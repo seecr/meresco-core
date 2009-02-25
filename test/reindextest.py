@@ -26,20 +26,20 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
 from cq2utils import CQ2TestCase, CallTrace
 from merescocore.components import StorageComponent, Reindex, FilterMessages
 from merescocore.framework import be
 
-from os.path import join
-from os import makedirs
-
 class ReindexTest(CQ2TestCase):
-    def testEnumerateStorage(self):
+
+    def setupStorage(self, records):
         storage = StorageComponent(self.tempdir)
-        storage.add('identifier:A', 'part', 'data1')
-        storage.add('identifier:B', 'part', 'data2')
-        storage.add('identifier:C', 'part', 'data3')
-        self.assertEquals(set(['identifier:B', 'identifier:C', 'identifier:A']), set(storage.listIdentifiers()))
+        for record in records:
+            storage.add(*record)
+        return storage
+
+    def setupDna(self, storage):
         observer = CallTrace('observer')
         reindex = be(
             (Reindex('part'),
@@ -49,9 +49,38 @@ class ReindexTest(CQ2TestCase):
                 (observer,)
             )
         )
+        return reindex, observer
+
+    def testEnumerateStorage(self):
+        storage = self.setupStorage([
+            ('identifier:A', 'part', 'data1'),
+            ('identifier:B', 'part', 'data2'),
+            ('identifier:C', 'part', 'data3'),
+        ])
+        self.assertEquals(set(['identifier:B', 'identifier:C', 'identifier:A']), set(storage.listIdentifiers()))
+
+        reindex, observer = self.setupDna(storage)
         result = list(reindex.reindex())
         self.assertEquals(3, len(observer.calledMethods))
         methods = sorted(map(str, observer.calledMethods))
         self.assertEquals("add('identifier:A', 'ignoredName', <etree._ElementTree>)", methods[0])
         self.assertEquals("add('identifier:B', 'ignoredName', <etree._ElementTree>)", methods[1])
         self.assertEquals("add('identifier:C', 'ignoredName', <etree._ElementTree>)", methods[2])
+
+    def testSelectIdentifiers(self):
+        storage = self.setupStorage([
+            ('identifier:1A', 'part', 'data1'),
+            ('identifier:1B', 'part', 'data2'),
+            ('identifier:2C', 'part', 'data3'),
+        ])
+        reindex, observer = self.setupDna(storage)
+        result = list(reindex.reindex(identifierMask="identifier:1"))
+        self.assertEquals(2, len(observer.calledMethods))
+
+        observer.calledMethods = []
+        result = list(reindex.reindex(identifierMask="identifier:2"))
+        self.assertEquals(1, len(observer.calledMethods))
+
+        observer.calledMethods = []
+        result = list(reindex.reindex(identifierMask="identifier:"))
+        self.assertEquals(3, len(observer.calledMethods))

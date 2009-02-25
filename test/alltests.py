@@ -84,6 +84,7 @@ from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
 
 from reindextest import ReindexTest
+from reindexconsoletest import ReindexConsoleTest
 
 
 if __name__ == '__main__':
