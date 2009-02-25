@@ -106,3 +106,9 @@ class StorageComponent(object):
         if partName:
             return ifilter(None, self._listIdentifiersByPartName(partName, identifierMask=identifierMask))
         return ifilter(None, self._listIdentifiers(identifierMask=identifierMask))
+
+    def glob(self, (prefix, wantedPartname)):
+        def filterPrefixAndPart((identifier, partName)):
+            return identifier.startswith(prefix) and (wantedPartname == None or wantedPartname == partName)
+
+        return ifilter(filterPrefixAndPart, self._storage.glob((prefix, wantedPartname)))
