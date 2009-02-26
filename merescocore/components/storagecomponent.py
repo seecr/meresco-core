@@ -91,21 +91,18 @@ class StorageComponent(object):
 
     def _listIdentifiers(self, identifierMask=''):
         lastIdentifier = None
-        for identifier, partname in self._storage:
-            if identifier != lastIdentifier and identifier.startswith(identifierMask):
+        for identifier, partname in self.glob((identifierMask, None)):
+            if identifier != lastIdentifier:
                 yield identifier
                 lastIdentifier = identifier
 
     def _listIdentifiersByPartName(self, partName, identifierMask=''):
-        for identifier, partname in self._storage:
-            if partName == partname and identifier.startswith(identifierMask):
-                yield identifier
+        for identifier, partname in self.glob((identifierMask, partName)):
+            yield identifier
 
     def listIdentifiers(self, partName=None, identifierMask=''):
         """Use an ifilter to hide the generator so it won't be consumed by compose"""
-        if partName:
-            return ifilter(None, self._listIdentifiersByPartName(partName, identifierMask=identifierMask))
-        return ifilter(None, self._listIdentifiers(identifierMask=identifierMask))
+        return ifilter(None, self._listIdentifiersByPartName(partName, identifierMask=identifierMask))
 
     def glob(self, (prefix, wantedPartname)):
         def filterPrefixAndPart((identifier, partName)):
