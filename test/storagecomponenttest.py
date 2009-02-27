@@ -32,18 +32,27 @@ from merescocore.components.storagecomponent import StorageComponent
 from storage import HierarchicalStorage, Storage
 from cStringIO import StringIO
 from merescocore.framework.observable import Observable
+from os import popen2
+
 
 class StorageComponentTest(CQ2TestCase):
 
     def setUp(self):
         CQ2TestCase.setUp(self)
-        self.storageComponent = StorageComponent(self.tempdir, revisionControl=True)
+        i, o = popen2('which ci 2>/dev/null')
+        self.revisionAvailable = o.read() != ''
+        
+        self.storageComponent = StorageComponent(self.tempdir, revisionControl=self.revisionAvailable)
         self.storage = self.storageComponent._storage
 
     def testAdd(self):
-        old,new = self.storageComponent.add("id_0", "partName", "The contents of the part")
+        if self.revisionAvailable:
+            old,new = self.storageComponent.add("id_0", "partName", "The contents of the part")
+        else:
+            self.storageComponent.add("id_0", "partName", "The contents of the part")
         self.assertEquals('The contents of the part', self.storage.get(('id_0', 'partName')).read())
-        self.assertEquals((0,1), (old,new))
+        if self.revisionAvailable:
+            self.assertEquals((0,1), (old,new))
 
     def testIsAvailableIdAndPart(self):
         sink = self.storage.put(('some:thing:anId-123','somePartName'))
@@ -90,7 +99,7 @@ class StorageComponentTest(CQ2TestCase):
         self.storageComponent.delete('some:thing:anId-123')
         self.assertTrue(identifier in self.storage)
 
-        self.storageComponent = StorageComponent(self.tempdir, revisionControl=True, partsRemovedOnDelete=['somePartName'])
+        self.storageComponent = StorageComponent(self.tempdir, partsRemovedOnDelete=['somePartName'])
         self.storage = self.storageComponent._storage
         self.storageComponent.delete('some:thing:anId-123')
         self.assertFalse(identifier in self.storage)
