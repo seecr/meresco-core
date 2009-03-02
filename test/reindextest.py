@@ -74,13 +74,13 @@ class ReindexTest(CQ2TestCase):
             ('identifier:2C', 'part', 'data3'),
         ])
         reindex, observer = self.setupDna(storage)
-        result = list(reindex.reindex(identifierMask="identifier:1"))
+        result = list(reindex.reindex(partialIdentifier="identifier:1"))
         self.assertEquals(2, len(observer.calledMethods))
 
         observer.calledMethods = []
-        result = list(reindex.reindex(identifierMask="identifier:2"))
+        result = list(reindex.reindex(partialIdentifier="identifier:2"))
         self.assertEquals(1, len(observer.calledMethods))
 
         observer.calledMethods = []
-        result = list(reindex.reindex(identifierMask="identifier:"))
+        result = list(reindex.reindex(partialIdentifier="identifier:"))
         self.assertEquals(3, len(observer.calledMethods))

@@ -46,10 +46,10 @@ class ReindexConsoleTest(CQ2TestCase):
         observer.returnValues['reindex'] = (x for x in ['identifier'])
         result = list(dna.all.handleRequest())
         self.assertEquals(1, len(observer.calledMethods))
-        self.assertEquals("reindex(identifierMask='')", str(observer.calledMethods[0]))
+        self.assertEquals("reindex(partialIdentifier='')", str(observer.calledMethods[0]))
 
         observer.calledMethods = []
         observer.returnValues['reindex'] = (x for x in ['identifier'])
-        result = list(dna.all.handleRequest(arguments={'identifierMask': ['ident:ifier:1']}))
+        result = list(dna.all.handleRequest(arguments={'partialIdentifier': ['ident:ifier:1']}))
         self.assertEquals(1, len(observer.calledMethods))
-        self.assertEquals("reindex(identifierMask='ident:ifier:1')", str(observer.calledMethods[0]))
+        self.assertEquals("reindex(partialIdentifier='ident:ifier:1')", str(observer.calledMethods[0]))

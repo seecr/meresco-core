@@ -37,8 +37,8 @@ class Reindex(Observable):
         Observable.__init__(self)
         self._partName = partName
 
-    def reindex(self, identifierMask=''):
-        for identifier in self.any.listIdentifiers(self._partName, identifierMask=identifierMask):
+    def reindex(self, partialIdentifier=''):
+        for identifier in self.any.listIdentifiers(self._partName, partialIdentifier=partialIdentifier):
             try:
                 self.do.add(identifier, 'ignoredName', EMPTYDOC)
             except:
@@ -49,8 +49,8 @@ class Reindex(Observable):
 class ReindexConsole(Observable):
     def handleRequest(self, *args, **kwargs):
         arguments = kwargs.get('arguments', {})
-        identifierMask=arguments.get('identifierMask', [''])[0]
+        partialIdentifier=arguments.get('partialIdentifier', [''])[0]
         yield "HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n"
-        for id in self.all.reindex(identifierMask=identifierMask):
+        for id in self.all.reindex(partialIdentifier=partialIdentifier):
             yield id + "\n"
         yield "done"

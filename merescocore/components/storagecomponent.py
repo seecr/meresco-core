@@ -89,20 +89,20 @@ class StorageComponent(object):
     def getStream(self, id, partName):
         return self._storage.get((id, partName))
 
-    def _listIdentifiers(self, identifierMask=''):
+    def _listIdentifiers(self, partialIdentifier=''):
         lastIdentifier = None
-        for identifier, partname in self.glob((identifierMask, None)):
+        for identifier, partname in self.glob((partialIdentifier, None)):
             if identifier != lastIdentifier:
                 yield identifier
                 lastIdentifier = identifier
 
-    def _listIdentifiersByPartName(self, partName, identifierMask=''):
-        for identifier, partname in self.glob((identifierMask, partName)):
+    def _listIdentifiersByPartName(self, partName, partialIdentifier=''):
+        for identifier, partname in self.glob((partialIdentifier, partName)):
             yield identifier
 
-    def listIdentifiers(self, partName=None, identifierMask=''):
+    def listIdentifiers(self, partName=None, partialIdentifier=''):
         """Use an ifilter to hide the generator so it won't be consumed by compose"""
-        return ifilter(None, self._listIdentifiersByPartName(partName, identifierMask=identifierMask))
+        return ifilter(None, self._listIdentifiersByPartName(partName, partialIdentifier=partialIdentifier))
 
     def glob(self, (prefix, wantedPartname)):
         def filterPrefixAndPart((identifier, partName)):
