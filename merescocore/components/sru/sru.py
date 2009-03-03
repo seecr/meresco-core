@@ -34,7 +34,7 @@ from merescocore.framework import Observable, decorate
 from merescocore.components.sru.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 from merescocore.components.http import utils as httputils
 
-from cqlparser.cqlparser import parseString as parseCQL
+from cqlparser import parseString as parseCQL
 from weightless import compose
 
 VERSION = '1.1'
@@ -234,17 +234,31 @@ class Sru(Observable):
         except Exception, e:
             yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
 
+    def _executeCQL(self, cqlAbstractSyntaxTree, start, stop, sortBy, sortDescending, arguments):
+        """Hook method (arguments is not used here, may be used in subclasses)"""
+        return self.any.executeCQL(
+            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
+            start=start,
+            stop=stop,
+            sortBy=sortBy,
+            sortDescending=sortDescending)
+
     def _doSearchRetrieve(self, sruQuery, arguments):
         SRU_IS_ONE_BASED = 1
 
         start = sruQuery.startRecord - SRU_IS_ONE_BASED
         cqlAbstractSyntaxTree = parseCQL(sruQuery.query)
-        total, recordIds = self.any.executeCQL(
-            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
-            start=start,
-            stop=start + sruQuery.maximumRecords,
-            sortBy=sruQuery.sortBy,
-            sortDescending=sruQuery.sortDescending)
+        try:
+            total, recordIds = self._executeCQL(
+                cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
+                start=start,
+                stop=start + sruQuery.maximumRecords,
+                sortBy=sruQuery.sortBy,
+                sortDescending=sruQuery.sortDescending,
+                arguments=arguments)
+        except Exception, e:
+            yield DIAGNOSTICS % ( QUERY_FEATURE_UNSUPPORTED[0], QUERY_FEATURE_UNSUPPORTED[1], xmlEscape(str(e)))
+            return
         yield self._startResults(total)
 
         recordsWritten = 0
@@ -306,7 +320,7 @@ class Sru(Observable):
         yield '</srw:extraRecordData>'
 
     def _yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
-        generator = self.all.yieldRecord(recordId, recordSchema)
+        generator = compose(self.all.yieldRecord(recordId, recordSchema))
         if recordPacking == 'xml':
             for data in generator:
                 yield data
