@@ -47,7 +47,7 @@ class Session(UserDict):
         return '<a href="?%s">%s</a>' % (urlencode({key: '-' + repr(value)}), caption)
 
 class ArgumentsInSession(Observable):
-    
+
     def handleRequest(self, session, arguments = {}, *args, **kwargs):
         for k,v in arguments.items():
             if not k in session:
@@ -71,13 +71,14 @@ class ArgumentsInSession(Observable):
         yield self.all.handleRequest(session=session, *args, **kwargs)
 
 class SessionHandler(Observable):
-    def __init__(self, secretSeed):
+    def __init__(self, secretSeed, nameSuffix=''):
         Observable.__init__(self)
         self._secretSeed = secretSeed
+        self._nameSuffix = nameSuffix
         self._sessions = {}
 
     def handleRequest(self, RequestURI='', Client=None, Headers={}, arguments = {}, *args, **kwargs):
-        sessioncookies = [cookie.strip() for cookie in Headers.get('Cookie','').split(';') if cookie.strip().startswith('session=')]
+        sessioncookies = [cookie.strip() for cookie in Headers.get('Cookie','').split(';') if cookie.strip().startswith('session%s=' % self._nameSuffix)]
         sessionid, session = None, None
         if len(sessioncookies) >=1:
             sessionid = sessioncookies[0].split('=')[1]
@@ -87,7 +88,7 @@ class SessionHandler(Observable):
             sessionid = md5('%s%s%s%s' % (time(), randint(0, 9999999999), clientaddress, self._secretSeed)).hexdigest()
             session = Session(sessionid)
             self._sessions[sessionid] = session
-        extraHeader = 'Set-Cookie: session=%s; path=/' % sessionid
+        extraHeader = 'Set-Cookie: session%s=%s; path=/' % (self._nameSuffix, sessionid)
 
         result = self.all.handleRequest(session=session, arguments=arguments, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
         alreadyDone = False

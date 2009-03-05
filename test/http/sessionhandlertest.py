@@ -64,6 +64,23 @@ class SessionHandlerTest(TestCase):
         self.assertTrue(sessionCookie.endswith('; path=/'))
         self.assertEquals('Set-Cookie: session=%s; path=/' % session['id'], sessionCookie)
 
+    def testCreateSessionWithName(self):
+        self.handler = SessionHandler(secretSeed='SessionHandlerTest', nameSuffix='Mine')
+        self.observer = CallTrace('Observer')
+        self.handler.addObserver(self.observer)
+        def handleRequest(*args, **kwargs):
+            yield  utils.okHtml
+            yield '<html/>'
+        self.observer.handleRequest = handleRequest
+        result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345))))
+        header, body = result.split(utils.CRLF*2,1)
+        self.assertTrue('Set-Cookie' in header, header)
+        headerParts = header.split(utils.CRLF)
+        self.assertEquals("HTTP/1.0 200 OK", headerParts[0])
+        sessionCookie = [p for p in headerParts[1:] if 'Set-Cookie' in p][0]
+        self.assertTrue(sessionCookie.startswith('Set-Cookie: sessionMine='), sessionCookie)
+
+
     def testRetrieveCookie(self):
         sessions = []
         def handleRequest(session=None, *args, **kwargs):
