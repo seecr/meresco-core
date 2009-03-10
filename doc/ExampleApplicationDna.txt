@@ -1,14 +1,14 @@
 .. -*- coding: utf-8 -*-
 .. This documentation is written using reStructuredText. See http://docutils.sf.net
 
-=========================================
-Documentation in reStructuredText HOWTO
-=========================================
---------------------------------------------------------------------------------------
-This document will help you creating documentation based on reStructuredText format.
---------------------------------------------------------------------------------------
+====
+|ea|
+====
+--------------------------------------------------------
+This document describes the |ea| supplied with Meresco.
+--------------------------------------------------------
 
-:Authors: Johan Jonkers, Thijs Janssen, Tom van der Sommen
+:Authors: Seek You Too
 :Organization: `Seek You Too`_
 :Version: 0.1
 :Copyright: 2008 by Seek You Too
@@ -22,11 +22,13 @@ This document will help you creating documentation based on reStructuredText for
 .. meta::
     :Revision: $LastChangedRevision$
     :Date: $LastChangedDate$
+    :LastChangedBy: $LastChangedBy$
 
 :Document History:
 
     * 2008-08-12,   J.B. Jonkers (CQ2),  version 0.1,    Initial version
     * 2008-08-12,   T.Janssen, T. van der Sommen (CQ2),  version 0.1.1,    Minor Changes
+    * 2009-01-06,   T.Janssen,  version 0.1.2, Changed title.
 
 
 .. |ea| replace:: Example Application
