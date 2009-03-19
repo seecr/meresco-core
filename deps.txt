@@ -1,4 +1,4 @@
-python-cqlparser (>=1.4)
+python-cqlparser (>=1.4.4)
 python-cqlparser (<<1.5)
 python-storage (>=5.1)
 python-storage (<<5.2)
