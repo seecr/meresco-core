@@ -64,10 +64,10 @@ class SRURecordUpdate(Observable):
         httpRequest.write(response)
 
 RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>
-<updateRequest xmlns:srw="info:srw/namespace/1/srw-schema" xmlns:ucp="info:srw/namespace/1/update">
+<srw:updateResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="info:lc/xmlns/update-v1">
     <srw:version>1.0</srw:version>
     <ucp:operationStatus>%(operationStatus)s</ucp:operationStatus>%(diagnostics)s
-</updateRequest>"""
+</srw:updateResponse>"""
 
 DIAGNOSTIC_XML = """<srw:diagnostics>
     <diag:diagnostic xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/">
