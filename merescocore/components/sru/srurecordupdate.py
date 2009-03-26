@@ -53,7 +53,7 @@ class SRURecordUpdate(Observable):
 
     def writeSucces(self, httpRequest):
         response = RESPONSE_XML % {
-            "operationStatus": "succes",
+            "operationStatus": "success",
             "diagnostics": ""}
         httpRequest.write(response)
 
