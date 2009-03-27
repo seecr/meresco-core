@@ -36,7 +36,7 @@ from amara.binderytools import bind_string
 
 
 XML = """<?xml version="1.0" encoding="UTF-8"?>
-<updateRequest xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="http://www.loc.gov/KVS_IHAVENOIDEA/">
+<srw:updateRequest xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="info:lc/xmlns/update-v1">
     <srw:version>1.0</srw:version>
     <ucp:action>info:srw/action/1/%(action)s</ucp:action>
     <ucp:recordIdentifier>%(recordIdentifier)s</ucp:recordIdentifier>
@@ -45,7 +45,7 @@ XML = """<?xml version="1.0" encoding="UTF-8"?>
         <srw:recordSchema>%(recordSchema)s</srw:recordSchema>
         <srw:recordData>%(recordData)s</srw:recordData>
     </srw:record>
-</updateRequest>"""
+</srw:updateRequest>"""
 
 XML_DOCUMENT = """<someXml>
 with strings<nodes and="attributes"/>
