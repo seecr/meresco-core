@@ -114,7 +114,7 @@ class SRURecordUpdateTest(TestCase):
         self.subject.handleRequest(request)
         self.assertEquals(1, len(self.observer.calledMethods))
 
-        self.assertTrue(request.written.find("""<ucp:operationStatus>succes</ucp:operationStatus>""") > -1)
+        self.assertTrue(request.written.find("""<ucp:operationStatus>success</ucp:operationStatus>""") > -1)
 
     def testNotCorrectXml(self):
         request = MockHTTPRequest("nonsense")
@@ -127,7 +127,7 @@ class SRURecordUpdateTest(TestCase):
         self.subject.handleRequest(request)
         self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
         diag = bind_string(request.written)
-        self.assertTrue(str(diag.updateRequest.diagnostics.diagnostic.details).find("""Some <Exception>""") > -1)
+        self.assertTrue(str(diag.updateResponse.diagnostics.diagnostic.details).find("""Some <Exception>""") > -1)
 
 
 class MockHTTPRequest:
