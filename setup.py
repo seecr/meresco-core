@@ -36,8 +36,6 @@ setup(
         'merescocore.components.http',
         'merescocore.components.sru',
         'merescocore.components.xml_generic',
-        'merescocore.examples',
-        'merescocore.examples.dna',
         'merescocore.framework',
         'meresco',
         'meresco.components'
