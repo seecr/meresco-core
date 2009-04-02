@@ -37,7 +37,11 @@ class Venturi(Observable):
         self._should = should
         self._could = could
 
+    def addDocumentPart(self, identifier=None, name=None, lxmlNode=None):
+        return add(self, identifier=identifier, name=name, lxmlNode=lxmlNode)
+
     def add(self, identifier=None, name=None, lxmlNode=None):
+        """should be obsoleted in favor of addDocumentPart"""
         self.tx.locals['id'] = identifier
         for partname, partXPath in self._should:
             part = self._findPart(identifier, partname, lxmlNode, partXPath)

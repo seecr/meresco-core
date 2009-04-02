@@ -49,7 +49,11 @@ class StorageComponent(object):
     def store(self, *args, **kwargs):
         return self.add(*args, **kwargs)
 
-    def add(self, id, partName, someString, *args, **kwargs):
+    def addDocumentPart(self, identifier=None, name=None, someString=None):
+        return add(self, identifier, name, someString)
+
+    def add(self, id, partName, someString):
+        """should be obsoleted in favor of addDocumentPart"""
         sink = self._storage.put((id, partName))
         try:
             sink.send(someString)
@@ -89,20 +93,20 @@ class StorageComponent(object):
     def getStream(self, id, partName):
         return self._storage.get((id, partName))
 
-    def _listIdentifiers(self, partialIdentifier=''):
+    def _listIdentifiers(self, identifierPrefix=''):
         lastIdentifier = None
-        for identifier, partname in self.glob((partialIdentifier, None)):
+        for identifier, partname in self.glob((identifierPrefix, None)):
             if identifier != lastIdentifier:
                 yield identifier
                 lastIdentifier = identifier
 
-    def _listIdentifiersByPartName(self, partName, partialIdentifier=''):
-        for identifier, partname in self.glob((partialIdentifier, partName)):
+    def _listIdentifiersByPartName(self, partName, identifierPrefix=''):
+        for identifier, partname in self.glob((identifierPrefix, partName)):
             yield identifier
 
-    def listIdentifiers(self, partName=None, partialIdentifier=''):
+    def listIdentifiers(self, partName=None, identifierPrefix=''):
         """Use an ifilter to hide the generator so it won't be consumed by compose"""
-        return ifilter(None, self._listIdentifiersByPartName(partName, partialIdentifier=partialIdentifier))
+        return ifilter(None, self._listIdentifiersByPartName(partName, identifierPrefix=identifierPrefix))
 
     def glob(self, (prefix, wantedPartname)):
         def filterPrefixAndPart((identifier, partName)):

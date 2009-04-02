@@ -33,24 +33,26 @@ from StringIO import StringIO
 EMPTYDOC = parse(StringIO('<empty/>'))
 
 class Reindex(Observable):
+
     def __init__(self, partName):
         Observable.__init__(self)
         self._partName = partName
 
-    def reindex(self, partialIdentifier=''):
-        for identifier in self.any.listIdentifiers(self._partName, partialIdentifier=partialIdentifier):
+    def reindex(self, identifierPrefix=''):
+        for identifier in self.any.listIdentifiers(self._partName, identifierPrefix=identifierPrefix):
             try:
-                self.do.add(identifier, 'ignoredName', EMPTYDOC)
+                self.do.addDocumentPart(identifier=identifier, name='ignoredName', lxmlNode=EMPTYDOC)
             except:
                 print 'ERROR', identifier
                 raise
             yield identifier
 
 class ReindexConsole(Observable):
+
     def handleRequest(self, *args, **kwargs):
         arguments = kwargs.get('arguments', {})
-        partialIdentifier=arguments.get('partialIdentifier', [''])[0]
+        identifierPrefix = arguments.get('identifierPrefix', [''])[0]
         yield "HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n"
-        for id in self.all.reindex(partialIdentifier=partialIdentifier):
+        for id in self.all.reindex(identifierPrefix=identifierPrefix):
             yield id + "\n"
         yield "done"
