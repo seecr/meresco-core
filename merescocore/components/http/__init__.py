@@ -36,3 +36,4 @@ from basichttphandler import BasicHttpHandler
 from basicauthentication import BasicAuthentication
 from sessionhandler import SessionHandler, ArgumentsInSession
 from apachelogger import ApacheLogger
+from utils import insertHeader

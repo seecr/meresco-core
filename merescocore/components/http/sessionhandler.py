@@ -26,7 +26,7 @@
 #
 ## end license ##
 from merescocore.framework import Observable
-from utils import CRLF
+from utils import CRLF, insertHeader
 from md5 import md5
 from time import time
 from random import randint
@@ -69,19 +69,6 @@ class ArgumentsInSession(Observable):
                 elif sign == '-' and value in session[k]:
                         session[k].remove(value)
         yield self.all.handleRequest(session=session, *args, **kwargs)
-
-
-def insertHeader(httpResponse, extraHeader) :
-    alreadyDone = False
-    for response in httpResponse:
-        if not alreadyDone and CRLF in response:
-            alreadyDone = True
-            statusLine, remainder = response.split(CRLF, 1)
-            yield statusLine + CRLF
-            yield extraHeader + CRLF
-            yield remainder
-        else:
-            yield response
 
 class SessionHandler(Observable):
     def __init__(self, secretSeed, nameSuffix=''):

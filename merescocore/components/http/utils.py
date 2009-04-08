@@ -60,3 +60,15 @@ notFoundHtml = "HTTP/1.0 404 Not Found" + CRLF + \
 serverErrorXml = "HTTP/1.0 500 Internal Server Error" + CRLF +\
                  ContentTypeXml + CRLF + \
                  CRLF
+
+def insertHeader(httpResponse, extraHeader):
+    alreadyDone = False
+    for response in httpResponse:
+        if not alreadyDone and CRLF in response:
+            alreadyDone = True
+            statusLine, remainder = response.split(CRLF, 1)
+            yield statusLine + CRLF
+            yield extraHeader + CRLF
+            yield remainder
+        else:
+            yield response
