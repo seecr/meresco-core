@@ -92,15 +92,15 @@ class SessionHandler(Observable):
 
         result = self.all.handleRequest(session=session, arguments=arguments, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
         alreadyDone = False
-        for iets in result:
-            if not alreadyDone and CRLF in iets:
+        for response in result:
+            if not alreadyDone and CRLF in response:
                 alreadyDone = True
-                heeliets = iets.split(CRLF, 1)
-                yield heeliets[0] + CRLF
+                statusLine, remainder = response.split(CRLF, 1)
+                yield statusLine + CRLF
                 yield extraHeader + CRLF
-                yield heeliets[1]
+                yield remainder
             else:
-                yield iets
+                yield response
 
 
 
