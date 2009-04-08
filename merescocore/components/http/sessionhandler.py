@@ -70,6 +70,19 @@ class ArgumentsInSession(Observable):
                         session[k].remove(value)
         yield self.all.handleRequest(session=session, *args, **kwargs)
 
+
+def insertHeader(httpResponse, extraHeader) :
+    alreadyDone = False
+    for response in httpResponse:
+        if not alreadyDone and CRLF in response:
+            alreadyDone = True
+            statusLine, remainder = response.split(CRLF, 1)
+            yield statusLine + CRLF
+            yield extraHeader + CRLF
+            yield remainder
+        else:
+            yield response
+
 class SessionHandler(Observable):
     def __init__(self, secretSeed, nameSuffix=''):
         Observable.__init__(self)
@@ -91,16 +104,10 @@ class SessionHandler(Observable):
         extraHeader = 'Set-Cookie: session%s=%s; path=/' % (self._nameSuffix, sessionid)
 
         result = self.all.handleRequest(session=session, arguments=arguments, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
-        alreadyDone = False
-        for response in result:
-            if not alreadyDone and CRLF in response:
-                alreadyDone = True
-                statusLine, remainder = response.split(CRLF, 1)
-                yield statusLine + CRLF
-                yield extraHeader + CRLF
-                yield remainder
-            else:
-                yield response
+
+        for response in insertHeader(result, extraHeader) :
+            yield response
+
 
 
 
