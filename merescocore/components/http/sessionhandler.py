@@ -26,7 +26,7 @@
 #
 ## end license ##
 from merescocore.framework import Observable
-from utils import CRLF, insertHeader
+from utils import insertHeader
 from md5 import md5
 from time import time
 from random import randint
