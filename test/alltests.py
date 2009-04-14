@@ -76,6 +76,8 @@ from http.utilstest import UtilsTest
 from sru.srudrilldownadaptertest import SRUDrilldownAdapterTest, SRUTermDrilldownTest, SRUFieldDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
 from sru.srutest import SruTest
+from sru.sruparsertest import SruParserTest
+from sru.sruhandlertest import SruHandlerTest
 from sru.srwtest import SrwTest
 
 from xml_generic.lxml_based.crosswalktest import CrosswalkTest
