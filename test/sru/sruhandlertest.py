@@ -28,9 +28,9 @@
 
 import unittest
 #remove at the end...
-from merescocore.components.sru.sru import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
+from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
 
-from merescocore.components.sru import Sru
+from merescocore.components.sru import SruHandler
 
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
@@ -44,83 +44,9 @@ SUCCESS = "SUCCESS"
 
 class SruHandlerTest(CQ2TestCase):
 
-    def testParseArguments(self):
-        component = Sru(host='', port='', description='', modifiedDate='')
-        database, command, arguments = component._parseUri('/db/cmd?arg=something')
-        self.assertEquals(('db', 'cmd', {'arg': ['something']}), (database, command, arguments))
-
-    def testMandatoryArgumentsSupplied(self):
-        error = MANDATORY_PARAMETER_NOT_SUPPLIED
-        self._validate(SUCCESS, {})
-        self._validate(error, {'version':['1.1']})
-        self._validate(error, {'version':['1.1'], 'query':['']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['x'], 'operation':['searchRetrieve']})
-
-    def testValidateAllowedArguments(self):
-        error = UNSUPPORTED_PARAMETER
-        self._validate(error, {'version':['1.1'], 'query':['x'], 'operation':['searchRetrieve'], 'niet geldig':['bla']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['x'], 'operation':['searchRetrieve'], 'x-whatever-comes-after-an-x': ['something']})
-
-    def testValidVersion(self):
-        error = UNSUPPORTED_VERSION
-        self._validate(error, {'version':['1.0'], 'query':['twente'], 'operation':['searchRetrieve']})
-        self._validate(error, {'version':['2.0'], 'query':['twente'], 'operation':['searchRetrieve']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve']})
-
-    def testValidOperation(self):
-        error = UNSUPPORTED_OPERATION
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['']})
-        self._validate(error,{'version':['1.1'], 'query':['twente'], 'operation':['unsupportedOperation']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve']})
-
-    def testValidStartRecord(self):
-        error = UNSUPPORTED_PARAMETER_VALUE
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['']})
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['A']})
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['-1']})
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['0']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['1']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'startRecord':['999999999']})
-
-    def testValidateProperlyUTF8EncodedParameter(self):
-        self._validate(UNSUPPORTED_PARAMETER_VALUE, {'version':['1.1'], 'query':['BadEUmlaut\xeb'], 'operation':['searchRetrieve']})
-
-    def testValidMaximumRecords(self):
-        error = UNSUPPORTED_PARAMETER_VALUE
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['']})
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['A']})
-        self._validate(error, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['-1']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['0']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['1']})
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords':['99']})
-
-    def testMaximumMaximumRecords(self):
-        component = Sru('', '', '', '', maximumMaximumRecords=100)
-        try:
-            component._createSruQuery({'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords': ['101']})
-            self.fail()
-        except SruException, e:
-            self.assertEquals(UNSUPPORTED_PARAMETER_VALUE, [e.code, e.message])
-
-    def testValidateCQLSyntax(self):
-        error = UNSUPPORTED_PARAMETER_VALUE
-        self._validate(SUCCESS, {'version':['1.1'], 'query':['TERM'], 'operation':['searchRetrieve'], 'startRecord':['1']})
-        self._validate(QUERY_FEATURE_UNSUPPORTED, {'version':['1.1'], 'query':['TERM1)'], 'operation':['searchRetrieve']})
-
-    def _validate(self, error, arguments):
-        component = Sru('', '', '', '')
-        try:
-            operation, arguments = component._parseArguments(arguments)
-            if operation == "searchRetrieve":
-                component._createSruQuery(arguments)
-            if error != SUCCESS:
-                self.fail("Expected error %s but got nothing"  % error)
-        except SruException, e:
-            self.assertEquals(error, [e.code, e.message])
-
     def testEchoedSearchRetrieveRequest(self):
         arguments = {'version':['1.1'], 'operation':['searchRetrieve'], 'query':['query >= 3']}
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
 
         result = "".join(list(component._writeEchoedSearchRetrieveRequest(arguments)))
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
@@ -131,7 +57,7 @@ class SruHandlerTest(CQ2TestCase):
     def testEchoedSearchRetrieveRequestWithExtraRequestData(self):
         arguments = {'version':['1.1'], 'operation':['searchRetrieve'], 'query':['query >= 3']}
         observer = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': 'some extra request data'})
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(observer)
 
         result = "".join(list(component._writeEchoedSearchRetrieveRequest(arguments)))
@@ -142,7 +68,7 @@ class SruHandlerTest(CQ2TestCase):
 </srw:echoedSearchRetrieveRequest>""",result)
 
     def testExtraResponseDataHandlerNoHandler(self):
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         hits = ["id_%s" % i for i in range(10)]
         result = "".join(list(component._writeExtraResponseData({}, hits)))
         self.assertEquals('' , result)
@@ -152,7 +78,7 @@ class SruHandlerTest(CQ2TestCase):
             def extraResponseData(self, *args):
                 return (f for f in [])
 
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(TestHandler())
         hits = ["id_%s" % i for i in range(10)]
         result = "".join(list(component._writeExtraResponseData({}, hits)))
@@ -163,7 +89,7 @@ class SruHandlerTest(CQ2TestCase):
             def extraResponseData(self, *args):
                 return (f for f in ["<someD", "ata/>"])
 
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(TestHandler())
         hits = ["id_%s" % i for i in range(10)]
         result = "".join(list(component._writeExtraResponseData({}, hits)))
@@ -171,11 +97,12 @@ class SruHandlerTest(CQ2TestCase):
 
     def testNextRecordPosition(self):
         hits = range(100)
-        observer = MockListeners(hits)
+        observer = CallTrace()
+        observer.returnValues['executeCQL'] = (10, range(11, 25))
 
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(observer)
-        result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra&startRecord=11&maximumRecords=15')))
+        result = "".join(list(component.searchRetrieve(sruQuery=None, startRecord=['11'], maximumRecords = ['15'])))
         self.assertTrue("<srw:nextRecordPosition>26</srw:nextRecordPosition>" in result, result)
 
         self.assertEquals(10, observer.start) # SRU is 1 based
@@ -185,7 +112,7 @@ class SruHandlerTest(CQ2TestCase):
         arguments = {'version':['1.1'], 'operation':['searchRetrieve'],  'query':['field=value'], 'x-recordSchema':['extra']}
         'database'
         observer = MockListeners(['0','1'])
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(observer)
         result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra')))
 
@@ -239,7 +166,7 @@ Content-Type: text/xml; charset=utf-8
         class RaisesException(object):
             def yieldRecordForRecordPacking(self, *args):
                 raise Exception("Test Exception")
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(RaisesException())
         result = "".join(list(compose(component._writeRecordData(CallTrace("Query"), "ID"))))
         self.assertTrue("diagnostic" in result)
@@ -248,7 +175,7 @@ Content-Type: text/xml; charset=utf-8
         class RaisesException(object):
             def extraResponseData(self, *args):
                 raise Exception("Test Exception")
-        component = Sru('', '', '', '')
+        component = SruHandler('', '', '', '')
         component.addObserver(RaisesException())
         result = "".join(list(compose(component._writeExtraResponseData("arguments", "hits"))))
         self.assertTrue("diagnostic" in result)

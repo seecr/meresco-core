@@ -33,7 +33,7 @@ from urllib import urlencode
 
 from merescocore.components.rss import Rss
 
-from sru.srutest import MockListeners
+from sru.sruhandlertest import MockListeners
 
 
 RSS_HEAD = """HTTP/1.0 200 OK

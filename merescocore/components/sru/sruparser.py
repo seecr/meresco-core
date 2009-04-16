@@ -88,42 +88,46 @@ class SruException(Exception):
 
 class SruParser(Observable):
 
-    def __init__(self, host, port, description='Meresco SRU', modifiedDate='1970-01-01T00:00:00Z', defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None, database=None):
+    def __init__(self, host='', port=0, description='Meresco SRU', modifiedDate='1970-01-01T00:00:00Z', database=None, defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
         Observable.__init__(self)
         self._host = host
         self._port = port
         self._description = description
-        self._database = database
         self._modifiedDate = modifiedDate
+        self._database = database
         self._defaultRecordSchema = defaultRecordSchema
         self._defaultRecordPacking = defaultRecordPacking
         self._maximumMaximumRecords = maximumMaximumRecords
 
     def handleRequest(self, arguments, **kwargs):
+        operations = {
+            'searchRetrieve': self._searchRetrieve,
+            'explain': self._explain
+        }
         yield httputils.okXml
 
         yield XML_HEADER
         try:
             operation, arguments = self._parseArguments(arguments)
-            if operation == "searchRetrieve":
-                query = self._createSruQuery(arguments)
+            if not operation in operations:
+                raise something
+
+            for data in operations[operation](arguments):
+                yield data
         except SruException, e:
             yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
             raise StopIteration()
-
-        try:
-            if operation == "explain":
-                yield self._doExplain()
-            else:
-                for data in self.all.searchRetrieve(query, arguments):
-                    yield data
         except Exception, e:
             from traceback import print_exc
             print_exc()
             yield "Unexpected Exception:\n"
             yield str(e)
             raise e
-                
+
+    def _searchRetrieve(self, arguments):
+        sruQuery = self._createSruQuery(arguments)
+        return self.any.searchRetrieve(sruQuery=sruQuery,**arguments)
+
     def _parseArguments(self, arguments):
         if arguments == {}:
             arguments = {'version':['1.1'], 'operation':['explain']}
@@ -161,14 +165,26 @@ class SruParser(Observable):
         except UnicodeDecodeError:
             raise SruException(UNSUPPORTED_PARAMETER_VALUE, "Parameters are not properly 'utf-8' encoded.")
 
-    def _doExplain(self, ):
+    def _createSruQuery(self, arguments):
+        try:
+            sruQuery = SRUQuery(arguments, self._defaultRecordSchema, self._defaultRecordPacking)
+
+            if self._maximumMaximumRecords and sruQuery.maximumRecords > self._maximumMaximumRecords:
+                raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords > %s' % self._maximumMaximumRecords)
+        except SRUQueryParameterException, e:
+            raise SruException(UNSUPPORTED_PARAMETER_VALUE, str(e))
+        except SRUQueryParseException, e:
+            raise SruException(QUERY_FEATURE_UNSUPPORTED, str(e))
+        return sruQuery
+
+    def _explain(self, *args, **kwargs):
         version = VERSION
         host = self._host
         port = self._port
         description = self._description
         modifiedDate = self._modifiedDate
         database = self._database
-        return """<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
+        yield """<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
    xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     <srw:version>%(version)s</srw:version>
     <srw:record>
@@ -192,16 +208,3 @@ class SruParser(Observable):
         </srw:recordData>
     </srw:record>
 </srw:explainResponse>""" % locals()
-
-    def _createSruQuery(self, arguments):
-        try:
-            sruQuery = SRUQuery(arguments, self._defaultRecordSchema, self._defaultRecordPacking)
-
-            if self._maximumMaximumRecords and sruQuery.maximumRecords > self._maximumMaximumRecords:
-                raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords > %s' % self._maximumMaximumRecords)
-        except SRUQueryParameterException, e:
-            raise SruException(UNSUPPORTED_PARAMETER_VALUE, str(e))
-        except SRUQueryParseException, e:
-            raise SruException(QUERY_FEATURE_UNSUPPORTED, str(e))
-        return sruQuery
-

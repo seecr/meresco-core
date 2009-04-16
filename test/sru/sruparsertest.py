@@ -27,7 +27,7 @@
 ## end license ##
 
 from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
-from merescocore.components.sru import SruParser
+from merescocore.components.sru import SruParser, SruHandler
 
 from cq2utils import CallTrace, CQ2TestCase
 
@@ -139,8 +139,9 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
             self.assertEquals(expectedResult, [e.code, e.message])
 
     def testSearchRetrieve(self):
-        component = SruParser('host', 'port')
+        component = SruParser()
         sruHandler = CallTrace('SRUHandler')
+        sruHandler.returnValues['searchRetrieve'] = (1, [0])
         component.addObserver(sruHandler)
 
         list(component.handleRequest(arguments={'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve']}))
@@ -148,6 +149,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals(['searchRetrieve'], [m.name for m in sruHandler.calledMethods])
         self.assertEquals((), sruHandler.calledMethods[0].args)
         kwargs = sruHandler.calledMethods[0].kwargs
-        self.assertEquals('1.1', kwargs['version'])
-        self.assertEquals('aQuery', kwargs['query'])
-        self.assertEquals({'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve']}, kwargs['arguments'])
+        self.assertEquals(['1.1'], kwargs['version'])
+        self.assertEquals(['aQuery'], kwargs['query'])
+        self.assertEquals(['searchRetrieve'], kwargs['operation'])
+        self.assertTrue('sruQuery' in kwargs)

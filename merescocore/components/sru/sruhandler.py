@@ -87,129 +87,10 @@ class SruException(Exception):
         self.message = message
         self.details = details
 
-class Sru(Observable):
+class SruHandler(Observable):
 
-    def __init__(self, host, port, description='Meresco SRU', modifiedDate='1970-01-01T00:00:00Z', defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
+    def __init__(self):
         Observable.__init__(self)
-        self._host = host
-        self._port = port
-        self._description = description
-        self._modifiedDate = modifiedDate
-        self._defaultRecordSchema = defaultRecordSchema
-        self._defaultRecordPacking = defaultRecordPacking
-        self._maximumMaximumRecords = maximumMaximumRecords
-
-    def handleRequest(self, port=None, Client=None, RequestURI=None, Method=None, Headers=None, **kwargs):
-        database, command, queryArguments = self._parseUri(RequestURI)
-        yield httputils.okXml
-
-        yield XML_HEADER
-        try:
-            operation, arguments = self._parseArguments(queryArguments)
-            if operation == "searchRetrieve":
-                query = self._createSruQuery(arguments)
-        except SruException, e:
-            yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
-            raise StopIteration()
-
-        try:
-            if operation == "explain":
-                yield self._doExplain(database)
-            else:
-                for data in compose(self._doSearchRetrieve(query, arguments)):
-                    yield data
-        except Exception, e:
-            from traceback import print_exc
-            print_exc()
-            yield "Unexpected Exception:\n"
-            yield str(e)
-            raise e
-
-    def _parseUri(self, RequestURI):
-        Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)
-        ignored, database, command, ignored = (Path + '//').split('/', 3)
-        arguments = parse_qs(Query)
-        return database, command, arguments
-
-    def _parseArguments(self, arguments):
-        if arguments == {}:
-            arguments = {'version':['1.1'], 'operation':['explain']}
-
-        operation = arguments.get('operation', [None])[0]
-        self._validateArguments(operation, arguments)
-        return operation, arguments
-
-    def _validateArguments(self, operation, arguments):
-        if operation == None:
-            raise SruException(MANDATORY_PARAMETER_NOT_SUPPLIED, 'operation')
-
-        if not operation in SUPPORTED_OPERATIONS:
-            raise SruException(UNSUPPORTED_OPERATION, operation)
-
-        self._validateCorrectEncoding(arguments)
-
-        for argument in arguments:
-            if not (argument in OFFICIAL_REQUEST_PARAMETERS[operation] or argument.startswith('x-')):
-                raise SruException(UNSUPPORTED_PARAMETER, argument)
-
-        for argument in MANDATORY_PARAMETERS[operation]:
-            if not argument in arguments:
-                raise SruException(MANDATORY_PARAMETER_NOT_SUPPLIED, argument)
-
-        if not arguments['version'][0] == VERSION:
-            raise SruException(UNSUPPORTED_VERSION, arguments['version'][0])
-
-    def _validateCorrectEncoding(self, arguments):
-        try:
-            for key, values in arguments.items():
-                key.decode('utf-8')
-                for value in values:
-                    value.decode('utf-8')
-        except UnicodeDecodeError:
-            raise SruException(UNSUPPORTED_PARAMETER_VALUE, "Parameters are not properly 'utf-8' encoded.")
-
-    def _doExplain(self, database):
-        version = VERSION
-        host = self._host
-        port = self._port
-        description = self._description
-        modifiedDate = self._modifiedDate
-        return """<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
-   xmlns:zr="http://explain.z3950.org/dtd/2.0/">
-    <srw:version>%(version)s</srw:version>
-    <srw:record>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
-        <srw:recordData>
-            <zr:explain>
-                <zr:serverInfo wsdl="http://%(host)s:%(port)s/%(database)s" protocol="SRU" version="%(version)s">
-                    <host>%(host)s</host>
-                    <port>%(port)s</port>
-                    <database>%(database)s</database>
-                </zr:serverInfo>
-                <zr:databaseInfo>
-                    <title lang="en" primary="true">SRU Database</title>
-                    <description lang="en" primary="true">%(description)s</description>
-                </zr:databaseInfo>
-                <zr:metaInfo>
-                    <dateModified>%(modifiedDate)s</dateModified>
-                </zr:metaInfo>
-            </zr:explain>
-        </srw:recordData>
-    </srw:record>
-</srw:explainResponse>""" % locals()
-
-    def _createSruQuery(self, arguments):
-        try:
-            sruQuery = SRUQuery(arguments, self._defaultRecordSchema, self._defaultRecordPacking)
-
-            if self._maximumMaximumRecords and sruQuery.maximumRecords > self._maximumMaximumRecords:
-                raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords > %s' % self._maximumMaximumRecords)
-        except SRUQueryParameterException, e:
-            raise SruException(UNSUPPORTED_PARAMETER_VALUE, str(e))
-        except SRUQueryParseException, e:
-            raise SruException(QUERY_FEATURE_UNSUPPORTED, str(e))
-        return sruQuery
 
     def _writeEchoedSearchRetrieveRequest(self, arguments):
         yield '<srw:echoedSearchRetrieveRequest>'
@@ -243,7 +124,7 @@ class Sru(Observable):
             sortBy=sortBy,
             sortDescending=sortDescending)
 
-    def _doSearchRetrieve(self, sruQuery, arguments):
+    def searchRetrieve(self, sruQuery, arguments):
         SRU_IS_ONE_BASED = 1
 
         start = sruQuery.startRecord - SRU_IS_ONE_BASED
@@ -330,3 +211,34 @@ class Sru(Observable):
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
 
+    def explain(self, **kwargs):
+        version = VERSION
+        host = self._host
+        port = self._port
+        description = self._description
+        modifiedDate = self._modifiedDate
+        database = self._database
+        return """<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
+   xmlns:zr="http://explain.z3950.org/dtd/2.0/">
+    <srw:version>%(version)s</srw:version>
+    <srw:record>
+        <srw:recordPacking>xml</srw:recordPacking>
+        <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
+        <srw:recordData>
+            <zr:explain>
+                <zr:serverInfo wsdl="http://%(host)s:%(port)s/%(database)s" protocol="SRU" version="%(version)s">
+                    <host>%(host)s</host>
+                    <port>%(port)s</port>
+                    <database>%(database)s</database>
+                </zr:serverInfo>
+                <zr:databaseInfo>
+                    <title lang="en" primary="true">SRU Database</title>
+                    <description lang="en" primary="true">%(description)s</description>
+                </zr:databaseInfo>
+                <zr:metaInfo>
+                    <dateModified>%(modifiedDate)s</dateModified>
+                </zr:metaInfo>
+            </zr:explain>
+        </srw:recordData>
+    </srw:record>
+</srw:explainResponse>""" % locals()

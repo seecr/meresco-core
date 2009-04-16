@@ -43,8 +43,8 @@ SOAP_FOOTER = """</SOAP:Body></SOAP:Envelope>"""
 
 SOAP = SOAP_HEADER + "%s" + SOAP_FOOTER
 
-from merescocore.components.sru import Sru
-from merescocore.components.sru.sru import SruException, DIAGNOSTICS, UNSUPPORTED_PARAMETER, UNSUPPORTED_OPERATION
+from merescocore.components.sru import SruParser
+from merescocore.components.sru.sruparser import SruException, DIAGNOSTICS, UNSUPPORTED_PARAMETER, UNSUPPORTED_OPERATION
 
 class SoapException(Exception):
 
@@ -57,10 +57,10 @@ class SoapException(Exception):
 
 class Srw(Observable):
 
-    def __init__(self, SruFactory=Sru, **kwargs):
+    def __init__(self, SruFactory=SruParser, **kwargs):
         Observable.__init__(self)
         ignored = "SRW Does Not Implement Explain - This Variable Will Not Be Used"
-        self._sruDelegate = SruFactory(host=ignored, port=ignored, description=ignored, modifiedDate=ignored, **kwargs)
+        self._sruDelegate = SruFactory(**kwargs)
         self._sruDelegate.all = self.all
         self._sruDelegate.any = self.any
         self._sruDelegate.do = self.do

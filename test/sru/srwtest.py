@@ -26,12 +26,11 @@
 #
 ## end license ##
 
-from cq2utils.cq2testcase import CQ2TestCase
-from cq2utils.calltrace import CallTrace
+from cq2utils import CQ2TestCase, CallTrace
 
 from merescocore.components.sru.srw import Srw
 
-from srutest import MockListeners
+from sruhandlertest import MockListeners
 
 httpResponse = """HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
@@ -110,7 +109,7 @@ Content-Type: text/xml; charset=utf-8
         component = Srw()
         component.addObserver(MockListeners(['recordId']))
         response = "".join(list(component.handleRequest(Body=request)))
-        
+
         self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % ('recordId', 'dc.author = "jones" and  dc.title = "smith"'), response)
 
     def testArgumentsAreNotUnicodeStrings(self):
