@@ -92,31 +92,33 @@ class SruHandler(Observable):
     def __init__(self):
         Observable.__init__(self)
 
-    def _writeEchoedSearchRetrieveRequest(self, arguments):
+    def _writeEchoedSearchRetrieveRequest(self, **kwargs):
         yield '<srw:echoedSearchRetrieveRequest>'
         for parameterName in ECHOED_PARAMETER_NAMES:
-            for value in map(xmlEscape, arguments.get(parameterName, [])):
+            value = kwargs.get(parameterName, None)
+            if value:
+                value = xmlEscape(value)
                 yield '<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals()
 
-        for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(arguments)), '</srw:extraRequestData>'):
+        for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(**kwargs)), '</srw:extraRequestData>'):
             yield chunk
         yield '</srw:echoedSearchRetrieveRequest>'
 
-    def _writeExtraResponseData(self, arguments, cqlAbstractSyntaxTree):
+    def _writeExtraResponseData(self, cqlAbstractSyntaxTree, **kwargs):
         return decorate('<srw:extraResponseData>',
-            self._extraResponseDataTryExcept(arguments, cqlAbstractSyntaxTree),
+            self._extraResponseDataTryExcept(cqlAbstractSyntaxTree, **kwargs),
             '</srw:extraResponseData>')
 
-    def _extraResponseDataTryExcept(self, arguments, cqlAbstractSyntaxTree):
+    def _extraResponseDataTryExcept(self, cqlAbstractSyntaxTree, **kwargs):
         try:
-            stuffs = compose(self.all.extraResponseData(arguments, cqlAbstractSyntaxTree))
+            stuffs = compose(self.all.extraResponseData(cqlAbstractSyntaxTree, **kwargs))
             for stuff in stuffs:
                 yield stuff
         except Exception, e:
             yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
 
-    def _executeCQL(self, cqlAbstractSyntaxTree, start, stop, sortBy, sortDescending, arguments):
-        """Hook method (arguments is not used here, may be used in subclasses)"""
+    def _executeCQL(self, cqlAbstractSyntaxTree=None, start=0, stop=9, sortBy=None, sortDescending=False, **kwargs):
+        """Hook method (kwargs is not used here, may be used in subclasses)"""
         return self.any.executeCQL(
             cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
             start=start,
@@ -124,19 +126,19 @@ class SruHandler(Observable):
             sortBy=sortBy,
             sortDescending=sortDescending)
 
-    def searchRetrieve(self, sruQuery, arguments):
+    def searchRetrieve(self, version=None, recordSchema=None, recordPacking=None, startRecord=1, maximumRecords=10, query='', sortBy=None, sortDescending=False, **kwargs):
         SRU_IS_ONE_BASED = 1
 
-        start = sruQuery.startRecord - SRU_IS_ONE_BASED
-        cqlAbstractSyntaxTree = parseCQL(sruQuery.query)
+        start = startRecord - SRU_IS_ONE_BASED
+        cqlAbstractSyntaxTree = parseCQL(query)
         try:
             total, recordIds = self._executeCQL(
                 cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
                 start=start,
-                stop=start + sruQuery.maximumRecords,
-                sortBy=sruQuery.sortBy,
-                sortDescending=sruQuery.sortDescending,
-                arguments=arguments)
+                stop=start + maximumRecords,
+                sortBy=sortBy,
+                sortDescending=sortDescending,
+                **kwargs)
         except Exception, e:
             yield DIAGNOSTICS % ( QUERY_FEATURE_UNSUPPORTED[0], QUERY_FEATURE_UNSUPPORTED[1], xmlEscape(str(e)))
             return
@@ -146,7 +148,7 @@ class SruHandler(Observable):
         for recordId in recordIds:
             if not recordsWritten:
                 yield '<srw:records>'
-            yield self._writeResult(sruQuery, recordId)
+            yield self._writeResult(recordSchema=recordSchema, recordPacking=recordPacking, recordId=recordId, **kwargs)
             recordsWritten += 1
 
         if recordsWritten:
@@ -155,8 +157,8 @@ class SruHandler(Observable):
             if nextRecordPosition < total:
                 yield '<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % (nextRecordPosition + SRU_IS_ONE_BASED)
 
-        yield self._writeEchoedSearchRetrieveRequest(arguments)
-        yield self._writeExtraResponseData(arguments=arguments, cqlAbstractSyntaxTree=cqlAbstractSyntaxTree)
+        yield self._writeEchoedSearchRetrieveRequest(**kwargs)
+        yield self._writeExtraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs)
         yield self._endResults()
 
     def _startResults(self, numberOfRecords):
@@ -167,18 +169,17 @@ class SruHandler(Observable):
     def _endResults(self):
         yield RESPONSE_FOOTER
 
-    def _writeResult(self, sruQuery, recordId):
+    def _writeResult(self, recordSchema=None, recordPacking=None, recordId=None, **kwargs):
         yield '<srw:record>'
-        yield '<srw:recordSchema>%s</srw:recordSchema>' % sruQuery.recordSchema
-        yield '<srw:recordPacking>%s</srw:recordPacking>' % sruQuery.recordPacking
-        yield self._writeRecordData(sruQuery, recordId)
-        yield self._writeExtraRecordData(sruQuery, recordId)
+        yield '<srw:recordSchema>%s</srw:recordSchema>' % recordSchema
+        yield '<srw:recordPacking>%s</srw:recordPacking>' % recordPacking
+        yield self._writeRecordData(recordSchema=recordSchema, recordPacking=recordPacking, recordId=recordId)
+        yield self._writeExtraRecordData(recordPacking=recordPacking, recordId=recordId, **kwargs)
         yield '</srw:record>'
 
-    def _writeRecordData(self, sruQuery, recordId):
+    def _writeRecordData(self, recordSchema=None, recordPacking=None, recordId=None):
         yield '<srw:recordData>'
-
-        yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, sruQuery.recordSchema, sruQuery.recordPacking))
+        yield self._catchErrors(self._yieldRecordForRecordPacking(recordId=recordId, recordSchema=recordSchema, recordPacking=recordPacking))
         yield '</srw:recordData>'
 
     def _catchErrors(self, dataGenerator):
@@ -189,14 +190,14 @@ class SruHandler(Observable):
             yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
 
 
-    def _writeExtraRecordData(self, sruQuery, recordId):
-        if not sruQuery.x_recordSchema:
+    def _writeExtraRecordData(self, x_recordSchema=None, recordPacking=None, recordId=None, **kwargs):
+        if not x_recordSchema:
             raise StopIteration()
 
         yield '<srw:extraRecordData>'
-        for schema in sruQuery.x_recordSchema:
+        for schema in x_recordSchema:
             yield '<recordData recordSchema="%s">' % xmlEscape(schema)
-            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, sruQuery.recordPacking))
+            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, recordPacking))
             yield '</recordData>'
         yield '</srw:extraRecordData>'
 
@@ -210,35 +211,3 @@ class SruHandler(Observable):
                 yield xmlEscape(data)
         else:
             raise Exception("Unknown Record Packing: %s" % recordPacking)
-
-    def explain(self, **kwargs):
-        version = VERSION
-        host = self._host
-        port = self._port
-        description = self._description
-        modifiedDate = self._modifiedDate
-        database = self._database
-        return """<srw:explainResponse xmlns:srw="http://www.loc.gov/zing/srw/"
-   xmlns:zr="http://explain.z3950.org/dtd/2.0/">
-    <srw:version>%(version)s</srw:version>
-    <srw:record>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordSchema>http://explain.z3950.org/dtd/2.0/</srw:recordSchema>
-        <srw:recordData>
-            <zr:explain>
-                <zr:serverInfo wsdl="http://%(host)s:%(port)s/%(database)s" protocol="SRU" version="%(version)s">
-                    <host>%(host)s</host>
-                    <port>%(port)s</port>
-                    <database>%(database)s</database>
-                </zr:serverInfo>
-                <zr:databaseInfo>
-                    <title lang="en" primary="true">SRU Database</title>
-                    <description lang="en" primary="true">%(description)s</description>
-                </zr:databaseInfo>
-                <zr:metaInfo>
-                    <dateModified>%(modifiedDate)s</dateModified>
-                </zr:metaInfo>
-            </zr:explain>
-        </srw:recordData>
-    </srw:record>
-</srw:explainResponse>""" % locals()

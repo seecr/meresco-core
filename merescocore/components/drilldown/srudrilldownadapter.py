@@ -62,14 +62,14 @@ class SRUTermDrilldown(Observable):
         Observable.__init__(self)
         self._sortedByTermCount = sortedByTermCount
 
-    def extraResponseData(self, arguments, cqlAbstractSyntaxTree):
+    def extraResponseData(self, cqlAbstractSyntaxTree, x_term_drilldown=[''], **kwargs):
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:
                 return l[0], DEFAULT_MAXIMUM_TERMS, self._sortedByTermCount
             return l[0], int(l[1]), self._sortedByTermCount
 
-        fieldsAndMaximums = arguments.get('x-term-drilldown', [''])[0].split(",")
+        fieldsAndMaximums = x_term_drilldown[0].split(",")
         fieldMaxTuples = (splitTermAndMaximum(s) for s in fieldsAndMaximums)
 
         if fieldsAndMaximums == [""]:
@@ -86,8 +86,8 @@ class SRUTermDrilldown(Observable):
             yield '</dd:navigator>'
         yield "</dd:term-drilldown>"
 
-    def echoedExtraRequestData(self, arguments):
-        argument = arguments.get('x-term-drilldown', [''])[0]
+    def echoedExtraRequestData(self, x_term_drilldown=[''], **kwargs):
+        argument = x_term_drilldown[0]
         if argument:
             yield "<dd:term-drilldown>"
             yield argument

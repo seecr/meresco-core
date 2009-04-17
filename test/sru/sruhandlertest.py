@@ -45,85 +45,92 @@ SUCCESS = "SUCCESS"
 class SruHandlerTest(CQ2TestCase):
 
     def testEchoedSearchRetrieveRequest(self):
-        arguments = {'version':['1.1'], 'operation':['searchRetrieve'], 'query':['query >= 3']}
-        component = SruHandler('', '', '', '')
+        arguments = {'version':'1.1', 'operation':'searchRetrieve', 'query':'query >= 3', 'recordSchema':'schema', 'recordPacking':'string'}
+        component = SruHandler()
 
-        result = "".join(list(component._writeEchoedSearchRetrieveRequest(arguments)))
+        result = "".join(list(component._writeEchoedSearchRetrieveRequest(**arguments)))
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
 </srw:echoedSearchRetrieveRequest>""", result)
 
     def testEchoedSearchRetrieveRequestWithExtraRequestData(self):
-        arguments = {'version':['1.1'], 'operation':['searchRetrieve'], 'query':['query >= 3']}
+        arguments = {'version':'1.1', 'operation':'searchRetrieve', 'query':'query >= 3', 'recordSchema':'schema', 'recordPacking':'string'}
         observer = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': 'some extra request data'})
-        component = SruHandler('', '', '', '')
+        component = SruHandler()
         component.addObserver(observer)
 
-        result = "".join(list(component._writeEchoedSearchRetrieveRequest(arguments)))
+        result = "".join(list(component._writeEchoedSearchRetrieveRequest(**arguments)))
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
     <srw:extraRequestData>some extra request data</srw:extraRequestData>
-</srw:echoedSearchRetrieveRequest>""",result)
+</srw:echoedSearchRetrieveRequest>""", result)
 
     def testExtraResponseDataHandlerNoHandler(self):
-        component = SruHandler('', '', '', '')
-        hits = ["id_%s" % i for i in range(10)]
-        result = "".join(list(component._writeExtraResponseData({}, hits)))
+        component = SruHandler()
+        result = "".join(list(component._writeExtraResponseData(cqlAbstractSyntaxTree=None)))
         self.assertEquals('' , result)
 
     def testExtraResponseDataHandlerNoData(self):
         class TestHandler:
-            def extraResponseData(self, *args):
+            def extraResponseData(self, *args, **kwargs):
                 return (f for f in [])
 
-        component = SruHandler('', '', '', '')
+        component = SruHandler()
         component.addObserver(TestHandler())
-        hits = ["id_%s" % i for i in range(10)]
-        result = "".join(list(component._writeExtraResponseData({}, hits)))
+        result = "".join(list(component._writeExtraResponseData(cqlAbstractSyntaxTree=None)))
         self.assertEquals('' , result)
 
     def testExtraResponseDataHandlerWithData(self):
         class TestHandler:
-            def extraResponseData(self, *args):
+            def extraResponseData(self, *args, **kwargs):
                 return (f for f in ["<someD", "ata/>"])
 
-        component = SruHandler('', '', '', '')
+        component = SruHandler()
         component.addObserver(TestHandler())
-        hits = ["id_%s" % i for i in range(10)]
-        result = "".join(list(component._writeExtraResponseData({}, hits)))
+        result = "".join(list(component._writeExtraResponseData(cqlAbstractSyntaxTree=None)))
         self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , result)
 
     def testNextRecordPosition(self):
-        hits = range(100)
         observer = CallTrace()
-        observer.returnValues['executeCQL'] = (10, range(11, 25))
+        observer.returnValues['executeCQL'] = (100, range(11, 26))
+        observer.returnValues['yieldRecord'] = "record"
+        observer.returnValues['extraResponseData'] = 'extraResponseData'
+        observer.returnValues['echoedExtraRequestData'] = 'echoedExtraRequestData'
 
-        component = SruHandler('', '', '', '')
+        component = SruHandler()
         component.addObserver(observer)
-        result = "".join(list(component.searchRetrieve(sruQuery=None, startRecord=['11'], maximumRecords = ['15'])))
+
+        result = "".join(compose(component.searchRetrieve(startRecord=11, maximumRecords=15, query='query', recordPacking='string', recordSchema='schema')))
         self.assertTrue("<srw:nextRecordPosition>26</srw:nextRecordPosition>" in result, result)
 
-        self.assertEquals(10, observer.start) # SRU is 1 based
-        self.assertEquals(25, observer.stop)
+
+        executeCqlCallKwargs = observer.calledMethods[0].kwargs
+        self.assertEquals(10, executeCqlCallKwargs['start']) # SRU is 1 based
+        self.assertEquals(25, executeCqlCallKwargs['stop'])
 
     def testSearchRetrieve(self):
-        arguments = {'version':['1.1'], 'operation':['searchRetrieve'],  'query':['field=value'], 'x-recordSchema':['extra']}
+        arguments = {'version':'1.1', 'operation':'searchRetrieve',  'recordSchema':'schema', 'recordPacking':'string', 'query':'field=value', 'x-recordSchema':'extra'}
         'database'
-        observer = MockListeners(['0','1'])
-        component = SruHandler('', '', '', '')
+        observer = CallTrace()
+        observer.returnValues['executeCQL'] = (100, range(11, 21))
+        observer.returnValues['yieldRecord'] = "record"
+        observer.returnValues['extraResponseData'] = 'extraResponseData'
+        observer.returnValues['echoedExtraRequestData'] = 'echoedExtraRequestData'
+
+        #observer = MockListeners(['0','1'])
+        component = SruHandler()
         component.addObserver(observer)
-        result = "".join(list(component.handleRequest(RequestURI='/database/sru?version=1.1&operation=searchRetrieve&query=field%3Dvalue&x-recordSchema=extra')))
+        result = "".join(compose(component.searchRetrieve(**arguments)))
+        self.assertEquals('executeCQL', observer.calledMethods[0].name)
+        methodKwargs = observer.calledMethods[0].kwargs
+        self.assertEquals('field=value', cqlCompose(methodKwargs['cqlAbstractSyntaxTree']))
+        self.assertEquals(0, methodKwargs['start'])
+        self.assertEquals(10, methodKwargs['stop'])
 
-        self.assertTrue(observer.executeCQLCalled)
-        self.assertEquals('field=value', cqlCompose(observer.cqlQuery))
-        self.assertEquals(0, observer.start)
-        self.assertEquals(10, observer.stop)
-
-        self.assertEquals(4, len(observer.writtenRecords))
-        self.assertEquals(('0', 'dc'), observer.writtenRecords[0])
-        self.assertEquals(('0', 'extra'), observer.writtenRecords[1])
+        self.assertEquals(10, len(list(m for m in observer.calledMethods if m.name == 'yieldRecord')))
+        print observer.calledMethods
 
         self.assertEqualsWS("""HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
@@ -164,20 +171,20 @@ Content-Type: text/xml; charset=utf-8
 
     def testExceptionInWriteRecordData(self):
         class RaisesException(object):
-            def yieldRecordForRecordPacking(self, *args):
+            def yieldRecordForRecordPacking(self, *args, **kwargs):
                 raise Exception("Test Exception")
-        component = SruHandler('', '', '', '')
+        component = SruHandler()
         component.addObserver(RaisesException())
-        result = "".join(list(compose(component._writeRecordData(CallTrace("Query"), "ID"))))
+        result = "".join(list(compose(component._writeRecordData(recordPacking="string", recordSchema="schema", recordId="ID"))))
         self.assertTrue("diagnostic" in result)
 
     def testExceptionInWriteExtraRecordData(self):
         class RaisesException(object):
-            def extraResponseData(self, *args):
+            def extraResponseData(self, *args, **kwargs):
                 raise Exception("Test Exception")
-        component = SruHandler('', '', '', '')
+        component = SruHandler()
         component.addObserver(RaisesException())
-        result = "".join(list(compose(component._writeExtraResponseData("arguments", "hits"))))
+        result = "".join(list(compose(component._writeExtraResponseData(cqlAbstractSyntaxTree=None))))
         self.assertTrue("diagnostic" in result)
 
 class MockListeners:

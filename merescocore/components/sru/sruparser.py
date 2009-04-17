@@ -31,8 +31,9 @@ from urllib import unquote
 from xml.sax.saxutils import escape as xmlEscape
 
 from merescocore.framework import Observable, decorate
-from merescocore.components.sru.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 from merescocore.components.http import utils as httputils
+
+from cqlparser import parseString, CQLParseException
 
 from weightless import compose
 
@@ -110,7 +111,7 @@ class SruParser(Observable):
         try:
             operation, arguments = self._parseArguments(arguments)
             if not operation in operations:
-                raise something
+                operation = 'explain'
 
             for data in operations[operation](arguments):
                 yield data
@@ -125,8 +126,49 @@ class SruParser(Observable):
             raise e
 
     def _searchRetrieve(self, arguments):
-        sruQuery = self._createSruQuery(arguments)
-        return self.any.searchRetrieve(sruQuery=sruQuery,**arguments)
+        arguments.update(self._parseSruArgs(arguments))
+        return self.any.searchRetrieve(**arguments)
+
+
+    def _parseSruArgs(self, arguments):
+        sruArgs = {
+            'version': arguments['version'][0],
+            'operation': arguments['operation'][0],
+            'recordSchema': arguments.get('recordSchema', [self._defaultRecordSchema])[0],
+            'recordPacking': arguments.get('recordPacking', [self._defaultRecordPacking])[0],
+        }
+        startRecord = arguments.get('startRecord', ['1'])[0]
+        if not startRecord.isdigit() or int(startRecord) < 1:
+            raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'startRecord')
+        sruArgs['startRecord'] = int(startRecord)
+
+        maximumRecords = arguments.get('maximumRecords', ['10'])[0]
+        if not maximumRecords.isdigit() or int(maximumRecords) < 0:
+            raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords')
+        sruArgs['maximumRecords'] = int(maximumRecords)
+        if self._maximumMaximumRecords and sruArgs['maximumRecords'] > self._maximumMaximumRecords:
+            raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords > %s' % self._maximumMaximumRecords)
+
+        query = arguments.get('query', [''])[0]
+        try:
+            parseString(query)
+        except CQLParseException, e:
+            raise SruException(QUERY_FEATURE_UNSUPPORTED, str(e))
+        sruArgs['query'] = query
+
+        if 'sortKeys' in arguments :
+            try:
+                sortBy, ignored, sortDirection = arguments.get('sortKeys')[0].split(',')
+                sruArgs['sortBy'] = sortBy.strip()
+                sruArgs['sortDescending'] = bool(int(sortDirection))
+            except ValueError:
+                pass
+
+        for key in (key for key in arguments if key.startswith('x-')):
+            sruArgs[key.replace('-', '_')] = arguments[key]
+
+        return sruArgs
+
 
     def _parseArguments(self, arguments):
         if arguments == {}:
@@ -164,18 +206,6 @@ class SruParser(Observable):
                     value.decode('utf-8')
         except UnicodeDecodeError:
             raise SruException(UNSUPPORTED_PARAMETER_VALUE, "Parameters are not properly 'utf-8' encoded.")
-
-    def _createSruQuery(self, arguments):
-        try:
-            sruQuery = SRUQuery(arguments, self._defaultRecordSchema, self._defaultRecordPacking)
-
-            if self._maximumMaximumRecords and sruQuery.maximumRecords > self._maximumMaximumRecords:
-                raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords > %s' % self._maximumMaximumRecords)
-        except SRUQueryParameterException, e:
-            raise SruException(UNSUPPORTED_PARAMETER_VALUE, str(e))
-        except SRUQueryParseException, e:
-            raise SruException(QUERY_FEATURE_UNSUPPORTED, str(e))
-        return sruQuery
 
     def _explain(self, *args, **kwargs):
         version = VERSION

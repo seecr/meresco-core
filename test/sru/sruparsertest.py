@@ -117,7 +117,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     def testMaximumMaximumRecords(self):
         component = SruParser('host', 'port', maximumMaximumRecords=100)
         try:
-            component._createSruQuery({'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords': ['101']})
+            component._parseSruArgs({'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords': ['101']})
             self.fail()
         except SruException, e:
             self.assertEquals(UNSUPPORTED_PARAMETER_VALUE, [e.code, e.message])
@@ -132,7 +132,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         try:
             operation, arguments = component._parseArguments(arguments)
             if operation == "searchRetrieve":
-                component._createSruQuery(arguments)
+                component._parseSruArgs(arguments)
             if expectedResult != SUCCESS:
                 self.fail("Expected %s but got nothing"  % expectedResult)
         except SruException, e:
@@ -144,12 +144,29 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         sruHandler.returnValues['searchRetrieve'] = (1, [0])
         component.addObserver(sruHandler)
 
-        list(component.handleRequest(arguments={'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve']}))
+        list(component.handleRequest(arguments=dict(version=['1.1'], query= ['aQuery'], operation=['searchRetrieve'], startRecord=['11'], maximumRecords = ['15'])))
 
         self.assertEquals(['searchRetrieve'], [m.name for m in sruHandler.calledMethods])
         self.assertEquals((), sruHandler.calledMethods[0].args)
         kwargs = sruHandler.calledMethods[0].kwargs
-        self.assertEquals(['1.1'], kwargs['version'])
-        self.assertEquals(['aQuery'], kwargs['query'])
-        self.assertEquals(['searchRetrieve'], kwargs['operation'])
-        self.assertTrue('sruQuery' in kwargs)
+        self.assertEquals('1.1', kwargs['version'])
+        self.assertEquals('aQuery', kwargs['query'])
+        self.assertEquals('searchRetrieve', kwargs['operation'])
+        self.assertEquals(11, kwargs['startRecord'])
+        self.assertEquals(15, kwargs['maximumRecords'])
+
+
+    def testSearchRetrieveWithXParameter(self):
+        component = SruParser()
+        sruHandler = CallTrace('SRUHandler')
+        sruHandler.returnValues['searchRetrieve'] = (1, [0])
+        component.addObserver(sruHandler)
+
+        list(component.handleRequest(arguments={'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve'], 'x-something':['something']}))
+
+        self.assertEquals(['searchRetrieve'], [m.name for m in sruHandler.calledMethods])
+        self.assertEquals((), sruHandler.calledMethods[0].args)
+        kwargs = sruHandler.calledMethods[0].kwargs
+        self.assertEquals(['something'], kwargs['x-something'])
+        self.assertEquals(['something'], kwargs['x_something'])
+
