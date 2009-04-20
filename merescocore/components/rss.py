@@ -37,7 +37,7 @@ from amara.binderytools import bind_string
 from cq2utils.wrappers import wrapp
 
 from merescocore.framework import Observable
-from merescocore.components.sru.sruquery import SRUQuery, SRUQueryException
+from merescocore.components.sru.sruparser import SruException
 from merescocore.components.http import utils as httputils
 
 from cqlparser.cqlparser import parseString as parseCQL
@@ -67,7 +67,7 @@ class Rss(Observable):
             maximumRecords = arguments.get('maximumRecords', [self._maximumRecords])[0]
             query = arguments.get('query', [''])[0]
             if not query:
-                raise SRUQueryException("MANDATORY parameter 'query' not supplied or empty")
+                raise SruException("MANDATORY parameter 'query' not supplied or empty")
             sruQueryArguments = {
                 'query': [query],
                 'maximumRecords': [str(maximumRecords)],
@@ -75,7 +75,7 @@ class Rss(Observable):
             if sortKeys != None:
                 sruQueryArguments['sortKeys'] = [sortKeys]
             sruQuery = SRUQuery(sruQueryArguments)
-        except (SRUQueryException,BadRequestException), e:
+        except (SruException, BadRequestException), e:
             yield '<title>ERROR %s</title>' % xmlEscape(self._title)
             yield '<link>%s</link>' % xmlEscape(self._link)
             yield "<description>An error occurred '%s'</description>" % xmlEscape(str(e))

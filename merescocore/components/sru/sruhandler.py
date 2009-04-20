@@ -31,7 +31,6 @@ from urllib import unquote
 from xml.sax.saxutils import escape as xmlEscape
 
 from merescocore.framework import Observable, decorate
-from merescocore.components.sru.sruquery import SRUQuery, SRUQueryParameterException, SRUQueryParseException
 from merescocore.components.http import utils as httputils
 
 from cqlparser import parseString as parseCQL
@@ -95,11 +94,10 @@ class SruHandler(Observable):
     def _writeEchoedSearchRetrieveRequest(self, **kwargs):
         yield '<srw:echoedSearchRetrieveRequest>'
         for parameterName in ECHOED_PARAMETER_NAMES:
-            value = kwargs.get(parameterName, None)
-            if value:
-                value = xmlEscape(value)
-                yield '<srw:%(parameterName)s>%(value)s</srw:%(parameterName)s>' % locals()
-
+            value = kwargs.get(parameterName.replace('-', '_'), [])
+            for v in (value if isinstance(value, list) else [value]):
+                aValue = xmlEscape(str(v))
+                yield '<srw:%(parameterName)s>%(aValue)s</srw:%(parameterName)s>' % locals()
         for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(**kwargs)), '</srw:extraRequestData>'):
             yield chunk
         yield '</srw:echoedSearchRetrieveRequest>'
@@ -157,7 +155,7 @@ class SruHandler(Observable):
             if nextRecordPosition < total:
                 yield '<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % (nextRecordPosition + SRU_IS_ONE_BASED)
 
-        yield self._writeEchoedSearchRetrieveRequest(**kwargs)
+        yield self._writeEchoedSearchRetrieveRequest(version=version, recordSchema=recordSchema, recordPacking=recordPacking, startRecord=startRecord, maximumRecords=maximumRecords, query=query, sortBy=sortBy, sortDescending=sortDescending, **kwargs)
         yield self._writeExtraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs)
         yield self._endResults()
 
@@ -201,7 +199,7 @@ class SruHandler(Observable):
             yield '</recordData>'
         yield '</srw:extraRecordData>'
 
-    def _yieldRecordForRecordPacking(self, recordId, recordSchema, recordPacking):
+    def _yieldRecordForRecordPacking(self, recordId=None, recordSchema=None, recordPacking=None):
         generator = compose(self.all.yieldRecord(recordId, recordSchema))
         if recordPacking == 'xml':
             for data in generator:

@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
+from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException, XML_HEADER
 from merescocore.components.sru import SruParser, SruHandler
 
 from cq2utils import CallTrace, CQ2TestCase
@@ -117,7 +117,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     def testMaximumMaximumRecords(self):
         component = SruParser('host', 'port', maximumMaximumRecords=100)
         try:
-            component._parseSruArgs({'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords': ['101']})
+            component.parseSruArgs({'version':['1.1'], 'query':['twente'], 'operation':['searchRetrieve'], 'maximumRecords': ['101']})
             self.fail()
         except SruException, e:
             self.assertEquals(UNSUPPORTED_PARAMETER_VALUE, [e.code, e.message])
@@ -132,7 +132,7 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         try:
             operation, arguments = component._parseArguments(arguments)
             if operation == "searchRetrieve":
-                component._parseSruArgs(arguments)
+                component.parseSruArgs(arguments)
             if expectedResult != SUCCESS:
                 self.fail("Expected %s but got nothing"  % expectedResult)
         except SruException, e:
@@ -141,10 +141,10 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
     def testSearchRetrieve(self):
         component = SruParser()
         sruHandler = CallTrace('SRUHandler')
-        sruHandler.returnValues['searchRetrieve'] = (1, [0])
+        sruHandler.returnValues['searchRetrieve'] = (x for x in ["<result>mock result XML</result>"])
         component.addObserver(sruHandler)
 
-        list(component.handleRequest(arguments=dict(version=['1.1'], query= ['aQuery'], operation=['searchRetrieve'], startRecord=['11'], maximumRecords = ['15'])))
+        response = "".join(component.handleRequest(arguments=dict(version=['1.1'], query= ['aQuery'], operation=['searchRetrieve'], startRecord=['11'], maximumRecords = ['15'])))
 
         self.assertEquals(['searchRetrieve'], [m.name for m in sruHandler.calledMethods])
         self.assertEquals((), sruHandler.calledMethods[0].args)
@@ -155,11 +155,14 @@ xmlns:zr="http://explain.z3950.org/dtd/2.0/">
         self.assertEquals(11, kwargs['startRecord'])
         self.assertEquals(15, kwargs['maximumRecords'])
 
+        self.assertTrue("HTTP/1.0 200 OK" in response)
+        self.assertTrue(XML_HEADER in response)
+
 
     def testSearchRetrieveWithXParameter(self):
         component = SruParser()
         sruHandler = CallTrace('SRUHandler')
-        sruHandler.returnValues['searchRetrieve'] = (1, [0])
+        sruHandler.returnValues['searchRetrieve'] = (x for x in ["<result>mock result XML</result>"])
         component.addObserver(sruHandler)
 
         list(component.handleRequest(arguments={'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve'], 'x-something':['something']}))

@@ -28,6 +28,7 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
+from merescocore.components.sru.sruhandler import SruHandler
 from merescocore.components.sru.srw import Srw
 
 from sruhandlertest import MockListeners
@@ -69,14 +70,20 @@ Content-Type: text/xml; charset=utf-8
         """Stuff that is not even XML"""
         request = 'This is not even XML'
 
-        response = "".join(list(Srw().handleRequest(Body=request)))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        response = "".join(list(srw.handleRequest(Body=request)))
         self.assertTrue('<faultcode>SOAP:Server.userException</faultcode>' in response)
 
     def testNonSRUArguments(self):
         """Arguments that are invalid in any SRU implementation"""
         request =  soapEnvelope % SRW_REQUEST % argumentsWithMandatory % """<SRW:illegalParameter>value</SRW:illegalParameter>"""
 
-        response = "".join(list(Srw().handleRequest(Body=request)))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        response = "".join(list(srw.handleRequest(Body=request)))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>illegalParameter</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
 
@@ -85,7 +92,10 @@ Content-Type: text/xml; charset=utf-8
         """
         request =  soapEnvelope % SRW_REQUEST % argumentsWithMandatory % """<SRW:stylesheet>http://example.org/style.xsl</SRW:stylesheet>"""
 
-        response = "".join(list(Srw().handleRequest(Body=request)))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        response = "".join(list(srw.handleRequest(Body=request)))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>stylesheet</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
 
@@ -93,22 +103,33 @@ Content-Type: text/xml; charset=utf-8
     def testOperationIsIllegal(self):
         request = soapEnvelope % SRW_REQUEST % """<SRW:version>1.1</SRW:version><SRW:operation>explain</SRW:operation>"""
 
-        response = "".join(list(Srw().handleRequest(Body=request)))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        response = "".join(list(srw.handleRequest(Body=request)))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/4</uri><details>explain</details><message>Unsupported Operation</message></diagnostic></diagnostics>""", response)
 
     def testContentType(self):
-        component = Srw()
-        component.addObserver(MockListeners([0]))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        sruHandler.addObserver(MockListeners([0]))
+
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ''
-        response = "".join(list(component.handleRequest(Body=request)))
+        response = "".join(list(srw.handleRequest(Body=request)))
         self.assertTrue('text/xml; charset=utf-8' in response, response)
 
     def testNormalOperation(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
-        component = Srw()
-        component.addObserver(MockListeners(['recordId']))
-        response = "".join(list(component.handleRequest(Body=request)))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        sruHandler.addObserver(MockListeners(['recordId']))
+
+        result = list(srw.handleRequest(Body=request))
+        print result
+        response = "".join(result)
 
         self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % ('recordId', 'dc.author = "jones" and  dc.title = "smith"'), response)
 
@@ -138,9 +159,11 @@ Content-Type: text/xml; charset=utf-8
   </SOAP:Body>
 </SOAP:Envelope>"""
 
-        component = Srw()
-        component.addObserver(MockListeners(['recordId']))
-        response = "".join(list(component.handleRequest(Body=request)))
+        srw = Srw()
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        sruHandler.addObserver(MockListeners(['recordId']))
+        response = "".join(srw.handleRequest(Body=request))
 
         echoRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
@@ -151,8 +174,10 @@ Content-Type: text/xml; charset=utf-8
 
     def testConstructorVariablesAreUsed(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
-        component = Srw(defaultRecordSchema="DEFAULT_RECORD_SCHEMA", defaultRecordPacking="DEFAULT_RECORD_PACKING")
-        component.addObserver(MockListeners([1]))
-        response = "".join(list(component.handleRequest(Body=request)))
+        srw = Srw(defaultRecordSchema="DEFAULT_RECORD_SCHEMA", defaultRecordPacking="DEFAULT_RECORD_PACKING")
+        sruHandler = SruHandler()
+        srw.addObserver(sruHandler)
+        sruHandler.addObserver(MockListeners([1]))
+        response = "".join(list(srw.handleRequest(Body=request)))
         self.assertTrue("DEFAULT_RECORD_SCHEMA" in response)
         self.assertTrue("DEFAULT_RECORD_PACKING" in response)

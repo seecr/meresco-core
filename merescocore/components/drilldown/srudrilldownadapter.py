@@ -62,7 +62,7 @@ class SRUTermDrilldown(Observable):
         Observable.__init__(self)
         self._sortedByTermCount = sortedByTermCount
 
-    def extraResponseData(self, cqlAbstractSyntaxTree, x_term_drilldown=[''], **kwargs):
+    def extraResponseData(self, cqlAbstractSyntaxTree=None, x_term_drilldown=[''], **kwargs):
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:

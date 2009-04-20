@@ -59,13 +59,12 @@ class SRUDrilldownAdapterTest(CQ2TestCase):
 class SRUTermDrilldownTest(CQ2TestCase):
 
     def testSRUTermDrilldown(self):
-        arguments = {"x-term-drilldown": ["field0:1,field1:2,field2:3"]}
         adapter = SRUTermDrilldown()
         adapter.addObserver(self)
         hits = ['recordId:1', 'recordId:2']
         cqlAbstractSyntaxTree = 'cqlAbstractSyntaxTree'
-        
-        result = adapter.extraResponseData(arguments, cqlAbstractSyntaxTree)
+
+        result = adapter.extraResponseData(cqlAbstractSyntaxTree, x_term_drilldown=["field0:1,field1:2,field2:3"])
         self.assertEqualsWS("""<dd:term-drilldown><dd:navigator name="field0">
     <dd:item count="14">value0_0</dd:item>
 </dd:navigator>
@@ -82,11 +81,10 @@ class SRUTermDrilldownTest(CQ2TestCase):
         self.assertEquals('cqlAbstractSyntaxTree', self.processed_ast)
 
     def testSRUTermDrilldownNoMaximums(self):
-        arguments = {"x-term-drilldown": ["field0,field1,field2"]}
         adapter = SRUTermDrilldown()
         adapter.addObserver(self)
         hits = CallTrace("Hits")
-        list(adapter.extraResponseData(arguments, []))
+        list(adapter.extraResponseData(cqlAbstractSyntaxTree=[], x_term_drilldown=["field0,field1,field2"]))
         self.assertEquals([('field0', 10, False), ('field1', 10, False), ('field2', 10, False)], list(self.processed_tuples))
 
     def docsetFromQuery(self, ast):

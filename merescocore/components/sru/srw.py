@@ -60,7 +60,7 @@ class Srw(Observable):
     def __init__(self, SruFactory=SruParser, **kwargs):
         Observable.__init__(self)
         ignored = "SRW Does Not Implement Explain - This Variable Will Not Be Used"
-        self._sruDelegate = SruFactory(**kwargs)
+        self._sruDelegate = SruFactory(host=ignored, port=ignored, description=ignored, modifiedDate=ignored, **kwargs)
         self._sruDelegate.all = self.all
         self._sruDelegate.any = self.any
         self._sruDelegate.do = self.do
@@ -78,14 +78,16 @@ class Srw(Observable):
         try:
             operation, arguments = self._sruDelegate._parseArguments(arguments)
             self._srwSpecificValidation(operation, arguments)
-            query = self._sruDelegate._createSruQuery(arguments)
+            sruArgs = self._sruDelegate.parseSruArgs(arguments)
+            arguments.update(sruArgs)
         except SruException, e:
             yield SOAP % DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
             raise StopIteration()
 
         try:
             yield SOAP_HEADER
-            for data in compose(self._sruDelegate._doSearchRetrieve(query, arguments)):
+            print "arguments: %s" % arguments
+            for data in compose(self.any.searchRetrieve(**arguments)):
                 yield data
             yield SOAP_FOOTER
         except Exception, e:
@@ -115,4 +117,3 @@ class Srw(Observable):
             raise SruException(UNSUPPORTED_OPERATION, operation)
         if 'stylesheet' in arguments:
             raise SruException(UNSUPPORTED_PARAMETER, 'stylesheet')
-

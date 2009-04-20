@@ -52,6 +52,8 @@ class SruHandlerTest(CQ2TestCase):
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
+    <srw:recordPacking>string</srw:recordPacking>
+    <srw:recordSchema>schema</srw:recordSchema>
 </srw:echoedSearchRetrieveRequest>""", result)
 
     def testEchoedSearchRetrieveRequestWithExtraRequestData(self):
@@ -64,6 +66,8 @@ class SruHandlerTest(CQ2TestCase):
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
+    <srw:recordPacking>string</srw:recordPacking>
+    <srw:recordSchema>schema</srw:recordSchema>
     <srw:extraRequestData>some extra request data</srw:extraRequestData>
 </srw:echoedSearchRetrieveRequest>""", result)
 
@@ -111,72 +115,92 @@ class SruHandlerTest(CQ2TestCase):
         self.assertEquals(25, executeCqlCallKwargs['stop'])
 
     def testSearchRetrieve(self):
-        arguments = {'version':'1.1', 'operation':'searchRetrieve',  'recordSchema':'schema', 'recordPacking':'string', 'query':'field=value', 'x-recordSchema':'extra'}
-        'database'
+        arguments = {'version':'1.1', 'operation':'searchRetrieve',  'recordSchema':'schema', 'recordPacking':'xml', 'query':'field=value', 'startRecord':1, 'maximumRecords':2, 'x_recordSchema':['extra', 'evenmore']}
+
         observer = CallTrace()
-        observer.returnValues['executeCQL'] = (100, range(11, 21))
-        observer.returnValues['yieldRecord'] = "record"
+        observer.returnValues['executeCQL'] = (100, range(11, 13))
+
+        yieldRecordCalls = []
+        def yieldRecord(recordId, recordSchema):
+            yieldRecordCalls.append(1)
+            yield "<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema)
+        observer.yieldRecord = yieldRecord
+
         observer.returnValues['extraResponseData'] = 'extraResponseData'
         observer.returnValues['echoedExtraRequestData'] = 'echoedExtraRequestData'
 
-        #observer = MockListeners(['0','1'])
         component = SruHandler()
         component.addObserver(observer)
+
         result = "".join(compose(component.searchRetrieve(**arguments)))
         self.assertEquals('executeCQL', observer.calledMethods[0].name)
         methodKwargs = observer.calledMethods[0].kwargs
         self.assertEquals('field=value', cqlCompose(methodKwargs['cqlAbstractSyntaxTree']))
         self.assertEquals(0, methodKwargs['start'])
-        self.assertEquals(10, methodKwargs['stop'])
+        self.assertEquals(2, methodKwargs['stop'])
 
-        self.assertEquals(10, len(list(m for m in observer.calledMethods if m.name == 'yieldRecord')))
-        print observer.calledMethods
+        self.assertEquals(6, sum(yieldRecordCalls))
 
-        self.assertEqualsWS("""HTTP/1.0 200 OK
-Content-Type: text/xml; charset=utf-8
-
-<?xml version="1.0" encoding="UTF-8"?>
+        self.assertEqualsWS("""
 <srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
-<srw:version>1.1</srw:version>
-<srw:numberOfRecords>2</srw:numberOfRecords>
-<srw:records>
-    <srw:record>
-        <srw:recordSchema>dc</srw:recordSchema>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordData>
-            <MOCKED_WRITTEN_DATA>0-dc</MOCKED_WRITTEN_DATA>
-        </srw:recordData>
-        <srw:extraRecordData><recordData recordSchema="extra">
-            <MOCKED_WRITTEN_DATA>0-extra</MOCKED_WRITTEN_DATA>
-        </recordData></srw:extraRecordData>
-    </srw:record>
-    <srw:record>
-        <srw:recordSchema>dc</srw:recordSchema>
-        <srw:recordPacking>xml</srw:recordPacking>
-        <srw:recordData>
-            <MOCKED_WRITTEN_DATA>1-dc</MOCKED_WRITTEN_DATA>
-        </srw:recordData>
-        <srw:extraRecordData><recordData recordSchema="extra">
-            <MOCKED_WRITTEN_DATA>1-extra</MOCKED_WRITTEN_DATA>
-        </recordData></srw:extraRecordData>
-    </srw:record>
-</srw:records>
-<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
-    <srw:query>field=value</srw:query>
-    <srw:x-recordSchema>extra</srw:x-recordSchema>
-</srw:echoedSearchRetrieveRequest>
+    <srw:numberOfRecords>100</srw:numberOfRecords>
+    <srw:records>
+        <srw:record>
+            <srw:recordSchema>schema</srw:recordSchema>
+            <srw:recordPacking>xml</srw:recordPacking>
+            <srw:recordData>
+                <MOCKED_WRITTEN_DATA>11-schema</MOCKED_WRITTEN_DATA>
+            </srw:recordData>
+            <srw:extraRecordData>
+                <recordData recordSchema="extra">
+                    <MOCKED_WRITTEN_DATA>11-extra</MOCKED_WRITTEN_DATA>
+                </recordData>
+                <recordData recordSchema="evenmore">
+                    <MOCKED_WRITTEN_DATA>11-evenmore</MOCKED_WRITTEN_DATA>
+                </recordData>
+            </srw:extraRecordData>
+        </srw:record>
+        <srw:record>
+            <srw:recordSchema>schema</srw:recordSchema>
+            <srw:recordPacking>xml</srw:recordPacking>
+            <srw:recordData>
+                <MOCKED_WRITTEN_DATA>12-schema</MOCKED_WRITTEN_DATA>
+            </srw:recordData>
+            <srw:extraRecordData>
+                <recordData recordSchema="extra">
+                    <MOCKED_WRITTEN_DATA>12-extra</MOCKED_WRITTEN_DATA>
+                </recordData>
+                <recordData recordSchema="evenmore">
+                    <MOCKED_WRITTEN_DATA>12-evenmore</MOCKED_WRITTEN_DATA>
+                </recordData>
+            </srw:extraRecordData>
+        </srw:record>
+    </srw:records>
+    <srw:nextRecordPosition>3</srw:nextRecordPosition>
+    <srw:echoedSearchRetrieveRequest>
+        <srw:version>1.1</srw:version>
+        <srw:query>field=value</srw:query>
+        <srw:startRecord>1</srw:startRecord>
+        <srw:maximumRecords>2</srw:maximumRecords>
+        <srw:recordPacking>xml</srw:recordPacking>
+        <srw:recordSchema>schema</srw:recordSchema>
+        <srw:x-recordSchema>extra</srw:x-recordSchema>
+        <srw:x-recordSchema>evenmore</srw:x-recordSchema>
+        <srw:extraRequestData>echoedExtraRequestData</srw:extraRequestData>
+    </srw:echoedSearchRetrieveRequest>
+    <srw:extraResponseData>extraResponseData</srw:extraResponseData>
 </srw:searchRetrieveResponse>
 """, result)
 
     def testExceptionInWriteRecordData(self):
-        class RaisesException(object):
-            def yieldRecordForRecordPacking(self, *args, **kwargs):
-                raise Exception("Test Exception")
+        observer = CallTrace()
+        observer.exceptions["yieldRecord"] = Exception("Test Exception")
         component = SruHandler()
-        component.addObserver(RaisesException())
+        component.addObserver(observer)
         result = "".join(list(compose(component._writeRecordData(recordPacking="string", recordSchema="schema", recordId="ID"))))
-        self.assertTrue("diagnostic" in result)
+        self.assertTrue("diagnostic" in result, result)
+        self.assertTrue("Test Exception" in result, result)
 
     def testExceptionInWriteExtraRecordData(self):
         class RaisesException(object):

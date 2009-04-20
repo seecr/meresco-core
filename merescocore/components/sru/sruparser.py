@@ -87,6 +87,17 @@ class SruException(Exception):
         self.message = message
         self.details = details
 
+# BEGIN temp copy paste from obsolete sruquery.py
+class SRUQueryException(Exception):
+    pass
+
+class SRUQueryParameterException(SRUQueryException):
+    pass
+
+class SRUQueryParseException(SRUQueryException):
+    pass
+# END temp copy paste from obsolete sruquery.py
+
 class SruParser(Observable):
 
     def __init__(self, host='', port=0, description='Meresco SRU', modifiedDate='1970-01-01T00:00:00Z', database=None, defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
@@ -113,7 +124,7 @@ class SruParser(Observable):
             if not operation in operations:
                 operation = 'explain'
 
-            for data in operations[operation](arguments):
+            for data in compose(operations[operation](arguments)):
                 yield data
         except SruException, e:
             yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
@@ -126,11 +137,12 @@ class SruParser(Observable):
             raise e
 
     def _searchRetrieve(self, arguments):
-        arguments.update(self._parseSruArgs(arguments))
+        sruArgs = self.parseSruArgs(arguments)
+        arguments.update(sruArgs)
         return self.any.searchRetrieve(**arguments)
 
 
-    def _parseSruArgs(self, arguments):
+    def parseSruArgs(self, arguments):
         sruArgs = {
             'version': arguments['version'][0],
             'operation': arguments['operation'][0],
@@ -164,8 +176,9 @@ class SruParser(Observable):
             except ValueError:
                 pass
 
-        for key in (key for key in arguments if key.startswith('x-')):
-            sruArgs[key.replace('-', '_')] = arguments[key]
+        for key in arguments:
+            if not key in sruArgs:
+                sruArgs[key.replace('-', '_')] = arguments[key]
 
         return sruArgs
 
@@ -173,7 +186,6 @@ class SruParser(Observable):
     def _parseArguments(self, arguments):
         if arguments == {}:
             arguments = {'version':['1.1'], 'operation':['explain']}
-
         operation = arguments.get('operation', [None])[0]
         self._validateArguments(operation, arguments)
         return operation, arguments
