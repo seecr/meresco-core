@@ -57,17 +57,19 @@ class SoapException(Exception):
 
 class Srw(Observable):
 
-    def __init__(self, SruFactory=SruParser, **kwargs):
+    def __init__(self, defaultRecordSchema=None, defaultRecordPacking=None):
         Observable.__init__(self)
-        ignored = "SRW Does Not Implement Explain - This Variable Will Not Be Used"
-        self._sruDelegate = SruFactory(host=ignored, port=ignored, description=ignored, modifiedDate=ignored, **kwargs)
-        self._sruDelegate.all = self.all
-        self._sruDelegate.any = self.any
-        self._sruDelegate.do = self.do
+        self._defaultRecordSchema = defaultRecordSchema
+        self._defaultRecordPacking = defaultRecordPacking
 
     def handleRequest(self, Body='', **kwargs):
         try:
             arguments = self._soapXmlToArguments(Body)
+            if not 'recordPacking' in arguments and self._defaultRecordPacking:
+                arguments['recordPacking'] = [self._defaultRecordPacking]
+            if not 'recordSchema' in arguments and self._defaultRecordSchema:
+                arguments['recordSchema'] = [self._defaultRecordSchema]
+
         except SoapException, e:
             yield httputils.serverErrorXml
             yield SOAP % e.asSoap()
@@ -76,9 +78,9 @@ class Srw(Observable):
         yield httputils.okXml
 
         try:
-            operation, arguments = self._sruDelegate._parseArguments(arguments)
+            operation, arguments = self.any._parseArguments(arguments)
             self._srwSpecificValidation(operation, arguments)
-            sruArgs = self._sruDelegate.parseSruArgs(arguments)
+            sruArgs = self.any.parseSruArgs(arguments)
             arguments.update(sruArgs)
         except SruException, e:
             yield SOAP % DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))

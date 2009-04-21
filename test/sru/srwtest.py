@@ -28,7 +28,7 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
-from merescocore.components.sru.sruhandler import SruHandler
+from merescocore.components.sru import SruHandler, SruParser
 from merescocore.components.sru.srw import Srw
 
 httpResponse = """HTTP/1.0 200 OK
@@ -57,6 +57,14 @@ argumentsWithMandatory = """<SRW:version>1.1</SRW:version><SRW:query>dc.author =
 
 class SrwTest(CQ2TestCase):
 
+    def setUp(self):
+        CQ2TestCase.setUp(self)
+        self.srw = Srw()
+        self.srw.addObserver(SruParser())
+        self.sruHandler = SruHandler()
+        self.srw.addObserver(self.sruHandler)
+
+
     def testNonSoap(self):
         """Wrong Soap envelope or body"""
         invalidSoapEnvelope = '<?xml version="1.0"?><SOAP:Envelope xmlns:SOAP="http://wrong.example.org/soap/envelope/"><SOAP:Body>%s</SOAP:Body></SOAP:Envelope>'
@@ -72,20 +80,14 @@ Content-Type: text/xml; charset=utf-8
         """Stuff that is not even XML"""
         request = 'This is not even XML'
 
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
-        response = "".join(list(srw.handleRequest(Body=request)))
+        response = "".join(self.srw.handleRequest(Body=request))
         self.assertTrue('<faultcode>SOAP:Server.userException</faultcode>' in response)
 
     def testNonSRUArguments(self):
         """Arguments that are invalid in any SRU implementation"""
         request =  soapEnvelope % SRW_REQUEST % argumentsWithMandatory % """<SRW:illegalParameter>value</SRW:illegalParameter>"""
 
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
-        response = "".join(list(srw.handleRequest(Body=request)))
+        response = "".join(self.srw.handleRequest(Body=request))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>illegalParameter</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
 
@@ -94,10 +96,7 @@ Content-Type: text/xml; charset=utf-8
         """
         request =  soapEnvelope % SRW_REQUEST % argumentsWithMandatory % """<SRW:stylesheet>http://example.org/style.xsl</SRW:stylesheet>"""
 
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
-        response = "".join(list(srw.handleRequest(Body=request)))
+        response = "".join(self.srw.handleRequest(Body=request))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>stylesheet</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
 
@@ -105,31 +104,22 @@ Content-Type: text/xml; charset=utf-8
     def testOperationIsIllegal(self):
         request = soapEnvelope % SRW_REQUEST % """<SRW:version>1.1</SRW:version><SRW:operation>explain</SRW:operation>"""
 
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
-        response = "".join(list(srw.handleRequest(Body=request)))
+        response = "".join(self.srw.handleRequest(Body=request))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/4</uri><details>explain</details><message>Unsupported Operation</message></diagnostic></diagnostics>""", response)
 
     def testContentType(self):
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
         observer = CallTrace(
             returnValues={'executeCQL': (1, [0])},
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData', 'yieldRecord'])
-        sruHandler.addObserver(observer)
+        self.sruHandler.addObserver(observer)
 
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ''
-        response = "".join(list(srw.handleRequest(Body=request)))
+        response = "".join(self.srw.handleRequest(Body=request))
         self.assertTrue('text/xml; charset=utf-8' in response, response)
 
     def testNormalOperation(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, ['recordId']),
@@ -137,9 +127,9 @@ Content-Type: text/xml; charset=utf-8
             },
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
 
-        sruHandler.addObserver(observer)
+        self.sruHandler.addObserver(observer)
 
-        result = "".join(srw.handleRequest(Body=request))
+        result = "".join(self.srw.handleRequest(Body=request))
 
         self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % ('recordId', 'dc.author = "jones" and  dc.title = "smith"'), result)
 
@@ -169,17 +159,14 @@ Content-Type: text/xml; charset=utf-8
   </SOAP:Body>
 </SOAP:Envelope>"""
 
-        srw = Srw()
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, ['recordId']),
                 'yieldRecord': lambda recordId, recordSchema: (g for g in ["<DATA>%s-%s</DATA>" % (recordId, recordSchema)])
             },
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
-        sruHandler.addObserver(observer)
-        response = "".join(srw.handleRequest(Body=request))
+        self.sruHandler.addObserver(observer)
+        response = "".join(self.srw.handleRequest(Body=request))
 
         echoRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
@@ -195,9 +182,11 @@ Content-Type: text/xml; charset=utf-8
 
     def testConstructorVariablesAreUsed(self):
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ""
-        srw = Srw(defaultRecordSchema="DEFAULT_RECORD_SCHEMA", defaultRecordPacking="DEFAULT_RECORD_PACKING")
-        sruHandler = SruHandler()
-        srw.addObserver(sruHandler)
+        srw = Srw(
+            defaultRecordSchema="DEFAULT_RECORD_SCHEMA",
+            defaultRecordPacking="DEFAULT_RECORD_PACKING")
+        srw.addObserver(SruParser())
+        srw.addObserver(self.sruHandler)
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, [1]),
@@ -205,7 +194,7 @@ Content-Type: text/xml; charset=utf-8
             },
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
 
-        sruHandler.addObserver(observer)
-        response = "".join(list(srw.handleRequest(Body=request)))
-        self.assertTrue("DEFAULT_RECORD_SCHEMA" in response)
-        self.assertTrue("DEFAULT_RECORD_PACKING" in response)
+        self.sruHandler.addObserver(observer)
+        response = "".join(srw.handleRequest(Body=request))
+        self.assertTrue("DEFAULT_RECORD_SCHEMA" in response, response)
+        self.assertTrue("DEFAULT_RECORD_PACKING" in response, response)
