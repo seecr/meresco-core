@@ -31,8 +31,6 @@ from cq2utils import CQ2TestCase, CallTrace
 from merescocore.components.sru.sruhandler import SruHandler
 from merescocore.components.sru.srw import Srw
 
-from sruhandlertest import MockListeners
-
 httpResponse = """HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8
 
@@ -51,7 +49,7 @@ echoedSearchRetrieveRequest = """<srw:echoedSearchRetrieveRequest>
 
 searchRetrieveResponse = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">\n<srw:version>1.1</srw:version><srw:numberOfRecords>%i</srw:numberOfRecords>%s</srw:searchRetrieveResponse>"""
 
-wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>%s-dc</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest)
+wrappedMockAnswer = searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>dc</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><DATA>%s-dc</DATA></srw:recordData></srw:record></srw:records>' + echoedSearchRetrieveRequest)
 
 SRW_REQUEST = """<SRW:searchRetrieveRequest xmlns:SRW="http://www.loc.gov/zing/srw/">%s</SRW:searchRetrieveRequest>"""
 
@@ -118,7 +116,10 @@ Content-Type: text/xml; charset=utf-8
         srw = Srw()
         sruHandler = SruHandler()
         srw.addObserver(sruHandler)
-        sruHandler.addObserver(MockListeners([0]))
+        observer = CallTrace(
+            returnValues={'executeCQL': (1, [0])},
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData', 'yieldRecord'])
+        sruHandler.addObserver(observer)
 
         request = soapEnvelope % SRW_REQUEST % argumentsWithMandatory % ''
         response = "".join(list(srw.handleRequest(Body=request)))
@@ -129,7 +130,14 @@ Content-Type: text/xml; charset=utf-8
         srw = Srw()
         sruHandler = SruHandler()
         srw.addObserver(sruHandler)
-        sruHandler.addObserver(MockListeners(['recordId']))
+        observer = CallTrace(
+            returnValues={
+                'executeCQL': (1, ['recordId']),
+                'yieldRecord': lambda recordId, recordSchema: (g for g in ["<DATA>%s-%s</DATA>" % (recordId, recordSchema)])
+            },
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
+
+        sruHandler.addObserver(observer)
 
         result = "".join(srw.handleRequest(Body=request))
 
@@ -164,7 +172,13 @@ Content-Type: text/xml; charset=utf-8
         srw = Srw()
         sruHandler = SruHandler()
         srw.addObserver(sruHandler)
-        sruHandler.addObserver(MockListeners(['recordId']))
+        observer = CallTrace(
+            returnValues={
+                'executeCQL': (1, ['recordId']),
+                'yieldRecord': lambda recordId, recordSchema: (g for g in ["<DATA>%s-%s</DATA>" % (recordId, recordSchema)])
+            },
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
+        sruHandler.addObserver(observer)
         response = "".join(srw.handleRequest(Body=request))
 
         echoRequest = """<srw:echoedSearchRetrieveRequest>
@@ -176,7 +190,7 @@ Content-Type: text/xml; charset=utf-8
 <srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema>
 </srw:echoedSearchRetrieveRequest>"""
 
-        self.assertEqualsWS(httpResponse % soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>recordId-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><DATA>recordId-info:srw/schema/1/mods-v3.0</DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
 
 
     def testConstructorVariablesAreUsed(self):
@@ -184,7 +198,14 @@ Content-Type: text/xml; charset=utf-8
         srw = Srw(defaultRecordSchema="DEFAULT_RECORD_SCHEMA", defaultRecordPacking="DEFAULT_RECORD_PACKING")
         sruHandler = SruHandler()
         srw.addObserver(sruHandler)
-        sruHandler.addObserver(MockListeners([1]))
+        observer = CallTrace(
+            returnValues={
+                'executeCQL': (1, [1]),
+                'yieldRecord': lambda recordId, recordSchema: (g for g in ["<DATA>%s-%s</DATA>" % (recordId, recordSchema)])
+            },
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
+
+        sruHandler.addObserver(observer)
         response = "".join(list(srw.handleRequest(Body=request)))
         self.assertTrue("DEFAULT_RECORD_SCHEMA" in response)
         self.assertTrue("DEFAULT_RECORD_PACKING" in response)

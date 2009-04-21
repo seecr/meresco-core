@@ -210,22 +210,3 @@ class SruHandlerTest(CQ2TestCase):
         component.addObserver(RaisesException())
         result = "".join(list(compose(component._writeExtraResponseData(cqlAbstractSyntaxTree=None))))
         self.assertTrue("diagnostic" in result)
-
-class MockListeners:
-    def __init__(self, executeCQLResult):
-        self.executeCQLResult = executeCQLResult
-        self.writtenRecords = []
-
-    def executeCQL(self, cqlAbstractSyntaxTree, start=0, stop=10, sortBy=None, sortDescending=None):
-        self.executeCQLCalled = True
-        self.cqlQuery = cqlAbstractSyntaxTree
-        self.sortKey = sortBy
-        self.sortDirection = sortDescending
-        self.start = start
-        self.stop = stop
-        return len(self.executeCQLResult), self.executeCQLResult[start:stop]
-
-    def yieldRecord(self, recordId, recordSchema):
-        self.writtenRecords.append((recordId, recordSchema))
-        yield "<MOCKED_WRITTEN_DATA>%s-%s</MOCKED_WRITTEN_DATA>" % (recordId, recordSchema)
-

@@ -26,15 +26,11 @@
 #
 ## end license ##
 
-from cq2utils.cq2testcase import CQ2TestCase
-from cq2utils.calltrace import CallTrace
+from cq2utils import CQ2TestCase, CallTrace
 from amara.binderytools import bind_string
 from urllib import urlencode
 
 from merescocore.components.rss import Rss
-
-from sru.sruhandlertest import MockListeners
-
 
 RSS_HEAD = """HTTP/1.0 200 OK
 Content-Type: application/rss+xml
@@ -55,7 +51,9 @@ RSS = RSS_HEAD % """<title>Test title</title>
 class RssTest(CQ2TestCase):
 
     def testNoResults(self):
-        observer = MockListeners([])
+        observer = CallTrace(
+            returnValues={'executeCQL': (0, [])},
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
 
         rss = Rss(
             title = 'Test title',
@@ -70,11 +68,12 @@ class RssTest(CQ2TestCase):
         self.assertEqualsWS(RSS % '', result)
 
     def testOneResult(self):
-        def getRecord(recordId):
-            yield '<item><title>Test Title</title><link>Test Identifier</link><description>Test Description</description></item>'
-
-        listeners = MockListeners([1])
-        listeners.getRecord = getRecord
+        observer = CallTrace(
+            returnValues={
+                'executeCQL': (1, [1]),
+                'getRecord': lambda recordId: (g for g in ['<item><title>Test Title</title><link>Test Identifier</link><description>Test Description</description></item>']),
+            },
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
 
         rss = Rss(
             title = 'Test title',
@@ -83,7 +82,7 @@ class RssTest(CQ2TestCase):
             sortKeys = 'date,,1',
             maximumRecords = '15',
         )
-        rss.addObserver(listeners)
+        rss.addObserver(observer)
 
         result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery')))
         self.assertEqualsWS(RSS % """<item>
@@ -128,14 +127,21 @@ class RssTest(CQ2TestCase):
         def getRecord(recordId):
             recordIds.append(recordId)
             return '<item/>'
-        queryResponder = MockListeners(range(100))
-        queryResponder.getRecord = getRecord
-        rss.addObserver(queryResponder)
+
+        observer = CallTrace(
+            returnValues={
+                'executeCQL': lambda start=0, stop=10, *args, **kwargs: (50, range(start, stop)),
+                'getRecord': getRecord,
+            },
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
+        rss.addObserver(observer)
 
         result = "".join(list(rss.handleRequest(RequestURI='/?query=aQuery&' + urlencode(sruArgs))))
 
-        self.assertEquals(sortKey, queryResponder.sortKey)
-        self.assertEquals(sortDirection, queryResponder.sortDirection)
+        method = observer.calledMethods[0]
+        self.assertEquals('executeCQL', method.name)
+        self.assertEquals(sortKey, method.kwargs['sortBy'])
+        self.assertEquals(sortDirection, method.kwargs['sortDescending'])
         self.assertEquals(maximumRecords, len(recordIds))
 
     def testMaxAndSort(self):
@@ -149,11 +155,13 @@ class RssTest(CQ2TestCase):
         self.assertMaxAndSort(10, 'othersortable', False, rssArgs={}, sruArgs={'sortKeys':'othersortable,,0'})
 
     def testContentType(self):
-        listeners = MockListeners([0])
+        observer = CallTrace(
+            returnValues={'executeCQL': (0, [])},
+            ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
         rss = Rss(title = 'Title', description = 'Description', link = 'Link')
-        rss.addObserver(listeners)
+        rss.addObserver(observer)
 
-        result = "".join(list(rss.handleRequest()))
+        result = "".join(rss.handleRequest())
         self.assertTrue('Content-Type: application/rss+xml' in result, result)
 
 
