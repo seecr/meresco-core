@@ -25,17 +25,18 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from amara.binderytools import bind_stream
-from amara.bindery import is_element
+
+from amara.binderytools import bind_string
 from merescocore.framework.observable import Observable
 from traceback import format_exc
 from xml.sax.saxutils import escape as escapeXml
 
 class SRURecordUpdate(Observable):
 
-    def handleRequest(self, httpRequest):
+    def handleRequest(self, Body='', **kwargs):
+        yield '\r\n'.join(['HTTP/1.0 200 Ok', 'Content-Type: text/xml, charset=utf-8\r\n', ''])
         try:
-            updateRequest = bind_stream(httpRequest.content).updateRequest
+            updateRequest = bind_string(Body).updateRequest
             recordId = str(updateRequest.recordIdentifier)
             prefix = "info:srw/action/1/"
             action = str(updateRequest.action)
@@ -47,21 +48,15 @@ class SRURecordUpdate(Observable):
                 self.do.delete(recordId)
             else:
                 raise Exception("Unknown action: " + action)
-            self.writeSucces(httpRequest)
+            answer = RESPONSE_XML % {
+                "operationStatus": "success",
+                "diagnostics": ""}
         except Exception, e:
-            self.writeError(httpRequest, format_exc(limit=7))
+            answer = RESPONSE_XML % {
+                "operationStatus": "fail",
+                "diagnostics": DIAGNOSTIC_XML % escapeXml(format_exc(limit=7))}
 
-    def writeSucces(self, httpRequest):
-        response = RESPONSE_XML % {
-            "operationStatus": "success",
-            "diagnostics": ""}
-        httpRequest.write(response)
-
-    def writeError(self, httpRequest, message):
-        response = RESPONSE_XML % {
-            "operationStatus": "fail",
-            "diagnostics": DIAGNOSTIC_XML % escapeXml(message)}
-        httpRequest.write(response)
+        yield answer
 
 RESPONSE_XML = """<?xml version="1.0" encoding="UTF-8"?>
 <srw:updateResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="info:lc/xmlns/update-v1">

@@ -40,7 +40,7 @@ from merescocore.framework import Observable
 from merescocore.components.sru.sruparser import SruException
 from merescocore.components.http import utils as httputils
 
-from cqlparser.cqlparser import parseString as parseCQL
+from cqlparser.cqlparser import parseString as parseCQL, CQLParseException
 
 from weightless import compose
 
@@ -64,18 +64,19 @@ class Rss(Observable):
             Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)
             arguments = parse_qs(Query)
             sortKeys = arguments.get('sortKeys', [self._sortKeys])[0]
-            maximumRecords = arguments.get('maximumRecords', [self._maximumRecords])[0]
+            sortBy, sortDescending = None, None
+            if sortKeys:
+                sortBy, ignored, sortDescending = sortKeys.split(',')
+                sortDescending = sortDescending == '1'
+
+            maximumRecords = int(arguments.get('maximumRecords', [self._maximumRecords])[0])
             query = arguments.get('query', [''])[0]
+            startRecord = 1
+
             if not query:
                 raise SruException("MANDATORY parameter 'query' not supplied or empty")
-            sruQueryArguments = {
-                'query': [query],
-                'maximumRecords': [str(maximumRecords)],
-            }
-            if sortKeys != None:
-                sruQueryArguments['sortKeys'] = [sortKeys]
-            sruQuery = SRUQuery(sruQueryArguments)
-        except (SruException, BadRequestException), e:
+            cqlAbstractSyntaxTree = parseCQL(query)
+        except (SruException, BadRequestException, CQLParseException), e:
             yield '<title>ERROR %s</title>' % xmlEscape(self._title)
             yield '<link>%s</link>' % xmlEscape(self._link)
             yield "<description>An error occurred '%s'</description>" % xmlEscape(str(e))
@@ -86,18 +87,26 @@ class Rss(Observable):
         yield '<description>%s</description>' % xmlEscape(self._description)
         yield '<link>%s</link>' % xmlEscape(self._link)
 
-        for data in compose(self._yieldResults(sruQuery)):
+        SRU_IS_ONE_BASED = 1 #And our RSS plugin is closely based on SRU
+        for data in compose(self._yieldResults(
+                cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
+                start=startRecord - SRU_IS_ONE_BASED,
+                stop=startRecord - SRU_IS_ONE_BASED+maximumRecords,
+                sortBy=sortBy,
+                sortDescending=sortDescending )):
             yield data
 
         yield """</channel>"""
         yield """</rss>"""
 
-
-    def _yieldResults(self, sruQuery):
-        SRU_IS_ONE_BASED = 1 #And our RSS plugin is closely based on SRU
-        start = sruQuery.startRecord - SRU_IS_ONE_BASED
-
-        total, hits = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL(sruQuery.query), start=start, stop=start + sruQuery.maximumRecords, sortBy=sruQuery.sortBy,  sortDescending=sruQuery.sortDescending)
+    def _yieldResults(self, cqlAbstractSyntaxTree=None, start=0, stop=9, sortBy=None, sortDescending=False, **kwargs):
+        total, hits = self.any.executeCQL(
+            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
+            start=start,
+            stop=stop,
+            sortBy=sortBy,
+            sortDescending=sortDescending
+        )
 
         for recordId in hits:
             yield self.any.getRecord(recordId)

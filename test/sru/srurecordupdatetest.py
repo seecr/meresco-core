@@ -26,10 +26,7 @@
 #
 ## end license ##
 
-from unittest import TestCase
-from StringIO import StringIO
-
-from cq2utils.calltrace import CallTrace
+from cq2utils import CallTrace, CQ2TestCase
 
 from merescocore.components.sru.srurecordupdate import SRURecordUpdate
 from amara.binderytools import bind_string
@@ -57,13 +54,14 @@ CREATE = "create"
 REPLACE = "replace"
 DELETE = "delete"
 
-class SRURecordUpdateTest(TestCase):
+class SRURecordUpdateTest(CQ2TestCase):
     """http://www.loc.gov/standards/sru/record-update/"""
 
     def setUp(self):
-        self.subject = SRURecordUpdate()
+        CQ2TestCase.setUp(self)
+        self.sruRecordUpdate = SRURecordUpdate()
         self.observer = CallTrace("Observer")
-        self.subject.addObserver(self.observer)
+        self.sruRecordUpdate.addObserver(self.observer)
         self.requestData = {
             "action": CREATE,
             "recordIdentifier": "defaultId",
@@ -72,18 +70,28 @@ class SRURecordUpdateTest(TestCase):
             "recordData": "<defaultXml/>"
             }
 
-    def createRequest(self):
-        return MockHTTPRequest(XML % self.requestData)
-
-    def testAddXML(self):
-        self.requestData = {
-            "action": "create",
+    def createRequestBody(self, action=CREATE, recordData="<dc>empty</dc>"):
+        return XML % {
+            "action": action,
             "recordIdentifier": "123",
             "recordPacking": "text/xml",
             "recordSchema": "irrelevantXML",
-            "recordData": "<dc>empty</dc>",
-            }
-        self.subject.handleRequest(self.createRequest())
+            "recordData": recordData,
+        }
+
+    def performRequest(self, requestBody):
+        result = ''.join(self.sruRecordUpdate.handleRequest(Body=requestBody))
+        return result.split('\r\n\r\n')
+
+    def testAddXML(self):
+        requestBody = self.createRequestBody()
+        headers, result = self.performRequest(requestBody)
+        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+<srw:updateResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="info:lc/xmlns/update-v1">
+    <srw:version>1.0</srw:version>
+    <ucp:operationStatus>success</ucp:operationStatus>
+</srw:updateResponse>""", result)
+
         self.assertEquals(1, len(self.observer.calledMethods))
         method = self.observer.calledMethods[0]
         self.assertEquals(3, len(method.arguments))
@@ -94,47 +102,39 @@ class SRURecordUpdateTest(TestCase):
         self.assertEquals("<dc>empty</dc>", method.arguments[2].xml())
 
     def testDelete(self):
-        self.requestData["action"] = DELETE
-        self.subject.handleRequest(self.createRequest())
+        requestBody = self.createRequestBody(action=DELETE)
+        headers, result = self.performRequest(requestBody)
+        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+<srw:updateResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="info:lc/xmlns/update-v1">
+    <srw:version>1.0</srw:version>
+    <ucp:operationStatus>success</ucp:operationStatus>
+</srw:updateResponse>""", result)
         self.assertEquals(1, len(self.observer.calledMethods))
 
         method = self.observer.calledMethods[0]
         self.assertEquals("delete", method.name)
 
     def testReplaceIsAdd(self):
-        self.requestData["action"] = REPLACE
-        self.subject.handleRequest(self.createRequest())
+        requestBody = self.createRequestBody(action=REPLACE)
+        headers, result = self.performRequest(requestBody)
+        self.assertEqualsWS("""<?xml version="1.0" encoding="UTF-8"?>
+<srw:updateResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:ucp="info:lc/xmlns/update-v1">
+    <srw:version>1.0</srw:version>
+    <ucp:operationStatus>success</ucp:operationStatus>
+</srw:updateResponse>""", result)
         self.assertEquals(1, len(self.observer.calledMethods))
 
         method = self.observer.calledMethods[0]
         self.assertEquals("add", method.name)
 
-    def testResponse(self):
-        request = self.createRequest()
-        self.subject.handleRequest(request)
-        self.assertEquals(1, len(self.observer.calledMethods))
-
-        self.assertTrue(request.written.find("""<ucp:operationStatus>success</ucp:operationStatus>""") > -1)
-
     def testNotCorrectXml(self):
-        request = MockHTTPRequest("nonsense")
-        self.subject.handleRequest(request)
-        self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
+        headers, result = self.performRequest("not_xml")
+        self.assertTrue('<ucp:operationStatus>fail</ucp:operationStatus>' in result, result)
+        self.assertEquals(0, len(self.observer.calledMethods))
 
     def testErrorsAreNotPassed(self):
         self.observer.exceptions['add'] = Exception('Some <Exception>')
-        request = self.createRequest()
-        self.subject.handleRequest(request)
-        self.assertTrue(request.written.find("""<ucp:operationStatus>fail</ucp:operationStatus>""") > -1)
-        diag = bind_string(request.written)
+        headers, result = self.performRequest(self.createRequestBody())
+        self.assertTrue("""<ucp:operationStatus>fail</ucp:operationStatus>""" in result, result)
+        diag = bind_string(result)
         self.assertTrue(str(diag.updateResponse.diagnostics.diagnostic.details).find("""Some <Exception>""") > -1)
-
-
-class MockHTTPRequest:
-
-    def __init__(self, content):
-        self.content = StringIO(content)
-        self.written = ""
-
-    def write(self, s):
-        self.written += s
