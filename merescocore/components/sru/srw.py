@@ -86,7 +86,6 @@ class Srw(Observable):
 
         try:
             yield SOAP_HEADER
-            print "arguments: %s" % arguments
             for data in compose(self.any.searchRetrieve(**arguments)):
                 yield data
             yield SOAP_FOOTER

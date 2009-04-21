@@ -37,7 +37,7 @@ from amara.binderytools import bind_string
 from cq2utils.wrappers import wrapp
 
 from merescocore.framework import Observable
-from merescocore.components.sru.sruparser import SruException
+from merescocore.components.sru.sruparser import SruMandatoryParameterNotSuppliedException
 from merescocore.components.http import utils as httputils
 
 from cqlparser.cqlparser import parseString as parseCQL, CQLParseException
@@ -74,9 +74,9 @@ class Rss(Observable):
             startRecord = 1
 
             if not query:
-                raise SruException("MANDATORY parameter 'query' not supplied or empty")
+                raise SruMandatoryParameterNotSuppliedException("query")
             cqlAbstractSyntaxTree = parseCQL(query)
-        except (SruException, BadRequestException, CQLParseException), e:
+        except (SruMandatoryParameterNotSuppliedException, BadRequestException, CQLParseException), e:
             yield '<title>ERROR %s</title>' % xmlEscape(self._title)
             yield '<link>%s</link>' % xmlEscape(self._link)
             yield "<description>An error occurred '%s'</description>" % xmlEscape(str(e))

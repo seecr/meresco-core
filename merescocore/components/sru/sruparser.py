@@ -82,10 +82,16 @@ QUERY_FEATURE_UNSUPPORTED = [48, "Query Feature Unsupported"]
 class SruException(Exception):
 
     def __init__(self, (code, message), details="No details available"):
-        Exception.__init__(self)
+        Exception.__init__(self, details)
         self.code = code
         self.message = message
         self.details = details
+
+class SruMandatoryParameterNotSuppliedException(SruException):
+    def __init__(self, parameterName):
+        SruException.__init__(self,
+            MANDATORY_PARAMETER_NOT_SUPPLIED,
+            details="MANDATORY parameter '%s' not supplied or empty" % parameterName)
 
 # BEGIN temp copy paste from obsolete sruquery.py
 class SRUQueryException(Exception):

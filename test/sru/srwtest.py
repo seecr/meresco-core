@@ -43,6 +43,10 @@ soapEnvelope = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/env
 echoedSearchRetrieveRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
 <srw:query>%s</srw:query>
+<srw:startRecord>1</srw:startRecord>
+<srw:maximumRecords>10</srw:maximumRecords>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordSchema>dc</srw:recordSchema>
 </srw:echoedSearchRetrieveRequest>"""
 
 searchRetrieveResponse = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">\n<srw:version>1.1</srw:version><srw:numberOfRecords>%i</srw:numberOfRecords>%s</srw:searchRetrieveResponse>"""
@@ -127,11 +131,9 @@ Content-Type: text/xml; charset=utf-8
         srw.addObserver(sruHandler)
         sruHandler.addObserver(MockListeners(['recordId']))
 
-        result = list(srw.handleRequest(Body=request))
-        print result
-        response = "".join(result)
+        result = "".join(srw.handleRequest(Body=request))
 
-        self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % ('recordId', 'dc.author = "jones" and  dc.title = "smith"'), response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % wrappedMockAnswer % ('recordId', 'dc.author = "jones" and  dc.title = "smith"'), result)
 
     def testArgumentsAreNotUnicodeStrings(self):
         """JJ/TJ: unicode strings somehow paralyse server requests.
@@ -144,7 +146,7 @@ Content-Type: text/xml; charset=utf-8
             self.assertTrue(type(key) == str)
 
     def testExampleFromLibraryOffCongressSite(self):
-        """Integration test based on http://www.loc.gov/standards/sru/srw/index.html
+        """testExampleFromLibraryOffCongressSite - Integration test based on http://www.loc.gov/standards/sru/srw/index.html
         spelling error ("recordSchema") corrected
         """
         request = """<SOAP:Envelope xmlns:SOAP="http://schemas.xmlsoap.org/soap/envelope/">
@@ -167,7 +169,12 @@ Content-Type: text/xml; charset=utf-8
 
         echoRequest = """<srw:echoedSearchRetrieveRequest>
 <srw:version>1.1</srw:version>
-<srw:query>dc.author = "jones" and  dc.title = "smith"</srw:query><srw:startRecord>1</srw:startRecord><srw:maximumRecords>10</srw:maximumRecords><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema></srw:echoedSearchRetrieveRequest>"""
+<srw:query>dc.author = "jones" and  dc.title = "smith"</srw:query>
+<srw:startRecord>1</srw:startRecord>
+<srw:maximumRecords>10</srw:maximumRecords>
+<srw:recordPacking>xml</srw:recordPacking>
+<srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema>
+</srw:echoedSearchRetrieveRequest>"""
 
         self.assertEqualsWS(httpResponse % soapEnvelope % searchRetrieveResponse % (1, '<srw:records><srw:record><srw:recordSchema>info:srw/schema/1/mods-v3.0</srw:recordSchema><srw:recordPacking>xml</srw:recordPacking><srw:recordData><MOCKED_WRITTEN_DATA>recordId-info:srw/schema/1/mods-v3.0</MOCKED_WRITTEN_DATA></srw:recordData></srw:record></srw:records>' +echoRequest), response)
 
