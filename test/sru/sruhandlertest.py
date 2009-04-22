@@ -208,5 +208,15 @@ class SruHandlerTest(CQ2TestCase):
                 raise Exception("Test Exception")
         component = SruHandler()
         component.addObserver(RaisesException())
-        result = "".join(list(compose(component._writeExtraResponseData(cqlAbstractSyntaxTree=None))))
+        result = "".join(compose(component._writeExtraResponseData(cqlAbstractSyntaxTree=None)))
         self.assertTrue("diagnostic" in result)
+
+    def testDiagnosticOnExecuteCql(self):
+        class RaisesException(object):
+            def executeCQL(self, *args, **kwargs):
+                raise Exception("Test Exception")
+        component = SruHandler()
+        component.addObserver(RaisesException())
+        result = "".join(compose(component.searchRetrieve(startRecord=11, maximumRecords=15, query='query', recordPacking='string', recordSchema='schema')))
+        self.assertTrue("diagnostic" in result)
+        

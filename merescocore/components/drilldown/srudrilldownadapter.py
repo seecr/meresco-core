@@ -62,7 +62,9 @@ class SRUTermDrilldown(Observable):
         Observable.__init__(self)
         self._sortedByTermCount = sortedByTermCount
 
-    def extraResponseData(self, cqlAbstractSyntaxTree=None, x_term_drilldown=[''], **kwargs):
+    def extraResponseData(self, cqlAbstractSyntaxTree=None, x_term_drilldown=None, **kwargs):
+        if x_term_drilldown == None or len(x_term_drilldown) != 1:
+            return
         def splitTermAndMaximum(s):
             l = s.split(":")
             if len(l) == 1:
@@ -86,28 +88,28 @@ class SRUTermDrilldown(Observable):
             yield '</dd:navigator>'
         yield "</dd:term-drilldown>"
 
-    def echoedExtraRequestData(self, x_term_drilldown=[''], **kwargs):
-        argument = x_term_drilldown[0]
-        if argument:
+    def echoedExtraRequestData(self, x_term_drilldown=None, **kwargs):
+        if x_term_drilldown and len(x_term_drilldown) == 1:
             yield "<dd:term-drilldown>"
-            yield argument
+            yield escape(x_term_drilldown[0])
             yield "</dd:term-drilldown>"
 
 class SRUFieldDrilldown(Observable):
 
-    def extraResponseData(self, arguments, cqlAbstractSyntaxTree):
-        query = arguments.get('query', [''])[0]
-        term = arguments.get('x-field-drilldown', [''])[0]
-        fields = arguments.get('x-field-drilldown-fields', [''])[0].split(",")
-
-        if not term or fields == [""]:
-            raise StopIteration
+    def extraResponseData(self, query=None, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
+        if not x_field_drilldown or len(x_field_drilldown) != 1:
+            return
+        if not x_field_drilldown_fields or len(x_field_drilldown_fields) != 1:
+            return
+        
+        term = x_field_drilldown[0]
+        fields = x_field_drilldown_fields[0].split(',')
 
         drilldownResults = self.drilldown(query, term, fields)
 
         yield "<dd:field-drilldown>"
         for field, count in drilldownResults:
-            yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(str(field)), escape(str(count)))
+            yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(escape(str(field))), escape(str(count)))
         yield "</dd:field-drilldown>"
 
     def drilldown(self, query, term, fields):
@@ -115,14 +117,12 @@ class SRUFieldDrilldown(Observable):
             total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL('(%s) AND %s=%s' % (query, field, term)))
             yield field, total
 
-    def echoedExtraRequestData(self, arguments):
-        fieldDrilldown = arguments.get('x-field-drilldown', [''])[0]
-        fieldDrilldownFields = arguments.get('x-field-drilldown-fields', [''])[0]
-        if fieldDrilldown:
+    def echoedExtraRequestData(self, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
+        if x_field_drilldown and len(x_field_drilldown) == 1:
             yield "<dd:field-drilldown>"
-            yield fieldDrilldown
+            yield escape(x_field_drilldown[0])
             yield "</dd:field-drilldown>"
-        if fieldDrilldownFields:
+        if x_field_drilldown_fields and len(x_field_drilldown_fields) == 1:
             yield "<dd:field-drilldown-fields>"
-            yield fieldDrilldownFields
+            yield escape(x_field_drilldown_fields[0])
             yield "</dd:field-drilldown-fields>"

@@ -102,12 +102,11 @@ class SRUTermDrilldownTest(CQ2TestCase):
 class SRUFieldDrilldownTest(CQ2TestCase):
 
     def testSRUParamsAndXMLOutput(self):
-        arguments = {"x-field-drilldown": ["term"], 'x-field-drilldown-fields': ['field0,field1'], 'query': ['original']}
         adapter = SRUFieldDrilldown()
         adapter.drilldown = self.drilldown
 
         self.drilldownCall = None
-        result = adapter.extraResponseData(arguments, "ignored_hits")
+        result = adapter.extraResponseData(x_field_drilldown=['term'], x_field_drilldown_fields=['field0,field1'], query='original')
         self.assertEqualsWS("""<dd:field-drilldown>
 <dd:field name="field0">5</dd:field>
 <dd:field name="field1">10</dd:field></dd:field-drilldown>""", "".join(result))
@@ -129,4 +128,9 @@ class SRUFieldDrilldownTest(CQ2TestCase):
         self.assertEquals("executeCQL(cqlAbstractSyntaxTree=<class CQL_QUERY>)", str(observer.calledMethods[0]))
         self.assertEquals("(original) and field0=term",  cqlCompose(observer.calledMethods[0].kwargs['cqlAbstractSyntaxTree']))
         self.assertEquals([("field0", 16), ("field1", 16)], result)
+
+    def testEchoedExtraRequestData(self):
+        d = SRUFieldDrilldown()
+        result = "".join(d.echoedExtraRequestData(x_field_drilldown=['term'], x_field_drilldown_fields = ['field0,field1'], otherArgument=['ignored']))
+        self.assertEquals('<dd:field-drilldown>term</dd:field-drilldown><dd:field-drilldown-fields>field0,field1</dd:field-drilldown-fields>', result)
 
