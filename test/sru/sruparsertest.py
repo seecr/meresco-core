@@ -30,6 +30,9 @@ from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIE
 from merescocore.components.sru import SruParser, SruHandler
 
 from cq2utils import CallTrace, CQ2TestCase
+from lxml.etree import parse
+from StringIO import StringIO
+from weightless import compose
 
 SUCCESS = "SUCCESS"
 

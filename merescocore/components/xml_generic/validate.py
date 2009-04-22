@@ -48,9 +48,6 @@ class Validate(Observable):
         allArguments = list(args) + kwargs.values()
         for arg in allArguments:
             if type(arg) == _ElementTree:
-                rootElement = arg.getroot()
-                usedNamespaces = rootElement.nsmap
-
                 toValidate = parse(StringIO(tostring(arg, pretty_print=True)))
                 self._schema.validate(toValidate)
                 if self._schema.error_log:
@@ -59,3 +56,11 @@ class Validate(Observable):
                     raise exception
         return self.all.unknown(*args, **kwargs)
 
+def assertValid(xmlString, schemaPath):
+    schema = XMLSchema(parse(open(schemaPath)))
+    toValidate = parse(StringIO(xmlString))
+    schema.validate(toValidate)
+    if schema.error_log:
+        for nr, line in enumerate(tostring(toValidate, encoding="utf-8", pretty_print=True).split('\n')):
+            print nr+1, line
+        raise AssertionError(str(schema.error_log))

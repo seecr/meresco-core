@@ -26,11 +26,14 @@
 #
 ## end license ##
 
-import unittest
-#remove at the end...
 from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
 
-from merescocore.components.sru import SruHandler
+from merescocore.components.sru import SruHandler, SruParser
+from merescocore.components.xml_generic.validate import assertValid
+from merescocore.components.xml_generic import schemasPath
+
+from os.path import join
+
 
 from cq2utils.calltrace import CallTrace
 from cStringIO import StringIO
@@ -219,4 +222,28 @@ class SruHandlerTest(CQ2TestCase):
         component.addObserver(RaisesException())
         result = "".join(compose(component.searchRetrieve(startRecord=11, maximumRecords=15, query='query', recordPacking='string', recordSchema='schema')))
         self.assertTrue("diagnostic" in result)
+
+    
+    def testValidXml(self):
+        component = SruParser()
+        sruHandler = SruHandler()
+        component.addObserver(sruHandler)
+        observer = CallTrace('observer')
+        sruHandler.addObserver(observer)
+        observer.returnValues['executeCQL'] = (2, ['id0', 'id1'])
+        observer.returnValues['echoedExtraRequestData'] = (f for f in [])
+        observer.returnValues['extraResponseData'] = (f for f in [])
+        observer.returnValues['yieldRecord'] = lambda *args, **kwargs: '<bike/>'
+
+        result = ''.join(compose(component.handleRequest(arguments={'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve']})))
+        header, body = result.split('\r\n'*2)
+        assertValid(body, join(schemasPath, 'srw-types.xsd'))
+        self.assertTrue('<bike/>' in body)
+        
+        result = ''.join(compose(component.handleRequest(arguments={'version':['1.1'], 'operation':['searchRetrieve']})))
+        header, body = result.split('\r\n'*2)
+        assertValid(body, join(schemasPath, 'srw-types.xsd'))
+        self.assertTrue('diagnostic' in body)
+
+        
         

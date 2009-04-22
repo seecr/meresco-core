@@ -50,16 +50,22 @@ MANDATORY_PARAMETERS = {
 
 SUPPORTED_OPERATIONS = ['explain', 'searchRetrieve']
 
-DIAGNOSTIC = """<diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/">
+
+RESPONSE_HEADER = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+"""
+
+RESPONSE_FOOTER = """</srw:searchRetrieveResponse>"""
+
+
+DIAGNOSTIC = """<diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
         <uri>info://srw/diagnostics/1/%s</uri>
         <details>%s</details>
         <message>%s</message>
     </diagnostic>"""
+    
+DIAGNOSTICS = """%s%s%s<srw:diagnostics>%s</srw:diagnostics>%s""" % (RESPONSE_HEADER, '<srw:version>%s</srw:version>' % VERSION, '<srw:numberOfRecords>0</srw:numberOfRecords>', DIAGNOSTIC, RESPONSE_FOOTER)
 
-DIAGNOSTICS = """<diagnostics>
-%s
-</diagnostics>
-""" % DIAGNOSTIC
+
 
 GENERAL_SYSTEM_ERROR = [1, "General System Error"]
 SYSTEM_TEMPORARILY_UNAVAILABLE = [2, "System Temporarily Unavailable"]

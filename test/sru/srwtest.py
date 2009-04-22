@@ -89,7 +89,12 @@ Content-Type: text/xml; charset=utf-8
 
         response = "".join(self.srw.handleRequest(Body=request))
 
-        self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>illegalParameter</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<srw:version>1.1</srw:version><srw:numberOfRecords>0</srw:numberOfRecords><srw:diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
+        <uri>info://srw/diagnostics/1/8</uri>
+        <details>illegalParameter</details>
+        <message>Unsupported Parameter</message>
+    </diagnostic></srw:diagnostics></srw:searchRetrieveResponse>""", response)
 
     def testNonSRWArguments(self):
         """Arguments that are part of SRU, but not of SRW (operation (done), stylesheet)
@@ -98,7 +103,12 @@ Content-Type: text/xml; charset=utf-8
 
         response = "".join(self.srw.handleRequest(Body=request))
 
-        self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/8</uri><details>stylesheet</details><message>Unsupported Parameter</message></diagnostic></diagnostics>""", response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<srw:version>1.1</srw:version><srw:numberOfRecords>0</srw:numberOfRecords><srw:diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
+        <uri>info://srw/diagnostics/1/8</uri>
+        <details>stylesheet</details>
+        <message>Unsupported Parameter</message>
+    </diagnostic></srw:diagnostics></srw:searchRetrieveResponse>""", response)
 
 
     def testOperationIsIllegal(self):
@@ -106,7 +116,12 @@ Content-Type: text/xml; charset=utf-8
 
         response = "".join(self.srw.handleRequest(Body=request))
 
-        self.assertEqualsWS(httpResponse % soapEnvelope % """<diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/"><uri>info://srw/diagnostics/1/4</uri><details>explain</details><message>Unsupported Operation</message></diagnostic></diagnostics>""", response)
+        self.assertEqualsWS(httpResponse % soapEnvelope % """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<srw:version>1.1</srw:version><srw:numberOfRecords>0</srw:numberOfRecords><srw:diagnostics><diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
+        <uri>info://srw/diagnostics/1/4</uri>
+        <details>explain</details>
+        <message>Unsupported Operation</message>
+    </diagnostic></srw:diagnostics></srw:searchRetrieveResponse>""", response)
 
     def testContentType(self):
         observer = CallTrace(
