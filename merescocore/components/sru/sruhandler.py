@@ -25,104 +25,24 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cgi import parse_qs
-from urlparse import urlsplit
-from urllib import unquote
 from xml.sax.saxutils import escape as xmlEscape
 
 from merescocore.framework import Observable, decorate
-from merescocore.components.http import utils as httputils
 
 from cqlparser import parseString as parseCQL
 from weightless import compose
 
-VERSION = '1.1'
-
-XML_HEADER = '<?xml version="1.0" encoding="UTF-8"?>'
-
-OFFICIAL_REQUEST_PARAMETERS = {
-    'explain': ['operation', 'version', 'stylesheet', 'extraRequestData', 'recordPacking'],
-    'searchRetrieve': ['version','query','startRecord','maximumRecords','recordPacking','recordSchema',
-'recordXPath','resultSetTTL','sortKeys','stylesheet','extraRequestData','operation']}
-
-MANDATORY_PARAMETERS = {
-    'explain':['version', 'operation'],
-    'searchRetrieve':['version', 'operation', 'query']}
-
-SUPPORTED_OPERATIONS = ['explain', 'searchRetrieve']
+from sruparser import VERSION, DIAGNOSTICS, DIAGNOSTIC, GENERAL_SYSTEM_ERROR
 
 RESPONSE_HEADER = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
 """
 
 RESPONSE_FOOTER = """</srw:searchRetrieveResponse>"""
 
-DIAGNOSTIC = """<diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/">
-        <uri>info://srw/diagnostics/1/%s</uri>
-        <details>%s</details>
-        <message>%s</message>
-    </diagnostic>"""
-
-DIAGNOSTICS = """<diagnostics>
-%s
-</diagnostics>
-""" % DIAGNOSTIC
-
 ECHOED_PARAMETER_NAMES = ['version', 'query', 'startRecord', 'maximumRecords', 'recordPacking', 'recordSchema', 'recordXPath', 'resultSetTTL', 'sortKeys', 'stylesheet', 'x-recordSchema']
 
-GENERAL_SYSTEM_ERROR = [1, "General System Error"]
-SYSTEM_TEMPORARILY_UNAVAILABLE = [2, "System Temporarily Unavailable"]
-UNSUPPORTED_OPERATION = [4, "Unsupported Operation"]
-UNSUPPORTED_VERSION = [5, "Unsupported Version"]
-UNSUPPORTED_PARAMETER_VALUE = [6, "Unsupported Parameter Value"]
-MANDATORY_PARAMETER_NOT_SUPPLIED = [7, "Mandatory Parameter Not Supplied"]
-UNSUPPORTED_PARAMETER = [8, "Unsupported Parameter"]
-QUERY_FEATURE_UNSUPPORTED = [48, "Query Feature Unsupported"]
-
-class SruException(Exception):
-
-    def __init__(self, (code, message), details="No details available"):
-        Exception.__init__(self)
-        self.code = code
-        self.message = message
-        self.details = details
 
 class SruHandler(Observable):
-
-    def __init__(self):
-        Observable.__init__(self)
-
-    def _writeEchoedSearchRetrieveRequest(self, **kwargs):
-        yield '<srw:echoedSearchRetrieveRequest>'
-        for parameterName in ECHOED_PARAMETER_NAMES:
-            value = kwargs.get(parameterName.replace('-', '_'), [])
-            for v in (value if isinstance(value, list) else [value]):
-                aValue = xmlEscape(str(v))
-                yield '<srw:%(parameterName)s>%(aValue)s</srw:%(parameterName)s>' % locals()
-        for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(**kwargs)), '</srw:extraRequestData>'):
-            yield chunk
-        yield '</srw:echoedSearchRetrieveRequest>'
-
-    def _writeExtraResponseData(self, cqlAbstractSyntaxTree, **kwargs):
-        return decorate('<srw:extraResponseData>',
-            self._extraResponseDataTryExcept(cqlAbstractSyntaxTree, **kwargs),
-            '</srw:extraResponseData>')
-
-    def _extraResponseDataTryExcept(self, cqlAbstractSyntaxTree, **kwargs):
-        try:
-            stuffs = compose(self.all.extraResponseData(cqlAbstractSyntaxTree, **kwargs))
-            for stuff in stuffs:
-                yield stuff
-        except Exception, e:
-            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
-
-    def _executeCQL(self, cqlAbstractSyntaxTree=None, start=0, stop=9, sortBy=None, sortDescending=False, **kwargs):
-        """Hook method (kwargs is not used here, may be used in subclasses)"""
-        return self.any.executeCQL(
-            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
-            start=start,
-            stop=stop,
-            sortBy=sortBy,
-            sortDescending=sortDescending)
 
     def searchRetrieve(self, version=None, recordSchema=None, recordPacking=None, startRecord=1, maximumRecords=10, query='', sortBy=None, sortDescending=False, **kwargs):
         SRU_IS_ONE_BASED = 1
@@ -158,6 +78,39 @@ class SruHandler(Observable):
         yield self._writeEchoedSearchRetrieveRequest(version=version, recordSchema=recordSchema, recordPacking=recordPacking, startRecord=startRecord, maximumRecords=maximumRecords, query=query, sortBy=sortBy, sortDescending=sortDescending, **kwargs)
         yield self._writeExtraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs)
         yield self._endResults()
+
+    def _writeEchoedSearchRetrieveRequest(self, **kwargs):
+        yield '<srw:echoedSearchRetrieveRequest>'
+        for parameterName in ECHOED_PARAMETER_NAMES:
+            value = kwargs.get(parameterName.replace('-', '_'), [])
+            for v in (value if isinstance(value, list) else [value]):
+                aValue = xmlEscape(str(v))
+                yield '<srw:%(parameterName)s>%(aValue)s</srw:%(parameterName)s>' % locals()
+        for chunk in decorate('<srw:extraRequestData>', compose(self.all.echoedExtraRequestData(**kwargs)), '</srw:extraRequestData>'):
+            yield chunk
+        yield '</srw:echoedSearchRetrieveRequest>'
+
+    def _writeExtraResponseData(self, cqlAbstractSyntaxTree, **kwargs):
+        return decorate('<srw:extraResponseData>',
+            self._extraResponseDataTryExcept(cqlAbstractSyntaxTree, **kwargs),
+            '</srw:extraResponseData>')
+
+    def _extraResponseDataTryExcept(self, cqlAbstractSyntaxTree, **kwargs):
+        try:
+            stuffs = compose(self.all.extraResponseData(cqlAbstractSyntaxTree, **kwargs))
+            for stuff in stuffs:
+                yield stuff
+        except Exception, e:
+            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
+
+    def _executeCQL(self, cqlAbstractSyntaxTree=None, start=0, stop=9, sortBy=None, sortDescending=False, **kwargs):
+        """Hook method (kwargs is not used here, may be used in subclasses)"""
+        return self.any.executeCQL(
+            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
+            start=start,
+            stop=stop,
+            sortBy=sortBy,
+            sortDescending=sortDescending)
 
     def _startResults(self, numberOfRecords):
         yield RESPONSE_HEADER

@@ -25,12 +25,9 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cgi import parse_qs
-from urlparse import urlsplit
-from urllib import unquote
 from xml.sax.saxutils import escape as xmlEscape
 
-from merescocore.framework import Observable, decorate
+from merescocore.framework import Observable
 from merescocore.components.http import utils as httputils
 
 from cqlparser import parseString, CQLParseException
@@ -38,6 +35,7 @@ from cqlparser import parseString, CQLParseException
 from weightless import compose
 
 VERSION = '1.1'
+DEFAULT_MAXIMUMRECORDS = '10'
 
 XML_HEADER = '<?xml version="1.0" encoding="UTF-8"?>'
 
@@ -52,11 +50,6 @@ MANDATORY_PARAMETERS = {
 
 SUPPORTED_OPERATIONS = ['explain', 'searchRetrieve']
 
-RESPONSE_HEADER = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/zing/srw/" xmlns:diag="http://www.loc.gov/zing/srw/diagnostic/" xmlns:xcql="http://www.loc.gov/zing/cql/xcql/" xmlns:dc="http://purl.org/dc/elements/1.1/">
-"""
-
-RESPONSE_FOOTER = """</srw:searchRetrieveResponse>"""
-
 DIAGNOSTIC = """<diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostics/">
         <uri>info://srw/diagnostics/1/%s</uri>
         <details>%s</details>
@@ -67,8 +60,6 @@ DIAGNOSTICS = """<diagnostics>
 %s
 </diagnostics>
 """ % DIAGNOSTIC
-
-ECHOED_PARAMETER_NAMES = ['version', 'query', 'startRecord', 'maximumRecords', 'recordPacking', 'recordSchema', 'recordXPath', 'resultSetTTL', 'sortKeys', 'stylesheet', 'x-recordSchema']
 
 GENERAL_SYSTEM_ERROR = [1, "General System Error"]
 SYSTEM_TEMPORARILY_UNAVAILABLE = [2, "System Temporarily Unavailable"]
@@ -93,17 +84,6 @@ class SruMandatoryParameterNotSuppliedException(SruException):
             MANDATORY_PARAMETER_NOT_SUPPLIED,
             details="MANDATORY parameter '%s' not supplied or empty" % parameterName)
 
-# BEGIN temp copy paste from obsolete sruquery.py
-class SRUQueryException(Exception):
-    pass
-
-class SRUQueryParameterException(SRUQueryException):
-    pass
-
-class SRUQueryParseException(SRUQueryException):
-    pass
-# END temp copy paste from obsolete sruquery.py
-
 class SruParser(Observable):
 
     def __init__(self, host='', port=0, description='Meresco SRU', modifiedDate='1970-01-01T00:00:00Z', database=None, defaultRecordSchema="dc", defaultRecordPacking="xml", maximumMaximumRecords=None):
@@ -118,19 +98,15 @@ class SruParser(Observable):
         self._maximumMaximumRecords = maximumMaximumRecords
 
     def handleRequest(self, arguments, **kwargs):
-        operations = {
-            'searchRetrieve': self._searchRetrieve,
-            'explain': self._explain
-        }
         yield httputils.okXml
 
         yield XML_HEADER
         try:
             operation, arguments = self._parseArguments(arguments)
-            if not operation in operations:
-                operation = 'explain'
-
-            for data in compose(operations[operation](arguments)):
+            operationMethod = self._explain
+            if operation == 'searchRetrieve':
+                operationMethod = self._searchRetrieve
+            for data in compose(operationMethod(arguments)):
                 yield data
         except SruException, e:
             yield DIAGNOSTICS % (e.code, xmlEscape(e.details), xmlEscape(e.message))
@@ -147,7 +123,6 @@ class SruParser(Observable):
         arguments.update(sruArgs)
         return self.any.searchRetrieve(**arguments)
 
-
     def parseSruArgs(self, arguments):
         sruArgs = {
             'version': arguments['version'][0],
@@ -160,7 +135,7 @@ class SruParser(Observable):
             raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'startRecord')
         sruArgs['startRecord'] = int(startRecord)
 
-        maximumRecords = arguments.get('maximumRecords', ['10'])[0]
+        maximumRecords = arguments.get('maximumRecords', [DEFAULT_MAXIMUMRECORDS])[0]
         if not maximumRecords.isdigit() or int(maximumRecords) < 0:
             raise SruException(UNSUPPORTED_PARAMETER_VALUE, 'maximumRecords')
         sruArgs['maximumRecords'] = int(maximumRecords)
@@ -191,7 +166,7 @@ class SruParser(Observable):
 
     def _parseArguments(self, arguments):
         if arguments == {}:
-            arguments = {'version':['1.1'], 'operation':['explain']}
+            arguments = {'version':[VERSION], 'operation':['explain']}
         operation = arguments.get('operation', [None])[0]
         self._validateArguments(operation, arguments)
         return operation, arguments
