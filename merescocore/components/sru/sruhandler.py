@@ -71,7 +71,7 @@ class SruHandler(Observable):
                 yield '<srw:nextRecordPosition>%i</srw:nextRecordPosition>' % (nextRecordPosition + SRU_IS_ONE_BASED)
 
         yield self._writeEchoedSearchRetrieveRequest(version=version, recordSchema=recordSchema, recordPacking=recordPacking, startRecord=startRecord, maximumRecords=maximumRecords, query=query, sortBy=sortBy, sortDescending=sortDescending, **kwargs)
-        yield self._writeExtraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs)
+        yield self._writeExtraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, version=version, recordSchema=recordSchema, recordPacking=recordPacking, startRecord=startRecord, maximumRecords=maximumRecords, query=query, sortBy=sortBy, sortDescending=sortDescending, **kwargs)
         yield self._endResults()
 
     def _writeEchoedSearchRetrieveRequest(self, **kwargs):
@@ -92,7 +92,7 @@ class SruHandler(Observable):
 
     def _extraResponseDataTryExcept(self, cqlAbstractSyntaxTree, **kwargs):
         try:
-            stuffs = compose(self.all.extraResponseData(cqlAbstractSyntaxTree, **kwargs))
+            stuffs = compose(self.all.extraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs))
             for stuff in stuffs:
                 yield stuff
         except Exception, e:

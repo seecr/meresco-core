@@ -237,3 +237,6 @@ class SruParser(Observable):
         </srw:recordData>
     </srw:record>
 </srw:explainResponse>""" % locals()
+
+    def searchRetrieve(self, *args, **kwargs):
+        return self.any.searchRetrieve(*args, **kwargs)

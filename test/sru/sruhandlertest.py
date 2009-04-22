@@ -90,14 +90,21 @@ class SruHandlerTest(CQ2TestCase):
         self.assertEquals('' , result)
 
     def testExtraResponseDataHandlerWithData(self):
+        argsUsed = []
+        kwargsUsed = []
         class TestHandler:
             def extraResponseData(self, *args, **kwargs):
+                argsUsed.append(args)
+                kwargsUsed.append(kwargs)
                 return (f for f in ["<someD", "ata/>"])
 
         component = SruHandler()
         component.addObserver(TestHandler())
         result = "".join(list(component._writeExtraResponseData(cqlAbstractSyntaxTree=None)))
         self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , result)
+        self.assertEquals([()], argsUsed)
+        self.assertEquals([{'cqlAbstractSyntaxTree': None}], kwargsUsed)
+        
 
     def testNextRecordPosition(self):
         observer = CallTrace()
@@ -111,7 +118,6 @@ class SruHandlerTest(CQ2TestCase):
 
         result = "".join(compose(component.searchRetrieve(startRecord=11, maximumRecords=15, query='query', recordPacking='string', recordSchema='schema')))
         self.assertTrue("<srw:nextRecordPosition>26</srw:nextRecordPosition>" in result, result)
-
 
         executeCqlCallKwargs = observer.calledMethods[0].kwargs
         self.assertEquals(10, executeCqlCallKwargs['start']) # SRU is 1 based
@@ -136,8 +142,10 @@ class SruHandlerTest(CQ2TestCase):
         component.addObserver(observer)
 
         result = "".join(compose(component.searchRetrieve(**arguments)))
-        self.assertEquals('executeCQL', observer.calledMethods[0].name)
-        methodKwargs = observer.calledMethods[0].kwargs
+        self.assertEquals(['executeCQL', 'echoedExtraRequestData', 'extraResponseData'], [m.name for m in observer.calledMethods])
+        executeCQLMethod, echoedExtraRequestDataMethod, extraResponseDataMethod = observer.calledMethods
+        self.assertEquals('executeCQL', executeCQLMethod.name)
+        methodKwargs = executeCQLMethod.kwargs
         self.assertEquals('field=value', cqlCompose(methodKwargs['cqlAbstractSyntaxTree']))
         self.assertEquals(0, methodKwargs['start'])
         self.assertEquals(2, methodKwargs['stop'])
@@ -195,6 +203,11 @@ class SruHandlerTest(CQ2TestCase):
     <srw:extraResponseData>extraResponseData</srw:extraResponseData>
 </srw:searchRetrieveResponse>
 """, result)
+        
+        self.assertEquals((), echoedExtraRequestDataMethod.args)
+        self.assertEquals(['version', 'recordSchema', 'x_recordSchema', 'sortDescending', 'sortBy', 'maximumRecords', 'startRecord', 'query', 'operation', 'recordPacking'], echoedExtraRequestDataMethod.kwargs.keys())
+        self.assertEquals((), extraResponseDataMethod.args)
+        self.assertEquals(set(['version', 'recordSchema', 'x_recordSchema', 'sortDescending', 'sortBy', 'maximumRecords', 'startRecord', 'query', 'operation', 'recordPacking', 'cqlAbstractSyntaxTree']), set(extraResponseDataMethod.kwargs.keys()))
 
     def testExceptionInWriteRecordData(self):
         observer = CallTrace()
@@ -245,5 +258,3 @@ class SruHandlerTest(CQ2TestCase):
         assertValid(body, join(schemasPath, 'srw-types.xsd'))
         self.assertTrue('diagnostic' in body)
 
-        
-        

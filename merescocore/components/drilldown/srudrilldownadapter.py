@@ -114,7 +114,8 @@ class SRUFieldDrilldown(Observable):
 
     def drilldown(self, query, term, fields):
         for field in fields:
-            total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL('(%s) AND %s=%s' % (query, field, term)))
+            cqlString = '(%s) AND %s=%s' % (query, field, term)
+            total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL(cqlString))
             yield field, total
 
     def echoedExtraRequestData(self, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
