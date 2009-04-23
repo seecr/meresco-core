@@ -43,16 +43,15 @@ DRILLDOWN_HEADER = """<dd:drilldown
     xsi:schemaLocation="http://namespace.meresco.org/drilldown http://namespace.drilldown.org/xsd/drilldown.xsd">"""
 DRILLDOWN_FOOTER = "</dd:drilldown>"
 
-class decorateWith:
-    def __init__(self, before, after):
-        self.before = before
-        self.after = after
-    def __call__(self, g):
+def decorateWith(before, after):
+    def _internal(g):
         def newg(*args, **kwargs):
-            return decorate(self.before,
+            return decorate(before,
                             g(*args, **kwargs),
-                            self.after)
+                            after)
         return newg
+    return _internal
+
     
 _wrapInDrilldownTag = decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
 
