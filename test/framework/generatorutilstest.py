@@ -27,7 +27,7 @@
 ## end license ##
 from unittest import TestCase, main
 
-from merescocore.framework.generatorutils import Peek, decorate
+from merescocore.framework.generatorutils import Peek, decorate, decorateWith
 
 class GeneratorUtilsTest(TestCase):
 
@@ -48,4 +48,18 @@ class GeneratorUtilsTest(TestCase):
     def testAlternativePeekEmpty(self):
         result = list(decorate(1, (i for i in []), 3))
         self.assertEquals([], result)
+
+    def testDecorateWith(self):
+        def gen(yieldSomething=True):
+            if yieldSomething :
+                yield 'something'
+        self.assertEquals("something", "".join(gen()))
+        self.assertEquals("", "".join(gen(yieldSomething=False)))
+
+        @decorateWith("This is ", ", isn't it?")
+        def tobedecorated1(*args, **kwargs):
+            return gen(*args, **kwargs)
+        self.assertEquals("This is something, isn't it?", "".join(tobedecorated1()))
+        self.assertEquals("", "".join(tobedecorated1(yieldSomething=False)))
+
 

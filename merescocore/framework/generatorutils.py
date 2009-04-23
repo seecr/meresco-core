@@ -35,6 +35,16 @@ def decorate(before, generator, after):
         yield value
     yield after
 
+def decorateWith(before, after):
+    def _internal(g):
+        def newg(*args, **kwargs):
+            return decorate(before,
+                            g(*args, **kwargs),
+                            after)
+        return newg
+    return _internal
+
+
 class Peek:
 
     def __init__(self, generator):

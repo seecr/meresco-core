@@ -42,7 +42,6 @@ from contextsettest import ContextSetTest
 from cqlconversiontest import CQLConversionTest
 from fieldletstest import FieldletsTest
 from fields2xmltest import Fields2XmlTest
-from generatorutilstest import GeneratorUtilsTest
 from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
 from parsecqltest import ParseCQLTest
@@ -60,6 +59,7 @@ from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
 
 from framework.helixtest import HelixTest
+from framework.generatorutilstest import GeneratorUtilsTest
 from framework.observabletest import ObservableTest
 from framework.transactiontest import TransactionTest
 

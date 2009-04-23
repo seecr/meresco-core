@@ -34,33 +34,18 @@ from merescocore.components.drilldown.srudrilldownadapter import SRUTermDrilldow
 
 from cqlparser.cqlcomposer import compose as cqlCompose
 
-
-class DecorateWithTest(CQ2TestCase):
-    @staticmethod
-    def gen(yieldSomething=True):
-        if yieldSomething :
-            yield 'something'
-    
-    def testDecorateWith(self):
-        self.assertEquals("something", "".join(gen()))
-        self.assertEquals("", "".join(gen(yieldSomething=False)))
-
-        @decorateWith("This is ", ", isn't it?")
-        def tobedecorated1(*args, **kwargs):
-            return gen(*args, **kwargs)
-        self.assertEquals("This is something, isn't it?", "".join(tobedecorated1()))
-        self.assertEquals("", "".join(tobedecorated1(yieldSomething=False)))
-
-    def testWrapInDrilldownTag(self):
-        @wrapInDrilldownTag
-        def tobedecorated(*args, **kwargs):
-            return gen(*args, **kwargs)
-        self.assertEqauls(DRILLDOWN_HEADER + "something" + DRILLDOWN_FOOTER, "".join(tobedecorated()))
-        self.assertEquals("", "".join(tobedecorated(yieldSomething=False)))
-
-
 class SRUTermDrilldownTest(CQ2TestCase):
 
+    def testWrapInDrilldownTag(self):
+        def gen(yieldSomething=True):
+            if yieldSomething :
+                yield 'something'        
+        @_wrapInDrilldownTag
+        def tobedecorated(*args, **kwargs):
+            return gen(*args, **kwargs)
+        self.assertEquals(DRILLDOWN_HEADER + "something" + DRILLDOWN_FOOTER, "".join(tobedecorated()))
+        self.assertEquals("", "".join(tobedecorated(yieldSomething=False)))
+    
     def testSRUTermDrilldown(self):
         sruTermDrilldown = SRUTermDrilldown()
         sruTermDrilldown.addObserver(self)

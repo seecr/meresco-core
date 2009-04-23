@@ -31,7 +31,7 @@ from xml.sax.saxutils import quoteattr, escape
 from cqlparser.cqlparser import parseString as parseCQL
 
 from merescocore.framework.observable import Observable
-from merescocore.framework.generatorutils import decorate
+from merescocore.framework.generatorutils import decorateWith
 
 from weightless import compose
 
@@ -43,16 +43,6 @@ DRILLDOWN_HEADER = """<dd:drilldown
     xsi:schemaLocation="http://namespace.meresco.org/drilldown http://namespace.drilldown.org/xsd/drilldown.xsd">"""
 DRILLDOWN_FOOTER = "</dd:drilldown>"
 
-def decorateWith(before, after):
-    def _internal(g):
-        def newg(*args, **kwargs):
-            return decorate(before,
-                            g(*args, **kwargs),
-                            after)
-        return newg
-    return _internal
-
-    
 _wrapInDrilldownTag = decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
 
 
