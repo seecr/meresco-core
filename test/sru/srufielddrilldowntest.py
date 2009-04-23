@@ -29,8 +29,8 @@
 from StringIO import StringIO
 
 from cq2utils import CQ2TestCase, CallTrace
-from merescocore.framework import be
-from merescocore.components.drilldown.srudrilldownadapter import SRUFieldDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, decorateWith
+from merescocore.framework import be, decorateWith
+from merescocore.components.drilldown import SRUFieldDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER
 
 from cqlparser.cqlcomposer import compose as cqlCompose
 

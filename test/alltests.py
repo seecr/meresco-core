@@ -73,7 +73,7 @@ from http.observablehttpservertest import ObservableHttpServerTest
 from http.ipfiltertest import IpFilterTest
 from http.utilstest import UtilsTest
 
-from sru.srudrilldownadaptertest import SRUFieldDrilldownTest
+from sru.srufielddrilldowntest import SRUFieldDrilldownTest
 from sru.srutermdrilldowntest import SRUTermDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
 from sru.sruparsertest import SruParserTest
