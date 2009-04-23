@@ -26,5 +26,5 @@
 #
 ## end license ##
 from drilldownfieldnames import DrilldownFieldnames
-from srudrilldownadapter import SRUDrilldownAdapter, SRUTermDrilldown, SRUFieldDrilldown
+from srudrilldownadapter import SRUTermDrilldown, SRUFieldDrilldown
 

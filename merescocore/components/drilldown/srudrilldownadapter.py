@@ -43,25 +43,24 @@ DRILLDOWN_HEADER = """<dd:drilldown
     xsi:schemaLocation="http://namespace.meresco.org/drilldown http://namespace.drilldown.org/xsd/drilldown.xsd">"""
 DRILLDOWN_FOOTER = "</dd:drilldown>"
 
-class SRUDrilldownAdapter(Observable):
-    def extraResponseData(self, *args, **kwargs):
-        return decorate(
-            DRILLDOWN_HEADER,
-            compose(self.all.extraResponseData(*args, **kwargs)),
-            DRILLDOWN_FOOTER)
-
-    def echoedExtraRequestData(self, *args, **kwargs):
-        return decorate(
-            DRILLDOWN_HEADER,
-            compose(self.all.echoedExtraRequestData(*args, **kwargs)),
-            DRILLDOWN_FOOTER)
-
+class decorateWith:
+    def __init__(self, before, after):
+        self.before = before
+        self.after = after
+    def __call__(self, g):
+        def newg(*args, **kwargs):
+            return decorate(self.before,
+                            g(*args, **kwargs),
+                            self.after)
+        return newg
+    
 
 class SRUTermDrilldown(Observable):
     def __init__(self, sortedByTermCount=False):
         Observable.__init__(self)
         self._sortedByTermCount = sortedByTermCount
 
+    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def extraResponseData(self, cqlAbstractSyntaxTree=None, x_term_drilldown=None, **kwargs):
         if x_term_drilldown == None or len(x_term_drilldown) != 1:
             return
@@ -88,14 +87,16 @@ class SRUTermDrilldown(Observable):
             yield '</dd:navigator>'
         yield "</dd:term-drilldown>"
 
+    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def echoedExtraRequestData(self, x_term_drilldown=None, **kwargs):
         if x_term_drilldown and len(x_term_drilldown) == 1:
             yield "<dd:term-drilldown>"
             yield escape(x_term_drilldown[0])
             yield "</dd:term-drilldown>"
 
-class SRUFieldDrilldown(Observable):
 
+class SRUFieldDrilldown(Observable):
+    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def extraResponseData(self, query=None, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
         if not x_field_drilldown or len(x_field_drilldown) != 1:
             return
@@ -106,7 +107,6 @@ class SRUFieldDrilldown(Observable):
         fields = x_field_drilldown_fields[0].split(',')
 
         drilldownResults = self.drilldown(query, term, fields)
-
         yield "<dd:field-drilldown>"
         for field, count in drilldownResults:
             yield '<dd:field name=%s>%s</dd:field>' % (quoteattr(escape(str(field))), escape(str(count)))
@@ -118,6 +118,7 @@ class SRUFieldDrilldown(Observable):
             total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL(cqlString))
             yield field, total
 
+    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def echoedExtraRequestData(self, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
         if x_field_drilldown and len(x_field_drilldown) == 1:
             yield "<dd:field-drilldown>"
