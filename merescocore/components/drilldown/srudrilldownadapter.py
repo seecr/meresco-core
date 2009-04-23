@@ -54,13 +54,15 @@ class decorateWith:
                             self.after)
         return newg
     
+_wrapInDrilldownTag = decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
+
 
 class SRUTermDrilldown(Observable):
     def __init__(self, sortedByTermCount=False):
         Observable.__init__(self)
         self._sortedByTermCount = sortedByTermCount
 
-    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
+    @_wrapInDrilldownTag
     def extraResponseData(self, cqlAbstractSyntaxTree=None, x_term_drilldown=None, **kwargs):
         if x_term_drilldown == None or len(x_term_drilldown) != 1:
             return
@@ -87,7 +89,7 @@ class SRUTermDrilldown(Observable):
             yield '</dd:navigator>'
         yield "</dd:term-drilldown>"
 
-    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
+    @_wrapInDrilldownTag
     def echoedExtraRequestData(self, x_term_drilldown=None, **kwargs):
         if x_term_drilldown and len(x_term_drilldown) == 1:
             yield "<dd:term-drilldown>"
@@ -96,7 +98,7 @@ class SRUTermDrilldown(Observable):
 
 
 class SRUFieldDrilldown(Observable):
-    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
+    @_wrapInDrilldownTag
     def extraResponseData(self, query=None, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
         if not x_field_drilldown or len(x_field_drilldown) != 1:
             return
@@ -118,7 +120,7 @@ class SRUFieldDrilldown(Observable):
             total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL(cqlString))
             yield field, total
 
-    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
+    @_wrapInDrilldownTag
     def echoedExtraRequestData(self, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
         if x_field_drilldown and len(x_field_drilldown) == 1:
             yield "<dd:field-drilldown>"
