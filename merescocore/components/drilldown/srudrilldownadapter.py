@@ -35,59 +35,10 @@ from merescocore.framework.generatorutils import decorateWith
 
 from weightless import compose
 
-DEFAULT_MAXIMUM_TERMS = 10
-
-DRILLDOWN_HEADER = """<dd:drilldown
-    xmlns:dd="http://namespace.meresco.org/drilldown"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://namespace.meresco.org/drilldown http://namespace.drilldown.org/xsd/drilldown.xsd">"""
-DRILLDOWN_FOOTER = "</dd:drilldown>"
-
-_wrapInDrilldownTag = decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
-
-
-class SRUTermDrilldown(Observable):
-    def __init__(self, sortedByTermCount=False):
-        Observable.__init__(self)
-        self._sortedByTermCount = sortedByTermCount
-
-    @_wrapInDrilldownTag
-    def extraResponseData(self, cqlAbstractSyntaxTree=None, x_term_drilldown=None, **kwargs):
-        if x_term_drilldown == None or len(x_term_drilldown) != 1:
-            return
-        def splitTermAndMaximum(s):
-            l = s.split(":")
-            if len(l) == 1:
-                return l[0], DEFAULT_MAXIMUM_TERMS, self._sortedByTermCount
-            return l[0], int(l[1]), self._sortedByTermCount
-
-        fieldsAndMaximums = x_term_drilldown[0].split(",")
-        fieldMaxTuples = (splitTermAndMaximum(s) for s in fieldsAndMaximums)
-
-        if fieldsAndMaximums == [""]:
-            raise StopIteration
-
-        drilldownResults = self.any.drilldown(
-            self.any.docsetFromQuery(cqlAbstractSyntaxTree),
-            fieldMaxTuples)
-        yield "<dd:term-drilldown>"
-        for fieldname, termCounts in drilldownResults:
-            yield '<dd:navigator name=%s>' % quoteattr(fieldname)
-            for term, count in termCounts:
-                yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), escape(str(term)))
-            yield '</dd:navigator>'
-        yield "</dd:term-drilldown>"
-
-    @_wrapInDrilldownTag
-    def echoedExtraRequestData(self, x_term_drilldown=None, **kwargs):
-        if x_term_drilldown and len(x_term_drilldown) == 1:
-            yield "<dd:term-drilldown>"
-            yield escape(x_term_drilldown[0])
-            yield "</dd:term-drilldown>"
-
+from drilldown import DRILLDOWN_HEADER, DRILLDOWN_FOOTER
 
 class SRUFieldDrilldown(Observable):
-    @_wrapInDrilldownTag
+    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def extraResponseData(self, query=None, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
         if not x_field_drilldown or len(x_field_drilldown) != 1:
             return
@@ -109,7 +60,7 @@ class SRUFieldDrilldown(Observable):
             total, recordIds = self.any.executeCQL(cqlAbstractSyntaxTree=parseCQL(cqlString))
             yield field, total
 
-    @_wrapInDrilldownTag
+    @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def echoedExtraRequestData(self, x_field_drilldown=None, x_field_drilldown_fields=None, **kwargs):
         if x_field_drilldown and len(x_field_drilldown) == 1:
             yield "<dd:field-drilldown>"

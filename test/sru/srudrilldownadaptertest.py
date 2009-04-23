@@ -30,67 +30,9 @@ from StringIO import StringIO
 
 from cq2utils import CQ2TestCase, CallTrace
 from merescocore.framework import be
-from merescocore.components.drilldown.srudrilldownadapter import SRUTermDrilldown, SRUFieldDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, decorateWith, _wrapInDrilldownTag
+from merescocore.components.drilldown.srudrilldownadapter import SRUFieldDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, decorateWith
 
 from cqlparser.cqlcomposer import compose as cqlCompose
-
-class SRUTermDrilldownTest(CQ2TestCase):
-
-    def testWrapInDrilldownTag(self):
-        def gen(yieldSomething=True):
-            if yieldSomething :
-                yield 'something'        
-        @_wrapInDrilldownTag
-        def tobedecorated(*args, **kwargs):
-            return gen(*args, **kwargs)
-        self.assertEquals(DRILLDOWN_HEADER + "something" + DRILLDOWN_FOOTER, "".join(tobedecorated()))
-        self.assertEquals("", "".join(tobedecorated(yieldSomething=False)))
-    
-    def testSRUTermDrilldown(self):
-        sruTermDrilldown = SRUTermDrilldown()
-        sruTermDrilldown.addObserver(self)
-        hits = ['recordId:1', 'recordId:2']
-        cqlAbstractSyntaxTree = 'cqlAbstractSyntaxTree'
-
-        result = sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree, x_term_drilldown=["field0:1,field1:2,field2:3"])
-        self.assertEqualsWS(DRILLDOWN_HEADER + """<dd:term-drilldown><dd:navigator name="field0">
-    <dd:item count="14">value0_0</dd:item>
-</dd:navigator>
-<dd:navigator name="field1">
-    <dd:item count="13">value1_0</dd:item>
-    <dd:item count="11">value1_1</dd:item>
-</dd:navigator>
-<dd:navigator name="field2">
-    <dd:item count="3">value2_0</dd:item>
-    <dd:item count="2">value2_1</dd:item>
-    <dd:item count="1">value2_2</dd:item>
-</dd:navigator></dd:term-drilldown></dd:drilldown>""", "".join(result))
-        self.assertEquals([('field0', 1, False), ('field1', 2, False), ('field2', 3, False)], list(self.processed_tuples))
-        self.assertEquals('cqlAbstractSyntaxTree', self.processed_ast)
-
-    def testSRUTermDrilldownNoMaximums(self):
-        sruTermDrilldown = SRUTermDrilldown()
-        sruTermDrilldown.addObserver(self)
-        list(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree=[], x_term_drilldown=["field0,field1,field2"]))
-        self.assertEquals([('field0', 10, False), ('field1', 10, False), ('field2', 10, False)], list(self.processed_tuples))
-
-    def docsetFromQuery(self, ast):
-        self.processed_ast = ast
-        return 'row'
-
-    def drilldown(self, row, tuples):
-        self.processed_row = row
-        self.processed_tuples = tuples
-        return [
-            ('field0', [('value0_0', 14)]),
-            ('field1', [('value1_0', 13), ('value1_1', 11)]),
-            ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
-            
-    def testEchoedExtraRequestData(self):
-        sruTermDrilldown = SRUTermDrilldown()
-        result = sruTermDrilldown.echoedExtraRequestData(x_term_drilldown=['dummy'])
-        self.assertEqualsWS(DRILLDOWN_HEADER + """<dd:term-drilldown>dummy</dd:term-drilldown></dd:drilldown>""", "".join(result))
-
 
 class SRUFieldDrilldownTest(CQ2TestCase):
 

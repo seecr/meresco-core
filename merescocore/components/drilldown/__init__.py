@@ -26,5 +26,7 @@
 #
 ## end license ##
 from drilldownfieldnames import DrilldownFieldnames
-from srudrilldownadapter import SRUTermDrilldown, SRUFieldDrilldown
+from srudrilldownadapter import SRUFieldDrilldown
+from srutermdrilldown import SRUTermDrilldown
+from drilldown import DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
 

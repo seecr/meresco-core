@@ -29,6 +29,7 @@
 from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
 
 from merescocore.components.sru import SruHandler, SruParser
+from merescocore.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER
 from merescocore.components.xml_generic.validate import assertValid
 from merescocore.components.xml_generic import schemasPath
 
@@ -60,19 +61,24 @@ class SruHandlerTest(CQ2TestCase):
 </srw:echoedSearchRetrieveRequest>""", result)
 
     def testEchoedSearchRetrieveRequestWithExtraRequestData(self):
-        arguments = {'version':'1.1', 'operation':'searchRetrieve', 'query':'query >= 3', 'recordSchema':'schema', 'recordPacking':'string'}
-        observer = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': 'some extra request data'})
+        arguments = {'version':'1.1', 'operation':'searchRetrieve', 'query':'query >= 3', 'recordSchema':'schema', 'recordPacking':'string', 'x_term_drilldown':['field0,field1']}
+        observer = CallTrace('ExtraRequestData', returnValues={'echoedExtraRequestData': '<some>extra request data</some>'})
         component = SruHandler()
+        component.addObserver(SRUTermDrilldown())
         component.addObserver(observer)
 
         result = "".join(list(component._writeEchoedSearchRetrieveRequest(**arguments)))
+        
+        drilldownRequestData = DRILLDOWN_HEADER \
+        + """<dd:term-drilldown>field0,field1</dd:term-drilldown>"""\
+        + DRILLDOWN_FOOTER
         self.assertEqualsWS("""<srw:echoedSearchRetrieveRequest>
     <srw:version>1.1</srw:version>
     <srw:query>query &gt;= 3</srw:query>
     <srw:recordPacking>string</srw:recordPacking>
     <srw:recordSchema>schema</srw:recordSchema>
-    <srw:extraRequestData>some extra request data</srw:extraRequestData>
-</srw:echoedSearchRetrieveRequest>""", result)
+    <srw:extraRequestData>%s<some>extra request data</some></srw:extraRequestData>
+</srw:echoedSearchRetrieveRequest>""" % drilldownRequestData, result)
 
     def testExtraResponseDataHandlerNoHandler(self):
         component = SruHandler()

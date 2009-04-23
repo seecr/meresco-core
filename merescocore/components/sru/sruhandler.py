@@ -25,9 +25,10 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from xml.sax.saxutils import escape as xmlEscape
+from xml.sax.saxutils import quoteattr, escape as xmlEscape
 
-from merescocore.framework import Observable, decorate
+from merescocore.framework import Observable, decorate, decorateWith
+from merescocore.components.drilldown import DRILLDOWN_HEADER, DRILLDOWN_FOOTER
 
 from cqlparser import parseString as parseCQL
 from weightless import compose
@@ -36,9 +37,7 @@ from sruparser import VERSION, DIAGNOSTICS, DIAGNOSTIC, GENERAL_SYSTEM_ERROR, QU
 
 ECHOED_PARAMETER_NAMES = ['version', 'query', 'startRecord', 'maximumRecords', 'recordPacking', 'recordSchema', 'recordXPath', 'resultSetTTL', 'sortKeys', 'stylesheet', 'x-recordSchema']
 
-
 class SruHandler(Observable):
-
     def searchRetrieve(self, version=None, recordSchema=None, recordPacking=None, startRecord=1, maximumRecords=10, query='', sortBy=None, sortDescending=False, **kwargs):
         SRU_IS_ONE_BASED = 1
 
