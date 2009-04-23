@@ -84,12 +84,12 @@ class SruHandler(Observable):
             yield chunk
         yield '</srw:echoedSearchRetrieveRequest>'
 
-    def _writeExtraResponseData(self, cqlAbstractSyntaxTree, **kwargs):
+    def _writeExtraResponseData(self, cqlAbstractSyntaxTree=None, **kwargs):
         return decorate('<srw:extraResponseData>',
-            self._extraResponseDataTryExcept(cqlAbstractSyntaxTree, **kwargs),
+            self._extraResponseDataTryExcept(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs),
             '</srw:extraResponseData>')
 
-    def _extraResponseDataTryExcept(self, cqlAbstractSyntaxTree, **kwargs):
+    def _extraResponseDataTryExcept(self, cqlAbstractSyntaxTree=None, **kwargs):
         try:
             stuffs = compose(self.all.extraResponseData(cqlAbstractSyntaxTree=cqlAbstractSyntaxTree, **kwargs))
             for stuff in stuffs:

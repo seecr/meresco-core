@@ -110,7 +110,22 @@ class SruHandlerTest(CQ2TestCase):
         self.assertEquals('<srw:extraResponseData><someData/></srw:extraResponseData>' , result)
         self.assertEquals([()], argsUsed)
         self.assertEquals([{'cqlAbstractSyntaxTree': None}], kwargsUsed)
-        
+
+    def testExtraResponseDataWithTermDrilldown(self):
+        arguments = {'version':'1.1', 'operation':'searchRetrieve', 'query':'query >= 3', 'recordSchema':'schema', 'recordPacking':'string', 'x_term_drilldown':['field0,field1']}
+
+        sruHandler = SruHandler()
+        sruTermDrilldown = SRUTermDrilldown()
+        observer = CallTrace("Drilldown")
+        observer.returnValues['docsetFromQuery'] = 'docset'
+        observer.returnValues['drilldown'] = [
+                ('field0', [('value0_0', 14)]),
+                ('field1', [('value1_0', 13), ('value1_1', 11)]),
+                ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+        sruTermDrilldown.addObserver(observer)
+        sruHandler.addObserver(sruTermDrilldown)
+        result = "".join(list(sruHandler._writeExtraResponseData(cqlAbstractSyntaxTree=None, **arguments)))
+        self.assertEqualsWS("""<srw:extraResponseData><dd:drilldown\n    xmlns:dd="http://namespace.meresco.org/drilldown"\n    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"\n    xsi:schemaLocation="http://namespace.meresco.org/drilldown http://namespace.drilldown.org/xsd/drilldown.xsd"><dd:term-drilldown><dd:navigator name="field0"><dd:item count="14">value0_0</dd:item></dd:navigator><dd:navigator name="field1"><dd:item count="13">value1_0</dd:item><dd:item count="11">value1_1</dd:item></dd:navigator><dd:navigator name="field2"><dd:item count="3">value2_0</dd:item><dd:item count="2">value2_1</dd:item><dd:item count="1">value2_2</dd:item></dd:navigator></dd:term-drilldown></dd:drilldown></srw:extraResponseData>""" , result)
 
     def testNextRecordPosition(self):
         observer = CallTrace()
