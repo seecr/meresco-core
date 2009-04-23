@@ -35,16 +35,6 @@ def decorate(before, generator, after):
         yield value
     yield after
 
-def generatorDecorate(before, data, after):
-    beforeWritten = False
-    for d in data:
-        if not beforeWritten:
-            yield before
-            beforeWritten = True
-        yield d
-    if beforeWritten:
-        yield after
-
 class Peek:
 
     def __init__(self, generator):

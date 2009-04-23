@@ -60,9 +60,11 @@ class SrwTest(CQ2TestCase):
     def setUp(self):
         CQ2TestCase.setUp(self)
         self.srw = Srw()
-        self.srw.addObserver(SruParser())
+        self.sruParser = SruParser()
         self.sruHandler = SruHandler()
-        self.srw.addObserver(self.sruHandler)
+        
+        self.srw.addObserver(self.sruParser)
+        self.sruParser.addObserver(self.sruHandler)
 
 
     def testNonSoap(self):
@@ -200,8 +202,9 @@ Content-Type: text/xml; charset=utf-8
         srw = Srw(
             defaultRecordSchema="DEFAULT_RECORD_SCHEMA",
             defaultRecordPacking="DEFAULT_RECORD_PACKING")
-        srw.addObserver(SruParser())
-        srw.addObserver(self.sruHandler)
+        sruParser = SruParser()
+        srw.addObserver(sruParser)
+        sruParser.addObserver(self.sruHandler)
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, [1]),

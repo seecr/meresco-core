@@ -31,7 +31,7 @@ from xml.sax.saxutils import quoteattr, escape
 from cqlparser.cqlparser import parseString as parseCQL
 
 from merescocore.framework.observable import Observable
-from merescocore.framework.generatorutils import generatorDecorate
+from merescocore.framework.generatorutils import decorate
 
 from weightless import compose
 
@@ -45,13 +45,13 @@ DRILLDOWN_FOOTER = "</dd:drilldown>"
 
 class SRUDrilldownAdapter(Observable):
     def extraResponseData(self, *args, **kwargs):
-        return generatorDecorate(
+        return decorate(
             DRILLDOWN_HEADER,
             compose(self.all.extraResponseData(*args, **kwargs)),
             DRILLDOWN_FOOTER)
 
     def echoedExtraRequestData(self, *args, **kwargs):
-        return generatorDecorate(
+        return decorate(
             DRILLDOWN_HEADER,
             compose(self.all.echoedExtraRequestData(*args, **kwargs)),
             DRILLDOWN_FOOTER)
