@@ -105,7 +105,8 @@ class Rss(Observable):
             start=start,
             stop=stop,
             sortBy=sortBy,
-            sortDescending=sortDescending
+            sortDescending=sortDescending,
+            **kwargs
         )
 
         for recordId in hits:

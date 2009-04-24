@@ -44,7 +44,7 @@ class SruHandler(Observable):
         start = startRecord - SRU_IS_ONE_BASED
         cqlAbstractSyntaxTree = parseCQL(query)
         try:
-            total, recordIds = self._executeCQL(
+            total, recordIds = self.any.executeCQL(
                 cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
                 start=start,
                 stop=start + maximumRecords,
@@ -96,15 +96,6 @@ class SruHandler(Observable):
                 yield stuff
         except Exception, e:
             yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
-
-    def _executeCQL(self, cqlAbstractSyntaxTree=None, start=0, stop=9, sortBy=None, sortDescending=False, **kwargs):
-        """Hook method (kwargs is not used here, may be used in subclasses)"""
-        return self.any.executeCQL(
-            cqlAbstractSyntaxTree=cqlAbstractSyntaxTree,
-            start=start,
-            stop=stop,
-            sortBy=sortBy,
-            sortDescending=sortDescending)
 
     def _startResults(self, numberOfRecords):
         yield RESPONSE_HEADER
