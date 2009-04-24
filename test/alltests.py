@@ -48,6 +48,7 @@ from parsecqltest import ParseCQLTest
 from storagecomponenttest import StorageComponentTest
 from storageharvestertest import StorageHarvesterTest
 from renamecqlindextest import RenameCqlIndexTest
+from requestscopetest import RequestScopeTest
 from rsstest import RssTest
 from rssitemtest import RssItemTest
 from statisticstest import StatisticsTest
