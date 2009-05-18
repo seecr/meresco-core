@@ -26,29 +26,10 @@
 #
 ## end license ##
 
-from logobserver import LogObserver
-from storagecomponent import StorageComponent, defaultSplit
-from storageharvester import defaultJoin
-from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
-from contextset import ContextSetList, ContextSet
+from merescocore.framework import Observable
 
-from fieldlets import RenameField, TransformFieldValue, FilterField
-from fields2xml import Fields2XmlTx
-from crosswalk import Crosswalk
-from xsltcrosswalk import XsltCrosswalk
-from xmlxpath import XmlXPath
-from rss import Rss
-from xmlcompose import XmlCompose
-from rssitem import RssItem
-from venturi import Venturi
-from configuration import Configuration, readConfig
-from xml2fields import Xml2Fields
-from xpath2field import XPath2Field
-from rewritepartname import RewritePartname
-from filtermessages import FilterMessages
-from reindex import Reindex, ReindexConsole
-from parsecql import ParseCQL
-from cqlconversion import CQLConversion
-from renamecqlindex import RenameCqlIndex
-from statisticsxml import StatisticsXml
-from requestscope import RequestScope
+class RequestScope(Observable):
+    def handleRequest(self, *args, **kwargs):
+        __callstack_var_requestScope__ = {}
+        for stuff in self.all.handleRequest(*args, **kwargs):
+            yield stuff
