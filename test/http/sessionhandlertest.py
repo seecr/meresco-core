@@ -31,7 +31,7 @@ from merescocore.components.http import SessionHandler, utils
 from merescocore.components.http.sessionhandler import Session
 from weightless import compose
 from cq2utils import CallTrace
-from time import time, mktime, strftime, localtime
+from time import time, mktime, strftime, localtime, sleep
 
 #Cookies RFC 2109 http://www.ietf.org/rfc/rfc2109.txt
 class SessionHandlerTest(TestCase):
@@ -131,14 +131,10 @@ class SessionHandlerTest(TestCase):
         sessionId = sessionCookie[len(cookieStartStr):sessionCookie.find(';')]
         return sessionId if sessionId else self.fail('Cookie-header has no value', sessionCookie)
 
-    def testSessionHasTime(self):
-        session = Session('asessionId, normally a hexdigest')
-        session.createTime = mktime(localtime(1242723141.0))
-
-        self.assertEquals(1242723141.0, session.createTime)
-
+    def testSessionUsesCurrentTimeForCreateTime(self):
         result = Session('asessionId, normally a hexdigest').createTime
-        self.assertEquals(str(int(time()))[:-2], str(int(result))[:-2])
+        sleep(0.2)
+        self.assertTrue(-0.001 < time() - result < 2.0)
 
     def testDefaultSessionTimeout(self):
         TWO_HOURS = 3600 * 2
