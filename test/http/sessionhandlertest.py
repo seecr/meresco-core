@@ -28,8 +28,10 @@
 
 from unittest import TestCase
 from merescocore.components.http import SessionHandler, utils
+from merescocore.components.http.sessionhandler import Session
 from weightless import compose
 from cq2utils import CallTrace
+from time import time, mktime, strftime, localtime
 
 #Cookies RFC 2109 http://www.ietf.org/rfc/rfc2109.txt
 class SessionHandlerTest(TestCase):
@@ -118,6 +120,84 @@ class SessionHandlerTest(TestCase):
         self.observer.handleRequest = handleRequest
         result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={})))
         self.assertEquals("""<a href="?key=%2B%28%27a+simple+tuple%27%2C%29">linktitle</a>""", result)
+
+    def assertSessionCookie(self, handleRequestOutput, nameSuffix=''):
+        header, body = handleRequestOutput.split(utils.CRLF*2,1)
+        headerParts = header.split(utils.CRLF)
+        sessionCookie = [p for p in headerParts[1:] if 'Set-Cookie' in p][0]
+        cookieStartStr = 'Set-Cookie: session%s=' % nameSuffix
+        self.assertTrue(sessionCookie.startswith(cookieStartStr), sessionCookie)
+
+        sessionId = sessionCookie[len(cookieStartStr):sessionCookie.find(';')]
+        return sessionId if sessionId else self.fail('Cookie-header has no value', sessionCookie)
+
+    def testSessionHasTime(self):
+        session = Session('asessionId, normally a hexdigest')
+        session.createTime = mktime(localtime(1242723141.0))
+
+        self.assertEquals(1242723141.0, session.createTime)
+
+        result = Session('asessionId, normally a hexdigest').createTime
+        self.assertEquals(str(int(time()))[:-2], str(int(result))[:-2])
+
+    def testDefaultSessionTimeout(self):
+        TWO_HOURS = 3600 * 2
+        sessions = []
+        def handleRequest(session=None, *args, **kwargs):
+            sessions.append(session)
+            yield  utils.okHtml + '<html/>'
+        self.observer.handleRequest = handleRequest
+
+        result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345))))
+        sessionIds = []
+        sessionId = self.assertSessionCookie(result)
+        sessionIds.append(sessionId)
+        result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345))))
+        sessionId = self.assertSessionCookie(result)
+        sessionIds.append(sessionId)
+
+        sessions[0].createTime = sessions[0].createTime - (TWO_HOURS + 1)
+        result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[0]['id']})))
+        sessionId = self.assertSessionCookie(result)
+        self.assertNotEqual(sessions[0]['id'], sessionId, "Timeout should have expired the Cookie: %s" % sessionId)
+
+        result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[1]['id']})))
+        sessionId = self.assertSessionCookie(result)
+        self.assertEquals(sessions[1]['id'], sessionId)
+        self.assertEquals(sessions[1], sessions[3])
+
+    def testCustomSessionTimeout(self):
+        HALF_AN_HOUR = 3600 / 2
+        sessions = []
+        def handleRequest(session=None, *args, **kwargs):
+            sessions.append(session)
+            yield  utils.okHtml + '<html/>'
+        handler = SessionHandler(secretSeed='SessionHandlerTest', timeout=HALF_AN_HOUR)
+        observer = CallTrace('Observer')
+        observer.handleRequest = handleRequest
+        handler.addObserver(observer)
+
+        sessionIds = []
+        for i in range(0, 4):
+            result = ''.join(compose(handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345))))
+            sessionId = self.assertSessionCookie(result)
+            sessionIds.append(sessionId)
+
+        sessions[0].createTime = sessions[0].createTime - (HALF_AN_HOUR + 3600)
+        sessions[1].createTime = sessions[1].createTime - (HALF_AN_HOUR + 1)
+        sessions[2].createTime = sessions[2].createTime - (HALF_AN_HOUR + 0)
+        sessions[3].createTime = sessions[3].createTime - (HALF_AN_HOUR + -1)
+
+        for i in range(0, 2):
+            result = ''.join(compose(handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[i]['id']})))
+            sessionId = self.assertSessionCookie(result)
+            self.assertNotEqual(sessions[i]['id'], sessionId, "Timeout should have expired the Cookie: %s, of session[%s]" % (sessionId, i))
+
+        for i in range(3, 4):
+            result = ''.join(compose(handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[i]['id']})))
+            sessionId = self.assertSessionCookie(result)
+            self.assertEquals(sessions[i]['id'], sessionId)
+
 
 # Cookie bevat:
 # - id (session)

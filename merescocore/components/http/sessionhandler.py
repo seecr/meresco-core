@@ -40,6 +40,8 @@ class Session(UserDict):
         d = {'id': sessionId}
         UserDict.__init__(self, d)
 
+        self.createTime = time()
+
     def setLink(self, caption, key, value):
         return '<a href="?%s">%s</a>' % (urlencode({key: '+' + repr(value)}), caption)
 
@@ -71,13 +73,17 @@ class ArgumentsInSession(Observable):
         yield self.all.handleRequest(session=session, *args, **kwargs)
 
 class SessionHandler(Observable):
-    def __init__(self, secretSeed, nameSuffix=''):
+    def __init__(self, secretSeed, nameSuffix='', timeout=3600*2):
         Observable.__init__(self)
         self._secretSeed = secretSeed
         self._nameSuffix = nameSuffix
         self._sessions = {}
+        self._sessionsList = []
+        self._timeout = timeout
 
     def handleRequest(self, RequestURI='', Client=None, Headers={}, arguments = {}, *args, **kwargs):
+        self._timeCutoff()
+
         sessioncookies = [cookie.strip() for cookie in Headers.get('Cookie','').split(';') if cookie.strip().startswith('session%s=' % self._nameSuffix)]
         sessionid, session = None, None
         if len(sessioncookies) >=1:
@@ -88,6 +94,8 @@ class SessionHandler(Observable):
             sessionid = md5('%s%s%s%s' % (time(), randint(0, 9999999999), clientaddress, self._secretSeed)).hexdigest()
             session = Session(sessionid)
             self._sessions[sessionid] = session
+            self._sessionsList.append(session)
+
         extraHeader = 'Set-Cookie: session%s=%s; path=/' % (self._nameSuffix, sessionid)
 
         result = self.all.handleRequest(session=session, arguments=arguments, RequestURI=RequestURI, Client=Client, Headers=Headers, *args, **kwargs)
@@ -95,8 +103,22 @@ class SessionHandler(Observable):
         for response in insertHeader(result, extraHeader) :
             yield response
 
+    def _timeCutoff(self):
+        if self._sessionsList == []:
+            return
 
-
+        timeCutoff = time() - self._timeout
+        cutoffList = []
+        for i in xrange(0, len(self._sessionsList)):
+            if self._sessionsList[i].createTime < timeCutoff:
+                cutoffList.append(i)
+            else:
+                break
+        if cutoffList != []:
+            cutoffList.reverse()
+            for i in cutoffList:
+                del self._sessions[self._sessionsList[i]['id']]
+                del self._sessionsList[i]
 
 #steps:
 #Generate some kind of unique id. bijv. md5(time() + ip + secret_seed)
