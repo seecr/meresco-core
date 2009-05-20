@@ -82,7 +82,6 @@ class SessionHandlerTest(TestCase):
         sessionCookie = [p for p in headerParts[1:] if 'Set-Cookie' in p][0]
         self.assertTrue(sessionCookie.startswith('Set-Cookie: sessionMine='), sessionCookie)
 
-
     def testRetrieveCookie(self):
         sessions = []
         def handleRequest(session=None, *args, **kwargs):
@@ -131,10 +130,36 @@ class SessionHandlerTest(TestCase):
         sessionId = sessionCookie[len(cookieStartStr):sessionCookie.find(';')]
         return sessionId if sessionId else self.fail('Cookie-header has no value', sessionCookie)
 
-    def testSessionUsesCurrentTimeForCreateTime(self):
-        result = Session('asessionId, normally a hexdigest').createTime
+    def testSessionUsesCurrentTimeForLastUsedTime(self):
+        result = Session('asessionId, normally a hexdigest').lastUsedTime
         sleep(0.2)
         self.assertTrue(-0.001 < time() - result < 2.0)
+
+    def testSessionComparesBasedOnLastUsedTime(self):
+        sessions = []
+        sessions.append(Session('3 sId'))
+        sessions.append(Session('1 sId'))
+        sessions.append(Session('2 sId'))
+        sortedSessions = sessions[:]
+        sortedSessions.sort()
+        self.assertNotEqual(id(sessions), id(sortedSessions))
+        self.assertEquals([sessions[0], sessions[1], sessions[2]], sortedSessions)
+
+        s1 = Session('1 sId')
+        s2 = Session('2 sId')
+        s3 = Session('3 sId')
+        pointInTime = time() - 3600
+        s1.lastUsedTime = pointInTime
+        s2.lastUsedTime = pointInTime + 1
+        s3.lastUsedTime = pointInTime + 2
+        sessions = []
+        sessions.extend([s1, s2, s3])
+        s1.lastUsedTime = pointInTime + 50
+        s2.lastUsedTime = pointInTime + 25
+        s3.lastUsedTime = pointInTime
+        sortedSessions = sessions[:]
+        sortedSessions.sort()
+        self.assertEquals([sessions[2], sessions[1], sessions[0]], sortedSessions)
 
     def testDefaultSessionTimeout(self):
         TWO_HOURS = 3600 * 2
@@ -152,7 +177,7 @@ class SessionHandlerTest(TestCase):
         sessionId = self.assertSessionCookie(result)
         sessionIds.append(sessionId)
 
-        sessions[0].createTime = sessions[0].createTime - (TWO_HOURS + 1)
+        sessions[0].lastUsedTime = sessions[0].lastUsedTime - (TWO_HOURS + 1)
         result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[0]['id']})))
         sessionId = self.assertSessionCookie(result)
         self.assertNotEqual(sessions[0]['id'], sessionId, "Timeout should have expired the Cookie: %s" % sessionId)
@@ -160,7 +185,8 @@ class SessionHandlerTest(TestCase):
         result = ''.join(compose(self.handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[1]['id']})))
         sessionId = self.assertSessionCookie(result)
         self.assertEquals(sessions[1]['id'], sessionId)
-        self.assertEquals(sessions[1], sessions[3])
+        self.assertTrue(-0.001 < time() - sessions[1].lastUsedTime < 2.0, "Time difference too big: %.1f seconds." % (time() - sessions[1].lastUsedTime))
+        self.assertEquals(id(sessions[1]), id(sessions[3]))
 
     def testCustomSessionTimeout(self):
         HALF_AN_HOUR = 3600 / 2
@@ -179,10 +205,10 @@ class SessionHandlerTest(TestCase):
             sessionId = self.assertSessionCookie(result)
             sessionIds.append(sessionId)
 
-        sessions[0].createTime = sessions[0].createTime - (HALF_AN_HOUR + 3600)
-        sessions[1].createTime = sessions[1].createTime - (HALF_AN_HOUR + 1)
-        sessions[2].createTime = sessions[2].createTime - (HALF_AN_HOUR + 0)
-        sessions[3].createTime = sessions[3].createTime - (HALF_AN_HOUR + -1)
+        sessions[0].lastUsedTime = sessions[0].lastUsedTime - (HALF_AN_HOUR + 3600)
+        sessions[1].lastUsedTime = sessions[1].lastUsedTime - (HALF_AN_HOUR + 1)
+        sessions[2].lastUsedTime = sessions[2].lastUsedTime - (HALF_AN_HOUR + 0)
+        sessions[3].lastUsedTime = sessions[3].lastUsedTime - (HALF_AN_HOUR + -1)
 
         for i in range(0, 2):
             result = ''.join(compose(handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[i]['id']})))
@@ -193,7 +219,7 @@ class SessionHandlerTest(TestCase):
             result = ''.join(compose(handler.handleRequest(RequestURI='/path', Client=('127.0.0.1', 12345), Headers={'Cookie': 'session=%s' % sessions[i]['id']})))
             sessionId = self.assertSessionCookie(result)
             self.assertEquals(sessions[i]['id'], sessionId)
-
+            self.assertTrue(-0.001 < time() - sessions[i].lastUsedTime < 2.0, "Time difference too big: %.1f seconds." % (time() - sessions[i].lastUsedTime))
 
 # Cookie bevat:
 # - id (session)

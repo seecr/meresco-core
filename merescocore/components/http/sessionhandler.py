@@ -40,13 +40,18 @@ class Session(UserDict):
         d = {'id': sessionId}
         UserDict.__init__(self, d)
 
-        self.createTime = time()
+        self.lastUsedTime = time()
 
     def setLink(self, caption, key, value):
         return '<a href="?%s">%s</a>' % (urlencode({key: '+' + repr(value)}), caption)
 
     def unsetLink(self, caption, key, value):
         return '<a href="?%s">%s</a>' % (urlencode({key: '-' + repr(value)}), caption)
+
+    def __cmp__(self, other):
+        return type(self) == type(other) \
+            and cmp(self.lastUsedTime, other.lastUsedTime) \
+            or cmp(type(self), type(other))
 
 class SessionHandler(Observable):
     def __init__(self, secretSeed, nameSuffix='', timeout=3600*2):
@@ -65,12 +70,16 @@ class SessionHandler(Observable):
         if len(sessioncookies) >=1:
             sessionid = sessioncookies[0].split('=')[1]
             session = self._sessions.get(sessionid, None)
+
         if session == None:
             clientaddress, ignoredPort = Client
             sessionid = md5('%s%s%s%s' % (time(), randint(0, 9999999999), clientaddress, self._secretSeed)).hexdigest()
             session = Session(sessionid)
             self._sessions[sessionid] = session
             self._sessionsList.append(session)
+        else:
+            session.lastUsedTime = time()
+            self._sessionsList.sort()
 
         extraHeader = 'Set-Cookie: session%s=%s; path=/' % (self._nameSuffix, sessionid)
 
@@ -84,17 +93,16 @@ class SessionHandler(Observable):
             return
 
         timeCutoff = time() - self._timeout
-        cutoffList = []
+        cutoffIndex = None
         for i in xrange(0, len(self._sessionsList)):
-            if self._sessionsList[i].createTime < timeCutoff:
-                cutoffList.append(i)
+            if self._sessionsList[i].lastUsedTime < timeCutoff:
+                cutoffIndex = i
             else:
                 break
-        if cutoffList != []:
-            cutoffList.reverse()
-            for i in cutoffList:
+        if cutoffIndex != None:
+            for i in range(0, cutoffIndex+1):
                 del self._sessions[self._sessionsList[i]['id']]
-                del self._sessionsList[i]
+            del self._sessionsList[:cutoffIndex+1]
 
 #steps:
 #Generate some kind of unique id. bijv. md5(time() + ip + secret_seed)
