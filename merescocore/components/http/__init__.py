@@ -34,6 +34,7 @@ from fileserver import StringServer, FileServer
 from ipfilter import IpFilter
 from basichttphandler import BasicHttpHandler
 from basicauthentication import BasicAuthentication
-from sessionhandler import SessionHandler, ArgumentsInSession
+from sessionhandler import SessionHandler
+from argumentsinsession import ArgumentsInSession
 from apachelogger import ApacheLogger
 from utils import insertHeader
