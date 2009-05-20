@@ -31,7 +31,7 @@ from merescocore.components.http import SessionHandler, utils
 from merescocore.components.http.sessionhandler import Session
 from weightless import compose
 from cq2utils import CallTrace
-from time import time, mktime, strftime, localtime, sleep
+from time import time, sleep
 
 #Cookies RFC 2109 http://www.ietf.org/rfc/rfc2109.txt
 class SessionHandlerTest(TestCase):

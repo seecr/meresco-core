@@ -69,6 +69,7 @@ from http.fileservertest import FileServerTest
 from http.pathfiltertest import PathFilterTest
 from http.pathrenametest import PathRenameTest
 from http.sessionhandlertest import SessionHandlerTest
+from http.timeddictionarytest import TimedDictionaryTest
 from http.argumentsinsessiontest import ArgumentsInSessionTest
 from http.observablehttpservertest import ObservableHttpServerTest
 from http.ipfiltertest import IpFilterTest

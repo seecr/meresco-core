@@ -35,6 +35,29 @@ from urlparse import urlsplit
 from cgi import parse_qs
 from UserDict import UserDict
 
+class TimedDictionary(object):
+    def __init__(self, timeout):
+        self._timeout = timeout
+        self._dictionary = {}
+
+    def get(self, key, default=None):
+        return self.__getitem__(key) if self.__contains__(key) else default
+
+    def has_key(self, key):
+        return self.__contains__(key)
+
+    def __getitem__(self, key):
+        return self._dictionary.__getitem__(key)
+
+    def __setitem__(self, key, value):
+        self._dictionary.__setitem__(key, value)
+
+    def __contains__(self, key):
+        return self._dictionary.__contains__(key)
+
+    def __delitem__(self, key):
+        return self._dictionary.__delitem__(key)
+
 class Session(UserDict):
     def __init__(self, sessionId):
         d = {'id': sessionId}
