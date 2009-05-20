@@ -25,16 +25,6 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-"""Main entry of Meresco
-
-All functionality of Meresco is exposed here.
-"""
-__author__ =  'Seek You Too B.V.'
-__version__=  '2.9'
-__revision__= 7629
-
-__all__ = []
-
 
 from sys import getdefaultencoding as _getdefaultencoding
 from locale import getdefaultlocale, _parse_localename
