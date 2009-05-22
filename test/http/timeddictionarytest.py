@@ -7,15 +7,14 @@ from cq2utils import CallTrace
 from time import time, sleep
 
 TWO_HOURS = 3600 * 2
+ONE_HOUR = 3600
 
-class someObject(object):
-    def __init__(self, initialValue):
-        self.subjectToCompare = initialValue
+class SomeObject(object):
+    def __init__(self, id):
+        self.id = id
 
-    def __cmp__(self):
-        return type(self) == type(other) \
-            and cmp(self.subjectToCompare, other.subjectToCompare) \
-            or cmp(type(self), type(other))
+    def _raise(self):
+        raise Exception("Should not happen in this testsituation")
 
 class TimedDictionaryTest(TestCase):
     def testBasicGetAndPut(self):
@@ -62,3 +61,67 @@ class TimedDictionaryTest(TestCase):
         except:
             self.fail("This shouldn't happen.")
         self.assertRaises(KeyError, timedDict.__delitem__, 'idontexist')
+
+    def testOrderIsKeptInternally(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        timedDict[3] = SomeObject(1)
+        timedDict[1] = SomeObject(10)
+        timedDict[2] = SomeObject(20)
+
+        self.assertEquals([3, 1, 2], timedDict._list)
+
+        timedDict[1] = SomeObject(23)
+        self.assertEquals([3, 2, 1], timedDict._list)
+
+        timedDict[0] = SomeObject(23.01)
+        self.assertEquals([3, 2, 1, 0], timedDict._list)
+
+        del timedDict[2]
+        self.assertEquals([3, 1, 0], timedDict._list)
+
+    def testGetTime(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        timedDict[1] = SomeObject('id1')
+        self.assertTrue(time() - timedDict.getTime(1) < 2.0)
+
+    def testTouch(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        timedDict[1] = SomeObject('id1')
+        timedDict[2] = SomeObject('id2')
+
+        self.assertEquals([1, 2], timedDict._list)
+        timedDict.touch(1)
+        self.assertEquals([2, 1], timedDict._list)
+
+    def testPurge(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        timedDict[1] = SomeObject('id1')
+        timedDict[2] = SomeObject('id2')
+        timedDict._now = lambda : time() + ONE_HOUR
+        self.assertEquals([1, 2], timedDict._list)
+
+        timedDict[3] = SomeObject('id3')
+        timedDict.touch(2)
+        timedDict._now = lambda : time() + TWO_HOURS
+        timedDict.purge()
+        self.assertEquals([3, 2], timedDict._list)
+        timedDict._now = lambda : time() + TWO_HOURS + TWO_HOURS
+        timedDict.purge()
+        self.assertEquals([], timedDict._list)
+
+    def testPurgeOnSetItem(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        timedDict[1] = SomeObject('id1')
+        timedDict._now = lambda : time() + TWO_HOURS
+        timedDict[2] = SomeObject('id2')
+
+        self.assertEquals([2], timedDict._list)
+
+    def testDeleteExpiredOnGetItem(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        timedDict[1] = SomeObject('id1')
+        timedDict._now = lambda : time() + TWO_HOURS
+
+        self.assertRaises(KeyError, timedDict.__getitem__, 1)
+        self.assertEquals([], timedDict._list)
+

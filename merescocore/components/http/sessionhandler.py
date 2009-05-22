@@ -39,24 +39,61 @@ class TimedDictionary(object):
     def __init__(self, timeout):
         self._timeout = timeout
         self._dictionary = {}
+        self._list = []
 
     def get(self, key, default=None):
-        return self.__getitem__(key) if self.__contains__(key) else default
+        return self[key] if key in self else default
+
+    def getTime(self, key):
+        return self._dictionary[key][0]
+
+    def purge(self):
+        now = self._now()
+        index = 0
+        for i, key in enumerate(self._list):
+            if self.hasExpired(key, now):
+                del self._dictionary[key]
+                index = i + 1
+            else:
+                break
+        if index > 0:
+            self._list = self._list[index:]
+
+    def touch(self, key):
+        self._dictionary[key] = (self._now(), self._dictionary[key][1])
+        self._list.remove(key)
+        self._list.append(key)
 
     def has_key(self, key):
-        return self.__contains__(key)
+        return key in self
+
+    def hasExpired(self, key, time=None):
+        if not time:
+            time = self._now()
+        return time > self.getTime(key) + self._timeout
+
+    def _now(self):
+        return time()
 
     def __getitem__(self, key):
-        return self._dictionary.__getitem__(key)
+        if self.hasExpired(key):
+            del self[key]
+        ignoredTime, value = self._dictionary.__getitem__(key)
+        return value
 
     def __setitem__(self, key, value):
-        self._dictionary.__setitem__(key, value)
+        self.purge()
+        if key in self:
+            self._list.remove(key)
+        self._dictionary[key] = (self._now(), value)
+        self._list.append(key)
 
     def __contains__(self, key):
-        return self._dictionary.__contains__(key)
+        return key in self._dictionary
 
     def __delitem__(self, key):
-        return self._dictionary.__delitem__(key)
+        del self._dictionary[key]
+        self._list.remove(key)
 
 class Session(UserDict):
     def __init__(self, sessionId):
@@ -102,7 +139,7 @@ class SessionHandler(Observable):
             self._sessionsList.append(session)
         else:
             session.lastUsedTime = time()
-            self._sessionsList.sort()
+            #self._sessionsList.sort()
 
         extraHeader = 'Set-Cookie: session%s=%s; path=/' % (self._nameSuffix, sessionid)
 
