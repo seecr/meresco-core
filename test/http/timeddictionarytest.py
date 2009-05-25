@@ -125,3 +125,22 @@ class TimedDictionaryTest(TestCase):
         self.assertRaises(KeyError, timedDict.__getitem__, 1)
         self.assertEquals([], timedDict._list)
 
+    def testExpiredOnInShouldReturnDefaultOnGetWithoutAnException(self):
+        timedDict = TimedDictionary(TWO_HOURS)
+        setTime = time()
+        timedDict._now = lambda : setTime
+        timedDict[1] = SomeObject('id1')
+
+        timedDict._now = lambda : setTime + TWO_HOURS
+        try:
+            1 in timedDict
+        except KeyError:
+            self.fail("Key shouldn't have expired yet.")
+        except:
+            self.fail("This should not happen.")
+
+        timedDict._now = lambda : setTime + TWO_HOURS + 0.000001
+
+        self.assertEquals(None, timedDict.get(1))
+        self.assertEquals('a default', timedDict.get(1, 'a default'))
+        self.assertEquals([], timedDict._list)

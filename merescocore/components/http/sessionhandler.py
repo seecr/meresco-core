@@ -42,7 +42,10 @@ class TimedDictionary(object):
         self._list = []
 
     def get(self, key, default=None):
-        return self[key] if key in self else default
+        try:
+            return self[key]
+        except KeyError:
+            return default
 
     def getTime(self, key):
         return self._dictionary[key][0]
@@ -64,9 +67,6 @@ class TimedDictionary(object):
         self._list.remove(key)
         self._list.append(key)
 
-    def has_key(self, key):
-        return key in self
-
     def hasExpired(self, key, time=None):
         if not time:
             time = self._now()
@@ -78,7 +78,7 @@ class TimedDictionary(object):
     def __getitem__(self, key):
         if self.hasExpired(key):
             del self[key]
-        ignoredTime, value = self._dictionary.__getitem__(key)
+        ignoredTime, value = self._dictionary[key]
         return value
 
     def __setitem__(self, key, value):
@@ -89,7 +89,12 @@ class TimedDictionary(object):
         self._list.append(key)
 
     def __contains__(self, key):
-        return key in self._dictionary
+        try:
+            self[key]
+            return True
+        except KeyError:
+            return False
+    has_key = __contains__
 
     def __delitem__(self, key):
         del self._dictionary[key]
