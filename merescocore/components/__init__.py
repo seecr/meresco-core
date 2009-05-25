@@ -26,6 +26,7 @@
 #
 ## end license ##
 
+from timeddictionary import TimedDictionary
 from logobserver import LogObserver
 from storagecomponent import StorageComponent, defaultSplit
 from storageharvester import defaultJoin

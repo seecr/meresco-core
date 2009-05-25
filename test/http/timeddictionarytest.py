@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from merescocore.components.http import TimedDictionary
+from merescocore.components import TimedDictionary
 
 from cq2utils import CallTrace
 
