@@ -166,5 +166,13 @@ class VenturiTest(CQ2TestCase):
             pass
         self.assertEquals([], [m.name for m in interceptor.calledMethods])
         self.assertEquals(['isAvailable'], [m.name for m in storage.calledMethods])
-        
-        
+
+    def testAddDocumentPartCallsAdd(self):
+        v = Venturi()
+        addInvocations = []
+        def add(*args, **kwargs):
+            addInvocations.append(dict(args=args, kwargs=kwargs))
+        v.add = add
+        v.addDocumentPart(identifier='x', name='y', lxmlNode='dummy')
+        self.assertEquals([{'args':(), 'kwargs':dict(identifier='x', name='y', lxmlNode='dummy')}], addInvocations)
+

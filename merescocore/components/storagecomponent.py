@@ -50,7 +50,7 @@ class StorageComponent(object):
         return self.add(*args, **kwargs)
 
     def addDocumentPart(self, identifier=None, name=None, someString=None):
-        return add(self, identifier, name, someString)
+        return self.add(id=identifier, name=name, someString=someString)
 
     def add(self, id, partName, someString):
         """should be obsoleted in favor of addDocumentPart"""

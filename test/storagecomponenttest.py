@@ -41,7 +41,7 @@ class StorageComponentTest(CQ2TestCase):
         CQ2TestCase.setUp(self)
         i, o = popen2('which ci 2>/dev/null')
         self.revisionAvailable = o.read() != ''
-        
+
         self.storageComponent = StorageComponent(self.tempdir, revisionControl=self.revisionAvailable)
         self.storage = self.storageComponent._storage
 
@@ -143,5 +143,13 @@ class StorageComponentTest(CQ2TestCase):
         self.storageComponent.add('some:thing:else-1','anotherPartName', 'data')
         self.assertEquals(set([('some:thing:anId-123', 'anotherPartName'), ('some:thing:anId-124', 'anotherPartName')]), set(self.storageComponent.glob(('some:thing:anId', 'anotherPartName'))))
 
+    def testAddDocumentPartCallsAdd(self):
+        s = StorageComponent(self.tempdir, revisionControl=self.revisionAvailable)
+        addInvocations = []
+        def add(*args, **kwargs):
+            addInvocations.append(dict(args=args, kwargs=kwargs))
+        s.add = add
+        s.addDocumentPart(identifier='x', name='y', someString='dummy')
+        self.assertEquals([{'args':(), 'kwargs':dict(id='x', name='y', someString='dummy')}], addInvocations)
 
 
