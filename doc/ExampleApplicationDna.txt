@@ -1,37 +1,40 @@
 .. -*- coding: utf-8 -*-
 .. This documentation is written using reStructuredText. See http://docutils.sf.net
 
-====
-|ea|
-====
---------------------------------------------------------
-This document describes the |ea| supplied with Meresco.
---------------------------------------------------------
-
-:Authors: Seek You Too
-:Organization: `Seek You Too`_
-:Version: 0.1
-:Copyright: 2008 by Seek You Too
-:License: |by-nc-nd|_ Attribution-Noncommercial-No Derivative Works 3.0 License
-
-.. _`Seek You Too`: http://www.cq2.nl
-.. |by-nc-nd| image:: http://i.creativecommons.org/l/by-nc-nd/3.0/88x31.png
-    :alt:
-.. _by-nc-nd: http://creativecommons.org/licenses/by-nc-nd/3.0/
-
 .. meta::
     :Revision: $LastChangedRevision$
     :Date: $LastChangedDate$
     :LastChangedBy: $LastChangedBy$
 
+===================
+Example Application
+===================
+-----------------------------------------------------------------------------------------
+Description of ``server.py`` for the Example Application supplied with Meresco Components
+-----------------------------------------------------------------------------------------
+
+:Authors: Seek You Too
+:Organization: `Seek You Too`_
+:Version: 0.2.2
+:Copyright: 2009 by Seek You Too
+:License: |by-nc-nd|_ Attribution-Noncommercial-No Derivative Works 3.0 License
 :Document History:
 
-    * 2008-08-12,   J.B. Jonkers (CQ2),  version 0.1,    Initial version
-    * 2008-08-12,   T.Janssen, T. van der Sommen (CQ2),  version 0.1.1,    Minor Changes
-    * 2009-01-06,   T.Janssen,  version 0.1.2, Changed title.
+..
+
+    * 2009-05-02, T. van der Sommen, version 0.2.2, reflecting continued development of Meresco in separate packages Meresco Core and Meresco Components in the documentation.
+    * 2009-04-27, T. van der Sommen, T. Janssen, version 0.2.1, added some links to code and documentation.
+    * 2009-04-17, J.P. Medema, T. van der Sommen, J.B. Jonkers, version 0.2, Major revision of DNA explanation
+    * 2009-01-06, T.Janssen, version 0.1.2, Changed title
+    * 2008-08-12, T.Janssen, T. van der Sommen, version 0.1.1, Minor Changes
+    * 2008-08-12, J.B. Jonkers, version 0.1, Initial version
 
 
-.. |ea| replace:: Example Application
+.. _`Seek You Too`: http://www.cq2.nl
+
+.. |by-nc-nd| image:: http://i.creativecommons.org/l/by-nc-nd/3.0/88x31.png
+    :alt:
+.. _by-nc-nd: http://creativecommons.org/licenses/by-nc-nd/3.0/
 .. contents:: Table of Contents
 .. section-numbering::
 
@@ -39,158 +42,85 @@ This document describes the |ea| supplied with Meresco.
 Introduction
 ============
 
-This document describes the |ea| supplied with Meresco. It also will try to establish the path of the data as it travels from the originating OAI repository to the end-user.
-The |ea| consists out of a server which provides:
+This document describes the Example Application supplied with Meresco (as defined in ``server.py`` in the ``examples/dna`` directory of Meresco Components), including the path of the data as it travels from the originating OAI repository to the end-user. For an even simpler example (including inline comments) please refer to ``simplexmlserver.py`` in the ``doc`` directory of Meresco Components. The code for the example server can also be found at http://www.meresco.com/codelink?package=meresco-components
 
-    * SRU Query support
-    * SRU Update support
-    * SRU Term Drilldown
-    * RSS support
+As prior knowledge we assume the reader has read or has knowledge of:
 
-Relation between datasource and searchengine
-============================================
+* Python language (see http://www.python.org)
+* Meresco Architectural Description
+* Meresco Component Library
+* Meresco Public Interfaces  (see http://www.meresco.com/doclink?package=meresco-core)
 
-The |ea| uses the output of the Meresco harvester as input for indexing records. Currently the |ea| can index OAI Dublin Core. The XML Hierarchy of the OAI Dublin Core record is flattened and can be queried; by doing so, Meresco creates a one on one representation of the original data and the fields upon which can be queried.
+Topics covered in this Example Application consists of a server which provides:
 
-For example, the following OAI Dublin Core record:
+* SRU Query support
+* SRU Update support
+* SRU Term Drilldown
+* RSS support
+* OAI PHM repository
 
+
+Relation between datasource and search engine
+=============================================
+
+The Example Application uses the output of the Meresco harvester as input for indexing records. Currently the Example Application can index OAI Dublin Core. The XML hierarchy of the OAI Dublin Core record is flattened and can be queried. Meresco creates a one on one representation of the original data and the fields upon which can be queried.
+
+For example, given the OAI Dublin Core record:
 ::
 
-    <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/">
-        <dc:title xmlns:dc="http://purl.org/dc/elements/1.1/">The title</dc:title>
+    <oai_dc:dc xmlns:oai_dc="http://www.openarchives.org/OAI/2.0/oai_dc/"
+               xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <dc:title>The title</dc:title>
     </oai_dc:dc>
 
-Can be queried for after indexing by Meresco with the statement:
-
+After being indexed by Meresco, it will be included in the result for the following CQL query:
 ::
 
     dc.title="The title"
 
+
 Structure
 =========
+Server definitions, like this one, are wired together from distinct Meresco components in Meresco Application DNA notation (see 'Meresco Core Component Library'). The server is initialized and started by feeding the DNA structure, as returned by the ``dna`` function, into the DNA processing ``be`` function and calling ``server.once.init_observer``. For educational purposes we will just zoom in on the contents of ``dna``.
 
-The basic structure of the Example Server is that there is an ObservableHttpServer which is observed by three PathFilters. These PathFilters determine based on the path of the request if the call should be let through or not.
+As is typically the case, this Example Application server has a bare bones ``Observable`` instance at its root (for generic facilities, like recursive initialization of all components in the tree). The first specific component in the hierarchy is the ``ObservableHttpServer`` on which ``handleRequest`` will be invoked for each HTTP request on the host and port given.
+
+As each application function ("SRU", "SRU update", "RSS" and "OAI" respectively) gets accessed through a separate URL base path, four corresponding ``PathFilter`` instances observe this ``ObservableHttpServer`` to enable the dispatching of HTTP requests to the application logic specific for each function. In practice this means for instance that an invocation of ``handleRequest`` on ``ObservableHttpServer`` with an URL base path ``'/sru'`` results in an invocation of ``handleRequest`` on the component observing the ``PathFilter('/sru')`` instance (which happens to be an instance of ``SruParser``).
+
 
 SRU Query and SRU Term Drilldown support
 ----------------------------------------
 
-The support for SRU queries is provided by the following part of the |ea| DNA:
+Support for SRU queries is provided by the ``SruParser`` component and it's observer ``SruHandler``, this in collaboration with the components ``SruHandler`` depends on to take care of it's subtasks.
 
-::
+The ``handleRequest`` method of ``SruParser`` parses a logical model for the SRU query with contained CQL from the HTTP request. ``SruParser`` component then delegates the search-retrieve request handling to the ``SruHandler``. The handler delegates the execution of this query by invoking ``self.any.executeCQL`` for acquiring the resulting records, and ``self.all.extraResponseData`` for possible extra result data - such as drilldown query results.
 
-    ...
-    unqualifiedTermFields = [('dc', 1.0)]
-    DRILLDOWN_PREFIX = 'drilldown.'
-    drilldownFieldnames = ['drilldown.dc.subject']
-    drilldownComponent = Drilldown(drilldownFieldnames)
-    indexHelix = \
-        (LuceneIndex(join(databasePath, 'index'), timer=reactor),
-            (drilldownComponent,)
-        )
-    ...
-    (Sru(   host=host, port=portNumber,
-            defaultRecordSchema='oai_dc', defaultRecordPacking='xml'),
-        (CQL2LuceneQuery(unqualifiedTermFields),
-            indexHelix
-        ),
-        (storageComponent,),
-        (SRUDrilldownAdapter(),
-            (SRUTermDrilldown(),
-                (DrilldownRequestFieldnameMap(
-                    lambda field: DRILLDOWN_PREFIX + field,
-                    lambda field: field[len(DRILLDOWN_PREFIX):]),
-                        (drilldownComponent,)
-                )
-            )
-        )
-    )
+The ``CQL2LuceneQuery`` observer responds to the ``executeCQL`` 'message'. ``CQL2LuceneQuery`` prepares the native Lucene query from the CQL. This is passed to the first observer listening to ``executeQuery``. In this case it is an instance of ``LuceneIndex`` that comes enclosed in a snippet of DNA that was assigned to the variable ``indexHelix`` earlier. An important reason to pre-assign ``indexHelix`` is that more than 1 component in the server's DNA depend on ``LuceneIndex`` and that only one connection to the Lucene index can exist at any given time. ``LuceneIndex`` manages that connection and should therefore only be instantiated once. The same is true for the ``Drilldown`` component, which single instance observes the ``LuceneIndex`` instance in order to receive necessary (re)initialization notifications. After the query got executed by Lucene, ``executeQuery`` returns the number of results and a list of record identifiers.
 
-This part of the |ea| DNA will convert the arguments specified in the URL into a SRU query. Next the query will be converted from CQL to the native Lucene format after will it will be executed.
-The query will result into just the identifiers of the records that match. These identifiers are then fetched from the storage in the request record-schema and the result will be rendered uing the specified record-packing.
+The detailed description above gives an idea of how components communicate with each other through messages (or 'methods' in Python speak), but it would go too far to spell out these calls for all component interactions in the DNA. Please refer to the actual code to learn about specific interactions.
 
-In addition to answering queries, this part of the |ea| will also answer SRU Term Drilldown queries. During the index process, fields marked to be suitable for drilldown have been indexed under a different fieldname suitable for drilldown. This fieldname is the originalfield name with a 'drilldown.' prefix. The SRU Term drilldown query contains the name of the field by which the enduser know the field and thus it will need to have the 'drilldown.' prefix prepended. This is done by the DrilldownRequestFieldnameMap component before the fieldnames are passed to the drilldown component.
+For each record identifier returned from ``LuceneIndex`` the record data corresponding to the record-schema specified in the SRU query will then be fetched from the storage (as taken care of by ``StorageComponent``) and the result will be rendered using the specified record-packing.
+
+The ``SRUTermDrilldown`` component starts a tree of components that takes care of answering SRU Term Drilldown queries. Note: the ``DrilldownFieldnames`` takes care of a internal renaming scheme for drilldown fields (these get a 'drilldown.' prefix in the index).
+
 
 SRU Update support
 ------------------
 
-The support for SRU Update is provided by the following part of the |ea| DNA:
+Support for SRU Update is provided by the ``SRURecordUpdate`` component and collaborators.
 
-::
+``SRURecordUpdate`` parses the SRUUpdate message and propagates the (meta)data through a number of preprocessing steps to the storage and the index. The TransactionScope component starts a new transaction and pass on the data. When the data has been processed and no error occured, the TransactionScope will signal for the changes to be commited. The ``Venturi`` component provides one such preprocessing step by collecting required (and/or optional) parts from the update request as well as the storage (not in this example) and propagates these separate parts one by one.
 
-    ...
-    fields2LuceneDocument = \
-        (TransactionFactory(lambda tx:
-                Fields2LuceneDocumentTx(tx, untokenized=drilldownFieldnames)),
-            index
-        )
-    indexingHelix = \
-        (Transparant(),
-            fields2LuceneDocument,
-            (FilterField(lambda name:
-                    DRILLDOWN_PREFIX + name in drilldownFieldnames),
-                (RenameField(lambda name: DRILLDOWN_PREFIX + name),
-                    fields2LuceneDocument
-                )
-            )
-        )
-    ...
-    (WebRequestServer(),
-        (SRURecordUpdate(),
-            (Amara2Lxml(),
-                (TransactionScope(),
-                    (Venturi(
-                        should=[
-                            ('metadata', '/document:document/document:part[@name="metadata"]/text()')
-                        ],
-                        namespaceMap={
-                            'document': 'http://meresco.com/namespace/harvester/document'}),
-
-                        (XmlXPath(['/oai:metadata/oai_dc:dc']),
-                            (XmlPrintLxml(),
-                                (RewritePartname('oai_dc'),
-                                    (storageComponent,)
-                                )
-                            ),
-                            (Xml2Fields(),
-                                indexingHelix,
-                                (RenameField(lambda name: "dc"),
-                                    indexingHelix
-                                ),
-                            ),
-                        ),
-                    )
-                )
-            )
-        )
-    )
-
-The SRURecordUpdate component currently in Meresco is one of the older components present and is therefor not completely up to data when it comes to how its used in with the other components. As a first step towards getting the component up to date, two wrapper components have been created so that to the other components the SRURecordUpdate component seems to work like any other component.
-
-The record that is offered for indexing by the external harvesting source (in most cases this will most likely be the meresco harvester) is accepted and the SRUUpdate protocol envelope is removed. The data contained within this envelope should have the following XML structure:
-
-::
-
-    <document xmlns="http://meresco.com/namespace/harvester/document">
-        <part name="my_data1">&lt;data1/&gt;</part>
-        <part name="my_data2">&lt;data2/&gt;</part>
-        <part name="my_data3">&lt;data3/&gt;</part>
-        ...
-    </document>
-
-The TransactionScope component will start a new transaction and pass on the data. After the data has been processed and no error occured, the TransactionScope will signal for the changes to be commited.
-The Venturi component will perform xpath queries in the data it receives. If an xpath query returns a result, the result of that query will be passed on the the observers. The name specified in front of the xpath query will be passed along as the partname of the xpath query result.
-
-Next the XmlXPath component will filter out the OAI DC tag which will then be stored in the storage under the name 'oai_dc'. The Xml2Fields component will flatten the XML and create the labels which will be indexed by the index later on.
-
-The observant reader will have noticed a variable called 'unqualifiedTermFields' in the previous chapter. The unqualifiedTermFields is a list of fields which will be queried if there is no field specified in the query. A good practise is to index data under the label of the root tag and to use that as a default field. In order to do this with Meresco, the RenameField component will add an additional label named after the root tag and copy the contents.
+The ``XmlXPath`` component serves as a filter to only carry out tasks when the specified xpath expression matches the given xml data. In this example, whenever xml data is encountered that matches the ``/oai:metadata/oai_dc:dc`` xpath, ``RewritePartname`` is used to store all OAI DC part data under the name 'oai_dc' in the storage. Then the XML data is "flattened" (``Xml2Fields``) into key-value pairs which are called fields. Such fields can optionally be passed through so-called Fieldlets. In this case a ``RenameField`` Fieldlet is included to index all values under the same 'default search key' ``dc`` (named after the root tag) to facilitate searching over all fields. This default search key gets passed into ``CQL2LuceneQuery`` through the variable ``unqualifiedTermFields`` to qualify unqualified search terms.
 
 
 RSS
-===
+---
 
-To do.
+The only new element here is the RssItem component that generates RSS XML for each record identifier returned by the query on the index, which is processed by the same component structure hierarchy that processes queries on the standard SRU interface.
 
-Running a server
-================
 
-To do.
+OAI
+---
+
+The Meresco index is made accessable as an OAI repository by means of the ``OaiPmh`` and ``OaiJazz`` components that take care of all OAI specific parsing and processing and delegate to the standard ``StorageComponent`` and ``LuceneIndex`` components.
