@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -60,7 +61,7 @@ class XmlParseAmara(Converter):
         return isXmlString(anObject)
 
     def _convert(self, anObject):
-        return bind_string(str(anObject)).childNodes[0]
+        return bind_string(anObject.encode('UTF-8')).childNodes[0]
 
 class XmlPrintAmara(Converter):
     def _canConvert(self, anObject):
@@ -74,8 +75,8 @@ class XmlParseLxml(Converter):
         return isXmlString(anObject)
 
     def _convert(self, anObject):
-        return parse(StringIO(anObject))
-
+        return parse(StringIO(anObject.encode('UTF-8')))
+        
 class XmlPrintLxml(Converter):
     def _canConvert(self, anObject):
         return type(anObject) == _ElementTree
