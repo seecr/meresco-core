@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -30,7 +31,7 @@ from merescocore.framework import BatchTransactionScope, Observable
 from callstackscope import callstackscope
 
 class BatchTransactionScopeTest(CQ2TestCase):
-    def testOne(self):
+    def testMessagePassesThrough(self):
         observer = CallTrace("observer")
 
         batchTransactionScope = BatchTransactionScope("batch", reactor=CallTrace("reactor"))
@@ -43,7 +44,7 @@ class BatchTransactionScopeTest(CQ2TestCase):
 
         self.assertEquals(["begin", "exoticMethod"], [m.name for m in observer.calledMethods])
 
-        
+
     def testBatchSize1(self):
         observable = Observable()
         batch = BatchTransactionScope("batch", reactor=CallTrace("reactor"), batchSize=1, timeout=99999999)
@@ -52,13 +53,13 @@ class BatchTransactionScopeTest(CQ2TestCase):
         def begin():
             tx = callstackscope('__callstack_var_tx__')
             tx.join(committer)
-        observer.begin = begin
+        observer.methods['begin'] = begin
         observable.addObserver(batch)
         batch.addObserver(observer)
 
         observable.do.addDocument("aDocument")
 
-        self.assertEquals(["addDocument"], [m.name for m in observer.calledMethods])
+        self.assertEquals(["begin", "addDocument"], [m.name for m in observer.calledMethods])
         self.assertEquals(['commit'], [m.name for m in committer.calledMethods])
 
     def testBatched(self):
@@ -82,3 +83,115 @@ class BatchTransactionScopeTest(CQ2TestCase):
 
         self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer.calledMethods])
         self.assertEquals(["commit"], [m.name for m in committer.calledMethods])
+
+    def testBatchedWithTimeout(self):
+        class MockReactor(object):
+            def __init__(this):
+                def error():
+                    raise Exception("Timer not set")
+                this.method = error
+
+            def addTimer(this, timeout, method):
+                this.method = method
+                return "TOKEN"
+
+            def doTimeout(this):
+                this.method()
+
+            def removeTimer(this, timer):
+                pass
+
+        observable = Observable()
+        reactor = MockReactor()
+        batch = BatchTransactionScope("batch", reactor=reactor, batchSize=3, timeout='dummy timeout')
+        observable.addObserver(batch)
+        observer = CallTrace()
+        committer = CallTrace("committer")
+        def begin():
+            tx = callstackscope('__callstack_var_tx__')
+            tx.join(committer)
+        observer.methods['begin'] = begin
+        batch.addObserver(observer)
+
+        observable.do.addDocument('aDocument')
+        observable.do.delete('aDocument')
+
+        self.assertEquals(['begin', "addDocument", "delete"], [m.name for m in observer.calledMethods])
+        self.assertEquals([], [m.name for m in committer.calledMethods])
+
+        reactor.doTimeout()
+
+        self.assertEquals(['begin', "addDocument", "delete"], [m.name for m in observer.calledMethods])
+        self.assertEquals(['commit'], [m.name for m in committer.calledMethods])
+
+
+    def testAssertionErrorOnInvalidTimeout(self):
+        self.assertRaises(AssertionError,
+                          lambda: BatchTransactionScope("batch", reactor=None, batchSize=2, timeout=-100))
+
+
+    def testActiveGeneratorsPreventCommit(self):
+        class MockReactor(object):
+            def __init__(this):
+                def error():
+                    raise Exception("Timer not set")
+                this.method = error
+
+            def addTimer(this, timeout, method):
+                this.method = method
+                return "TOKEN"
+
+            def doTimeout(this):
+                this.method()
+
+            def removeTimer(this, timer):
+                pass
+
+        observable = Observable()
+        reactor = MockReactor()
+        batch = BatchTransactionScope("batch", reactor=reactor, batchSize=1, timeout='dummy timeout')
+        observable.addObserver(batch)
+
+        def mockAddDocument(doc):
+            for i in range(0, 3):
+                print 'mockAddDocument: %s, %d' % (doc, i)
+                yield i
+
+        observer1 = CallTrace('observer1')
+        committer1 = CallTrace("committer1")
+        def begin():
+            tx = callstackscope('__callstack_var_tx__')
+            tx.join(committer1)
+        observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
+        batch.addObserver(observer1)
+
+        call1 = observable.all.addDocument('aDocument1')
+        print call1.next()
+
+        self.assertEquals(['begin', "addDocument"], [m.name for m in observer1.calledMethods])
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        call2 = observable.all.addDocument('aDocument2')
+        print call2.next()
+        self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        reactor.doTimeout()
+        self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
+
+        print call1.next()
+        print call1.next()
+
+        #try:
+        print call1.next()
+        #except Exception, e:
+            #print str(e)
+
+        batch._commit()
+        self.assertEquals(['commit', 'commit'], [m.name for m in committer1.calledMethods])
+
+        #reactor.doTimeout()
+
+        #self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
+        #self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
+

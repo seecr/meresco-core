@@ -34,18 +34,41 @@ class BatchTransactionScope(Observable):
         Observable.__init__(self)
         assert timeout > 0
         self._transactionName = transactionName
-        
+        self._reactor = reactor
+        self._batchSize = batchSize
+        self._timeout = timeout
+        self._currentTransaction = None
+        self._batchCounter = 0
 
     def unknown(self, message, *args, **kwargs):
-        __callstack_var_tx__ = Transaction(self._transactionName)
-        self.once.begin()
+        if self._currentTransaction == None:
+            self._currentTransaction = Transaction(self._transactionName)
+            __callstack_var_tx__ = self._currentTransaction
+            self.once.begin()
+            self._timerToken = self._reactor.addTimer(self._timeout, self._doTimeout)
         try:
             results = self.all.unknown(message, *args, **kwargs)
             for result in results:
                 yield result
-            __callstack_var_tx__.commit()
+
+            self._batchCounter += 1
+            if self._batchCounter >= self._batchSize:
+                self._commit()
         except TransactionException:
-            __callstack_var_tx__.rollback()
+            self._currentTransaction.rollback()
         finally:
             results = None
+
+    def _doTimeout(self):
+         self._timerToken = None
+         self._commit()
+
+    def _commit(self):
+        self._currentTransaction.commit()
+        self._currentTransaction = None
+        self._batchCounter = 0
+        if self._timerToken != None:
+            self._reactor.removeTimer(self._timerToken)
+            self._timerToken = None
+
 
