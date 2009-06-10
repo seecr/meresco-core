@@ -63,6 +63,7 @@ from framework.helixtest import HelixTest
 from framework.generatorutilstest import GeneratorUtilsTest
 from framework.observabletest import ObservableTest
 from framework.transactiontest import TransactionTest
+from framework.batchtransactionscopetest import BatchTransactionScopeTest
 
 from http.basicauthenticationtest import BasicAuthenticationTest
 from http.fileservertest import FileServerTest

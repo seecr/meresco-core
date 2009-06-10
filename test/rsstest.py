@@ -71,6 +71,8 @@ class RssTest(CQ2TestCase):
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, [1]),
+            },
+            methods={
                 'getRecord': lambda recordId: (g for g in ['<item><title>Test Title</title><link>Test Identifier</link><description>Test Description</description></item>']),
             },
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
@@ -129,7 +131,7 @@ class RssTest(CQ2TestCase):
             return '<item/>'
 
         observer = CallTrace(
-            returnValues={
+            methods={
                 'executeCQL': lambda start=0, stop=10, *args, **kwargs: (50, range(start, stop)),
                 'getRecord': getRecord,
             },

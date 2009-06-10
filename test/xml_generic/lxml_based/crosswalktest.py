@@ -57,8 +57,8 @@ class CrosswalkTest(CQ2TestCase):
     def testOne(self):
         list(self.crosswalk.unknown('crosswalk', 'id', 'metadata', theXmlRecord=parse(readRecord('imsmd_v1p2-1.xml'))))
         self.assertEquals(1, len(self.observer.calledMethods))
-        self.assertEquals(2, len(self.observer.calledMethods[0].arguments))
-        arguments = self.observer.calledMethods[0].arguments
+        self.assertEquals(2, len(self.observer.calledMethods[0].args))
+        arguments = self.observer.calledMethods[0].args
         self.assertEquals("id", arguments[0])
         self.assertEquals("metadata", arguments[1])
 

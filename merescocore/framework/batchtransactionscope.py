@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -25,12 +26,26 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-
-from observable import Observable, Transparant, be
-from observer import ObserverFunction
-from generatorutils import decorate, decorateWith
-from helix import findHelix, link
+from merescocore.framework import Observable
 from transaction import TransactionException, Transaction
-from transactionscope import TransactionScope
-from resourcemanager import ResourceManager
-from batchtransactionscope import BatchTransactionScope
+
+class BatchTransactionScope(Observable):
+    def __init__(self, transactionName, reactor, batchSize=10, timeout=1):
+        Observable.__init__(self)
+        assert timeout > 0
+        self._transactionName = transactionName
+        
+
+    def unknown(self, message, *args, **kwargs):
+        __callstack_var_tx__ = Transaction(self._transactionName)
+        self.once.begin()
+        try:
+            results = self.all.unknown(message, *args, **kwargs)
+            for result in results:
+                yield result
+            __callstack_var_tx__.commit()
+        except TransactionException:
+            __callstack_var_tx__.rollback()
+        finally:
+            results = None
+

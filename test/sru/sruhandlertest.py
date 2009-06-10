@@ -267,7 +267,7 @@ class SruHandlerTest(CQ2TestCase):
         observer.returnValues['executeCQL'] = (2, ['id0', 'id1'])
         observer.returnValues['echoedExtraRequestData'] = (f for f in [])
         observer.returnValues['extraResponseData'] = (f for f in [])
-        observer.returnValues['yieldRecord'] = lambda *args, **kwargs: '<bike/>'
+        observer.methods['yieldRecord'] = lambda *args, **kwargs: '<bike/>'
 
         result = ''.join(compose(component.handleRequest(arguments={'version':['1.1'], 'query': ['aQuery'], 'operation':['searchRetrieve']})))
         header, body = result.split('\r\n'*2)

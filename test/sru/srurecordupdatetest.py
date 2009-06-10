@@ -94,12 +94,12 @@ class SRURecordUpdateTest(CQ2TestCase):
 
         self.assertEquals(1, len(self.observer.calledMethods))
         method = self.observer.calledMethods[0]
-        self.assertEquals(3, len(method.arguments))
+        self.assertEquals(3, len(method.args))
         self.assertEquals("add", method.name)
-        self.assertEquals("123", method.arguments[0])
-        self.assertEquals(str, type(method.arguments[0]))
-        self.assertEquals("irrelevantXML", method.arguments[1])
-        self.assertEquals("<dc>empty</dc>", method.arguments[2].xml())
+        self.assertEquals("123", method.args[0])
+        self.assertEquals(str, type(method.args[0]))
+        self.assertEquals("irrelevantXML", method.args[1])
+        self.assertEquals("<dc>empty</dc>", method.args[2].xml())
 
     def testDelete(self):
         requestBody = self.createRequestBody(action=DELETE)

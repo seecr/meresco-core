@@ -55,9 +55,9 @@ class XmlPumpTest(CQ2TestCase):
 
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertEquals("add", self.observer.calledMethods[0].name)
-        self.assertEquals(["id", "partName"], self.observer.calledMethods[0].arguments[:2])
+        self.assertEquals(("id", "partName"), self.observer.calledMethods[0].args[:2])
 
-        xmlNode = self.observer.calledMethods[0].arguments[2]
+        xmlNode = self.observer.calledMethods[0].args[2]
         self.assertEquals('tag', xmlNode.localName)
         self.assertEquals('content', xmlNode.content.localName)
 
@@ -75,7 +75,7 @@ class XmlPumpTest(CQ2TestCase):
 
         self.assertEquals(1, len(self.observer.calledMethods))
         self.assertEquals("aMethodCall", self.observer.calledMethods[0].name)
-        self.assertEquals(["id", "partName", s], self.observer.calledMethods[0].arguments)
+        self.assertEquals(("id", "partName", s), self.observer.calledMethods[0].args)
 
     def testAmara2LXml(self):
         class Observer:

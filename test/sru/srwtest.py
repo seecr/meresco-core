@@ -140,6 +140,8 @@ Content-Type: text/xml; charset=utf-8
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, ['recordId']),
+            },
+            methods={
                 'yieldRecord': lambda recordId, recordSchema: (g for g in ["<DATA>%s-%s</DATA>" % (recordId, recordSchema)])
             },
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
@@ -179,6 +181,8 @@ Content-Type: text/xml; charset=utf-8
         observer = CallTrace(
             returnValues={
                 'executeCQL': (1, ['recordId']),
+            },
+            methods={
                 'yieldRecord': lambda recordId, recordSchema: (g for g in ["<DATA>%s-%s</DATA>" % (recordId, recordSchema)])
             },
             ignoredAttributes=['unknown', 'extraResponseData', 'echoedExtraRequestData'])
