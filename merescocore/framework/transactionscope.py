@@ -27,34 +27,23 @@
 #
 ## end license ##
 from merescocore.framework import Observable
-from callstackscope import callstackscope
+from transaction import TransactionException, Transaction
 
-class TransactionException(Exception):
-    pass
+class TransactionScope(Observable):
+    def __init__(self, transactionName):
+        Observable.__init__(self)
+        self._transactionName = transactionName
 
-class Transaction(object):
+    def unknown(self, message, *args, **kwargs):
+        __callstack_var_tx__ = Transaction(self._transactionName)
+        self.once.begin()
+        try:
+            results = self.all.unknown(message, *args, **kwargs)
+            for result in results:
+                yield result
+            __callstack_var_tx__.commit()
+        except TransactionException:
+            __callstack_var_tx__.rollback()
+        finally:
+            results = None
 
-    def __init__(self, name):
-        self._resourceManagers = []
-        self.locals = {}
-        self.name = name
-
-    def getId(self):
-        return id(self)
-
-    def join(self, resourceManager):
-        if resourceManager not in self._resourceManagers:
-            self._resourceManagers.append(resourceManager)
-
-    def commit(self):
-        while self._resourceManagers:
-            resourceManager = self._resourceManagers.pop(0)
-            resourceManager.commit()
-
-    def rollback(self):
-        while self._resourceManagers:
-            resourceManager = self._resourceManagers.pop(0)
-            resourceManager.rollback()
-
-    def abort(self):
-        raise TransactionException()

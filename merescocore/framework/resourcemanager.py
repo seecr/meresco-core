@@ -29,32 +29,35 @@
 from merescocore.framework import Observable
 from callstackscope import callstackscope
 
-class TransactionException(Exception):
-    pass
+class ResourceManager(Observable):
 
-class Transaction(object):
+    def __init__(self, transactionName, resourceTxFactory):
+        Observable.__init__(self)
+        self._resourceTxFactory = resourceTxFactory
+        self._transactionName = transactionName
+        self.txs = {}
 
-    def __init__(self, name):
-        self._resourceManagers = []
-        self.locals = {}
-        self.name = name
+    def begin(self):
+        tx = callstackscope('__callstack_var_tx__')
+        if tx.name != self._transactionName:
+            return
+        resourceTx = self._resourceTxFactory(self)
+        tx.join(self)
+        self.txs[tx.getId()] = resourceTx
 
-    def getId(self):
-        return id(self)
-
-    def join(self, resourceManager):
-        if resourceManager not in self._resourceManagers:
-            self._resourceManagers.append(resourceManager)
+    def unknown(self, message, *args, **kwargs):
+        tx = callstackscope('__callstack_var_tx__')
+        method = getattr(self.txs[tx.getId()], message, None)
+        if method != None:
+            yield method(*args, **kwargs)
 
     def commit(self):
-        while self._resourceManagers:
-            resourceManager = self._resourceManagers.pop(0)
-            resourceManager.commit()
+        tx = callstackscope('__callstack_var_tx__')
+        resourceTx = self.txs.pop(tx.getId())
+        resourceTx.commit()
 
     def rollback(self):
-        while self._resourceManagers:
-            resourceManager = self._resourceManagers.pop(0)
-            resourceManager.rollback()
+        tx = callstackscope('__callstack_var_tx__')
+        resourceTx = self.txs.pop(tx.getId())
+        resourceTx.rollback()
 
-    def abort(self):
-        raise TransactionException()
