@@ -44,7 +44,6 @@ class BatchTransactionScopeTest(CQ2TestCase):
 
         self.assertEquals(["begin", "exoticMethod"], [m.name for m in observer.calledMethods])
 
-
     def testBatchSize1(self):
         observable = Observable()
         batch = BatchTransactionScope("batch", reactor=CallTrace("reactor"), batchSize=1, timeout=99999999)
@@ -85,22 +84,6 @@ class BatchTransactionScopeTest(CQ2TestCase):
         self.assertEquals(["commit"], [m.name for m in committer.calledMethods])
 
     def testBatchedWithTimeout(self):
-        class MockReactor(object):
-            def __init__(this):
-                def error():
-                    raise Exception("Timer not set")
-                this.method = error
-
-            def addTimer(this, timeout, method):
-                this.method = method
-                return "TOKEN"
-
-            def doTimeout(this):
-                this.method()
-
-            def removeTimer(this, timer):
-                pass
-
         observable = Observable()
         reactor = MockReactor()
         batch = BatchTransactionScope("batch", reactor=reactor, batchSize=3, timeout='dummy timeout')
@@ -131,22 +114,6 @@ class BatchTransactionScopeTest(CQ2TestCase):
 
 
     def testActiveGeneratorsPreventCommit(self):
-        class MockReactor(object):
-            def __init__(this):
-                def error():
-                    raise Exception("Timer not set")
-                this.method = error
-
-            def addTimer(this, timeout, method):
-                this.method = method
-                return "TOKEN"
-
-            def doTimeout(this):
-                this.method()
-
-            def removeTimer(this, timer):
-                pass
-
         observable = Observable()
         reactor = MockReactor()
         batch = BatchTransactionScope("batch", reactor=reactor, batchSize=1, timeout='dummy timeout')
@@ -154,7 +121,6 @@ class BatchTransactionScopeTest(CQ2TestCase):
 
         def mockAddDocument(doc):
             for i in range(0, 3):
-                print 'mockAddDocument: %s, %d' % (doc, i)
                 yield i
 
         observer1 = CallTrace('observer1')
@@ -166,30 +132,97 @@ class BatchTransactionScopeTest(CQ2TestCase):
         batch.addObserver(observer1)
 
         call1 = observable.all.addDocument('aDocument1')
-        print call1.next()
+        call1.next()
 
         self.assertEquals(['begin', "addDocument"], [m.name for m in observer1.calledMethods])
         self.assertEquals([], [m.name for m in committer1.calledMethods])
 
         call2 = observable.all.addDocument('aDocument2')
-        print call2.next()
+        call2.next()
         self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
         self.assertEquals([], [m.name for m in committer1.calledMethods])
 
         for result in call1:
-            print result
+            pass
 
         self.assertEquals([], [m.name for m in committer1.calledMethods])
 
         call3 = observable.all.addDocument('aDocument3')
 
         for result in call2:
-            print result
+            pass
 
         self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
 
         for result in call3:
-            print result
+            pass
         self.assertEquals(['commit', 'commit'], [m.name for m in committer1.calledMethods])
 
 
+    def testActiveGeneratorsPreventCommitOnTimeout(self):
+        observable = Observable()
+        reactor = MockReactor()
+        batch = BatchTransactionScope("batch", reactor=reactor, batchSize=5, timeout='dummy timeout')
+        observable.addObserver(batch)
+
+        def mockAddDocument(doc):
+            for i in range(0, 3):
+                yield i
+
+        observer1 = CallTrace('observer1')
+        committer1 = CallTrace("committer1")
+        def begin():
+            tx = callstackscope('__callstack_var_tx__')
+            tx.join(committer1)
+        observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
+        batch.addObserver(observer1)
+
+        call1 = observable.all.addDocument('aDocument1')
+        call1.next()
+
+        self.assertEquals(['begin', "addDocument"], [m.name for m in observer1.calledMethods])
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        call2 = observable.all.addDocument('aDocument2')
+        call2.next()
+        self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        for result in call1:
+            pass
+
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+        reactor.doTimeout()
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        call3 = observable.all.addDocument('aDocument3')
+
+        for result in call2:
+            pass
+
+        self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
+
+        for result in call3:
+            pass
+        self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
+        reactor.doTimeout()
+        self.assertEquals(['commit', 'commit'], [m.name for m in committer1.calledMethods])
+
+
+class MockReactor(object):
+    def __init__(this):
+        def error():
+            raise Exception("Timer not set")
+        this.method = error
+
+    def addTimer(this, timeout, method):
+        this.method = method
+        return "TOKEN"
+
+    def doTimeout(this):
+        this.method()
+
+    def removeTimer(this, timer):
+        pass
