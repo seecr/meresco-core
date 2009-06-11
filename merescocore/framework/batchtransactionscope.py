@@ -45,7 +45,7 @@ class BatchTransactionScope(Observable):
             self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self._transactionName)
             transaction._batchCounter = 0
             transaction._activeGenerators = 0
-            transaction._timedOut = False
+            transaction._markedForCommit = False
             transaction._timerToken = None
             self.once.begin()
         try:
@@ -56,7 +56,7 @@ class BatchTransactionScope(Observable):
             transaction._activeGenerators -= 1
 
             transaction._batchCounter += 1
-            if transaction._batchCounter >= self._batchSize or transaction._timedOut:
+            if transaction._markedForCommit or transaction._batchCounter >= self._batchSize:
                 self._commit(transaction)
             else:
                 self._removeTimer(transaction)
@@ -70,16 +70,15 @@ class BatchTransactionScope(Observable):
 
     def _doTimeout(self, transaction):
          transaction._timerToken = None
-         transaction._timedOut = True
          self._commit(transaction)
 
     def _commit(self, transaction):
-        self._currentTransaction = None
+        transaction._markedForCommit = True
+        self._removeTimer(transaction)
+        if transaction == self._currentTransaction:
+            self._currentTransaction = None
         if transaction._activeGenerators == 0:
-            if transaction == self._currentTransaction:
-                self._currentTransaction = None
             transaction.commit()
-            self._removeTimer(transaction)
 
     def _removeTimer(self, transaction):
         if transaction._timerToken != None:
