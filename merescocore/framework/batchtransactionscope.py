@@ -39,7 +39,6 @@ class BatchTransactionScope(Observable):
         self._timeout = timeout
         self._currentTransaction = None
 
-
     def unknown(self, message, *args, **kwargs):
         transaction = self._currentTransaction
         if transaction == None:
@@ -59,7 +58,6 @@ class BatchTransactionScope(Observable):
 
             transaction._batchCounter += 1
             if transaction._batchCounter >= self._batchSize or transaction._timedOut:
-                self._currentTransaction = None
                 self._commit(transaction)
             else:
                 self._removeTimer(transaction)
@@ -72,13 +70,12 @@ class BatchTransactionScope(Observable):
             results = None
 
     def _doTimeout(self, transaction):
-         print '_doTimeout'
          transaction._timerToken = None
          transaction._timedOut = True
          self._commit(transaction)
 
     def _commit(self, transaction):
-        print '_commit', transaction._activeGenerators
+        self._currentTransaction = None
         if transaction._activeGenerators == 0:
             if transaction == self._currentTransaction:
                 self._currentTransaction = None
@@ -88,5 +85,3 @@ class BatchTransactionScope(Observable):
     def _removeTimer(self, transaction):
         if transaction._timerToken != None:
             self._reactor.removeTimer(transaction._timerToken)
-
-
