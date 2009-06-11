@@ -40,14 +40,13 @@ class BatchTransactionScope(Observable):
         self._currentTransaction = None
 
     def unknown(self, message, *args, **kwargs):
-        transaction = self._currentTransaction
+        __callstack_var_tx__ = transaction = self._currentTransaction
         if transaction == None:
-            self._currentTransaction = transaction = Transaction(self._transactionName)
+            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self._transactionName)
             transaction._batchCounter = 0
             transaction._activeGenerators = 0
             transaction._timedOut = False
             transaction._timerToken = None
-            __callstack_var_tx__ = transaction
             self.once.begin()
         try:
             transaction._activeGenerators += 1
