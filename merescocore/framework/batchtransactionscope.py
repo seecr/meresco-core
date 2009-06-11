@@ -38,37 +38,55 @@ class BatchTransactionScope(Observable):
         self._batchSize = batchSize
         self._timeout = timeout
         self._currentTransaction = None
-        self._batchCounter = 0
+
 
     def unknown(self, message, *args, **kwargs):
-        if self._currentTransaction == None:
-            self._currentTransaction = Transaction(self._transactionName)
-            __callstack_var_tx__ = self._currentTransaction
+        transaction = self._currentTransaction
+        if transaction == None:
+            self._currentTransaction = transaction = Transaction(self._transactionName)
+            transaction._batchCounter = 0
+            transaction._activeGenerators = 0
+            transaction._timedOut = False
+            transaction._timerToken = None
+            __callstack_var_tx__ = transaction
             self.once.begin()
-            self._timerToken = self._reactor.addTimer(self._timeout, self._doTimeout)
         try:
+            transaction._activeGenerators += 1
             results = self.all.unknown(message, *args, **kwargs)
             for result in results:
                 yield result
+            transaction._activeGenerators -= 1
 
-            self._batchCounter += 1
-            if self._batchCounter >= self._batchSize:
-                self._commit()
+            transaction._batchCounter += 1
+            if transaction._batchCounter >= self._batchSize or transaction._timedOut:
+                self._currentTransaction = None
+                self._commit(transaction)
+            else:
+                self._removeTimer(transaction)
+                transaction._timerToken = self._reactor.addTimer(self._timeout,
+                                                                 lambda: self._doTimeout(transaction))
         except TransactionException:
-            self._currentTransaction.rollback()
+            transaction.rollback()
+            self._currentTransaction = None
         finally:
             results = None
 
-    def _doTimeout(self):
-         self._timerToken = None
-         self._commit()
+    def _doTimeout(self, transaction):
+         print '_doTimeout'
+         transaction._timerToken = None
+         transaction._timedOut = True
+         self._commit(transaction)
 
-    def _commit(self):
-        self._currentTransaction.commit()
-        self._currentTransaction = None
-        self._batchCounter = 0
-        if self._timerToken != None:
-            self._reactor.removeTimer(self._timerToken)
-            self._timerToken = None
+    def _commit(self, transaction):
+        print '_commit', transaction._activeGenerators
+        if transaction._activeGenerators == 0:
+            if transaction == self._currentTransaction:
+                self._currentTransaction = None
+            transaction.commit()
+            self._removeTimer(transaction)
+
+    def _removeTimer(self, transaction):
+        if transaction._timerToken != None:
+            self._reactor.removeTimer(transaction._timerToken)
 
 

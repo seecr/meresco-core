@@ -176,22 +176,20 @@ class BatchTransactionScopeTest(CQ2TestCase):
         self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
         self.assertEquals([], [m.name for m in committer1.calledMethods])
 
-        reactor.doTimeout()
+        for result in call1:
+            print result
+
+        self.assertEquals([], [m.name for m in committer1.calledMethods])
+
+        call3 = observable.all.addDocument('aDocument3')
+
+        for result in call2:
+            print result
+
         self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
 
-        print call1.next()
-        print call1.next()
-
-        #try:
-        print call1.next()
-        #except Exception, e:
-            #print str(e)
-
-        batch._commit()
+        for result in call3:
+            print result
         self.assertEquals(['commit', 'commit'], [m.name for m in committer1.calledMethods])
 
-        #reactor.doTimeout()
-
-        #self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
-        #self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
 
