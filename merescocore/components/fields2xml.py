@@ -52,7 +52,7 @@ class Fields2XmlTx(Observable):
         ns = self._namespace != None and ' xmlns="%s"' % self._namespace or ''
         xml = '<%s%s>%s</%s>' % (self._partName, ns, generateXml(self._fields), self._partName)
 
-        identifier = self._resourceManager.tx.locals['id']
+        identifier = self._resourceManager.ctx.tx.locals['id']
         self._resourceManager.do.store(identifier, self._partName, xml)
 
 def splitName(name):

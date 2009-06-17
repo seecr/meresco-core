@@ -35,9 +35,11 @@ from amara.binderytools import bind_string
 class Fields2XmlTest(CQ2TestCase):
     def testOne(self):
         transaction = CallTrace('Transaction')
+        ctx = CallTrace('CTX')
         tx = CallTrace('TX')
         tx.locals = {'id': 'identifier'}
-        transaction.tx = tx
+        transaction.ctx = ctx
+        transaction.ctx.tx = tx
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
@@ -51,9 +53,11 @@ class Fields2XmlTest(CQ2TestCase):
 
     def testPartNameIsDefinedAtInitialization(self):
         transaction = CallTrace('Transaction')
+        ctx = CallTrace('CTX')        
         tx = CallTrace('TX')
         tx.locals = {'id': 'otherIdentifier'}
-        transaction.tx = tx        
+        transaction.ctx = ctx
+        transaction.ctx.tx = tx
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
@@ -68,9 +72,11 @@ class Fields2XmlTest(CQ2TestCase):
 
     def testNamespace(self):
         transaction = CallTrace('Transaction')
+        ctx = CallTrace('CTX')         
         tx = CallTrace('TX')
         tx.locals = {'id': 'identifier'}
-        transaction.tx = tx        
+        transaction.ctx = ctx
+        transaction.ctx.tx = tx  
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
