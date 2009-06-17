@@ -135,6 +135,14 @@ def _beRecursive(helix, helicesDone):
         helicesDone.add(helix)
     return component
 
+class Context(object):
+    def __getattr__(self, name):
+        try:
+            return callstackscope('__callstack_var_%s__' % name)
+        except AttributeError:
+            raise AttributeError("'%s' has no attribute '%s'" % (self, name))
+    
+
 class Observable(object):
     def __init__(self, name = None):
         self._observers = []
@@ -145,11 +153,7 @@ class Observable(object):
         if name:
             self.__repr__ = lambda: name
 
-    def __getattr__(self, name):
-        try:
-            return callstackscope('__callstack_var_%s__' % name)
-        except AttributeError:
-            raise AttributeError("'%s' has no attribute '%s'" % (self, name))
+        self.ctx = Context()
 
     def addObserver(self, observer):
         self._observers.append(observer)

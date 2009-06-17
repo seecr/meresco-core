@@ -52,10 +52,10 @@ class RequestScopeTest(CQ2TestCase):
                 yield self.any.getArg()
         class SetArgObserver(Observable):
             def setArg(self):
-                self.requestScope["arg"] = "value"
+                self.ctx.requestScope["arg"] = "value"
         class GetArgObserver(Observable):
             def getArg(self):
-                return self.requestScope["arg"]
+                return self.ctx.requestScope["arg"]
 
         r = RequestScope()
         myObserver = MyObserver()
@@ -74,10 +74,10 @@ class RequestScopeTest(CQ2TestCase):
                 yield self.any.getArg()
         class SetArgObserver(Observable):
             def setArg(self, key, value):
-                self.requestScope[key] = value
+                self.ctx.requestScope[key] = value
         class GetArgObserver(Observable):
             def getArg(self):
-                return ';'.join('%s=%s' % (k,v) for k,v in self.requestScope.items())
+                return ';'.join('%s=%s' % (k,v) for k,v in self.ctx.requestScope.items())
 
         r = RequestScope()
         myObserver = MyObserver()

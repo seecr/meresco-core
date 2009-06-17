@@ -141,7 +141,7 @@ class VenturiTest(CQ2TestCase):
         ids = []
         class TempComponent(Observable):
             def add(this, oldStyleId, partname, data):
-                ids.append(this.tx.locals['id'])
+                ids.append(this.ctx.tx.locals['id'])
         v = createVenturiHelix([('PARTNAME', '/document')],[], TempComponent())
         v.do.add('ID', 'PARTNAME', fromstring('<document><other/></document>'))
         self.assertEquals(1, len(ids))

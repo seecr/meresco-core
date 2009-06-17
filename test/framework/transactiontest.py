@@ -107,7 +107,7 @@ class TransactionTest(TestCase):
         class CallTwoMethods(Observable):
             def twice(self, argument1, argument2):
                 yield self.all.methodOne(argument1)
-                self.tx.abort()
+                self.ctx.tx.abort()
                 yield self.all.methodTwo(argument2)
 
         dna = \

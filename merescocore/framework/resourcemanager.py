@@ -38,7 +38,7 @@ class ResourceManager(Observable):
         self.txs = {}
 
     def begin(self):
-        tx = callstackscope('__callstack_var_tx__')
+        tx = self.ctx.tx
         if tx.name != self._transactionName:
             return
         resourceTx = self._resourceTxFactory(self)
@@ -46,18 +46,18 @@ class ResourceManager(Observable):
         self.txs[tx.getId()] = resourceTx
 
     def unknown(self, message, *args, **kwargs):
-        tx = callstackscope('__callstack_var_tx__')
+        tx = self.ctx.tx
         method = getattr(self.txs[tx.getId()], message, None)
         if method != None:
             yield method(*args, **kwargs)
 
     def commit(self):
-        tx = callstackscope('__callstack_var_tx__')
+        tx = self.ctx.tx
         resourceTx = self.txs.pop(tx.getId())
         resourceTx.commit()
 
     def rollback(self):
-        tx = callstackscope('__callstack_var_tx__')
+        tx = self.ctx.tx
         resourceTx = self.txs.pop(tx.getId())
         resourceTx.rollback()
 

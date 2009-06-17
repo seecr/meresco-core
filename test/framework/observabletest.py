@@ -369,9 +369,9 @@ class ObservableTest(unittest.TestCase):
         txId = []
         class MyTxParticipant(Observable):
             def doSomething(self):
-                txId.append(self.tx.getId())
+                txId.append(self.ctx.tx.getId())
                 yield 'A'
-                txId.append(self.tx.getId())
+                txId.append(self.ctx.tx.getId())
                 yield 'B'
         dna = \
             (Observable(),
@@ -396,20 +396,20 @@ class ObservableTest(unittest.TestCase):
         collected = {}
         class MyFirstTxParticipant(Transparant):
             def begin(self):
-                self.tx.join(self)
+                self.ctx.tx.join(self)
             def doSomething(self):
-                collected[self.tx.getId()] = ['first']
+                collected[self.ctx.tx.getId()] = ['first']
                 yield self.any.doSomething()
             def commit(self):
-                collected[self.tx.getId()].append('done 1')
+                collected[self.ctx.tx.getId()].append('done 1')
         class MySecondTxParticipant(Observable):
             def begin(self):
-                self.tx.join(self)
+                self.ctx.tx.join(self)
             def doSomething(self):
-                collected[self.tx.getId()].append('second')
+                collected[self.ctx.tx.getId()].append('second')
                 yield 'second'
             def commit(self):
-                collected[self.tx.getId()].append('done 2')
+                collected[self.ctx.tx.getId()].append('done 2')
         dna = \
             (Observable(),
                 (TransactionScope('name'),
@@ -456,7 +456,7 @@ class ObservableTest(unittest.TestCase):
 
         class StackVarUser(Observable):
             def useVariable(self):
-                self.myvar.append('Thingy')
+                self.ctx.myvar.append('Thingy')
 
         dna = \
             (Observable(),

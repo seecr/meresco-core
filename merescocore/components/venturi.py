@@ -42,7 +42,7 @@ class Venturi(Observable):
 
     def add(self, identifier=None, name=None, lxmlNode=None):
         """should be obsoleted in favor of addDocumentPart"""
-        self.tx.locals['id'] = identifier
+        self.ctx.tx.locals['id'] = identifier
         for partname, partXPath in self._should:
             part = self._findPart(identifier, partname, lxmlNode, partXPath)
             if part == None:
@@ -74,7 +74,7 @@ class Venturi(Observable):
         return parse(StringIO(anObject))
 
     def delete(self, id):
-        self.tx.locals['id'] = id
+        self.ctx.tx.locals['id'] = id
         self.do.delete(id)
 
 class VenturiException(Exception):
