@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -50,7 +51,7 @@ class StorageComponent(object):
         return self.add(*args, **kwargs)
 
     def addDocumentPart(self, identifier=None, name=None, someString=None):
-        return self.add(id=identifier, name=name, someString=someString)
+        return self.add(id=identifier, partName=name, someString=someString)
 
     def add(self, id, partName, someString):
         """should be obsoleted in favor of addDocumentPart"""
