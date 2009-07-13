@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -150,6 +151,6 @@ class StorageComponentTest(CQ2TestCase):
             addInvocations.append(dict(args=args, kwargs=kwargs))
         s.add = add
         s.addDocumentPart(identifier='x', name='y', someString='dummy')
-        self.assertEquals([{'args':(), 'kwargs':dict(id='x', name='y', someString='dummy')}], addInvocations)
+        self.assertEquals([{'args':(), 'kwargs':dict(id='x', partName='y', someString='dummy')}], addInvocations)
 
 
