@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -30,7 +31,7 @@ from time import time
 from cq2utils import CQ2TestCase
 from os import makedirs, rename
 from os.path import isfile, join
-from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
+from merescocore.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
 
 class StatisticsTest(CQ2TestCase):
 
@@ -398,13 +399,14 @@ EzHcr+HcT36knZp3JDwIxoWbDzXbXevVh8DCFQVLt2FpMXywa8NJ+L0gj4QMC6X9SpF8TIpNFMnl
 pFwpUt1RJOV9pnBbstlGYR9lu1JUdUdR4itFzTtyE0WxzUrfKOae0vyDwm2pdhNFc20tVorG8k+7
 3x4HuiQteUnREo8fzoXWtGHoh+X80ZBuqLu/H2vxzmm8dDgxc0y9VnNssH10f44Rjx7NMTaNSuZY
 gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
-        f = open(join(self.tempdir, 'snapshot'),'w')
         from base64 import decodestring
         from zlib import decompress
+        f = open(join(self.tempdir, 'snapshot'),'w')
         f.write(decompress(decodestring(data)))
         f.close()
         stats = Statistics(self.tempdir, [('key',)])
         self.assertEquals({('value',): 1}, stats.get(('key',)))
+        
     
     def createStatsdirForMergeTests(self, name):
         statsDir = join(self.tempdir, name)

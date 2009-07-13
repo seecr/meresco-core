@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -30,7 +31,7 @@ from urlparse import urlsplit
 
 from time import mktime, gmtime
 
-from meresco.components.statistics import AggregatorException
+from merescocore.components.statistics import AggregatorException
 from weightless import compose
 
 NAMESPACE="http://meresco.com/namespace/meresco/statistics"

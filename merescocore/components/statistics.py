@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -187,12 +188,29 @@ class Statistics(Observable):
         finally:
             txfile.close()
 
-    def _initializeFromSnapshot(self):
-        snapshotFile = open(self._snapshotFilename, 'rb')
+    def _convertFile(self):
+        tempFile = self._snapshotFilename + ".convert"
+        newSnapshot = open(tempFile, 'wb')
         try:
-            self._data = pickle.load(snapshotFile)
+            contents = open(self._snapshotFilename).read()
+            newSnapshot.write(contents.replace('meresco.components.statistics', 'merescocore.components.statistics'))
         finally:
-            snapshotFile.close()
+            newSnapshot.close()
+            rename(tempFile, self._snapshotFilename)
+
+    def _initializeFromSnapshot(self, convertIfNeeded=True):
+        try:
+            snapshotFile = open(self._snapshotFilename, 'rb')
+            try:
+                self._data = pickle.load(snapshotFile)
+            finally:
+                snapshotFile.close()
+        except ImportError, e:
+            if str(e) == 'No module named statistics' and convertIfNeeded:
+                self._convertFile()
+                self._initializeFromSnapshot(convertIfNeeded=False)
+            else:
+                raise
 
     def _txlog(self):
         if not self._txlogFile:

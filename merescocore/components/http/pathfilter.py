@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -27,7 +28,7 @@
 ## end license ##
 
 from merescocore.framework.observable import Observable
-from meresco.components.statistics import Logger
+from merescocore.components.statistics import Logger
 
 class PathFilter(Observable, Logger):
     def __init__(self, subPaths, excluding=[]):

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -27,7 +28,7 @@
 ## end license ##
 from cq2utils import CQ2TestCase
 from merescocore.components.statisticsxml import StatisticsXml
-from meresco.components.statistics import Statistics
+from merescocore.components.statistics import Statistics
 
 from weightless import compose
 
