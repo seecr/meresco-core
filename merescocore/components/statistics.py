@@ -188,29 +188,17 @@ class Statistics(Observable):
         finally:
             txfile.close()
 
-    def _convertFile(self):
-        tempFile = self._snapshotFilename + ".convert"
-        newSnapshot = open(tempFile, 'wb')
+    def _initializeFromSnapshot(self):
+        snapshotFile = open(self._snapshotFilename, 'rb')
         try:
-            contents = open(self._snapshotFilename).read()
-            newSnapshot.write(contents.replace('meresco.components.statistics', 'merescocore.components.statistics'))
-        finally:
-            newSnapshot.close()
-            rename(tempFile, self._snapshotFilename)
-
-    def _initializeFromSnapshot(self, convertIfNeeded=True):
-        try:
-            snapshotFile = open(self._snapshotFilename, 'rb')
-            try:
-                self._data = pickle.load(snapshotFile)
-            finally:
-                snapshotFile.close()
+            self._data = pickle.load(snapshotFile)
         except ImportError, e:
-            if str(e) == 'No module named statistics' and convertIfNeeded:
-                self._convertFile()
-                self._initializeFromSnapshot(convertIfNeeded=False)
+            if str(e) == 'No module named meresco.components.statistics':
+                raise ImportError("meresco.components.statistics has been replaced, therefore you have to convert your statisticsfile using the 'convert_statistics.py' script in the tools directory")
             else:
                 raise
+        finally:
+            snapshotFile.close()
 
     def _txlog(self):
         if not self._txlogFile:

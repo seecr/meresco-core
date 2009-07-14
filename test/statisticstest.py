@@ -401,9 +401,28 @@ pFwpUt1RJOV9pnBbstlGYR9lu1JUdUdR4itFzTtyE0WxzUrfKOae0vyDwm2pdhNFc20tVorG8k+7
 gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
         from base64 import decodestring
         from zlib import decompress
-        f = open(join(self.tempdir, 'snapshot'),'w')
+        snaphotFilename=join(self.tempdir, 'snapshot')
+        f = open(snaphotFilename,'w')
         f.write(decompress(decodestring(data)))
         f.close()
+        try:
+            stats = Statistics(self.tempdir, [('key',)])
+        except ImportError, e:
+            self.assertEquals("meresco.components.statistics has been replaced, therefore you have to convert your statisticsfile using the 'convert_statistics.py' script in the tools directory", str(e))
+
+        #
+        # Add the tools package to the python path so the conversion tool can
+        # be imported
+        # <hack>
+        from os.path import dirname
+        toolsPath = join(dirname(dirname(__file__)), 'tools')
+        from sys import path
+        path.insert(0, toolsPath)
+        import convert_statistics
+        convertedFilename = convert_statistics.convert_pickle_file(snaphotFilename)
+        rename(convertedFilename, snaphotFilename)
+        # </hack>
+        
         stats = Statistics(self.tempdir, [('key',)])
         self.assertEquals({('value',): 1}, stats.get(('key',)))
         
