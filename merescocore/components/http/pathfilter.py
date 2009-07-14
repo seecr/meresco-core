@@ -27,25 +27,22 @@
 #
 ## end license ##
 
-from merescocore.framework.observable import Observable
 from merescocore.components.statistics import Logger
+from handlerequestfilter import HandleRequestFilter
 
-class PathFilter(Observable, Logger):
+class PathFilter(HandleRequestFilter, Logger):
     def __init__(self, subPaths, excluding=[]):
-        Observable.__init__(self)
+        HandleRequestFilter.__init__(self, self._filter)
         Logger.__init__(self)
         self._subPaths = subPaths
         if type(subPaths) == str:
             self._subPaths = [subPaths]
         self._excluding = excluding
 
-    def handleRequest(self, path, *args, **kwargs):
+    def _filter(self, path, **kwargs):
         matchesSubPath = [subPath for subPath in self._subPaths if path.startswith(subPath)]
         matchesExcludedPath = [excludedPath for excludedPath in self._excluding if path.startswith(excludedPath)]
         if matchesSubPath and not matchesExcludedPath:
             self.log(path=matchesSubPath[0])
-            return self.all.handleRequest(path=path, *args, **kwargs)
-        return (f for f in [])
-
-    def unknown(self, methodName, *args, **kwargs):
-        return self.all.unknown(methodName, *args, **kwargs)
+            return True
+        return False

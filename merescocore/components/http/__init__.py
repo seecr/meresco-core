@@ -38,3 +38,4 @@ from sessionhandler import SessionHandler
 from argumentsinsession import ArgumentsInSession
 from apachelogger import ApacheLogger
 from utils import insertHeader
+from handlerequestfilter import HandleRequestFilter

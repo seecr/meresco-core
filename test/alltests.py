@@ -68,6 +68,7 @@ from framework.batchtransactionscopetest import BatchTransactionScopeTest
 from http.basicauthenticationtest import BasicAuthenticationTest
 from http.fileservertest import FileServerTest
 from http.pathfiltertest import PathFilterTest
+from http.handlerequestfiltertest import HandleRequestFilterTest
 from http.pathrenametest import PathRenameTest
 from http.sessionhandlertest import SessionHandlerTest
 from http.timeddictionarytest import TimedDictionaryTest

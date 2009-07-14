@@ -25,32 +25,27 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from merescocore.framework import Transparant
+from handlerequestfilter import HandleRequestFilter
 
-def _emptyGenerator():
-    if False:
-        yield None
-
-class IpFilter(Transparant):
+class IpFilter(HandleRequestFilter):
 
     def __init__(self, allowedIps=[], allowedIpRanges=[]):
-        Transparant.__init__(self)
+        HandleRequestFilter.__init__(self, self._filter)
         self._allowedIps = allowedIps
         self._allowedIpRanges = [(self._convertToNumber(start), self._convertToNumber(end))
             for start,end in allowedIpRanges]
 
-    def handleRequest(self, Client, *args, **kwargs):
+    def _filter(self, Client, **kwargs):
         ipaddress = Client[0] if Client != None else '0.0.0.0'
         if ipaddress in self._allowedIps:
-            return self.all.handleRequest(Client=Client, *args, **kwargs)
+            return True
 
         ipNumber = self._convertToNumber(ipaddress)
         for (start, end) in self._allowedIpRanges:
             if start <= ipNumber < end:
-                return self.all.handleRequest(Client=Client, *args, **kwargs)
+                return True
 
-        return _emptyGenerator()
-
+        return False
 
     def _convertToNumber(self, ip):
         a,b,c,d = [int(x) for x in ip.split('.')]
