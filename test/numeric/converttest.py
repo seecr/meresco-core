@@ -27,7 +27,7 @@
 ## end license ##
 
 from unittest import TestCase
-from edurep.numeric.convert import Convert
+from merescocore.components.numeric.convert import Convert
 
 class ConvertTest(TestCase):
     def testConvertOneDecimal(self):

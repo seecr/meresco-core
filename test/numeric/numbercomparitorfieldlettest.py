@@ -27,7 +27,7 @@
 ## end license ##
 
 from cq2utils import CQ2TestCase, CallTrace
-from edurep.numeric.numbercomparitorfieldlet import NumberComparitorFieldlet
+from merescocore.components.numeric.numbercomparitorfieldlet import NumberComparitorFieldlet
 
 class NumberComparitorFieldletTest(CQ2TestCase):
     def setUp(self):

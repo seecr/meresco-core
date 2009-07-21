@@ -27,7 +27,7 @@
 ## end license ##
 
 from unittest import TestCase
-from edurep.numeric.numbercomparitorcqlvisitor import NumberComparitorCqlVisitor
+from merescocore.components.numeric.numbercomparitorcqlvisitor import NumberComparitorCqlVisitor
 from cqlparser import parseString
 
 class NumberComparitorCqlVisitorTest(TestCase):

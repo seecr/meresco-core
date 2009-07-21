@@ -58,6 +58,8 @@ from venturitest import VenturiTest
 from xmlpumptest import XmlPumpTest
 from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
+from reindextest import ReindexTest
+from reindexconsoletest import ReindexConsoleTest
 
 from framework.helixtest import HelixTest
 from framework.generatorutilstest import GeneratorUtilsTest
@@ -77,6 +79,11 @@ from http.observablehttpservertest import ObservableHttpServerTest
 from http.ipfiltertest import IpFilterTest
 from http.utilstest import UtilsTest
 
+from numeric.converttest import ConvertTest
+from numeric.numbercomparitorfieldlettest import NumberComparitorFieldletTest
+from numeric.numbercomparitorcqlvisitortest import NumberComparitorCqlVisitorTest
+from numeric.numbercomparitortest import NumberComparitorTest
+
 from sru.srufielddrilldowntest import SRUFieldDrilldownTest
 from sru.srutermdrilldowntest import SRUTermDrilldownTest
 from sru.srurecordupdatetest import SRURecordUpdateTest
@@ -89,9 +96,6 @@ from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest
 from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
 from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
 from xml_generic.validatetest import ValidateTest
-
-from reindextest import ReindexTest
-from reindexconsoletest import ReindexConsoleTest
 
 
 if __name__ == '__main__':
