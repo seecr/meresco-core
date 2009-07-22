@@ -38,4 +38,4 @@ class NumberComparitorCqlConversion(CQLConversion):
         self._valueLength = valueLength
 
     def _convertAst(self, ast):
-        return NumberComparitorCqlVisitor(ast, fieldname=self._fieldname, convert=self._numberConvert, valueLength=valueLength).visit()
+        return NumberComparitorCqlVisitor(ast, fieldname=self._fieldname, convert=self._numberConvert, valueLength=self._valueLength).visit()
