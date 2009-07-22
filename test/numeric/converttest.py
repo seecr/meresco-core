@@ -50,9 +50,17 @@ class ConvertTest(TestCase):
         self.assertEquals(2, convert('1.5'))
         self.assertEquals(2, convert('2.4456789'))
 
-    def testConvertNoDecimal(self):
+    def testConvertDecimalMinus1(self):
         convert = Convert(-1)
         self.assertEquals(0, convert('1.0'))
         self.assertEquals(1, convert('11.0456789'))
         self.assertEquals(0, convert('0.9999999'))
         self.assertEquals(2, convert('19.45'))
+
+    def testStrangeNumbers(self):
+        convert = Convert(1)
+        self.assertEquals(50, convert('05.0'))
+        self.assertEquals(70, convert('007'))
+        self.assertEquals(0, convert('-000'))
+        
+        
