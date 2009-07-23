@@ -34,11 +34,10 @@ setup(
         'merescocore.components',
         'merescocore.components.drilldown',
         'merescocore.components.http',
+        'merescocore.components.numeric',
         'merescocore.components.sru',
         'merescocore.components.xml_generic',
         'merescocore.framework',
-        'meresco',
-        'meresco.components'
     ],
     package_data={
         'merescocore.components': ['rules/*.rules'],
