@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -36,10 +37,9 @@ from merescocore.components.xml_generic import schemasPath
 from os.path import join
 
 
-from cq2utils.calltrace import CallTrace
-from cStringIO import StringIO
-from cq2utils.cq2testcase import CQ2TestCase
-from cqlparser.cqlcomposer import compose as cqlCompose
+from StringIO import StringIO
+from cq2utils import CQ2TestCase, CallTrace
+from cqlparser import parseString
 import traceback
 
 from weightless import compose
@@ -167,7 +167,7 @@ class SruHandlerTest(CQ2TestCase):
         executeCQLMethod, echoedExtraRequestDataMethod, extraResponseDataMethod = observer.calledMethods
         self.assertEquals('executeCQL', executeCQLMethod.name)
         methodKwargs = executeCQLMethod.kwargs
-        self.assertEquals('field=value', cqlCompose(methodKwargs['cqlAbstractSyntaxTree']))
+        self.assertEquals(parseString('field=value'), methodKwargs['cqlAbstractSyntaxTree'])
         self.assertEquals(0, methodKwargs['start'])
         self.assertEquals(2, methodKwargs['stop'])
 

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -32,7 +33,7 @@ from cq2utils import CQ2TestCase, CallTrace
 from merescocore.framework import be, decorateWith
 from merescocore.components.drilldown import SRUFieldDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER
 
-from cqlparser.cqlcomposer import compose as cqlCompose
+from cqlparser import parseString
 
 class SRUFieldDrilldownTest(CQ2TestCase):
 
@@ -61,7 +62,7 @@ class SRUFieldDrilldownTest(CQ2TestCase):
 
         self.assertEquals(2, len(observer.calledMethods))
         self.assertEquals("executeCQL(cqlAbstractSyntaxTree=<class CQL_QUERY>)", str(observer.calledMethods[0]))
-        self.assertEquals("(original) and field0=term",  cqlCompose(observer.calledMethods[0].kwargs['cqlAbstractSyntaxTree']))
+        self.assertEquals(parseString("(original) and field0=term"),  observer.calledMethods[0].kwargs['cqlAbstractSyntaxTree'])
         self.assertEquals([("field0", 16), ("field1", 16)], result)
 
     def testEchoedExtraRequestData(self):

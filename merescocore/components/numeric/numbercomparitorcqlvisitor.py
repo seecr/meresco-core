@@ -37,10 +37,13 @@ class NumberComparitorCqlVisitor(CqlIdentityVisitor):
         self._convert = convert
         self._util = Util(valueLength)
 
+    def _isComparisonField(self, node):
+        #SEARCH_CLAUSE(INDEX(TERM('term')),RELATION(...),SEARCH_TERM(...))
+        return node.children()[0].name() == 'INDEX' and \
+              node.children()[0].children()[0].children()[0] == self._fieldname
+
     def visitSEARCH_CLAUSE(self, node):
-        if  len(node.children()) == 3 and \
-            node.children()[1].__class__ == RELATION and \
-            node.children()[0].children()[0].children()[0] == self._fieldname:
+        if self._isComparisonField(node):
             comparitor = node.children()[1].children()[0].children()[0]
             if comparitor in ['>=', '<', '>',  '<=']:
                 value = node.children()[2].children()[0].children()[0]
@@ -67,7 +70,6 @@ class NumberComparitorCqlVisitor(CqlIdentityVisitor):
         else:
             decimal = self._util.decimal(value, decimalPosition)
             nestedClause =  SEARCH_CLAUSE(
-                '(',
                 CQL_QUERY(
                     SCOPED_CLAUSE(
                         self._simpleSearchClause(field, self._util.termWithDecimal(decimal, decimalPosition)),
@@ -77,14 +79,12 @@ class NumberComparitorCqlVisitor(CqlIdentityVisitor):
                         )
                     )
                 ),
-                ')'
             )
             if decimal + higherInOrdering < 0:
                 return nestedClause
             if decimal + higherInOrdering == self._util.base:
                 return nestedClause
             return SEARCH_CLAUSE(
-                '(',
                 CQL_QUERY(
                     SCOPED_CLAUSE(
                         self._simpleSearchClause(field, self._util.termWithDecimal(decimal + higherInOrdering, decimalPosition)),
@@ -94,7 +94,6 @@ class NumberComparitorCqlVisitor(CqlIdentityVisitor):
                         )
                     )
                 ),
-                ')'
             )
 
     def _simpleSearchClause(self, field, aString):
