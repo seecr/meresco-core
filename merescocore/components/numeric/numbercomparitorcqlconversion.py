@@ -26,15 +26,11 @@
 #
 ## end license ##
 
+from merescocore.components import CQLConversion, CqlSearchClauseModification, CqlSearchClauseConversion
+from numbercomparitormodifier import NumberComparitorModifier
 from convert import Convert
-from merescocore.components import CQLConversion, CqlSearchClauseModification
-from numbercomparitorcqlvisitor import NumberComparitorModifier
-from cqlparser import CqlIdentityVisitor
 
-class NumberComparitorCqlConversion(CQLConversion):
-    def __init__(self, fieldname, nrOfDecimals, valueLength):
-        CQLConversion.__init__(self, self._convertAst)
-        self._modifier = NumberComparitorModifier(fieldname=fieldname, convert=Convert(nrOfDecimals), valueLength=valueLength)
+def NumberComparitorCqlConversion(fieldname, nrOfDecimals, valueLength):
+    modifier = NumberComparitorModifier(fieldname=fieldname, convert=Convert(nrOfDecimals), valueLength=valueLength)
+    return CqlSearchClauseConversion(modifier.canModify, modifier.modify)
 
-    def _convertAst(self, ast):
-        return CqlSearchClauseModification(ast, self._modifier.canModify, self._modifier.modify).visit()

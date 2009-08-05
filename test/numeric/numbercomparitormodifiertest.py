@@ -27,7 +27,7 @@
 ## end license ##
 
 from unittest import TestCase
-from merescocore.components.numeric.numbercomparitorcqlvisitor import NumberComparitorModifier
+from merescocore.components.numeric.numbercomparitormodifier import NumberComparitorModifier
 from cqlparser import parseString
 from cqlparser.cqlparser import CQL_QUERY, SCOPED_CLAUSE
 from merescocore.components.numeric import NumberComparitorCqlConversion

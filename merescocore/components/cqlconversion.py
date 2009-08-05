@@ -41,6 +41,15 @@ class CQLConversion(Converter):
     def _convert(self, cqlAst):
         return self._astConversion(cqlAst)
 
+class CqlSearchClauseConversion(CQLConversion):
+    def __init__(self, searchClauseFilter, modifier):
+        CQLConversion.__init__(self, self._convertAst)
+        self._searchClauseFilter = searchClauseFilter
+        self._modifier = modifier
+        
+    def _convertAst(self, ast):
+        return CqlSearchClauseModification(ast, self._searchClauseFilter, self._modifier).visit()
+
 class CqlSearchClauseModification(CqlIdentityVisitor):
     def __init__(self, ast, searchClauseFilter, modifier):
         CqlIdentityVisitor.__init__(self, ast)
