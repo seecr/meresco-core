@@ -81,7 +81,7 @@ from http.utilstest import UtilsTest
 
 from numeric.converttest import ConvertTest
 from numeric.numbercomparitorfieldlettest import NumberComparitorFieldletTest
-from numeric.numbercomparitorcqlvisitortest import NumberComparitorCqlVisitorTest
+from numeric.numbercomparitormodifiertest import NumberComparitorModifierTest
 from numeric.numbercomparitortest import NumberComparitorTest
 
 from sru.srufielddrilldowntest import SRUFieldDrilldownTest
