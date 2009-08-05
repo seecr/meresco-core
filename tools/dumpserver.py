@@ -39,36 +39,52 @@ from sys import stdout
 from os.path import abspath, dirname, join, isdir, basename
 from os import makedirs
 from merescocore.components.http import ObservableHttpServer
-from merescocore.components.http.webrequestserver import WebRequestServer
-from merescocore.components.sru import SRURecordUpdate
+from merescocore.components.sru.srurecordupdate import RESPONSE_XML, DIAGNOSTIC_XML, escapeXml, bind_string
 from merescocore.framework import Observable, be
 from re import compile
 from traceback import format_exc
-from amara.binderytools import bind_stream
 
 mydir = dirname(abspath(__file__))
 notWordCharRE = compile('\W+')
 
-class Dump(SRURecordUpdate):
-    def __init__(self, dumpdir):
-        SRURecordUpdate.__init__(self)
+
+
+
+class Dump(object):
+    def __init__(self, dumpdir, maxCount=10):
         self._dumpdir = dumpdir
         self._number = self._findLastNumber()
+        self._maxCountNumber = self._number + maxCount
+        self._maxCount = maxCount
 
-    def handleRequest(self, httpRequest):
+    def handleRequest(self, Body='', **kwargs):
+        yield '\r\n'.join(['HTTP/1.0 200 Ok', 'Content-Type: text/xml, charset=utf-8\r\n', ''])
         try:
-            updateRequest = bind_stream(httpRequest.content).updateRequest
+            updateRequest = bind_string(Body).updateRequest
             recordId = str(updateRequest.recordIdentifier)
             normalizedRecordId = notWordCharRE.sub('_', recordId)
             self._number +=1
-            filename = '%05d_%s.updateRequest' %(self._number, normalizedRecordId)
-            with open(join(self._dumpdir, filename), 'w') as f:
-                print recordId
-                stdout.flush()
-                updateRequest.xml(f)
-            self.writeSucces(httpRequest)
+            if self._number <= self._maxCountNumber:
+                filename = '%05d_%s.updateRequest' %(self._number, normalizedRecordId)
+                with open(join(self._dumpdir, filename), 'w') as f:
+                    print recordId
+                    stdout.flush()
+                    updateRequest.xml(f)
+                answer = RESPONSE_XML % {
+                    "operationStatus": "success",
+                    "diagnostics": ""}
+            else:
+                self._maxCountNumber = self._number + self._maxCount
+                print 'Reached maxCount'
+                answer = RESPONSE_XML % {
+                    "operationStatus": "fail",
+                    "diagnostics": DIAGNOSTIC_XML % escapeXml("Enough is enough")}
         except Exception, e:
-            self.writeError(httpRequest, format_exc(limit=7))
+            answer = RESPONSE_XML % {
+                "operationStatus": "fail",
+                "diagnostics": DIAGNOSTIC_XML % escapeXml(format_exc(limit=7))}
+
+        yield answer
 
     def _findLastNumber(self):
         return max([int(basename(f)[:5]) for f in glob(join(self._dumpdir, '*.updateRequest'))]+[0])
@@ -79,9 +95,7 @@ def main(reactor, portNumber, dumpdir):
     server = be(
         (Observable(),
             (ObservableHttpServer(reactor, portNumber),
-                (WebRequestServer(),
-                    (Dump(dumpdir),)
-                )
+                (Dump(dumpdir),)
             )
         )
     )
