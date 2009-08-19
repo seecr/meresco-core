@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -34,12 +35,12 @@ class RenameCqlIndex(object):
 
     def __call__(self, cqlAst):
         return _CqlIndexChangeVisitor(self._fieldRename, cqlAst).visit()
-        
+
 class _CqlIndexChangeVisitor(CqlIdentityVisitor):
     def __init__(self, fieldRename, root):
         CqlIdentityVisitor.__init__(self, root)
         self._fieldRename = fieldRename
-        
+
     def visitINDEX(self, node):
         assert len(node.children()) == 1
         myterm = node.children()[0]
