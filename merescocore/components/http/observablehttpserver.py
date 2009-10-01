@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -32,15 +33,15 @@ from urlparse import urlsplit
 from StringIO import StringIO
 from socket import gethostname
 
-
 class ObservableHttpServer(Observable):
-    def __init__(self, reactor, port, timeout=1, prio=None):
+    def __init__(self, reactor, port, timeout=1, prio=None, sok=None):
         Observable.__init__(self)
         self._port = port
         self._reactor = reactor
         self._timeout = timeout
         self._started = False
         self._prio = prio
+        self._sok = sok
 
     def startServer(self):
         """Starts server,
@@ -51,7 +52,7 @@ class ObservableHttpServer(Observable):
         """
         self._keepHttpServerForTestingSupport = \
             HttpServer(self._reactor, self._port, self._connect,
-                timeout=self._timeout, prio=self._prio)
+                timeout=self._timeout, prio=self._prio, sok=self._sok)
         self._started = True
 
     def observer_init(self):
