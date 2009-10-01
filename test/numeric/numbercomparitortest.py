@@ -28,11 +28,11 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 from cqlparser import parseString
-from merescocomponents.facetindex import LuceneIndex, Document
-from merescocomponents.facetindex.cqlparsetreetolucenequery import LuceneQueryComposer
-from merescocore.components.numeric.numbercomparitorcqlvisitor import NumberComparitorCqlVisitor
+from merescocomponents.facetindex import LuceneIndex, Document, CQL2LuceneQuery
 from merescocore.components.numeric.numbercomparitorfieldlet import NumberComparitorFieldlet
+from merescocore.components.numeric.numbercomparitorcqlconversion import NumberComparitorCqlConversion
 from merescocore.components.numeric.convert import Convert
+from merescocore.framework import be, Observable
 
 unqualifiedTermFields = [('field',1.0)]
 
@@ -60,11 +60,14 @@ class NumberComparitorTest(CQ2TestCase):
 
 
     def assertResult(self, expectedResult, query):
-        queryComposer = LuceneQueryComposer(unqualifiedTermFields)
-        ast = parseString(query)
-        ratingAst = NumberComparitorCqlVisitor(ast, 'field', Convert(nrOfDecimals=self.nrOfDecimals), valueLength=self.valueLength).visit()
-        luceneQuery = queryComposer.compose(ratingAst)
-        total, recordIds = self.index.executeQuery(luceneQuery)
+        dna = be((Observable(),
+            (NumberComparitorCqlConversion('field', self.nrOfDecimals, valueLength=self.valueLength),
+                (CQL2LuceneQuery(unqualifiedTermFields),
+                    (self.index,)
+                )
+            )
+        ))
+        total, recordIds = dna.any.executeCQL(cqlAbstractSyntaxTree=parseString(query))
         self.assertEquals(expectedResult, sorted(recordIds))
         
     def testGTE_1_Decimal(self):

@@ -26,43 +26,39 @@
 #
 ## end license ##
 
-from cqlparser import CqlIdentityVisitor
 from cqlparser.cqlparser import RELATION, SEARCH_CLAUSE, CQL_QUERY, INDEX, COMPARITOR, SEARCH_TERM, TERM, BOOLEAN, SCOPED_CLAUSE
 from util import Util
 
-class NumberComparitorCqlVisitor(CqlIdentityVisitor):
-    def __init__(self, ast, fieldname, convert, valueLength):
-        CqlIdentityVisitor.__init__(self, ast)
+class NumberComparitorModifier(object):
+    def __init__(self, fieldname, convert, valueLength):
         self._fieldname = fieldname
         self._convert = convert
         self._util = Util(valueLength)
 
-    def _isComparisonField(self, node):
-        #SEARCH_CLAUSE(INDEX(TERM('term')),RELATION(...),SEARCH_TERM(...))
+    def canModify(self, node):
+        #SEARCH_CLAUSE(INDEX(TERM('term')),RELATION(COMPARITOR('...')),SEARCH_TERM(...))
         return node.children()[0].name() == 'INDEX' and \
-              node.children()[0].children()[0].children()[0] == self._fieldname
+              node.children()[0].children()[0].children()[0] == self._fieldname and \
+              node.children()[1].children()[0].children()[0] in ['>=', '<', '>',  '<=']
 
-    def visitSEARCH_CLAUSE(self, node):
-        if self._isComparisonField(node):
-            comparitor = node.children()[1].children()[0].children()[0]
-            if comparitor in ['>=', '<', '>',  '<=']:
-                value = node.children()[2].children()[0].children()[0]
+    def modify(self, node):
+        comparitor = node.children()[1].children()[0].children()[0]
+        value = node.children()[2].children()[0].children()[0]
 
-                field = "%s.gte" % self._fieldname if ">" in comparitor else "%s.lte" % self._fieldname
-                higherInOrdering = 1 if ">" in comparitor else -1
+        field = "%s.gte" % self._fieldname if ">" in comparitor else "%s.lte" % self._fieldname
+        higherInOrdering = 1 if ">" in comparitor else -1
 
-                value = self._convert(value)
+        value = self._convert(value)
 
-                if not '=' in comparitor:
-                    value = value + higherInOrdering
+        if not '=' in comparitor:
+            value = value + higherInOrdering
 
-                if (value < 0 and '<' in comparitor) or \
-                    (value >= self._util.maximum and '>' in comparitor):
-                        return self._simpleSearchClause(field, 'z' * self._util.valueLength)
-                value = max(min(value, self._util.maximum - 1), 0)
-                
-                return self._searchClause(self._util.valueLength - 1, value, higherInOrdering, field)
-        return CqlIdentityVisitor.visitSEARCH_CLAUSE(self, node)
+        if (value < 0 and '<' in comparitor) or \
+            (value >= self._util.maximum and '>' in comparitor):
+                return self._simpleSearchClause(field, 'z' * self._util.valueLength)
+        value = max(min(value, self._util.maximum - 1), 0)
+
+        return self._searchClause(self._util.valueLength - 1, value, higherInOrdering, field)
 
     def _searchClause(self, decimalPosition, value, higherInOrdering, field):
         if decimalPosition == 0:

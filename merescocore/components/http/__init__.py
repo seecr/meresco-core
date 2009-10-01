@@ -27,6 +27,7 @@
 ## end license ##
 
 from observablehttpserver import ObservableHttpServer
+from observablehttpsserver import ObservableHttpsServer
 from pathfilter import PathFilter
 from pathrename import PathRename
 from geturl import GetURL

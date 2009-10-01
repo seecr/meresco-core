@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -40,3 +41,23 @@ class CQLConversion(Converter):
 
     def _convert(self, cqlAst):
         return self._astConversion(cqlAst)
+
+class CqlSearchClauseConversion(CQLConversion):
+    def __init__(self, searchClauseFilter, modifier):
+        CQLConversion.__init__(self, self._convertAst)
+        self._searchClauseFilter = searchClauseFilter
+        self._modifier = modifier
+
+    def _convertAst(self, ast):
+        return CqlSearchClauseModification(ast, self._searchClauseFilter, self._modifier).visit()
+
+class CqlSearchClauseModification(CqlIdentityVisitor):
+    def __init__(self, ast, searchClauseFilter, modifier):
+        CqlIdentityVisitor.__init__(self, ast)
+        self._searchClauseFilter = searchClauseFilter
+        self._modifier = modifier
+
+    def visitSEARCH_CLAUSE(self, node):
+        if self._searchClauseFilter(node):
+            return self._modifier(node)
+        return CqlIdentityVisitor.visitSEARCH_CLAUSE(self, node)
