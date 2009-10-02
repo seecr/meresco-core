@@ -56,7 +56,7 @@ class ObservableHttpsServer(Observable):
         """
         self._keepsHttpServerForTestingSupport = \
             HttpsServer(self._reactor, self._port, self._connect,
-                timeout=self._timeout, prio=self._prio, sok=sok, keyfile=self._keyfile, certfile=self._certfile)
+                timeout=self._timeout, prio=self._prio, sok=self._sok, keyfile=self._keyfile, certfile=self._certfile)
         self._started = True
 
     def observer_init(self):
