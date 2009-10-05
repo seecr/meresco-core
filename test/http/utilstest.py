@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -45,3 +46,13 @@ class UtilsTest(TestCase):
         self.assertEquals("HTTP/1.0 200 OK", headerParts[0])
         self.assertTrue(newHeader in headerParts)
         self.assertTrue(utils.ContentTypeHtml in headerParts)
+
+    def testInsertHeaderWithEmptyLines(self):
+        def handleRequest(*args, **kwargs):
+            yield "HTTP/1.0 200 OK\r\n"
+            yield "Header: value\r\n\r\n"
+            yield '<ht'
+            yield 'ml/>'
+
+        result = list(utils.insertHeader(handleRequest(), 'Set-Cookie: session=dummySessionId1234; path=/'))
+        self.assertFalse('' in result, result)

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -69,6 +70,7 @@ def insertHeader(httpResponse, extraHeader):
             statusLine, remainder = response.split(CRLF, 1)
             yield statusLine + CRLF
             yield extraHeader + CRLF
-            yield remainder
+            if remainder != '':
+                yield remainder
         else:
             yield response
