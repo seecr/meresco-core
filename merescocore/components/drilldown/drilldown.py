@@ -29,7 +29,7 @@
 DEFAULT_MAXIMUM_TERMS = 10
 
 DRILLDOWN_HEADER = """<dd:drilldown
-    xmlns:dd="http://namespace.meresco.com/namespace/drilldown"
+    xmlns:dd="http://meresco.com/namespace/drilldown"
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://namespace.meresco.com/namespace/drilldown http://meresco.com/files/xsd/drilldown-20070730.xsd">"""
+    xsi:schemaLocation="http://meresco.com/namespace/drilldown http://meresco.com/files/xsd/drilldown-20070730.xsd">"""
 DRILLDOWN_FOOTER = "</dd:drilldown>"
