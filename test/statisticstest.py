@@ -414,8 +414,10 @@ gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
         # Add the tools package to the python path so the conversion tool can
         # be imported
         # <hack>
-        from os.path import dirname
+        from os.path import dirname, isdir
         toolsPath = join(dirname(dirname(__file__)), 'tools')
+        if not isdir(toolsPath):
+            return
         from sys import path
         path.insert(0, toolsPath)
         import convert_statistics
