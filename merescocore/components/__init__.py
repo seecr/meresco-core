@@ -47,7 +47,7 @@ from xml2fields import Xml2Fields
 from xpath2field import XPath2Field
 from rewritepartname import RewritePartname
 from filtermessages import FilterMessages
-from reindex import Reindex, ReindexConsole
+from reindex import Reindex
 from parsecql import ParseCQL
 from cqlconversion import CQLConversion, CqlSearchClauseModification, CqlSearchClauseConversion
 from renamecqlindex import RenameCqlIndex

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -26,33 +27,93 @@
 #
 ## end license ##
 
+from __future__ import with_statement
+
 from merescocore.framework import Observable
 from lxml.etree import parse
 from StringIO import StringIO
+from os.path import isdir, join
+from os import makedirs, listdir, remove, rmdir
 
 EMPTYDOC = parse(StringIO('<empty/>'))
 
 class Reindex(Observable):
 
-    def __init__(self, partName):
+    def __init__(self, partName, filelistPath=''):
         Observable.__init__(self)
         self._partName = partName
-
-    def reindex(self, identifierPrefix=''):
-        for identifier in self.any.listIdentifiers(self._partName, identifierPrefix=identifierPrefix):
-            try:
-                self.do.addDocumentPart(identifier=identifier, name='ignoredName', lxmlNode=EMPTYDOC)
-            except:
-                print 'ERROR', identifier
-                raise
-            yield identifier
-
-class ReindexConsole(Observable):
+        self._filelistPath = filelistPath
+        if not isdir(self._filelistPath):
+            makedirs(self._filelistPath)
 
     def handleRequest(self, *args, **kwargs):
         arguments = kwargs.get('arguments', {})
-        identifierPrefix = arguments.get('identifierPrefix', [''])[0]
+        try:
+            session = arguments.get('session', [''])[0]
+        except IndexError:
+            session = ''
+
+        batchSize = int(arguments.get('batchsize', [200])[0])
         yield "HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n"
-        for id in self.all.reindex(identifierPrefix=identifierPrefix):
-            yield id + "\n"
-        yield "done"
+        if session == '':
+            yield "!error: session missing"
+            return
+        if batchSize > 2000  or batchSize <= 0:
+            yield "!error: invalid batchsize"
+            return
+
+        sessionDirectory = join(self._filelistPath, session)
+        if not isdir(sessionDirectory):
+            results = self._createBatches(sessionDirectory, batchSize)
+        else:
+            results = self._processBatches(sessionDirectory)
+
+        for result in results:
+            yield result
+
+
+    def _createBatches(self, sessionDirectory, batchSize):
+        currentBatch = 0
+        batch = []
+        identifiersFound = False
+
+        for identifier in self.any.listIdentifiers(self._partName):
+            batch.append(identifier)
+            if len(batch) == batchSize:
+                identifiersFound = self._writeBatch(sessionDirectory, currentBatch, batch)
+                yield "#"
+                currentBatch += 1
+                batch = []
+        additionalBatch = 0
+        if batch != []:
+            identifiersFound = self._writeBatch(sessionDirectory, currentBatch, batch)
+            additionalBatch = 1
+            yield "#"
+        if not identifiersFound:
+            yield "!error: no identifiers"
+            return
+        yield '\n=batches: %d' % (currentBatch + additionalBatch)
+
+    def _writeBatch(self, sessionDirectory, number, batch):
+        if not isdir(sessionDirectory):
+            makedirs(sessionDirectory)
+
+        with open(join(sessionDirectory, 'batch_%0.15d' % number), 'w') as fd:
+            fd.write('\n'.join(batch))
+        return True
+
+    def _processBatches(self, sessionDirectory):
+        batchFile = join(sessionDirectory, listdir(sessionDirectory)[0])
+
+        for identifier in (identifier.strip() for identifier in open(batchFile).readlines()):
+            try:
+                self.do.addDocumentPart(identifier=identifier, name='ignoredName', lxmlNode=EMPTYDOC)
+            except Exception, e:
+                yield '\n!error processing "%s": %s' % (identifier, str(e))
+                return
+            yield "+%s\n" % identifier
+
+        remove(batchFile)
+        yield "=batches left: %d" % len(listdir(sessionDirectory))
+        if len(listdir(sessionDirectory)) == 0:
+            rmdir(sessionDirectory)

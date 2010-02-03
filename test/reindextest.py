@@ -1,4 +1,5 @@
 #!/usr/bin/env python2.5
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -29,12 +30,17 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 from merescocore.components import StorageComponent, Reindex, FilterMessages
-from merescocore.framework import be
+from merescocore.framework import be, Observable
+
+from os.path import join, isdir
+from os import listdir
 
 class ReindexTest(CQ2TestCase):
+    def _path(self, subdir):
+        return join(self.tempdir, subdir)
 
     def setupStorage(self, records):
-        storage = StorageComponent(self.tempdir)
+        storage = StorageComponent(self._path('storage'))
         for record in records:
             storage.add(*record)
         return storage
@@ -42,7 +48,7 @@ class ReindexTest(CQ2TestCase):
     def setupDna(self, storage):
         observer = CallTrace('observer')
         reindex = be(
-            (Reindex('part'),
+            (Reindex(filelistPath=self._path('reindex'), partName='part'),
                 (FilterMessages(allowed=['listIdentifiers']),
                     (storage, ),
                 ),
@@ -51,37 +57,130 @@ class ReindexTest(CQ2TestCase):
         )
         return reindex, observer
 
-    def testEnumerateStorage(self):
+    def testArguments(self):
+        reindex, observer = self.setupDna(CallTrace('Storage'))
+        def assertError(message, arguments):
+            result = list(reindex.handleRequest(arguments=arguments))
+            self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', message], result)
+        assertError('!error: session missing', {})
+        assertError('!error: session missing', {'session': []})
+
+        assertError('!error: invalid batchsize', {'session': ['test'], 'batchsize': ['-1']})
+        assertError('!error: invalid batchsize', {'session': ['test'], 'batchsize': ['0']})
+        assertError('!error: invalid batchsize', {'session': ['test'], 'batchsize': ['2001']})
+
+    def testWithEmptyStorage(self):
+        reindex, observer = self.setupDna(CallTrace('Storage', returnValues={'listIdentifiers': []}))
+        directory = join(self._path('reindex'), 'testcase')
+        self.assertFalse(isdir(directory))
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        self.assertFalse(isdir(directory))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', "!error: no identifiers"], result)
+
+    def testCreateIdentifierFiles(self):
         storage = self.setupStorage([
-            ('identifier:A', 'part', 'data1'),
-            ('identifier:B', 'part', 'data2'),
-            ('identifier:C', 'part', 'data3'),
+            ('id:1', 'part', 'data1'),
+            ('id:2', 'part', 'data2'),
+            ('id:3', 'part', 'data3'),
         ])
-        self.assertEquals(set(['identifier:B', 'identifier:C', 'identifier:A']), set(storage.listIdentifiers()))
-
         reindex, observer = self.setupDna(storage)
-        result = list(reindex.reindex())
-        self.assertEquals(3, len(observer.calledMethods))
-        methods = sorted(map(str, observer.calledMethods))
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        directory = join(self._path('reindex'), 'testcase')
+        self.assertTrue(isdir(directory))
+        files = listdir(directory)
+        self.assertEquals(1, len(files))
+        identifiers = list(identifier for identifier in open(join(directory, files[0])).read().split('\n') if identifier != '')
+        self.assertEquals(['id:1', 'id:2', 'id:3'], identifiers)
 
-        self.assertEquals("addDocumentPart(identifier='identifier:A', name='ignoredName', lxmlNode=<etree._ElementTree>)", methods[0])
-        self.assertEquals("addDocumentPart(identifier='identifier:B', name='ignoredName', lxmlNode=<etree._ElementTree>)", methods[1])
-        self.assertEquals("addDocumentPart(identifier='identifier:C', name='ignoredName', lxmlNode=<etree._ElementTree>)", methods[2])
-
-    def testSelectIdentifiers(self):
+    def testCreateIdentifierFilesInBatches(self):
         storage = self.setupStorage([
-            ('identifier:1A', 'part', 'data1'),
-            ('identifier:1B', 'part', 'data2'),
-            ('identifier:2C', 'part', 'data3'),
+            ('id:1', 'part', 'data1'),
+            ('id:2', 'part', 'data2'),
+            ('id:3', 'part', 'data3'),
         ])
         reindex, observer = self.setupDna(storage)
-        result = list(reindex.reindex(identifierPrefix="identifier:1"))
-        self.assertEquals(2, len(observer.calledMethods))
+        result = list(reindex.handleRequest(arguments={'session': ['testcase'], 'batchsize': ['1']}))
+        directory = join(self._path('reindex'), 'testcase')
+        self.assertTrue(isdir(directory))
+        files = listdir(directory)
+        self.assertEquals(3, len(files))
 
-        observer.calledMethods = []
-        result = list(reindex.reindex(identifierPrefix="identifier:2"))
-        self.assertEquals(1, len(observer.calledMethods))
+    def testCreateIdentifierFilesYieldsOutput(self):
+        storage = self.setupStorage([
+            ('id:1', 'part', 'data1'),
+            ('id:2', 'part', 'data2'),
+            ('id:3', 'part', 'data3'),
+        ])
+        reindex, observer = self.setupDna(storage)
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
 
-        observer.calledMethods = []
-        result = list(reindex.reindex(identifierPrefix="identifier:"))
-        self.assertEquals(3, len(observer.calledMethods))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '#', '\n=batches: 1'], result)
+
+    def testProcessCreatedBatches(self):
+        storage = self.setupStorage([
+            ('id:1', 'part', 'data1'),
+            ('id:2', 'part', 'data2'),
+            ('id:3', 'part', 'data3'),
+        ])
+        reindex, observer = self.setupDna(storage)
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '#', '\n=batches: 1'], result)
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '+id:1\n', '+id:2\n', '+id:3\n', '=batches left: 0'], result)
+
+        methods = [str(m) for m in observer.calledMethods]
+        self.assertEquals(3, len(methods))
+        self.assertEquals("addDocumentPart(identifier='id:1', name='ignoredName', lxmlNode=<etree._ElementTree>)", methods[0])
+        self.assertEquals("addDocumentPart(identifier='id:2', name='ignoredName', lxmlNode=<etree._ElementTree>)", methods[1])
+        self.assertEquals("addDocumentPart(identifier='id:3', name='ignoredName', lxmlNode=<etree._ElementTree>)", methods[2])
+
+    def testRemoveFilesAndDirectoryAfterProcess(self):
+        storage = self.setupStorage([
+            ('id:1', 'part', 'data1'),
+            ('id:2', 'part', 'data2'),
+            ('id:3', 'part', 'data3'),
+        ])
+        reindex, observer = self.setupDna(storage)
+        directory = join(self._path('reindex'), 'testcase')
+
+        result = list(reindex.handleRequest(arguments={'session': ['testcase'], 'batchsize': ['1']}))
+        self.assertEquals(3, len(listdir(directory)))
+        self.assertTrue(isdir(directory))
+
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        self.assertEquals(2, len(listdir(directory)))
+        self.assertTrue(isdir(directory))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '+id:1\n', '=batches left: 2'], result)
+
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        self.assertEquals(1, len(listdir(directory)))
+        self.assertTrue(isdir(directory))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '+id:2\n', '=batches left: 1'], result)
+
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        self.assertFalse(isdir(directory))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '+id:3\n','=batches left: 0'], result)
+
+    def testProcessGivesError(self):
+        storage = self.setupStorage([
+            ('id:1', 'part', 'data1'),
+            ('id:2', 'part', 'data2'),
+            ('id:3', 'part', 'data3'),
+        ])
+        reindex, observer = self.setupDna(storage)
+        observer.exceptions['addDocumentPart'] = Exception('An Error Occured')
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '#', '\n=batches: 1'], result)
+        result = list(reindex.handleRequest(arguments={'session': ['testcase']}))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '\n!error processing "id:1": An Error Occured'], result)
+
+    def testNotOffByOneIfNoRemainder(self):
+        records = [('id:%d' % i, 'part', 'data%d' % i) for i in range(80)]
+        storage = self.setupStorage(records)
+        reindex, observer = self.setupDna(storage)
+        directory = join(self._path('reindex'), 'testcase')
+        result = list(reindex.handleRequest(arguments={'session': ['testcase'], 'batchsize': ['5']}))
+        self.assertEquals(16, len(listdir(directory)))
+        self.assertEquals(['HTTP/1.0 200 OK\r\nContent-Type: plain/text\r\n\r\n', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '#', '\n=batches: 16'], result)

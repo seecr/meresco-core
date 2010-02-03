@@ -59,7 +59,6 @@ from xmlpumptest import XmlPumpTest
 from xml2fieldstest import Xml2FieldsTest
 from xpath2fieldtest import XPath2FieldTest
 from reindextest import ReindexTest
-from reindexconsoletest import ReindexConsoleTest
 
 from framework.helixtest import HelixTest
 from framework.generatorutilstest import GeneratorUtilsTest
