@@ -8,6 +8,8 @@
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -32,9 +34,10 @@ from cgi import parse_qs
 from urlparse import urlsplit
 from StringIO import StringIO
 from socket import gethostname
+from utils import serverUnavailableHtml
 
 class ObservableHttpServer(Observable):
-    def __init__(self, reactor, port, timeout=1, prio=None, sok=None):
+    def __init__(self, reactor, port, timeout=1, prio=None, sok=None, maxConnections=None):
         Observable.__init__(self)
         self._port = port
         self._reactor = reactor
@@ -42,6 +45,7 @@ class ObservableHttpServer(Observable):
         self._started = False
         self._prio = prio
         self._sok = sok
+        self._maxConnections = maxConnections
 
     def startServer(self):
         """Starts server,
@@ -52,7 +56,9 @@ class ObservableHttpServer(Observable):
         """
         self._keepHttpServerForTestingSupport = \
             HttpServer(self._reactor, self._port, self._connect,
-                timeout=self._timeout, prio=self._prio, sok=self._sok)
+                timeout=self._timeout, prio=self._prio, sok=self._sok,
+                maxConnections=self._maxConnections,
+                errorHandler=self._error)
         self._started = True
 
     def observer_init(self):
@@ -61,6 +67,11 @@ class ObservableHttpServer(Observable):
 
     def _connect(self, **kwargs):
         return self.handleRequest(port=self._port, **kwargs)
+
+    def _error(self, **kwargs):
+        yield serverUnavailableHtml +\
+        '<html><head></head><body><h1>Service Unavailable</h1></body></html>'
+        self.do.logHttpError(**kwargs)
 
     def handleRequest(self, RequestURI=None, *args, **kwargs):
         scheme, netloc, path, query, fragments = urlsplit(RequestURI)

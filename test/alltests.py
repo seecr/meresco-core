@@ -8,6 +8,8 @@
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -66,6 +68,7 @@ from framework.observabletest import ObservableTest
 from framework.transactiontest import TransactionTest
 from framework.batchtransactionscopetest import BatchTransactionScopeTest
 
+from http.apacheloggertest import ApacheLoggerTest
 from http.basicauthenticationtest import BasicAuthenticationTest
 from http.fileservertest import FileServerTest
 from http.pathfiltertest import PathFilterTest

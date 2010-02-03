@@ -7,6 +7,8 @@
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -28,6 +30,7 @@
 
 from merescocore.framework import Transparant
 from time import strftime, gmtime
+from urlparse import urlsplit
 
 class DevNull(object):
     def write(self, *args, **kwargs):
@@ -41,7 +44,20 @@ class ApacheLogger(Transparant):
         Transparant.__init__(self)
         self._outputStream = outputStream
         
-    def handleRequest(self, Method, Client, Headers, path, query='', *args, **kwargs):
+    def handleRequest(self, *args, **kwargs):
+        status = 0
+        for line in self.all.handleRequest(*args, **kwargs):
+            if not status and line.startswith('HTTP/1.0'):
+                status = line[len('HTTP/1.0 '):][:3]
+                self._log(status, **kwargs)
+            yield line  
+
+    def logHttpError(self, ResponseCode, RequestURI, *args, **kwargs):
+        scheme, netloc, path, query, fragments = urlsplit(RequestURI)
+        self._log(ResponseCode, path=path, query=query, **kwargs)
+        self.do.logHttpError(ResponseCode=ResponseCode, RequestURI=RequestURI, **kwargs)
+
+    def _log(self, status, Method, Client, query, Headers, path,  **kwargs):
         ipaddress = Client[0]
         timestamp = strftime('%d/%b/%Y:%H:%M:%S +0000', gmtime())
         responseSize = '??'
@@ -50,12 +66,5 @@ class ApacheLogger(Transparant):
         Referer = Headers.get('Referer', '-')
         UserAgent = Headers.get('User-Agent', '-')
 
-        result = self.all.handleRequest(Method=Method, Client=Client, Headers=Headers, path=path, query=query, *args, **kwargs)
-
-        status = 0
-        for line in result:
-            if not status and line.startswith('HTTP/1.0'):
-                status = line[len('HTTP/1.0 '):][:3]
-                self._outputStream.write(logline % locals())
-                self._outputStream.flush()
-            yield line
+        self._outputStream.write(logline % locals())
+        self._outputStream.flush()

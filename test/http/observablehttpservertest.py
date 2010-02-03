@@ -7,6 +7,8 @@
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -29,7 +31,8 @@ from socket import socket
 from cq2utils import CQ2TestCase, CallTrace
 from weightless import Reactor
 
-from merescocore.components.http.observablehttpserver import ObservableHttpServer
+from merescocore.components.http import ObservableHttpServer
+from merescocore.components.http.utils import CRLF
 
 class ObservableHttpServerTest(CQ2TestCase):
     def testSimpleHandleRequest(self):
@@ -61,6 +64,32 @@ class ObservableHttpServerTest(CQ2TestCase):
         self.assertEquals(['emptykey', 'key'], sorted(arguments.keys()))
         self.assertEquals(['value'], arguments['key'])
         self.assertEquals([''], arguments['emptykey'])
+
+    def testMaxConnectionsErrorHandling(self):
+        observer = CallTrace('Observer')
+        reactor = CallTrace('Reactor')
+
+        s = ObservableHttpServer(reactor, 1024, maxConnections=5)
+        s.addObserver(observer)
+        result = ''.join(s._error(ResponseCode=503, something='bicycle'))
+
+        self.assertEquals(1, len(observer.calledMethods))
+        self.assertEquals('logHttpError', observer.calledMethods[0].name)
+        self.assertEquals({'ResponseCode': 503, 'something': 'bicycle'}, observer.calledMethods[0].kwargs)
+        header, body = result.split(CRLF * 2)
+        self.assertTrue(header.startswith('HTTP/1.0 503'), header)
+        self.assertTrue('Service Unavailable' in body, body)
+
+    def testErrorHandlerRegisteredOnWeightlessHttpServer(self):
+        reactor = CallTrace('Reactor')
+
+        s = ObservableHttpServer(reactor, 1024, maxConnections=5)
+        s.startServer()
+
+        acceptor = s._keepHttpServerForTestingSupport
+        httphandler = acceptor._sinkFactory('sok')
+        errorHandler = httphandler._errorHandler
+        self.assertTrue(errorHandler == s._error)
 
     def testServerWithPrio(self):
         import gc, weakref
