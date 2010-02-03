@@ -31,6 +31,7 @@ CRLF = "\r\n"
 ContentTypeXml = "Content-Type: text/xml; charset=utf-8"
 ContentTypeRss = "Content-Type: application/rss+xml"
 ContentTypeHtml = "Content-Type: text/html; charset=utf-8"
+ContentTypePlainText = "Content-Type: text/plain; charset=utf-8"
 
 Ok = "HTTP/1.0 200 Ok" + CRLF
 
@@ -45,6 +46,10 @@ okRss = "HTTP/1.0 200 OK" + CRLF + \
 
 okHtml = "HTTP/1.0 200 OK" + CRLF + \
         ContentTypeHtml + CRLF + \
+        CRLF
+
+okPlainText = "HTTP/1.0 200 OK" + CRLF + \
+        ContentTypePlainText + CRLF + \
         CRLF
 
 #403
