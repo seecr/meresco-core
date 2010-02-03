@@ -31,6 +31,7 @@ from os import rename, remove
 from os.path import isfile, join
 from inspect import currentframe
 from time import mktime, gmtime
+import operator
 from merescocore.framework import Observable
 
 snapshotFilename = 'snapshot'
@@ -78,7 +79,11 @@ class Top100s(object):
             self._data[statisticId] = dict(self.getTop(statisticId))
 
     def getTop(self, statisticId):
-        return sorted(self._data.get(statisticId, {}).items(), cmp=lambda (k1,v1),(k2,v2):cmp(v2,v1))[:100]
+         return sorted(
+                    self._data.get(statisticId, {}).iteritems(),
+                    key=operator.itemgetter(1),          # much faster: use Schwartzian Transform
+                    reverse=True
+               )[:100]
 
     def statisticIds(self):
         return self._data.keys()

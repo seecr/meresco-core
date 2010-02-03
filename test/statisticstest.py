@@ -28,6 +28,7 @@
 ## end license ##
 import cPickle as pickle
 from time import time
+from random import randint
 from cq2utils import CQ2TestCase
 from os import makedirs, rename
 from os.path import isfile, join
@@ -521,6 +522,16 @@ gqWxnGIsdJHVJ8VGE9qYTYpNw0nHVbFp73xtKhTWNmQtZtP6WvJ0+AO3mVOw"""
         two = Top100s({('keys',):dict([('d%02d' % i,8) for i in range(99)] + [('c',6)])})
         one.extend(two)
         self.assertEquals(dict([('a%02d' % i,10) for i in range(99)] + [('c',11)]), one._data[('keys',)])
+
+    def testPerformanceOfSchwartzianTransformInTopSorting(self):
+        stats = Statistics(self.tempdir, [('keys',)])
+        for i in xrange(1000):
+            stats._process({'keys': [randint(0, 10000)]})
+        t0 = time()
+        for i in xrange(100):
+            stats._data.get((2000,1,1,0,0,0), (2099,1,1,0,0,0)).getTop(('keys',))
+        t = time() - t0
+        self.assertTiming(0.02, t, 0.1) # used to be ~2.5
     
 class ListFactory(object):
     def doInit(self):
