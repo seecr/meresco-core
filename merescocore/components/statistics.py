@@ -3,10 +3,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -33,6 +34,7 @@ from inspect import currentframe
 from time import mktime, gmtime
 import operator
 from merescocore.framework import Observable
+from callstackscope import callstackscope
 
 snapshotFilename = 'snapshot'
 
@@ -44,19 +46,24 @@ def combinations(head, tail):
             for trailer in combinations(tail[0], tail[1:]):
                 yield (value,) + trailer
 
+def _log(statisticsLog, **kwargs):
+    for key, value in kwargs.items():
+        statisticsLog.setdefault(key, []).append(value)
+
+def log(observable, **kwargs):
+    try:
+        _log(observable.ctx.statisticsLog, **kwargs)
+    except AttributeError:
+        pass
+
 class Logger(object):
     def log(self, **kwargs):
-        frame = currentframe().f_back
-        while frame:
-            if "__log__" in frame.f_locals:
-                var = frame.f_locals["__log__"]
-                for key, value in kwargs.items():
-                    if not key in var:
-                        var[key] = []
-                    var[key].append(value)
-                return
-            frame = frame.f_back
-            
+        try:
+            _log(callstackscope('__callstack_var_statisticsLog__'), **kwargs)
+        except AttributeError:
+            pass
+        
+    
 class Top100s(object):
     def __init__(self, data=None):
         if not data:
@@ -115,11 +122,11 @@ class Statistics(Observable):
         self._data.merge(rhsStatistics._data)
 
     def unknown(self, message, *args, **kwargs):
-        __log__ = {} # to be found on the call stack by Logger
+        __callstack_var_statisticsLog__ = {} 
         responses = self.all.unknown(message, *args, **kwargs)
         for response in responses:
             yield response
-        self._process(__log__)
+        self._process(__callstack_var_statisticsLog__)
         self._snapshotIfNeeded()
 
     def listKeys(self):

@@ -3,10 +3,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -27,13 +28,14 @@
 #
 ## end license ##
 
-from merescocore.components.statistics import Logger
+from merescocore.components.statistics import log
 from handlerequestfilter import HandleRequestFilter
 
-class PathFilter(HandleRequestFilter, Logger):
+class PathFilter(HandleRequestFilter):
+    log = log
+
     def __init__(self, subPaths, excluding=[]):
         HandleRequestFilter.__init__(self, self._filter)
-        Logger.__init__(self)
         self._subPaths = subPaths
         if type(subPaths) == str:
             self._subPaths = [subPaths]

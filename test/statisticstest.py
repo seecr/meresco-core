@@ -3,10 +3,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -32,7 +33,8 @@ from random import randint
 from cq2utils import CQ2TestCase
 from os import makedirs, rename
 from os.path import isfile, join
-from merescocore.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename
+from merescocore.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename, log
+from merescocore.framework import Observable
 
 class StatisticsTest(CQ2TestCase):
 
@@ -195,6 +197,42 @@ class StatisticsTest(CQ2TestCase):
         stats.addObserver(myObserver)
         list(stats.unknown("aMessage"))
         self.assertEquals({('newValue',): 1}, stats.get(('message',)))
+
+    def testSelfLogWithObservableAndDelegation(self):
+        class MyObserver(Observable):
+            log=log
+            def aMessage(self):
+                self.log(message='newValue')
+        stats = Statistics(self.tempdir, [('message',)])
+        stats._clock = lambda: (1970, 1, 1, 0, 0, 0)
+        myObserver = MyObserver()
+        stats.addObserver(myObserver)
+        list(stats.unknown("aMessage"))
+        self.assertEquals({('newValue',): 1}, stats.get(('message',)))
+
+    def testLogWithoutStatistics(self):
+        result = []
+        class MyObserver(Logger):
+            def aMessage(self):
+                self.log(message='newValue')
+                result.append('aMessage')
+        observable = Observable()
+        myObserver = MyObserver()
+        observable.addObserver(myObserver)
+        observable.do.aMessage()
+        self.assertEquals(['aMessage'], result)
+    
+    def testLogWithObserverWithoutStatistics(self):
+        result = []
+        class MyObserver(Observable):
+            log = log
+            def aMessage(self):
+                self.log(message='newValue')
+                result.append('aMessage')
+        observable = Observable()
+        myObserver = MyObserver()
+        observable.addObserver(myObserver)
+        observable.do.aMessage()
 
     def testSelfLogMultipleValuesForSameKey(self):
         class MyObserver(Logger):
