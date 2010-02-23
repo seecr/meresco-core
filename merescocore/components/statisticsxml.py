@@ -3,10 +3,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -33,6 +34,7 @@ from time import mktime, gmtime
 
 from merescocore.components.statistics import AggregatorException
 from weightless import compose
+from xml.sax.saxutils import escape as xmlEscape
 
 NAMESPACE="http://meresco.com/namespace/meresco/statistics"
 
@@ -123,7 +125,7 @@ class StatisticsXml(object):
             yield "<%s>%s</%s>" % (tagName, "None", tagName)
         else:
             for e in list:
-                yield "<%s>%s</%s>" % (tagName, e, tagName)
+                yield "<%s>%s</%s>" % (tagName, xmlEscape(e), tagName)
 
     def _parseArguments(self, RequestURI):
         Scheme, Netloc, Path, Query, Fragment = urlsplit(RequestURI)

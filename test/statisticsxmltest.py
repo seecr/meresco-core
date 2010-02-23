@@ -3,10 +3,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -26,9 +27,12 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from cq2utils import CQ2TestCase
+from cq2utils import CQ2TestCase, CallTrace
 from merescocore.components.statisticsxml import StatisticsXml
 from merescocore.components.statistics import Statistics
+from merescocore.components.http.utils import CRLF
+from StringIO import StringIO
+from lxml.etree import parse
 
 from weightless import compose
 
@@ -97,6 +101,27 @@ class StatisticsXmlTest(CQ2TestCase):
         self.assertTrue("""<fromTime>2008""" in result, result)
         self.assertTrue("""<toTime>2008-01-01""" in result, result)
         self.assertTrue("""<serverTime""" in result, result)
+
+
+    def testXmlProperlyEscaped(self):
+        stats = CallTrace('stats')
+        value1 = 'value1'
+        value2 = 'value2&two'
+        nsmap = {'stats': 'http://meresco.com/namespace/meresco/statistics'}
+        stats.returnValues['get'] = {(value1,): 13, (value2,): 100}
+        stats.returnValues['listKeys'] = [('key',)]
+        xml = StatisticsXml(stats)
+        head, body = ''.join(compose(xml.handleRequest(RequestURI="http://localhost/statistics?key=key"))).split(CRLF*2)
+        xmlnode = parse(StringIO(body))
+        observations = xmlnode.xpath('/stats:statistics/stats:observations/stats:observation',
+                namespaces=nsmap)
+        self.assertEquals(2, len(observations))
+        result = []
+        for observation in observations:
+            value = observation.xpath('stats:value/text()', namespaces=nsmap)[0]
+            occurrences = observation.xpath('stats:occurrences/text()', namespaces=nsmap)[0]
+            result.append((value, occurrences))
+        self.assertEquals([(value2, '100'), (value1, '13')], result)
 
 
 
