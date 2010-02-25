@@ -48,7 +48,6 @@ from logcomponenttest import LogComponentTest
 from logobservertest import LogObserverTest
 from parsecqltest import ParseCQLTest
 from storagecomponenttest import StorageComponentTest
-from storageharvestertest import StorageHarvesterTest
 from renamecqlindextest import RenameCqlIndexTest
 from requestscopetest import RequestScopeTest
 from rsstest import RssTest
