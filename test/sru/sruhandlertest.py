@@ -230,6 +230,15 @@ class SruHandlerTest(CQ2TestCase):
         self.assertEquals((), extraResponseDataMethod.args)
         self.assertEquals(set(['version', 'recordSchema', 'x_recordSchema', 'sortDescending', 'sortBy', 'maximumRecords', 'startRecord', 'query', 'operation', 'recordPacking', 'cqlAbstractSyntaxTree']), set(extraResponseDataMethod.kwargs.keys()))
 
+    def testIOErrorInWriteRecordData(self):
+        observer = CallTrace()
+        observer.exceptions["yieldRecord"] = IOError()
+        component = SruHandler()
+        component.addObserver(observer)
+        result = "".join(list(compose(component._writeRecordData(recordPacking="string", recordSchema="schema", recordId="ID"))))
+        self.assertTrue("diagnostic" in result, result)
+        self.assertTrue("recordSchema 'schema' for identifier 'ID' does not exist" in result, result)
+
     def testExceptionInWriteRecordData(self):
         observer = CallTrace()
         observer.exceptions["yieldRecord"] = Exception("Test Exception")

@@ -115,13 +115,15 @@ class SruHandler(Observable):
 
     def _writeRecordData(self, recordSchema=None, recordPacking=None, recordId=None):
         yield '<srw:recordData>'
-        yield self._catchErrors(self._yieldRecordForRecordPacking(recordId=recordId, recordSchema=recordSchema, recordPacking=recordPacking))
+        yield self._catchErrors(self._yieldRecordForRecordPacking(recordId=recordId, recordSchema=recordSchema, recordPacking=recordPacking), recordSchema, recordId)
         yield '</srw:recordData>'
 
-    def _catchErrors(self, dataGenerator):
+    def _catchErrors(self, dataGenerator, recordSchema, recordId):
         try:
             for stuff in compose(dataGenerator):
                 yield stuff
+        except IOError, e:
+            yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape("recordSchema '%s' for identifier '%s' does not exist" % (recordSchema, recordId))])
         except Exception, e:
             yield DIAGNOSTIC % tuple(GENERAL_SYSTEM_ERROR + [xmlEscape(str(e))])
 
@@ -133,7 +135,7 @@ class SruHandler(Observable):
         yield '<srw:extraRecordData>'
         for schema in x_recordSchema:
             yield '<recordData recordSchema="%s">' % xmlEscape(schema)
-            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, recordPacking))
+            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, recordPacking), x_recordSchema, recordId)
             yield '</recordData>'
         yield '</srw:extraRecordData>'
 
