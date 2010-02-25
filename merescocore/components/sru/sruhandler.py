@@ -135,7 +135,7 @@ class SruHandler(Observable):
         yield '<srw:extraRecordData>'
         for schema in x_recordSchema:
             yield '<recordData recordSchema="%s">' % xmlEscape(schema)
-            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, recordPacking), x_recordSchema, recordId)
+            yield self._catchErrors(self._yieldRecordForRecordPacking(recordId, schema, recordPacking), schema, recordId)
             yield '</recordData>'
         yield '</srw:extraRecordData>'
 
