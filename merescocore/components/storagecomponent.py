@@ -78,7 +78,7 @@ class StorageComponent(object):
         return False, False
 
     def write(self, sink, id, partName):
-        stream = self._storage.get((id, partName))
+        stream = self._storage.getFile((id, partName))
         try:
             for line in stream:
                 sink.write(line)
@@ -86,13 +86,13 @@ class StorageComponent(object):
             stream.close()
 
     def yieldRecord(self, id, partName):
-        stream = self._storage.get((id, partName))
+        stream = self._storage.getFile((id, partName))
         for data in stream:
             yield data
         stream.close()
 
     def getStream(self, id, partName):
-        return self._storage.get((id, partName))
+        return self._storage.getFile((id, partName))
 
     def _listIdentifiers(self, identifierPrefix=''):
         lastIdentifier = None
