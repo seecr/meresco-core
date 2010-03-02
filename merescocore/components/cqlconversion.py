@@ -3,11 +3,12 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -51,6 +52,14 @@ class CqlSearchClauseConversion(CQLConversion):
     def _convertAst(self, ast):
         return CqlSearchClauseModification(ast, self._searchClauseFilter, self._modifier).visit()
 
+class CqlMultiSearchClauseConversion(CQLConversion):
+    def __init__(self, filtersAndModifiers):
+        CQLConversion.__init__(self, self._convertAst)
+        self._filtersAndModifiers = filtersAndModifiers
+
+    def _convertAst(self, ast):
+        return CqlMultiSearchClauseModification(ast, self._filtersAndModifiers).visit()
+
 class CqlSearchClauseModification(CqlIdentityVisitor):
     def __init__(self, ast, searchClauseFilter, modifier):
         CqlIdentityVisitor.__init__(self, ast)
@@ -61,3 +70,15 @@ class CqlSearchClauseModification(CqlIdentityVisitor):
         if self._searchClauseFilter(node):
             return self._modifier(node)
         return CqlIdentityVisitor.visitSEARCH_CLAUSE(self, node)
+
+class CqlMultiSearchClauseModification(CqlIdentityVisitor):
+    def __init__(self, ast, filtersAndModifiers):
+        CqlIdentityVisitor.__init__(self, ast)
+        self._filtersAndModifiers = filtersAndModifiers
+
+    def visitSEARCH_CLAUSE(self, node):
+        for searchClauseFilter, searchClauseModifier in self._filtersAndModifiers:
+            if searchClauseFilter(node):
+                return searchClauseModifier(node)
+        return CqlIdentityVisitor.visitSEARCH_CLAUSE(self, node)
+

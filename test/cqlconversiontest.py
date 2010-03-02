@@ -28,7 +28,7 @@
 ## end license ##
 
 from cq2utils import CQ2TestCase, CallTrace
-from merescocore.components import CQLConversion, CqlSearchClauseModification
+from merescocore.components import CQLConversion, CqlSearchClauseModification, CqlSearchClauseConversion, CqlMultiSearchClauseConversion
 from merescocore.framework import Observable, be
 from cqlparser import parseString, cql2string
 from cqlparser.cqlparser import SEARCH_TERM, SEARCH_CLAUSE, TERM
@@ -88,5 +88,48 @@ class CQLConversionTest(CQ2TestCase):
         visitor = CqlSearchClauseModification(ast, canModify, modify) 
         result = visitor.visit()
         self.assertEquals('field1=value1 AND newvalue', cql2string(result))
+
+
+    def testMultipleSearchClauseReplacements(self):
+        ast = parseString('term1 AND term2 AND term3')
+        #SEARCH_TERM(TERM('term'))
+        def canModifyTerm1(node):
+            return "SEARCH_CLAUSE(SEARCH_TERM(TERM('term1')))" == str(node)
+        def modifyTerm1(node):
+            return SEARCH_CLAUSE(SEARCH_TERM(TERM('termOne')))
+        def canModifyTerm3(node):
+            return "SEARCH_CLAUSE(SEARCH_TERM(TERM('term3')))" == str(node)
+        def modifyTerm3(node):
+            return SEARCH_CLAUSE(SEARCH_TERM(TERM('termThree')))
+        observerClassic = CallTrace('observerClassic')
+        observerNewStyle = CallTrace('observerNewStyle')
+        classic = be((Observable(),
+            (CqlSearchClauseConversion(canModifyTerm1,modifyTerm1),
+                (CqlSearchClauseConversion(canModifyTerm3,modifyTerm3),
+                    (observerClassic,)
+                )
+            )
+        ))
+        newStyle = be((Observable(),
+            (CqlMultiSearchClauseConversion([
+                    (canModifyTerm1, modifyTerm1),
+                    (canModifyTerm3, modifyTerm3)
+                ]),
+                (observerNewStyle,)
+            )
+        ))
+
+        classic.do.message(ast)
+        newStyle.do.message(ast)
+
+        self.assertEquals(['message'], [m.name for m in observerClassic.calledMethods])
+        resultClassic = observerClassic.calledMethods[0].args[0]
+        self.assertEquals(['message'], [m.name for m in observerNewStyle.calledMethods])
+        resultNewStyle = observerNewStyle.calledMethods[0].args[0]
+
+        self.assertEquals('termOne AND term2 AND termThree', cql2string(resultClassic))
+        self.assertEquals('termOne AND term2 AND termThree', cql2string(resultNewStyle))
+
+
 
 
