@@ -2,11 +2,12 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -27,9 +28,10 @@
 ## end license ##
 
 from cq2utils import CQ2TestCase, CallTrace
-from merescocore.components import CQLConversion
+from merescocore.components import CQLConversion, CqlSearchClauseModification
 from merescocore.framework import Observable, be
-from cqlparser import parseString
+from cqlparser import parseString, cql2string
+from cqlparser.cqlparser import SEARCH_TERM, SEARCH_CLAUSE, TERM
 
 
 class CQLConversionTest(CQ2TestCase):
@@ -57,3 +59,34 @@ class CQLConversionTest(CQ2TestCase):
         c = CQLConversion(converter.convert)
         self.assertEquals(parseString('ast'), c._convert(parseString('otherfield = value')))
         self.assertEquals(['convert'], [m.name for m in converter.calledMethods])
+
+    def testSearchClauseNoModification(self):
+        ast = parseString('field=value')
+        modifier = CallTrace('SearchClauseModifier')
+        visitor = CqlSearchClauseModification(ast, lambda node: False, modifier.modify)
+        result = visitor.visit()
+        self.assertEquals('field=value', cql2string(result))
+        self.assertEquals(0, len(modifier.calledMethods))
+
+    def testSearchClauseModifySimpleSearchClause(self):
+        ast = parseString('field=value')
+        def canModify(node):
+            self.assertEquals(['INDEX', 'RELATION', 'SEARCH_TERM'], [c.name() for c in node.children()])
+            return True
+        def modify(node):
+            return SEARCH_CLAUSE(SEARCH_TERM(TERM('newvalue')))
+        visitor = CqlSearchClauseModification(ast, canModify, modify) 
+        result = visitor.visit()
+        self.assertEquals('newvalue', cql2string(result))
+
+    def testReplaceSubtree(self):
+        ast = parseString('field1=value1 AND (field2=value2 OR (field3=value3))')
+        def canModify(node):
+            return ['CQL_QUERY'] == [c.name() for c in node.children()]
+        def modify(node):
+            return SEARCH_CLAUSE(SEARCH_TERM(TERM('newvalue')))
+        visitor = CqlSearchClauseModification(ast, canModify, modify) 
+        result = visitor.visit()
+        self.assertEquals('field1=value1 AND newvalue', cql2string(result))
+
+
