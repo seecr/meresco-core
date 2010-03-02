@@ -2,10 +2,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -28,6 +29,16 @@
 
 from cqlparser.cqlparser import RELATION, SEARCH_CLAUSE, CQL_QUERY, INDEX, COMPARITOR, SEARCH_TERM, TERM, BOOLEAN, SCOPED_CLAUSE
 from util import Util
+
+from merescocore.components import CqlSearchClauseConversion
+from convert import Convert
+
+def filterAndModifier(fieldname, nrOfDecimals, valueLength):
+    modifier = NumberComparitorModifier(fieldname=fieldname, convert=Convert(nrOfDecimals), valueLength=valueLength)
+    return modifier.canModify, modifier.modify
+
+def NumberComparitorCqlConversion(fieldname, nrOfDecimals, valueLength):
+    return CqlSearchClauseConversion(*filterAndModifier(fieldname, nrOfDecimals, valueLength))
 
 class NumberComparitorModifier(object):
     def __init__(self, fieldname, convert, valueLength):

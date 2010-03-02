@@ -2,10 +2,11 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -30,7 +31,7 @@ from cq2utils import CQ2TestCase, CallTrace
 from cqlparser import parseString
 from merescocomponents.facetindex import LuceneIndex, Document, CQL2LuceneQuery
 from merescocore.components.numeric.numbercomparitorfieldlet import NumberComparitorFieldlet
-from merescocore.components.numeric.numbercomparitorcqlconversion import NumberComparitorCqlConversion
+from merescocore.components.numeric import NumberComparitorCqlConversion
 from merescocore.components.numeric.convert import Convert
 from merescocore.framework import be, Observable
 
