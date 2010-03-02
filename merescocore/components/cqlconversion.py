@@ -43,15 +43,6 @@ class CQLConversion(Converter):
     def _convert(self, cqlAst):
         return self._astConversion(cqlAst)
 
-class CqlSearchClauseConversion(CQLConversion):
-    def __init__(self, searchClauseFilter, modifier):
-        CQLConversion.__init__(self, self._convertAst)
-        self._searchClauseFilter = searchClauseFilter
-        self._modifier = modifier
-
-    def _convertAst(self, ast):
-        return CqlSearchClauseModification(ast, self._searchClauseFilter, self._modifier).visit()
-
 class CqlMultiSearchClauseConversion(CQLConversion):
     def __init__(self, filtersAndModifiers):
         CQLConversion.__init__(self, self._convertAst)
@@ -60,17 +51,9 @@ class CqlMultiSearchClauseConversion(CQLConversion):
     def _convertAst(self, ast):
         return CqlMultiSearchClauseModification(ast, self._filtersAndModifiers).visit()
 
-class CqlSearchClauseModification(CqlIdentityVisitor):
-    def __init__(self, ast, searchClauseFilter, modifier):
-        CqlIdentityVisitor.__init__(self, ast)
-        self._searchClauseFilter = searchClauseFilter
-        self._modifier = modifier
-
-    def visitSEARCH_CLAUSE(self, node):
-        if self._searchClauseFilter(node):
-            return self._modifier(node)
-        return CqlIdentityVisitor.visitSEARCH_CLAUSE(self, node)
-
+def CqlSearchClauseConversion(searchClauseFilter, modifier):
+    return CqlMultiSearchClauseConversion([(searchClauseFilter, modifier)])
+    
 class CqlMultiSearchClauseModification(CqlIdentityVisitor):
     def __init__(self, ast, filtersAndModifiers):
         CqlIdentityVisitor.__init__(self, ast)

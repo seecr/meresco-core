@@ -28,7 +28,7 @@
 ## end license ##
 
 from cq2utils import CQ2TestCase, CallTrace
-from merescocore.components import CQLConversion, CqlSearchClauseModification, CqlSearchClauseConversion, CqlMultiSearchClauseConversion
+from merescocore.components import CQLConversion, CqlSearchClauseConversion, CqlMultiSearchClauseConversion
 from merescocore.framework import Observable, be
 from cqlparser import parseString, cql2string
 from cqlparser.cqlparser import SEARCH_TERM, SEARCH_CLAUSE, TERM
@@ -63,8 +63,8 @@ class CQLConversionTest(CQ2TestCase):
     def testSearchClauseNoModification(self):
         ast = parseString('field=value')
         modifier = CallTrace('SearchClauseModifier')
-        visitor = CqlSearchClauseModification(ast, lambda node: False, modifier.modify)
-        result = visitor.visit()
+        conversion = CqlSearchClauseConversion(lambda node: False, modifier.modify)
+        result = conversion._detectAndConvert(ast)
         self.assertEquals('field=value', cql2string(result))
         self.assertEquals(0, len(modifier.calledMethods))
 
@@ -75,8 +75,8 @@ class CQLConversionTest(CQ2TestCase):
             return True
         def modify(node):
             return SEARCH_CLAUSE(SEARCH_TERM(TERM('newvalue')))
-        visitor = CqlSearchClauseModification(ast, canModify, modify) 
-        result = visitor.visit()
+        conversion = CqlSearchClauseConversion(canModify, modify)
+        result = conversion._detectAndConvert(ast)
         self.assertEquals('newvalue', cql2string(result))
 
     def testReplaceSubtree(self):
@@ -85,8 +85,8 @@ class CQLConversionTest(CQ2TestCase):
             return ['CQL_QUERY'] == [c.name() for c in node.children()]
         def modify(node):
             return SEARCH_CLAUSE(SEARCH_TERM(TERM('newvalue')))
-        visitor = CqlSearchClauseModification(ast, canModify, modify) 
-        result = visitor.visit()
+        conversion = CqlSearchClauseConversion(canModify, modify)
+        result = conversion._detectAndConvert(ast)
         self.assertEquals('field1=value1 AND newvalue', cql2string(result))
 
 
