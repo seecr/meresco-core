@@ -89,6 +89,12 @@ class CQLConversionTest(CQ2TestCase):
         result = conversion._detectAndConvert(ast)
         self.assertEquals('field1=value1 AND newvalue', cql2string(result))
 
+    def testReplacementMustBeSearchClause(self):
+        ast = parseString('term')
+        canModify = lambda node: True
+        modify = lambda node: TERM('wrong')
+        conversion = CqlSearchClauseConversion(canModify, modify)
+        self.assertRaises(AssertionError, conversion._detectAndConvert, ast)
 
     def testMultipleSearchClauseReplacements(self):
         ast = parseString('term1 AND term2 AND term3')

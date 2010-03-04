@@ -30,7 +30,7 @@
 
 from xmlpump import Converter
 from cqlparser.cqlparser import CQLAbstractSyntaxNode
-from cqlparser import CqlIdentityVisitor
+from cqlparser import CqlVisitor
 
 class CQLConversion(Converter):
     def __init__(self, astConversion):
@@ -49,20 +49,24 @@ class CqlMultiSearchClauseConversion(CQLConversion):
         self._filtersAndModifiers = filtersAndModifiers
 
     def _convertAst(self, ast):
-        return CqlMultiSearchClauseModification(ast, self._filtersAndModifiers).visit()
+        CqlMultiSearchClauseModification(ast, self._filtersAndModifiers).visit()
+        return ast
 
 class CqlSearchClauseConversion(CqlMultiSearchClauseConversion):
     def __init__(self, searchClauseFilter, modifier):
         CqlMultiSearchClauseConversion.__init__(self, [(searchClauseFilter, modifier)])
     
-class CqlMultiSearchClauseModification(CqlIdentityVisitor):
+class CqlMultiSearchClauseModification(CqlVisitor):
     def __init__(self, ast, filtersAndModifiers):
-        CqlIdentityVisitor.__init__(self, ast)
+        CqlVisitor.__init__(self, ast)
         self._filtersAndModifiers = filtersAndModifiers
 
     def visitSEARCH_CLAUSE(self, node):
         for searchClauseFilter, searchClauseModifier in self._filtersAndModifiers:
             if searchClauseFilter(node):
-                return searchClauseModifier(node)
-        return CqlIdentityVisitor.visitSEARCH_CLAUSE(self, node)
+                newSearchClause = searchClauseModifier(node)
+                assert newSearchClause.name() == 'SEARCH_CLAUSE', 'Expected a SEARCH_CLAUSE'
+                node.replaceChildren(*newSearchClause.children())
+                return ()
+        return CqlVisitor.visitSEARCH_CLAUSE(self, node)
 
