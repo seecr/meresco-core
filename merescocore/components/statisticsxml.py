@@ -36,7 +36,7 @@ from merescocore.components.statistics import AggregatorException
 from weightless import compose
 from xml.sax.saxutils import escape as xmlEscape
 
-NAMESPACE="http://meresco.com/namespace/meresco/statistics"
+NAMESPACE="http://meresco.org/namespace/meresco/statistics"
 
 class StatisticsXml(object):
 

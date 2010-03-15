@@ -80,11 +80,11 @@ class Fields2XmlTest(CQ2TestCase):
         transactionDo = CallTrace('TransactionDo')
         transaction.do = transactionDo
         
-        f = Fields2XmlTx(transaction, 'extra', namespace="http://meresco.com/namespace/fields/extra")
+        f = Fields2XmlTx(transaction, 'extra', namespace="http://meresco.org/namespace/fields/extra")
         f.addField('key.sub', 'value')
         f.commit()
         
-        self.assertEquals(('identifier', 'extra', '<extra xmlns="http://meresco.com/namespace/fields/extra"><key><sub>value</sub></key></extra>'), transactionDo.calledMethods[0].args)
+        self.assertEquals(('identifier', 'extra', '<extra xmlns="http://meresco.org/namespace/fields/extra"><key><sub>value</sub></key></extra>'), transactionDo.calledMethods[0].args)
 
     def testIllegalPartNameRaisesException(self):
         for name in ['this is wrong', '%%@$%*^$^', '/slash', 'dot.dot']:

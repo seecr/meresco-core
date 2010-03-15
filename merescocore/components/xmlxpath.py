@@ -35,7 +35,7 @@ oftenUsedNamespaces = {
     'dc': "http://purl.org/dc/elements/1.1/",
     'oai': "http://www.openarchives.org/OAI/2.0/",
     'lom': "http://ltsc.ieee.org/xsd/LOM",
-    'meta': "http://meresco.com/namespace/harvester/meta",
+    'meta': "http://meresco.org/namespace/harvester/meta",
 }
 
 class XmlXPath(Observable):

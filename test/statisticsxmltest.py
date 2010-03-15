@@ -107,7 +107,7 @@ class StatisticsXmlTest(CQ2TestCase):
         stats = CallTrace('stats')
         value1 = 'value1'
         value2 = 'value2&two'
-        nsmap = {'stats': 'http://meresco.com/namespace/meresco/statistics'}
+        nsmap = {'stats': 'http://meresco.org/namespace/meresco/statistics'}
         stats.returnValues['get'] = {(value1,): 13, (value2,): 100}
         stats.returnValues['listKeys'] = [('key',)]
         xml = StatisticsXml(stats)
