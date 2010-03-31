@@ -33,7 +33,7 @@ from storagecomponent import StorageComponent, defaultSplit, defaultJoin
 from xmlpump import XmlParseAmara, XmlPrintAmara, Amara2Lxml, Lxml2Amara, XmlPrintLxml, XmlParseLxml
 from contextset import ContextSetList, ContextSet
 
-from fieldlets import RenameField, TransformFieldValue, FilterField
+from fieldlets import RenameField, TransformFieldValue, FilterField, AddField
 from fields2xml import Fields2XmlTx
 from crosswalk import Crosswalk
 from xsltcrosswalk import XsltCrosswalk

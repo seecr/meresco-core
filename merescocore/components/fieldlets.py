@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from merescocore.framework import Transparant
+from merescocore.framework import Transparant, Observable
 
 class _Fieldlet(Transparant):
     def __init__(self, method):
@@ -36,14 +36,24 @@ class _Fieldlet(Transparant):
 class FilterField(_Fieldlet):
     def addField(self, name, value):
         if self._method(name):
-            self.do.addField(name, value)
+            self.do.addField(name=name, value=value)
 
 class RenameField(_Fieldlet):
     def addField(self, name, value):
-        self.do.addField(self._method(name), value)
+        self.do.addField(name=self._method(name), value=value)
 
 class TransformFieldValue(_Fieldlet):
     def addField(self, name, value):
         newValue = self._method(value)
         if newValue != None:
-            self.do.addField(name, newValue)
+            self.do.addField(name=name, value=newValue)
+
+class AddField(Observable):
+    def __init__(self, name, value):
+        Observable.__init__(self)
+        self._name = name
+        self._value = value
+
+    def add(self, *args, **kwargs):
+        self.do.addField(name=self._name, value=self._value)
+
