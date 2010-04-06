@@ -3,7 +3,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -118,10 +118,11 @@ class SruHandlerTest(CQ2TestCase):
         sruTermDrilldown = SRUTermDrilldown()
         observer = CallTrace("Drilldown")
         observer.returnValues['docsetFromQuery'] = 'docset'
-        observer.returnValues['drilldown'] = [
-                ('field0', [('value0_0', 14)]),
-                ('field1', [('value1_0', 13), ('value1_1', 11)]),
-                ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+        observer.returnValues['drilldown'] = iter([
+                ('field0', iter([('value0_0', 14)])),
+                ('field1', iter([('value1_0', 13), ('value1_1', 11)])),
+                ('field2', iter([('value2_0', 3), ('value2_1', 2), ('value2_2', 1)]))
+            ])
         sruTermDrilldown.addObserver(observer)
         sruHandler.addObserver(sruTermDrilldown)
         result = "".join(list(sruHandler._writeExtraResponseData(cqlAbstractSyntaxTree=None, **arguments)))

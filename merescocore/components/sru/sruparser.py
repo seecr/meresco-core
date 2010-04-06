@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -34,6 +34,9 @@ from cqlparser import parseString, CQLParseException
 
 from weightless import compose
 
+from diagnostic import DIAGNOSTIC
+from diagnostic import GENERAL_SYSTEM_ERROR, SYSTEM_TEMPORARILY_UNAVAILABLE, UNSUPPORTED_OPERATION, UNSUPPORTED_VERSION, UNSUPPORTED_PARAMETER_VALUE, MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, QUERY_FEATURE_UNSUPPORTED
+
 VERSION = '1.1'
 DEFAULT_MAXIMUMRECORDS = '10'
 
@@ -56,25 +59,8 @@ RESPONSE_HEADER = """<srw:searchRetrieveResponse xmlns:srw="http://www.loc.gov/z
 
 RESPONSE_FOOTER = """</srw:searchRetrieveResponse>"""
 
-
-DIAGNOSTIC = """<diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
-        <uri>info://srw/diagnostics/1/%s</uri>
-        <details>%s</details>
-        <message>%s</message>
-    </diagnostic>"""
-    
 DIAGNOSTICS = """%s%s%s<srw:diagnostics>%s</srw:diagnostics>%s""" % (RESPONSE_HEADER, '<srw:version>%s</srw:version>' % VERSION, '<srw:numberOfRecords>0</srw:numberOfRecords>', DIAGNOSTIC, RESPONSE_FOOTER)
 
-
-
-GENERAL_SYSTEM_ERROR = [1, "General System Error"]
-SYSTEM_TEMPORARILY_UNAVAILABLE = [2, "System Temporarily Unavailable"]
-UNSUPPORTED_OPERATION = [4, "Unsupported Operation"]
-UNSUPPORTED_VERSION = [5, "Unsupported Version"]
-UNSUPPORTED_PARAMETER_VALUE = [6, "Unsupported Parameter Value"]
-MANDATORY_PARAMETER_NOT_SUPPLIED = [7, "Mandatory Parameter Not Supplied"]
-UNSUPPORTED_PARAMETER = [8, "Unsupported Parameter"]
-QUERY_FEATURE_UNSUPPORTED = [48, "Query Feature Unsupported"]
 
 class SruException(Exception):
 

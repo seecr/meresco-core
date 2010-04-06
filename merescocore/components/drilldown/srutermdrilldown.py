@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -30,6 +30,8 @@ from merescocore.framework import Observable, decorateWith
 from drilldown import DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
 from xml.sax.saxutils import escape as xmlEscape, quoteattr
 
+from merescocore.components.sru.diagnostic import generalSystemError
+
 class SRUTermDrilldown(Observable):
     def __init__(self, sortedByTermCount=False):
         Observable.__init__(self)
@@ -55,24 +57,28 @@ class SRUTermDrilldown(Observable):
             self.any.docsetFromQuery(cqlAbstractSyntaxTree),
             fieldMaxTuples)
 
-        tagStack = []
+        yield self._termDrilldown(drilldownResults)
 
-        yield "<dd:term-drilldown>"
-        tagStack.append( "</dd:term-drilldown>")
+    @decorateWith("<dd:term-drilldown>", "</dd:term-drilldown>")
+    def _termDrilldown(self, drilldownResults):
         try:
             for fieldname, termCounts in drilldownResults:
-                yield '<dd:navigator name=%s>' % quoteattr(fieldname)
-                tagStack.append("</dd:navigator>")
-                for term, count in termCounts:
-                    yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), xmlEscape(str(term)))
-                tagStack.pop()
-                yield '</dd:navigator>'
+                yield self._dd_navigator(fieldname, termCounts)
         except Exception, e:
-            for tag in reversed(tagStack):
-                yield tag
-            yield DRILLDOWN_FOOTER
-            raise e
-        yield "</dd:term-drilldown>"
+            yield generalSystemError(xmlEscape(e.message))
+            return
+
+    def _dd_navigator(self, fieldname, termCounts):
+        try:
+            firstTerm, firstCount = termCounts.next()
+            yield '<dd:navigator name=%s>' % quoteattr(fieldname)
+            yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(firstCount)), xmlEscape(str(firstTerm)))
+            for term, count in termCounts:
+                yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), xmlEscape(str(term)))
+            yield '</dd:navigator>'
+        except Exception, e:
+            yield generalSystemError(xmlEscape(e.message))
+            return
         
     @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)
     def echoedExtraRequestData(self, x_term_drilldown=None, **kwargs):

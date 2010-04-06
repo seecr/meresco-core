@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -29,6 +29,8 @@
 from cq2utils import CQ2TestCase, CallTrace
 from weightless import compose
 
+from merescocore.components.sru.diagnostic import generalSystemError
+
 from merescocore.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
 
 
@@ -46,7 +48,7 @@ class SRUTermDrilldownTest(CQ2TestCase):
         sruTermDrilldown.addObserver(observer)
         cqlAbstractSyntaxTree = 'cqlAbstractSyntaxTree'
 
-        result = sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree, x_term_drilldown=["field0:1,field1:2,field2"])
+        result = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree, x_term_drilldown=["field0:1,field1:2,field2"]))
         self.assertEqualsWS(DRILLDOWN_HEADER + """<dd:term-drilldown><dd:navigator name="field0">
     <dd:item count="14">value0_0</dd:item>
 </dd:navigator>
@@ -73,20 +75,19 @@ class SRUTermDrilldownTest(CQ2TestCase):
         sruTermDrilldown.addObserver(observer)
 
         cqlAbstractSyntaxTree = 'ignored'
-        result = ""
-        try:
-            composedGenerator = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree    , x_term_drilldown=["fieldignored:1"]))
-            for partial in composedGenerator:
-                result += partial
-        except Exception, e:
-            self.assertEquals("Some Exception", str(e))
+        composedGenerator = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree    , x_term_drilldown=["fieldignored:1"]))
+        result = "".join(composedGenerator)
 
-        self.assertEqualsWS('''<dd:drilldown
-        xmlns:dd="http://meresco.org/namespace/drilldown"
-        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://meresco.org/namespace/drilldown http://meresco.org/files/xsd/drilldown-20070730.xsd">
-            <dd:term-drilldown></dd:term-drilldown>
-        </dd:drilldown>''', result)
+        expected = DRILLDOWN_HEADER + """
+            <dd:term-drilldown>
+                <diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
+                    <uri>info://srw/diagnostics/1/1</uri>
+                    <details>General System Error</details>
+                    <message>Some Exception</message>
+                </diagnostic>
+            </dd:term-drilldown>
+        """ + DRILLDOWN_FOOTER
+        self.assertEqualsWS(expected, result)
 
     def testDrilldownInternalRaisesExceptionNotTheFirst(self):
         sruTermDrilldown = SRUTermDrilldown()
@@ -102,19 +103,23 @@ class SRUTermDrilldownTest(CQ2TestCase):
         sruTermDrilldown.addObserver(observer)
 
         cqlAbstractSyntaxTree = 'ignored'
-        result = ""
-        try:
-            composedGenerator = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree    , x_term_drilldown=["fieldignored:1"]))
-            for partial in composedGenerator:
-                result += partial
-        except Exception, e:
-            self.assertEquals("Some Exception", str(e))
 
-        self.assertEqualsWS(DRILLDOWN_HEADER + """<dd:term-drilldown><dd:navigator name="field0">
-    <dd:item count="14">value0_0</dd:item>
-</dd:navigator>
-<dd:navigator name="field1">
-</dd:navigator></dd:term-drilldown></dd:drilldown>""", result)
+        composedGenerator = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree    , x_term_drilldown=["fieldignored:1"]))
+        result = "".join(composedGenerator)
+
+        expected = DRILLDOWN_HEADER + """
+            <dd:term-drilldown>
+                <dd:navigator name="field0">
+                    <dd:item count="14">value0_0</dd:item>
+                </dd:navigator>
+                <diagnostic xmlns="http://www.loc.gov/zing/srw/diagnostic/">
+                    <uri>info://srw/diagnostics/1/1</uri>
+                    <details>General System Error</details>
+                    <message>Some Exception</message>
+                </diagnostic>
+            </dd:term-drilldown>
+        """ + DRILLDOWN_FOOTER
+        self.assertEqualsWS(expected, result)
 
 
     def testEchoedExtraRequestData(self):
