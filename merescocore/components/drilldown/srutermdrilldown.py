@@ -54,12 +54,24 @@ class SRUTermDrilldown(Observable):
         drilldownResults = self.any.drilldown(
             self.any.docsetFromQuery(cqlAbstractSyntaxTree),
             fieldMaxTuples)
+
+        tagStack = []
+
         yield "<dd:term-drilldown>"
-        for fieldname, termCounts in drilldownResults:
-            yield '<dd:navigator name=%s>' % quoteattr(fieldname)
-            for term, count in termCounts:
-                yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), xmlEscape(str(term)))
-            yield '</dd:navigator>'
+        tagStack.append( "</dd:term-drilldown>")
+        try:
+            for fieldname, termCounts in drilldownResults:
+                yield '<dd:navigator name=%s>' % quoteattr(fieldname)
+                tagStack.append("</dd:navigator>")
+                for term, count in termCounts:
+                    yield '<dd:item count=%s>%s</dd:item>' % (quoteattr(str(count)), xmlEscape(str(term)))
+                tagStack.pop()
+                yield '</dd:navigator>'
+        except Exception, e:
+            for tag in reversed(tagStack):
+                yield tag
+            yield DRILLDOWN_FOOTER
+            raise e
         yield "</dd:term-drilldown>"
         
     @decorateWith(DRILLDOWN_HEADER, DRILLDOWN_FOOTER)

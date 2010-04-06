@@ -27,6 +27,7 @@
 ## end license ##
 
 from cq2utils import CQ2TestCase, CallTrace
+from weightless import compose
 
 from merescocore.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
 
@@ -37,10 +38,10 @@ class SRUTermDrilldownTest(CQ2TestCase):
 
         observer = CallTrace("Drilldown")
         observer.returnValues['docsetFromQuery'] = 'docset'
-        observer.returnValues['drilldown'] = [
-                ('field0', [('value0_0', 14)]),
-                ('field1', [('value1_0', 13), ('value1_1', 11)]),
-                ('field2', [('value2_0', 3), ('value2_1', 2), ('value2_2', 1)])]
+        observer.returnValues['drilldown'] = iter([
+                ('field0', iter([('value0_0', 14)])),
+                ('field1', iter([('value1_0', 13), ('value1_1', 11)])),
+                ('field2', iter([('value2_0', 3), ('value2_1', 2), ('value2_2', 1)]))])
 
         sruTermDrilldown.addObserver(observer)
         cqlAbstractSyntaxTree = 'cqlAbstractSyntaxTree'
@@ -61,6 +62,59 @@ class SRUTermDrilldownTest(CQ2TestCase):
         self.assertEquals(['docsetFromQuery', 'drilldown'], [m.name for m in observer.calledMethods])
         self.assertEquals('cqlAbstractSyntaxTree', observer.calledMethods[0].args[0])
         self.assertEquals([('field0', 1, False), ('field1', 2, False), ('field2', DEFAULT_MAXIMUM_TERMS, False)], list(observer.calledMethods[1].args[1]))
+
+    def testDrilldownCallRaisesAnError(self):
+        sruTermDrilldown = SRUTermDrilldown()
+        observer = CallTrace("Drilldown")
+        def mockDrilldown(*args):
+            raise Exception("Some Exception")
+            yield "Some thing"
+        observer.methods["drilldown"] = mockDrilldown
+        sruTermDrilldown.addObserver(observer)
+
+        cqlAbstractSyntaxTree = 'ignored'
+        result = ""
+        try:
+            composedGenerator = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree    , x_term_drilldown=["fieldignored:1"]))
+            for partial in composedGenerator:
+                result += partial
+        except Exception, e:
+            self.assertEquals("Some Exception", str(e))
+
+        self.assertEqualsWS('''<dd:drilldown
+        xmlns:dd="http://meresco.org/namespace/drilldown"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://meresco.org/namespace/drilldown http://meresco.org/files/xsd/drilldown-20070730.xsd">
+            <dd:term-drilldown></dd:term-drilldown>
+        </dd:drilldown>''', result)
+
+    def testDrilldownInternalRaisesExceptionNotTheFirst(self):
+        sruTermDrilldown = SRUTermDrilldown()
+        observer = CallTrace("Drilldown")
+        def raiser(*args):
+            raise Exception("Some Exception")
+            yield
+        drilldownResults = iter([
+                ('field0', iter([('value0_0', 14)])),
+                ('field1', raiser()),
+            ])
+        observer.returnValues["drilldown"] = drilldownResults
+        sruTermDrilldown.addObserver(observer)
+
+        cqlAbstractSyntaxTree = 'ignored'
+        result = ""
+        try:
+            composedGenerator = compose(sruTermDrilldown.extraResponseData(cqlAbstractSyntaxTree    , x_term_drilldown=["fieldignored:1"]))
+            for partial in composedGenerator:
+                result += partial
+        except Exception, e:
+            self.assertEquals("Some Exception", str(e))
+
+        self.assertEqualsWS(DRILLDOWN_HEADER + """<dd:term-drilldown><dd:navigator name="field0">
+    <dd:item count="14">value0_0</dd:item>
+</dd:navigator>
+<dd:navigator name="field1">
+</dd:navigator></dd:term-drilldown></dd:drilldown>""", result)
 
 
     def testEchoedExtraRequestData(self):
