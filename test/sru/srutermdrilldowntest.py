@@ -29,9 +29,9 @@
 from cq2utils import CQ2TestCase, CallTrace
 from weightless import compose
 
-from merescocore.components.sru.diagnostic import generalSystemError
+from meresco.components.sru.diagnostic import generalSystemError
 
-from merescocore.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
+from meresco.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
 
 
 class SRUTermDrilldownTest(CQ2TestCase):

@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -31,10 +31,10 @@ from cq2utils.cq2testcase import CQ2TestCase
 
 from lxml.etree import parse, _ElementTree
 
-from merescocore.components.xml_generic.validate import Validate, ValidateException
-from merescocore.framework import Observable
+from meresco.components.xml_generic.validate import Validate, ValidateException
+from meresco.core import Observable
 
-from merescocore.components.xml_generic import  __file__ as xml_genericpath
+from meresco.components.xml_generic import  __file__ as xml_genericpath
 from os.path import join, dirname, abspath
 
 class ValidateTest(CQ2TestCase):

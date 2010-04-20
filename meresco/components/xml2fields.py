@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from merescocore.framework import Observable
+from meresco.core import Observable
 from warnings import warn
 from lxml.etree import _Element
 

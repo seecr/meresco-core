@@ -4,7 +4,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -38,7 +38,7 @@ def convert_pickle_file(pickle_file):
         return
         
     contents = open(pickle_file).read()
-    converted = contents.replace('meresco.components.statistics', 'merescocore.components.statistics')
+    converted = contents.replace('meresco.components.statistics', 'meresco.components.statistics')
     
     fp = open(target, 'wb')
     try:

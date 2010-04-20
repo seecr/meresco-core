@@ -26,7 +26,7 @@
 #
 ## end license ##
 
-from merescocore.framework import Transparant, Observable
+from meresco.core import Transparant, Observable
 
 class _Fieldlet(Transparant):
     def __init__(self, method):

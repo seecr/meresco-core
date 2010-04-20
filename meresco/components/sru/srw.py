@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -30,8 +30,8 @@ from xml.sax.saxutils import escape as xmlEscape
 from amara.binderytools import bind_string
 
 from cq2utils.amaraextension import getElements
-from merescocore.framework import Observable
-from merescocore.components.http import utils as httputils
+from meresco.core import Observable
+from meresco.components.http import utils as httputils
 
 from weightless import compose
 
@@ -43,8 +43,8 @@ SOAP_FOOTER = """</SOAP:Body></SOAP:Envelope>"""
 
 SOAP = SOAP_HEADER + "%s" + SOAP_FOOTER
 
-from merescocore.components.sru import SruParser
-from merescocore.components.sru.sruparser import SruException, DIAGNOSTICS, UNSUPPORTED_PARAMETER, UNSUPPORTED_OPERATION
+from meresco.components.sru import SruParser
+from meresco.components.sru.sruparser import SruException, DIAGNOSTICS, UNSUPPORTED_PARAMETER, UNSUPPORTED_OPERATION
 
 class SoapException(Exception):
 

@@ -33,7 +33,7 @@ from os.path import isfile, join
 from inspect import currentframe
 from time import mktime, gmtime
 import operator
-from merescocore.framework import Observable
+from meresco.core import Observable
 from callstackscope import callstackscope
 
 snapshotFilename = 'snapshot'

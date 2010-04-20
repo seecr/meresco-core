@@ -30,10 +30,10 @@
 from cq2utils import CQ2TestCase, CallTrace
 from cqlparser import parseString
 from merescocomponents.facetindex import LuceneIndex, Document, CQL2LuceneQuery
-from merescocore.components.numeric.numbercomparitorfieldlet import NumberComparitorFieldlet
-from merescocore.components.numeric import NumberComparitorCqlConversion
-from merescocore.components.numeric.convert import Convert
-from merescocore.framework import be, Observable
+from meresco.components.numeric.numbercomparitorfieldlet import NumberComparitorFieldlet
+from meresco.components.numeric import NumberComparitorCqlConversion
+from meresco.components.numeric.convert import Convert
+from meresco.core import be, Observable
 
 unqualifiedTermFields = [('field',1.0)]
 

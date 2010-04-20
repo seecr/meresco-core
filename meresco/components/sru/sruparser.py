@@ -27,8 +27,8 @@
 ## end license ##
 from xml.sax.saxutils import escape as xmlEscape
 
-from merescocore.framework import Observable
-from merescocore.components.http import utils as httputils
+from meresco.core import Observable
+from meresco.components.http import utils as httputils
 
 from cqlparser import parseString, CQLParseException
 

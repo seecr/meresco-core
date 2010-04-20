@@ -27,12 +27,12 @@
 #
 ## end license ##
 
-from merescocore.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
+from meresco.components.sru.sruparser import MANDATORY_PARAMETER_NOT_SUPPLIED, UNSUPPORTED_PARAMETER, UNSUPPORTED_VERSION, UNSUPPORTED_OPERATION, UNSUPPORTED_PARAMETER_VALUE, QUERY_FEATURE_UNSUPPORTED, SruException
 
-from merescocore.components.sru import SruHandler, SruParser
-from merescocore.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER
-from merescocore.components.xml_generic.validate import assertValid
-from merescocore.components.xml_generic import schemasPath
+from meresco.components.sru import SruHandler, SruParser
+from meresco.components.drilldown import SRUTermDrilldown, DRILLDOWN_HEADER, DRILLDOWN_FOOTER
+from meresco.components.xml_generic.validate import assertValid
+from meresco.components.xml_generic import schemasPath
 
 from os.path import join
 

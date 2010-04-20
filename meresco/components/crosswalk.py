@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -32,7 +32,7 @@ from cq2utils.xmlutils import findNamespaces
 from glob import glob
 from os.path import basename, dirname, abspath, join
 
-from merescocore.framework import Observable
+from meresco.core import Observable
 
 EXTENSION = '.rules'
 

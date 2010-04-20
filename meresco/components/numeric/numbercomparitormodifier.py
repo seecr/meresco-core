@@ -30,7 +30,7 @@
 from cqlparser.cqlparser import RELATION, SEARCH_CLAUSE, CQL_QUERY, INDEX, COMPARITOR, SEARCH_TERM, TERM, BOOLEAN, SCOPED_CLAUSE
 from util import Util
 
-from merescocore.components import CqlSearchClauseConversion
+from meresco.components import CqlSearchClauseConversion
 from convert import Convert
 
 def filterAndModifier(fieldname, nrOfDecimals, valueLength):

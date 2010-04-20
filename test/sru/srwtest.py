@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -28,8 +28,8 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
-from merescocore.components.sru import SruHandler, SruParser
-from merescocore.components.sru.srw import Srw
+from meresco.components.sru import SruHandler, SruParser
+from meresco.components.sru.srw import Srw
 
 httpResponse = """HTTP/1.0 200 OK
 Content-Type: text/xml; charset=utf-8

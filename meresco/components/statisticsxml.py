@@ -32,7 +32,7 @@ from urlparse import urlsplit
 
 from time import mktime, gmtime
 
-from merescocore.components.statistics import AggregatorException
+from meresco.components.statistics import AggregatorException
 from weightless import compose
 from xml.sax.saxutils import escape as xmlEscape
 

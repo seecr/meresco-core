@@ -33,8 +33,8 @@ from random import randint
 from cq2utils import CQ2TestCase
 from os import makedirs, rename
 from os.path import isfile, join
-from merescocore.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename, log
-from merescocore.framework import Observable
+from meresco.components.statistics import Statistics, Logger, combinations, Aggregator, AggregatorException, Top100s, snapshotFilename, log
+from meresco.core import Observable
 
 class StatisticsTest(CQ2TestCase):
 

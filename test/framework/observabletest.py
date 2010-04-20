@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -30,8 +30,8 @@ import sys
 from traceback import format_tb
 from types import GeneratorType
 
-from merescocore.framework import Observable, TransactionScope, Transparant
-from merescocore.framework.observable import be
+from meresco.core import Observable, TransactionScope, Transparant
+from meresco.core.observable import be
 from cq2utils.calltrace import CallTrace
 import unittest
 

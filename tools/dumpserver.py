@@ -3,7 +3,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -38,9 +38,9 @@ from weightless import Reactor
 from sys import stdout
 from os.path import abspath, dirname, join, isdir, basename
 from os import makedirs
-from merescocore.components.http import ObservableHttpServer
-from merescocore.components.sru.srurecordupdate import RESPONSE_XML, DIAGNOSTIC_XML, escapeXml, bind_string
-from merescocore.framework import Observable, be
+from meresco.components.http import ObservableHttpServer
+from meresco.components.sru.srurecordupdate import RESPONSE_XML, DIAGNOSTIC_XML, escapeXml, bind_string
+from meresco.core import Observable, be
 from re import compile
 from traceback import format_exc
 

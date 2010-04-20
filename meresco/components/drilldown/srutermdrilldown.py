@@ -26,11 +26,11 @@
 #
 ## end license ##
 
-from merescocore.framework import Observable, decorateWith
+from meresco.core import Observable, decorateWith
 from drilldown import DRILLDOWN_HEADER, DRILLDOWN_FOOTER, DEFAULT_MAXIMUM_TERMS
 from xml.sax.saxutils import escape as xmlEscape, quoteattr
 
-from merescocore.components.sru.diagnostic import generalSystemError
+from meresco.components.sru.diagnostic import generalSystemError
 
 class SRUTermDrilldown(Observable):
     def __init__(self, sortedByTermCount=False):

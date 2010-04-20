@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -30,18 +30,18 @@ from distutils.core import setup
 setup(
     name='meresco-core',
     packages=[
-        'merescocore',
-        'merescocore.components',
-        'merescocore.components.drilldown',
-        'merescocore.components.http',
-        'merescocore.components.numeric',
-        'merescocore.components.sru',
-        'merescocore.components.xml_generic',
-        'merescocore.framework',
+        'meresco',
+        'meresco.components',
+        'meresco.components.drilldown',
+        'meresco.components.http',
+        'meresco.components.numeric',
+        'meresco.components.sru',
+        'meresco.components.xml_generic',
+        'meresco.core',
     ],
     package_data={
-        'merescocore.components': ['rules/*.rules'],
-        'merescocore.components.xml_generic': [
+        'meresco.components': ['rules/*.rules'],
+        'meresco.components.xml_generic': [
             'schemas/*',
             'schemas-lom/*.xsd',
             'schemas-lom/common/*',

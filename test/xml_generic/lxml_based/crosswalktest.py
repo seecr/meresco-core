@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -36,9 +36,9 @@ from difflib import unified_diff
 from re import match
 from os import remove
 
-from merescocore.components import Crosswalk
-from merescocore.components.crosswalk import rewriteRules
-from merescocore.components.xml_generic import Validate, __file__ as xml_genericpath
+from meresco.components import Crosswalk
+from meresco.components.crosswalk import rewriteRules
+from meresco.components.xml_generic import Validate, __file__ as xml_genericpath
 from os.path import join, dirname, abspath
 
 def readRecord(name):

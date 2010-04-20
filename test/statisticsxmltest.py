@@ -28,9 +28,9 @@
 #
 ## end license ##
 from cq2utils import CQ2TestCase, CallTrace
-from merescocore.components.statisticsxml import StatisticsXml
-from merescocore.components.statistics import Statistics
-from merescocore.components.http.utils import CRLF
+from meresco.components.statisticsxml import StatisticsXml
+from meresco.components.statistics import Statistics
+from meresco.components.http.utils import CRLF
 from StringIO import StringIO
 from lxml.etree import parse
 

@@ -28,8 +28,8 @@ from cq2utils import CallTrace
 from StringIO import StringIO
 from weightless import compose
 
-from merescocore.components.http import ApacheLogger
-from merescocore.components.http.utils import okPlainText
+from meresco.components.http import ApacheLogger
+from meresco.components.http.utils import okPlainText
 
 class ApacheLoggerTest(TestCase):
     def testLogHandleRequest(self):

@@ -2,7 +2,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -28,8 +28,8 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 
-from merescocore.components import Fields2XmlTx
-from merescocore.components.fields2xml import Fields2XmlException, generateXml
+from meresco.components import Fields2XmlTx
+from meresco.components.fields2xml import Fields2XmlException, generateXml
 from amara.binderytools import bind_string
 
 class Fields2XmlTest(CQ2TestCase):

@@ -28,7 +28,7 @@
 #
 ## end license ##
 
-from merescocore.components.statistics import log
+from meresco.components.statistics import log
 from handlerequestfilter import HandleRequestFilter
 
 class PathFilter(HandleRequestFilter):
