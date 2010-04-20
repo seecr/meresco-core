@@ -1,9 +1,8 @@
-# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -26,38 +25,17 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from merescocore.framework import Observable
-from callstackscope import callstackscope
 
-class ResourceManager(Observable):
+from sys import getdefaultencoding as _getdefaultencoding
+from locale import getdefaultlocale, _parse_localename
+assert _getdefaultencoding() == 'utf-8', 'Please ensure that de default encoding is utf-8'
+assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
 
-    def __init__(self, transactionName, resourceTxFactory):
-        Observable.__init__(self)
-        self._resourceTxFactory = resourceTxFactory
-        self._transactionName = transactionName
-        self.txs = {}
-
-    def begin(self):
-        tx = self.ctx.tx
-        if tx.name != self._transactionName:
-            return
-        resourceTx = self._resourceTxFactory(self)
-        tx.join(self)
-        self.txs[tx.getId()] = resourceTx
-
-    def unknown(self, message, *args, **kwargs):
-        tx = self.ctx.tx
-        method = getattr(self.txs[tx.getId()], message, None)
-        if method != None:
-            yield method(*args, **kwargs)
-
-    def commit(self):
-        tx = self.ctx.tx
-        resourceTx = self.txs.pop(tx.getId())
-        resourceTx.commit()
-
-    def rollback(self):
-        tx = self.ctx.tx
-        resourceTx = self.txs.pop(tx.getId())
-        resourceTx.rollback()
-
+from observable import Observable, Transparant, be
+from observer import ObserverFunction
+from generatorutils import decorate, decorateWith
+from helix import findHelix, link
+from transaction import TransactionException, Transaction
+from transactionscope import TransactionScope
+from resourcemanager import ResourceManager
+from batchtransactionscope import BatchTransactionScope

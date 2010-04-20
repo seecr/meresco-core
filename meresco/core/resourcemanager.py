@@ -3,7 +3,7 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
@@ -26,24 +26,38 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from merescocore.framework import Observable
-from transaction import TransactionException, Transaction
+from observable import Observable
+from callstackscope import callstackscope
 
-class TransactionScope(Observable):
-    def __init__(self, transactionName):
+class ResourceManager(Observable):
+
+    def __init__(self, transactionName, resourceTxFactory):
         Observable.__init__(self)
+        self._resourceTxFactory = resourceTxFactory
         self._transactionName = transactionName
+        self.txs = {}
+
+    def begin(self):
+        tx = self.ctx.tx
+        if tx.name != self._transactionName:
+            return
+        resourceTx = self._resourceTxFactory(self)
+        tx.join(self)
+        self.txs[tx.getId()] = resourceTx
 
     def unknown(self, message, *args, **kwargs):
-        __callstack_var_tx__ = Transaction(self._transactionName)
-        self.once.begin()
-        try:
-            results = self.all.unknown(message, *args, **kwargs)
-            for result in results:
-                yield result
-            __callstack_var_tx__.commit()
-        except TransactionException:
-            __callstack_var_tx__.rollback()
-        finally:
-            results = None
+        tx = self.ctx.tx
+        method = getattr(self.txs[tx.getId()], message, None)
+        if method != None:
+            yield method(*args, **kwargs)
+
+    def commit(self):
+        tx = self.ctx.tx
+        resourceTx = self.txs.pop(tx.getId())
+        resourceTx.commit()
+
+    def rollback(self):
+        tx = self.ctx.tx
+        resourceTx = self.txs.pop(tx.getId())
+        resourceTx.rollback()
 
