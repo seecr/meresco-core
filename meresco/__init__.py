@@ -25,4 +25,5 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-
+from pkgutil import extend_path
+__path__ = extend_path(__path__, __name__)

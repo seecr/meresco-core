@@ -41,67 +41,11 @@ sysPath.insert(0, "..")                            #DO_NOT_DISTRIBUTE
 
 import unittest
 
-from contextsettest import ContextSetTest
-from cqlconversiontest import CQLConversionTest
-from fieldletstest import FieldletsTest
-from fields2xmltest import Fields2XmlTest
-from logcomponenttest import LogComponentTest
-from logobservertest import LogObserverTest
-from parsecqltest import ParseCQLTest
-from storagecomponenttest import StorageComponentTest
-from renamecqlindextest import RenameCqlIndexTest
-from requestscopetest import RequestScopeTest
-from rsstest import RssTest
-from rssitemtest import RssItemTest
-from statisticstest import StatisticsTest
-from statisticsxmltest import StatisticsXmlTest
-from tokenizefieldlettest import TokenizeFieldletTest
-from venturitest import VenturiTest
-from xmlpumptest import XmlPumpTest
-from xml2fieldstest import Xml2FieldsTest
-from xpath2fieldtest import XPath2FieldTest
-from reindextest import ReindexTest
-
-from framework.helixtest import HelixTest
-from framework.generatorutilstest import GeneratorUtilsTest
-from framework.observabletest import ObservableTest
-from framework.transactiontest import TransactionTest
-from framework.batchtransactionscopetest import BatchTransactionScopeTest
-
-from http.apacheloggertest import ApacheLoggerTest
-from http.basicauthenticationtest import BasicAuthenticationTest
-from http.fileservertest import FileServerTest
-from http.pathfiltertest import PathFilterTest
-from http.handlerequestfiltertest import HandleRequestFilterTest
-from http.pathrenametest import PathRenameTest
-from http.sessionhandlertest import SessionHandlerTest
-from http.timeddictionarytest import TimedDictionaryTest
-from http.argumentsinsessiontest import ArgumentsInSessionTest
-from http.observablehttpservertest import ObservableHttpServerTest
-from http.ipfiltertest import IpFilterTest
-from http.utilstest import UtilsTest
-
-from numeric.converttest import ConvertTest
-from numeric.numbercomparitorfieldlettest import NumberComparitorFieldletTest
-from numeric.numbercomparitormodifiertest import NumberComparitorModifierTest
-try:
-    from numeric.numbercomparitortest import NumberComparitorTest
-except ImportError:
-    print 'SKIPPING NumberComparitorTest due to missing dependency. (meresco-components)'
-
-from sru.srufielddrilldowntest import SRUFieldDrilldownTest
-from sru.srutermdrilldowntest import SRUTermDrilldownTest
-from sru.srurecordupdatetest import SRURecordUpdateTest
-from sru.sruparsertest import SruParserTest
-from sru.sruhandlertest import SruHandlerTest
-from sru.srwtest import SrwTest
-
-from xml_generic.lxml_based.crosswalktest import CrosswalkTest
-from xml_generic.lxml_based.xsltcrosswalktest import XsltCrosswalkTest
-from xml_generic.lxml_based.xmlxpathtest import XmlXPathTest
-from xml_generic.lxml_based.xmlcomposetest import XmlComposeTest
-from xml_generic.validatetest import ValidateTest
-
+from helixtest import HelixTest
+from generatorutilstest import GeneratorUtilsTest
+from observabletest import ObservableTest
+from transactiontest import TransactionTest
+from batchtransactionscopetest import BatchTransactionScopeTest
 
 if __name__ == '__main__':
     unittest.main()

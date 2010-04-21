@@ -1,8 +1,0 @@
-extend('ims-generic')
-
-inputNamespace='http://lorenet.org'
-
-# namespaces for use in XPath expressions in rules
-sourceNsMap = {
-	'imsmd': inputNamespace,
-}
