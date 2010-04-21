@@ -1,6 +1,9 @@
-===========================
- Meresco Component Library
-===========================
+.. -*- coding: utf-8 -*-
+.. This documentation is written using reStructuredText. See http://docutils.sf.net
+
+============================
+ Meresco Technical Concepts
+============================
 ---------------------------------------------------------
  About Components, Application DNA and Jackson Pipelines
 ---------------------------------------------------------
@@ -8,7 +11,7 @@
 :Revision: $Revision$
 :Authors: Seek You Too
 :Last changed by: $LastChangedBy$
-:Contact: info@cq2.org
+:Contact: info@cq2.nl
 :Copyright: © Seek You Too
 :License: |by-nc-nd|_ Attribution-Noncommercial-No Derivative Works 3.0 License
 
@@ -21,9 +24,9 @@
 
 Introduction
 ============
-Meresco features a generic Component Library to pull components together in order to create a functional system. The type of systems it creates varies from simple metadata storage, to full blown service providers.
+Meresco features a generic component library to pull components together in order to create a functional system. The type of systems it creates varies from simple metadata storage, to full blown service providers.
 
-The Component Library is one of its kind. It is one of the simplest Plug & Play solutions around, yet it makes many hard issues such as dependencies, configuration and dataflow easy to deal with.  Also, it yields a very efficient high-performance application.
+The component library is one of its kind. It is one of the simplest Plug & Play solutions around, yet it makes many hard issues such as dependencies, configuration and dataflow easy to deal with.  Also, it yields a very efficient high-performance application.
 
 Problems
 --------
@@ -166,7 +169,7 @@ Sending messages
 ~~~~~~~~~~~~~~~~
 A component sending messages must extend ``Observable``, as components are connected by means of the ``Observable`` pattern::
 
-    from meresco import Observable
+    from meresco.core import Observable
     class OtherComponent(Observable):
         pass
 
