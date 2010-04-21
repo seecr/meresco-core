@@ -31,26 +31,8 @@ setup(
     name='meresco-core',
     packages=[
         'meresco',
-        'meresco.components',
-        'meresco.components.drilldown',
-        'meresco.components.http',
-        'meresco.components.numeric',
-        'meresco.components.sru',
-        'meresco.components.xml_generic',
         'meresco.core',
     ],
-    package_data={
-        'meresco.components': ['rules/*.rules'],
-        'meresco.components.xml_generic': [
-            'schemas/*',
-            'schemas-lom/*.xsd',
-            'schemas-lom/common/*',
-            'schemas-lom/examples/*',
-            'schemas-lom/extend/*',
-            'schemas-lom/unique/*',
-            'schemas-lom/vocab/*'
-        ]
-    },
     version='%VERSION%',
     url='http://www.meresco.org',
     author='Seek You Too',
