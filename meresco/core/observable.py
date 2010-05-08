@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -108,18 +109,18 @@ class DoMessage(DeferredMessage):
 
 
 class OnceMessage(DeferredMessage):
-
     def __call__(self, *args, **kwargs):
-        done = []
+        done = set()
         return self._callonce(self._observers, args, kwargs, done)
 
     def _callonce(self, observers, args, kwargs, done):
         for observer in observers:
-            if hasattr(observer, self._message) and observer not in done:
-                getattr(observer, self._message)(*args, **kwargs)
-                done.append(observer)
-            if isinstance(observer, Observable):
-                self._callonce(observer._observers, args, kwargs, done)
+            if observer not in done:
+                done.add(observer)
+                if hasattr(observer, self._message):
+                    getattr(observer, self._message)(*args, **kwargs)
+                if isinstance(observer, Observable):
+                    self._callonce(observer._observers, args, kwargs, done)
 
 def be(strand):
     helicesDone = set()
@@ -141,7 +142,7 @@ class Context(object):
             return callstackscope('__callstack_var_%s__' % name)
         except AttributeError:
             raise AttributeError("'%s' has no attribute '%s'" % (self, name))
-    
+
 
 class Observable(object):
     def __init__(self, name = None):

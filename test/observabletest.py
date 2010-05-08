@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build
@@ -532,6 +533,25 @@ class ObservableTest(unittest.TestCase):
         collector = []
         root.once.methodOnNonObservableSubclass(collector)
         self.assertEquals(['once'], collector)
+
+    def testOnceAndOnlyOnceForMutuallyObservingObservables(self):
+        class MyObserver(Observable):
+            def methodOnlyCalledOnce(self, aList):
+                aList.append(self)
+        ownobserverobserver = MyObserver()
+        dna = \
+            (Observable(),
+                (ownobserverobserver,
+                    (Observable("observer"),
+                        (ownobserverobserver,),
+                    )
+                )
+            )
+        root = be(dna)
+        collector = []
+        root.once.methodOnlyCalledOnce(collector)
+        self.assertEquals([ownobserverobserver], collector)
+
 
     def testNoLeakingGeneratorsInCycle(self):
         import gc
