@@ -1,0 +1,85 @@
+Changeset created on Mon May 10 12:04:51 CEST 2010 by Seek You Too
+
+Description: Once now allows for cyclic observer dependencies
+
+    'once' method doesn't have a problem anymore with observers that observe components that observe themselves.
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-core/workingsets/3.0-beta/version_6
+
+diff --unidirectional-new-file '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' --recursive --unified version_6/meresco/core/observable.py version_6.fix_once_for_cyclic_dependency//meresco/core/observable.py
+--- version_6/meresco/core/observable.py	2010-04-28 15:57:36.000000000 +0200
++++ version_6.fix_once_for_cyclic_dependency//meresco/core/observable.py	2010-05-08 22:35:21.000000000 +0200
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ ## begin license ##
+ #
+ #    Meresco Core is an open-source library containing components to build
+@@ -108,18 +109,18 @@
+ 
+ 
+ class OnceMessage(DeferredMessage):
+-
+     def __call__(self, *args, **kwargs):
+-        done = []
++        done = set()
+         return self._callonce(self._observers, args, kwargs, done)
+ 
+     def _callonce(self, observers, args, kwargs, done):
+         for observer in observers:
+-            if hasattr(observer, self._message) and observer not in done:
+-                getattr(observer, self._message)(*args, **kwargs)
+-                done.append(observer)
+-            if isinstance(observer, Observable):
+-                self._callonce(observer._observers, args, kwargs, done)
++            if observer not in done:
++                done.add(observer)
++                if hasattr(observer, self._message):
++                    getattr(observer, self._message)(*args, **kwargs)
++                if isinstance(observer, Observable):
++                    self._callonce(observer._observers, args, kwargs, done)
+ 
+ def be(strand):
+     helicesDone = set()
+@@ -141,7 +142,7 @@
+             return callstackscope('__callstack_var_%s__' % name)
+         except AttributeError:
+             raise AttributeError("'%s' has no attribute '%s'" % (self, name))
+-    
++
+ 
+ class Observable(object):
+     def __init__(self, name = None):
+diff --unidirectional-new-file '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' --recursive --unified version_6/test/observabletest.py version_6.fix_once_for_cyclic_dependency//test/observabletest.py
+--- version_6/test/observabletest.py	2010-04-28 15:57:36.000000000 +0200
++++ version_6.fix_once_for_cyclic_dependency//test/observabletest.py	2010-05-08 22:45:54.000000000 +0200
+@@ -1,3 +1,4 @@
++# -*- coding: utf-8 -*-
+ ## begin license ##
+ #
+ #    Meresco Core is an open-source library containing components to build
+@@ -533,6 +534,25 @@
+         root.once.methodOnNonObservableSubclass(collector)
+         self.assertEquals(['once'], collector)
+ 
++    def testOnceAndOnlyOnceForMutuallyObservingObservables(self):
++        class MyObserver(Observable):
++            def methodOnlyCalledOnce(self, aList):
++                aList.append(self)
++        ownobserverobserver = MyObserver()
++        dna = \
++            (Observable(),
++                (ownobserverobserver,
++                    (Observable("observer"),
++                        (ownobserverobserver,),
++                    )
++                )
++            )
++        root = be(dna)
++        collector = []
++        root.once.methodOnlyCalledOnce(collector)
++        self.assertEquals([ownobserverobserver], collector)
++
++
+     def testNoLeakingGeneratorsInCycle(self):
+         import gc
+         from weakref import ref
