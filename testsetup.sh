@@ -32,9 +32,10 @@ rm -rf tmp build
 python setup.py install --root tmp
 
 export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
+cp -r test tmp/test
 
 (
-cd test
+cd tmp/test
 ./alltests.sh
 )
 
