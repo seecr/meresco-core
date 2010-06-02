@@ -8,6 +8,7 @@
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -107,6 +108,41 @@ class ObservableTest(unittest.TestCase):
         value = []
         observable.do.something(value, 1)
         self.assertEquals([1], value)
+
+    def testAsyncdoReturnsGenerator(self):
+        observable = Observable()
+        retval = observable.asyncdo.oneWayMethodWithoutReturnValue()
+        self.assertRaises(StopIteration, retval.next)
+
+    def testAsyncdoEmptyGenerator(self):
+        observable = Observable()
+        called=[]
+        class Listener(object):
+            def message(this):
+                yield 'a'
+                called.append(True)
+                yield 'b'
+        observable.addObserver(Listener())
+        retval = observable.asyncdo.message()
+        self.assertRaises(StopIteration, retval.next)
+        self.assertEquals([True], called)
+
+    def testAsyncdoYieldsCallables(self):
+        observable = Observable()
+        called=[]
+        def callable():
+            pass
+        class Listener(object):
+            def message(this):
+                yield 'a'
+                yield callable
+                yield 'b'
+                called.append(True)
+        observable.addObserver(Listener())
+        retval = observable.asyncdo.message()
+        self.assertEquals(callable, retval.next())
+        self.assertRaises(StopIteration, retval.next)
+        self.assertEquals([True], called)
 
     def testAddStrandEmptyList(self):
         observable = Observable()
@@ -315,6 +351,12 @@ class ObservableTest(unittest.TestCase):
             self.assertEquals(2, len(format_tb(exTraceback)))
         try:
             observable.do.a()
+        except Exception:
+            exType, exValue, exTraceback = sys.exc_info()
+            self.assertEquals('A.a', str(exValue))
+            self.assertEquals(2, len(format_tb(exTraceback)))
+        try:
+            list(observable.asyncdo.a())
         except Exception:
             exType, exValue, exTraceback = sys.exc_info()
             self.assertEquals('A.a', str(exValue))

@@ -3,11 +3,12 @@
 #
 #    Meresco Core is an open-source library containing components to build
 #    searchengines, repositories and archives.
-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
+#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #
 #    This file is part of Meresco Core.
 #
@@ -107,6 +108,15 @@ class DoMessage(DeferredMessage):
             exType, exValue, exTraceback = exc_info()
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
+class AsyncdoMessage(DeferredMessage):
+    def __call__(self, *args, **kwargs):
+        try:
+            for value in compose(DeferredMessage.__call__(self, *args, **kwargs)):
+                if callable(value):
+                    yield value
+        except:
+            exType, exValue, exTraceback = exc_info()
+            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
 class OnceMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
@@ -150,6 +160,7 @@ class Observable(object):
         self.all = Defer(self._observers, AllMessage)
         self.any = Defer(self._observers, AnyMessage)
         self.do = Defer(self._observers, DoMessage)
+        self.asyncdo = Defer(self._observers, AsyncdoMessage)
         self.once = Defer(self._observers, OnceMessage)
         if name:
             self.__repr__ = lambda: name
