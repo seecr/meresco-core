@@ -1,0 +1,143 @@
+Changeset created on Thu Jun  3 11:46:19 CEST 2010 by Seek You Too
+
+Description: Observable now has asyncdo message
+
+    Asyncdo message is the asynchronous form of do. Itis a generator which
+    will throw away results and yields callable objects. This is a future 
+    feature to allow suspending and resuming of generators together with
+    the reactor of a coming version of Weightless.
+
+Baseline version: meresco-core/workingsets/3.0-Edurep/version_0
+
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/meresco/core/observable.py version_1/meresco/core/observable.py
+--- version_0/meresco/core/observable.py	2010-06-02 10:44:01.000000000 +0200
++++ version_1/meresco/core/observable.py	2010-06-03 11:45:37.000000000 +0200
+@@ -3,11 +3,12 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -107,6 +108,15 @@
+             exType, exValue, exTraceback = exc_info()
+             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+ 
++class AsyncdoMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            for value in compose(DeferredMessage.__call__(self, *args, **kwargs)):
++                if callable(value):
++                    yield value
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+ 
+ class OnceMessage(DeferredMessage):
+     def __call__(self, *args, **kwargs):
+@@ -150,6 +160,7 @@
+         self.all = Defer(self._observers, AllMessage)
+         self.any = Defer(self._observers, AnyMessage)
+         self.do = Defer(self._observers, DoMessage)
++        self.asyncdo = Defer(self._observers, AsyncdoMessage)
+         self.once = Defer(self._observers, OnceMessage)
+         if name:
+             self.__repr__ = lambda: name
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/test/alltests.sh version_1/test/alltests.sh
+--- version_0/test/alltests.sh	2010-06-02 10:44:01.000000000 +0200
++++ version_1/test/alltests.sh	2010-06-03 11:45:37.000000000 +0200
+@@ -23,5 +23,5 @@
+ #
+ ## end license ##
+ 
+-export PYTHONPATH=.
++export PYTHONPATH=.:"$PYTHONPATH"
+ python2.5 _alltests.py "$@"
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/test/observabletest.py version_1/test/observabletest.py
+--- version_0/test/observabletest.py	2010-06-02 10:44:01.000000000 +0200
++++ version_1/test/observabletest.py	2010-06-03 11:45:37.000000000 +0200
+@@ -8,6 +8,7 @@
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -108,6 +109,41 @@
+         observable.do.something(value, 1)
+         self.assertEquals([1], value)
+ 
++    def testAsyncdoReturnsGenerator(self):
++        observable = Observable()
++        retval = observable.asyncdo.oneWayMethodWithoutReturnValue()
++        self.assertRaises(StopIteration, retval.next)
++
++    def testAsyncdoEmptyGenerator(self):
++        observable = Observable()
++        called=[]
++        class Listener(object):
++            def message(this):
++                yield 'a'
++                called.append(True)
++                yield 'b'
++        observable.addObserver(Listener())
++        retval = observable.asyncdo.message()
++        self.assertRaises(StopIteration, retval.next)
++        self.assertEquals([True], called)
++
++    def testAsyncdoYieldsCallables(self):
++        observable = Observable()
++        called=[]
++        def callable():
++            pass
++        class Listener(object):
++            def message(this):
++                yield 'a'
++                yield callable
++                yield 'b'
++                called.append(True)
++        observable.addObserver(Listener())
++        retval = observable.asyncdo.message()
++        self.assertEquals(callable, retval.next())
++        self.assertRaises(StopIteration, retval.next)
++        self.assertEquals([True], called)
++
+     def testAddStrandEmptyList(self):
+         observable = Observable()
+         observable.addStrand((), [])
+@@ -320,6 +356,12 @@
+             self.assertEquals('A.a', str(exValue))
+             self.assertEquals(2, len(format_tb(exTraceback)))
+         try:
++            list(observable.asyncdo.a())
++        except Exception:
++            exType, exValue, exTraceback = sys.exc_info()
++            self.assertEquals('A.a', str(exValue))
++            self.assertEquals(2, len(format_tb(exTraceback)))
++        try:
+             observable.any.unknown('a')
+         except Exception:
+             exType, exValue, exTraceback = sys.exc_info()
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/testsetup.sh version_1/testsetup.sh
+--- version_0/testsetup.sh	2010-06-02 10:44:01.000000000 +0200
++++ version_1/testsetup.sh	2010-06-03 11:45:37.000000000 +0200
+@@ -32,9 +32,10 @@
+ python setup.py install --root tmp
+ 
+ export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
++cp -r test tmp/test
+ 
+ (
+-cd test
++cd tmp/test
+ ./alltests.sh
+ )
+ 
