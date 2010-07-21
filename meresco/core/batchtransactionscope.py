@@ -28,9 +28,11 @@
 ## end license ##
 from observable import Observable
 from transaction import TransactionException, Transaction
+from warnings import warn
 
 class BatchTransactionScope(Observable):
     def __init__(self, transactionName, reactor, batchSize=10, timeout=1):
+        warn("BatchTransactionScope is not fit for suspendable commits in timeOuts.", DeprecationWarning)
         Observable.__init__(self)
         assert timeout > 0
         self._transactionName = transactionName
@@ -57,7 +59,7 @@ class BatchTransactionScope(Observable):
 
             transaction._batchCounter += 1
             if transaction._markedForCommit or transaction._batchCounter >= self._batchSize:
-                self._commit(transaction)
+                yield self._commit(transaction)
             else:
                 self._removeTimer(transaction)
                 transaction._timerToken = self._reactor.addTimer(self._timeout,
@@ -70,7 +72,7 @@ class BatchTransactionScope(Observable):
 
     def _doTimeout(self, transaction):
          transaction._timerToken = None
-         self._commit(transaction)
+         list(self._commit(transaction))
 
     def _commit(self, transaction):
         transaction._markedForCommit = True
@@ -78,7 +80,8 @@ class BatchTransactionScope(Observable):
         if transaction == self._currentTransaction:
             self._currentTransaction = None
         if transaction._activeGenerators == 0:
-            transaction.commit()
+            for result in transaction.commit():
+                yield result
 
     def _removeTimer(self, transaction):
         if transaction._timerToken != None:

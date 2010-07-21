@@ -81,7 +81,7 @@ class TransactionTest(TestCase):
         resource = MockResource()
         tx.join(resource)
         tx.join(resource)
-        tx.commit()
+        list(tx.commit())
         self.assertEquals(1, len(commitCalled))
 
     def testFreeTransaction(self):
@@ -127,3 +127,21 @@ class TransactionTest(TestCase):
         tx = Transaction('name')
         tx.locals['myvar'] = 'value'
         self.assertEquals('value', tx.locals['myvar'])
+
+    def testTransactionYieldsCallablesInCommits(self):
+        callable = lambda: None
+        class Committer(Observable):
+            def begin(inner):
+                inner.ctx.tx.join(inner)
+            def commit(inner):
+                yield callable
+
+        observable = Observable()
+        scope = TransactionScope("name")
+        observable.addObserver(scope)
+        scope.addObserver(Committer())
+
+        result = list(observable.all.someMethod())
+
+        self.assertTrue(callable in result)
+

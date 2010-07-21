@@ -7,6 +7,7 @@
 #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
 #       http://www.kennisnetictopschool.nl
+#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
 #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 #
 #    This file is part of Meresco Core.
@@ -41,9 +42,13 @@ class TransactionScope(Observable):
             results = self.all.unknown(message, *args, **kwargs)
             for result in results:
                 yield result
-            __callstack_var_tx__.commit()
+            results = __callstack_var_tx__.commit()
+            for result in results:
+                yield result
         except TransactionException:
-            __callstack_var_tx__.rollback()
+            results = __callstack_var_tx__.rollback()
+            for result in results:
+                yield result
         finally:
             results = None
 
