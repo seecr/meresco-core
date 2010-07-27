@@ -172,6 +172,10 @@ class Observable(object):
     def observable_name(self):
         return self._name
 
+    def observable_setName(self, name):
+        self._name = name
+        return self
+
     def addObserver(self, observer):
         self._observers.append(observer)
 

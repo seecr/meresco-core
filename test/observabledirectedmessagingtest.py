@@ -100,7 +100,7 @@ class ObservableDirectedMessagingTest(TestCase):
                 called.append(("B", this.observable_name()))
 
         observable.addObserver(A("name"))
-        observable.addObserver(A("anothername"))
+        observable.addObserver(A().observable_setName("anothername"))
         observable.addObserver(B("anothername"))
         observable.addObserver(B())
 
@@ -114,6 +114,10 @@ class ObservableDirectedMessagingTest(TestCase):
 
         list(observable.all["name"].method())
         self.assertEquals([("A", "name")], called)
+
+    def testSetName(self):
+        observable = Observable().observable_setName('name')
+        self.assertEquals('name', observable.observable_name())
 
 
     # observable_setName('name')
