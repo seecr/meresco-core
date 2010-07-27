@@ -28,14 +28,14 @@
 #
 ## end license ##
 
-import sys
+from sys import exc_info
 from traceback import format_tb
 from types import GeneratorType
 
 from meresco.core import Observable, TransactionScope, Transparant
 from meresco.core.observable import be
 from cq2utils.calltrace import CallTrace
-import unittest
+from unittest import TestCase
 
 class Interceptor(Observable):
     def unknown(self, message, *args, **kwargs):
@@ -43,7 +43,7 @@ class Interceptor(Observable):
         self.args = args
         self.kwargs = kwargs
 
-class ObservableTest(unittest.TestCase):
+class ObservableTest(TestCase):
 
     def testObserverInit(self):
         initcalled = [0]
@@ -340,37 +340,37 @@ class ObservableTest(unittest.TestCase):
         try:
             observable.any.a()
         except Exception:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('A.a', str(exValue))
             self.assertEquals(2, len(format_tb(exTraceback)))
         try:
             list(observable.all.a())
         except Exception:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('A.a', str(exValue))
             self.assertEquals(2, len(format_tb(exTraceback)))
         try:
             observable.do.a()
         except Exception:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('A.a', str(exValue))
             self.assertEquals(2, len(format_tb(exTraceback)))
         try:
             list(observable.asyncdo.a())
         except Exception:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('A.a', str(exValue))
             self.assertEquals(2, len(format_tb(exTraceback)))
         try:
             observable.any.unknown('a')
         except Exception:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('A.a', str(exValue))
             self.assertEquals(2, len(format_tb(exTraceback)))
         try:
             observable.any.somethingNotThereButHandledByUnknown('a')
         except Exception:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('A.a', str(exValue))
             # unknown calls a(), so one extra traceback: 3
             self.assertEquals(3, len(format_tb(exTraceback)))
@@ -394,7 +394,7 @@ class ObservableTest(unittest.TestCase):
             a.a()
             self.fail('should raise exception')
         except:
-            exType, exValue, exTraceback = sys.exc_info()
+            exType, exValue, exTraceback = exc_info()
             self.assertEquals('D.d', str(exValue))
             self.assertEquals('testMoreElaborateExceptionCleaning', exTraceback.tb_frame.f_code.co_name)
             exTraceback = exTraceback.tb_next
