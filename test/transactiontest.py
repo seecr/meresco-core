@@ -128,6 +128,10 @@ class TransactionTest(TestCase):
         tx.locals['myvar'] = 'value'
         self.assertEquals('value', tx.locals['myvar'])
 
+    def testTransactionScopeName(self):
+        scope = TransactionScope("name")
+        self.assertEquals("name", scope.observable_name())
+
     def testTransactionYieldsCallablesInCommits(self):
         callable = lambda: None
         class Committer(Observable):

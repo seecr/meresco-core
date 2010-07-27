@@ -31,8 +31,8 @@ from callstackscope import callstackscope
 
 class ResourceManager(Observable):
 
-    def __init__(self, transactionName, resourceTxFactory):
-        Observable.__init__(self)
+    def __init__(self, transactionName, resourceTxFactory, name=None):
+        Observable.__init__(self, name)
         self._resourceTxFactory = resourceTxFactory
         self._transactionName = transactionName
         self.txs = {}

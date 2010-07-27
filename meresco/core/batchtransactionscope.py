@@ -33,9 +33,8 @@ from warnings import warn
 class BatchTransactionScope(Observable):
     def __init__(self, transactionName, reactor, batchSize=10, timeout=1):
         warn("BatchTransactionScope is not fit for suspendable commits in timeOuts.", DeprecationWarning)
-        Observable.__init__(self)
+        Observable.__init__(self, name=transactionName)
         assert timeout > 0
-        self._transactionName = transactionName
         self._reactor = reactor
         self._batchSize = batchSize
         self._timeout = timeout
@@ -44,7 +43,7 @@ class BatchTransactionScope(Observable):
     def unknown(self, message, *args, **kwargs):
         __callstack_var_tx__ = transaction = self._currentTransaction
         if transaction == None:
-            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self._transactionName)
+            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self.observable_name())
             transaction._batchCounter = 0
             transaction._activeGenerators = 0
             transaction._markedForCommit = False

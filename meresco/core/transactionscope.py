@@ -32,11 +32,10 @@ from transaction import TransactionException, Transaction
 
 class TransactionScope(Observable):
     def __init__(self, transactionName):
-        Observable.__init__(self)
-        self._transactionName = transactionName
+        Observable.__init__(self, name=transactionName)
 
     def unknown(self, message, *args, **kwargs):
-        __callstack_var_tx__ = Transaction(self._transactionName)
+        __callstack_var_tx__ = Transaction(self.observable_name())
         self.once.begin()
         try:
             results = self.all.unknown(message, *args, **kwargs)
