@@ -39,6 +39,9 @@ class Defer(object):
     def __getattr__(self, attr):
         return self._defereeType(self._observers, attr)
 
+    def __getitem__(self, target):
+        return Defer([o for o in self._observers if o.getName() == target], self._defereeType)
+
     def unknown(self, message, *args, **kwargs):
         try:
             return getattr(self, message)(*args, **kwargs)
@@ -164,8 +167,12 @@ class Observable(object):
         self.once = Defer(self._observers, OnceMessage)
         if name:
             self.__repr__ = lambda: name
+        self._name = name
 
         self.ctx = Context()
+    
+    def getName(self):
+        return self._name
 
     def addObserver(self, observer):
         self._observers.append(observer)

@@ -594,7 +594,6 @@ class ObservableTest(TestCase):
         root.once.methodOnlyCalledOnce(collector)
         self.assertEquals([ownobserverobserver], collector)
 
-
     def testNoLeakingGeneratorsInCycle(self):
         import gc
         from weakref import ref
