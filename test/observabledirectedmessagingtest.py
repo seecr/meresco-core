@@ -53,16 +53,51 @@ class ObservableDirectedMessagingTest(TestCase):
         
         self.assertEquals([], called)
 
+        list(observable.all.method())
+
+        self.assertEquals(["Z"], called)
+
+    def testDirectedMessagesCanAlsoBeAcceptedByObjects(self):
+        observable = Observable()
+        called = []
+        class Y(object):
+            def method(this):
+                called.append("Y")
+            def observable_name(this):
+                return 'name'
+        class Z(object):
+            def method(this):
+                called.append("Z")
+        observable.addObserver(Y())
+        observable.addObserver(Z())
+
+        list(observable.all["name"].method())
+        
+        self.assertEquals(['Y'], called)
+
+        del called[:]
+
+        list(observable.all.method())
+
+        self.assertEquals(['Y', "Z"], called)
+
+        del called[:]
+
+        list(observable.all["other"].method())
+
+        self.assertEquals([], called)
+
+
     def testUndirectedObserverMessagingIsUnaffectedByObserverName(self):
         observable = Observable()
         called = []
         class A(Observable):
             def method(this):
-                called.append(("A", this.getName()))
+                called.append(("A", this.observable_name()))
         
         class B(Observable):
             def method(this):
-                called.append(("B", this.getName()))
+                called.append(("B", this.observable_name()))
 
         observable.addObserver(A("name"))
         observable.addObserver(A("anothername"))
@@ -80,6 +115,5 @@ class ObservableDirectedMessagingTest(TestCase):
         list(observable.all["name"].method())
         self.assertEquals([("A", "name")], called)
 
-    def testWhatToDoWithTransparent(self):
-        self.fail("<thinking error/>")
 
+    # observable_setName('name')

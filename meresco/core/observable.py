@@ -40,7 +40,7 @@ class Defer(object):
         return self._defereeType(self._observers, attr)
 
     def __getitem__(self, target):
-        return Defer([o for o in self._observers if o.getName() == target], self._defereeType)
+        return Defer([o for o in self._observers if hasattr(o, "observable_name") and o.observable_name() == target], self._defereeType)
 
     def unknown(self, message, *args, **kwargs):
         try:
@@ -171,7 +171,7 @@ class Observable(object):
 
         self.ctx = Context()
     
-    def getName(self):
+    def observable_name(self):
         return self._name
 
     def addObserver(self, observer):
