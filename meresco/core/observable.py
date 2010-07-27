@@ -165,8 +165,6 @@ class Observable(object):
         self.do = Defer(self._observers, DoMessage)
         self.asyncdo = Defer(self._observers, AsyncdoMessage)
         self.once = Defer(self._observers, OnceMessage)
-        if name:
-            self.__repr__ = lambda: name
         self._name = name
 
         self.ctx = Context()
@@ -190,6 +188,9 @@ class Observable(object):
                 observer.printTree(depth=depth+1)
             else:
                 printInColor(depth+1, 31, observer)
+
+    def __repr__(self):
+        return "%s(name=%s)" % (self.__class__.__name__, repr(self._name))
 
 class Transparant(Observable):
     def unknown(self, message, *args, **kwargs):
