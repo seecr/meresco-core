@@ -1,0 +1,366 @@
+Changeset created on Thu Jul 29 16:46:54 CEST 2010 by Seek You Too
+
+Description: Implemented Labeled Interface Invocation on Observable
+
+    Observable now implements Labeled Interface Invocation. A message
+    to observers can now optionally be labeled with a name.
+    If the name that an observable is given matches the message label,
+    than it will participate in the processing of that call.
+    Non-Observable components or objects can participate as endpoint
+    if they implement the observable_name function which should return
+    a labelname.
+
+Baseline version: meresco-core/workingsets/3.1-Edurep/version_1
+
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/doc/MerescoTechnicalConcepts.txt version_2/doc/MerescoTechnicalConcepts.txt
+--- version_1/doc/MerescoTechnicalConcepts.txt	2010-07-23 17:17:58.000000000 +0200
++++ version_2/doc/MerescoTechnicalConcepts.txt	2010-07-29 16:42:57.000000000 +0200
+@@ -7,8 +7,8 @@
+ ---------------------------------------------------------
+  About Components, Application DNA and Jackson Pipelines
+ ---------------------------------------------------------
+-:Date: $Date: 2010-07-23 17:17:57 +0200 (Fri, 23 Jul 2010) $
+-:Revision: $Revision: 2519 $
++:Date: $Date: 2010-07-27 11:38:36 +0200 (Tue, 27 Jul 2010) $
++:Revision: $Revision: 2527 $
+ :Authors: Seek You Too
+ :Last changed by: $LastChangedBy: thijsj $
+ :Contact: info@cq2.nl
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/meresco/core/batchtransactionscope.py version_2/meresco/core/batchtransactionscope.py
+--- version_1/meresco/core/batchtransactionscope.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/meresco/core/batchtransactionscope.py	2010-07-29 16:42:57.000000000 +0200
+@@ -33,9 +33,8 @@
+ class BatchTransactionScope(Observable):
+     def __init__(self, transactionName, reactor, batchSize=10, timeout=1):
+         warn("BatchTransactionScope is not fit for suspendable commits in timeOuts.", DeprecationWarning)
+-        Observable.__init__(self)
++        Observable.__init__(self, name=transactionName)
+         assert timeout > 0
+-        self._transactionName = transactionName
+         self._reactor = reactor
+         self._batchSize = batchSize
+         self._timeout = timeout
+@@ -44,7 +43,7 @@
+     def unknown(self, message, *args, **kwargs):
+         __callstack_var_tx__ = transaction = self._currentTransaction
+         if transaction == None:
+-            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self._transactionName)
++            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self.observable_name())
+             transaction._batchCounter = 0
+             transaction._activeGenerators = 0
+             transaction._markedForCommit = False
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/meresco/core/observable.py version_2/meresco/core/observable.py
+--- version_1/meresco/core/observable.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/meresco/core/observable.py	2010-07-29 16:42:57.000000000 +0200
+@@ -39,6 +39,9 @@
+     def __getattr__(self, attr):
+         return self._defereeType(self._observers, attr)
+ 
++    def __getitem__(self, target):
++        return Defer([o for o in self._observers if hasattr(o, "observable_name") and o.observable_name() == target], self._defereeType)
++
+     def unknown(self, message, *args, **kwargs):
+         try:
+             return getattr(self, message)(*args, **kwargs)
+@@ -162,10 +165,16 @@
+         self.do = Defer(self._observers, DoMessage)
+         self.asyncdo = Defer(self._observers, AsyncdoMessage)
+         self.once = Defer(self._observers, OnceMessage)
+-        if name:
+-            self.__repr__ = lambda: name
++        self._name = name
+ 
+         self.ctx = Context()
++    
++    def observable_name(self):
++        return self._name
++
++    def observable_setName(self, name):
++        self._name = name
++        return self
+ 
+     def addObserver(self, observer):
+         self._observers.append(observer)
+@@ -184,6 +193,9 @@
+             else:
+                 printInColor(depth+1, 31, observer)
+ 
++    def __repr__(self):
++        return "%s(name=%s)" % (self.__class__.__name__, repr(self._name))
++
+ class Transparant(Observable):
+     def unknown(self, message, *args, **kwargs):
+         return self.all.unknown(message, *args, **kwargs)
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/meresco/core/resourcemanager.py version_2/meresco/core/resourcemanager.py
+--- version_1/meresco/core/resourcemanager.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/meresco/core/resourcemanager.py	2010-07-29 16:42:57.000000000 +0200
+@@ -31,8 +31,8 @@
+ 
+ class ResourceManager(Observable):
+ 
+-    def __init__(self, transactionName, resourceTxFactory):
+-        Observable.__init__(self)
++    def __init__(self, transactionName, resourceTxFactory, name=None):
++        Observable.__init__(self, name)
+         self._resourceTxFactory = resourceTxFactory
+         self._transactionName = transactionName
+         self.txs = {}
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/meresco/core/transactionscope.py version_2/meresco/core/transactionscope.py
+--- version_1/meresco/core/transactionscope.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/meresco/core/transactionscope.py	2010-07-29 16:42:57.000000000 +0200
+@@ -32,11 +32,10 @@
+ 
+ class TransactionScope(Observable):
+     def __init__(self, transactionName):
+-        Observable.__init__(self)
+-        self._transactionName = transactionName
++        Observable.__init__(self, name=transactionName)
+ 
+     def unknown(self, message, *args, **kwargs):
+-        __callstack_var_tx__ = Transaction(self._transactionName)
++        __callstack_var_tx__ = Transaction(self.observable_name())
+         self.once.begin()
+         try:
+             results = self.all.unknown(message, *args, **kwargs)
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/test/_alltests.py version_2/test/_alltests.py
+--- version_1/test/_alltests.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/test/_alltests.py	2010-07-29 16:42:57.000000000 +0200
+@@ -44,6 +44,7 @@
+ from helixtest import HelixTest
+ from generatorutilstest import GeneratorUtilsTest
+ from observabletest import ObservableTest
++from observabledirectedmessagingtest import ObservableDirectedMessagingTest
+ from transactiontest import TransactionTest
+ from batchtransactionscopetest import BatchTransactionScopeTest
+ 
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/test/observabledirectedmessagingtest.py version_2/test/observabledirectedmessagingtest.py
+--- version_1/test/observabledirectedmessagingtest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_2/test/observabledirectedmessagingtest.py	2010-07-29 16:42:57.000000000 +0200
+@@ -0,0 +1,123 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from unittest import TestCase
++
++from meresco.core import Observable
++
++class ObservableDirectedMessagingTest(TestCase):
++
++    def testDirectedObserverMessagingDoesNotBreakUndirectedCall(self):
++        observable = Observable()
++        called = []
++        class A(Observable):
++            def method(this):
++                called.append("A")
++        observable.addObserver(A("name"))
++
++        list(observable.all["name"].method())
++        
++        self.assertEquals(["A"], called)
++
++    def testDirectedObserverMessagingIgnoresNonObservableObservers(self):
++        observable = Observable()
++        called = []
++        class Z(object):
++            def method(this):
++                called.append("Z")
++        observable.addObserver(Z())
++
++        list(observable.all["name"].method())
++        
++        self.assertEquals([], called)
++
++        list(observable.all.method())
++
++        self.assertEquals(["Z"], called)
++
++    def testDirectedMessagesCanAlsoBeAcceptedByObjects(self):
++        observable = Observable()
++        called = []
++        class Y(object):
++            def method(this):
++                called.append("Y")
++            def observable_name(this):
++                return 'name'
++        class Z(object):
++            def method(this):
++                called.append("Z")
++        observable.addObserver(Y())
++        observable.addObserver(Z())
++
++        list(observable.all["name"].method())
++        
++        self.assertEquals(['Y'], called)
++
++        del called[:]
++
++        list(observable.all.method())
++
++        self.assertEquals(['Y', "Z"], called)
++
++        del called[:]
++
++        list(observable.all["other"].method())
++
++        self.assertEquals([], called)
++
++
++    def testUndirectedObserverMessagingIsUnaffectedByObserverName(self):
++        observable = Observable()
++        called = []
++        class A(Observable):
++            def method(this):
++                called.append(("A", this.observable_name()))
++        
++        class B(Observable):
++            def method(this):
++                called.append(("B", this.observable_name()))
++
++        observable.addObserver(A("name"))
++        observable.addObserver(A().observable_setName("anothername"))
++        observable.addObserver(B("anothername"))
++        observable.addObserver(B())
++
++        list(observable.all.method())
++        
++        self.assertEquals([("A", "name"), 
++            ("A", "anothername"), 
++            ("B", "anothername"), 
++            ("B", None)], called)
++        del called[:]
++
++        list(observable.all["name"].method())
++        self.assertEquals([("A", "name")], called)
++
++    def testSetName(self):
++        observable = Observable().observable_setName('name')
++        self.assertEquals('name', observable.observable_name())
++
++
++    # observable_setName('name')
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/test/observabletest.py version_2/test/observabletest.py
+--- version_1/test/observabletest.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/test/observabletest.py	2010-07-29 16:42:57.000000000 +0200
+@@ -28,14 +28,14 @@
+ #
+ ## end license ##
+ 
+-import sys
++from sys import exc_info
+ from traceback import format_tb
+ from types import GeneratorType
+ 
+ from meresco.core import Observable, TransactionScope, Transparant
+ from meresco.core.observable import be
+ from cq2utils.calltrace import CallTrace
+-import unittest
++from unittest import TestCase
+ 
+ class Interceptor(Observable):
+     def unknown(self, message, *args, **kwargs):
+@@ -43,7 +43,7 @@
+         self.args = args
+         self.kwargs = kwargs
+ 
+-class ObservableTest(unittest.TestCase):
++class ObservableTest(TestCase):
+ 
+     def testObserverInit(self):
+         initcalled = [0]
+@@ -340,37 +340,37 @@
+         try:
+             observable.any.a()
+         except Exception:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('A.a', str(exValue))
+             self.assertEquals(2, len(format_tb(exTraceback)))
+         try:
+             list(observable.all.a())
+         except Exception:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('A.a', str(exValue))
+             self.assertEquals(2, len(format_tb(exTraceback)))
+         try:
+             observable.do.a()
+         except Exception:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('A.a', str(exValue))
+             self.assertEquals(2, len(format_tb(exTraceback)))
+         try:
+             list(observable.asyncdo.a())
+         except Exception:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('A.a', str(exValue))
+             self.assertEquals(2, len(format_tb(exTraceback)))
+         try:
+             observable.any.unknown('a')
+         except Exception:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('A.a', str(exValue))
+             self.assertEquals(2, len(format_tb(exTraceback)))
+         try:
+             observable.any.somethingNotThereButHandledByUnknown('a')
+         except Exception:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('A.a', str(exValue))
+             # unknown calls a(), so one extra traceback: 3
+             self.assertEquals(3, len(format_tb(exTraceback)))
+@@ -394,7 +394,7 @@
+             a.a()
+             self.fail('should raise exception')
+         except:
+-            exType, exValue, exTraceback = sys.exc_info()
++            exType, exValue, exTraceback = exc_info()
+             self.assertEquals('D.d', str(exValue))
+             self.assertEquals('testMoreElaborateExceptionCleaning', exTraceback.tb_frame.f_code.co_name)
+             exTraceback = exTraceback.tb_next
+@@ -594,7 +594,6 @@
+         root.once.methodOnlyCalledOnce(collector)
+         self.assertEquals([ownobserverobserver], collector)
+ 
+-
+     def testNoLeakingGeneratorsInCycle(self):
+         import gc
+         from weakref import ref
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_1/test/transactiontest.py version_2/test/transactiontest.py
+--- version_1/test/transactiontest.py	2010-07-23 17:02:45.000000000 +0200
++++ version_2/test/transactiontest.py	2010-07-29 16:42:57.000000000 +0200
+@@ -128,6 +128,10 @@
+         tx.locals['myvar'] = 'value'
+         self.assertEquals('value', tx.locals['myvar'])
+ 
++    def testTransactionScopeName(self):
++        scope = TransactionScope("name")
++        self.assertEquals("name", scope.observable_name())
++
+     def testTransactionYieldsCallablesInCommits(self):
+         callable = lambda: None
+         class Committer(Observable):
