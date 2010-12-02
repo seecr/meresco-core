@@ -121,6 +121,14 @@ class AsyncdoMessage(DeferredMessage):
             exType, exValue, exTraceback = exc_info()
             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
 
+class AsyncanyMessage(DeferredMessage):
+    def __call__(self, *args, **kwargs):
+        try:
+            x = compose(DeferredMessage.__call__(self, *args, **kwargs))
+            yield x.next()
+        except StopIteration:
+            raise AttributeError('None of the %d observers responds to asyncany.%s(...)' % (len(self._observers), self._message))
+
 class OnceMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         done = set()
@@ -164,6 +172,7 @@ class Observable(object):
         self.any = Defer(self._observers, AnyMessage)
         self.do = Defer(self._observers, DoMessage)
         self.asyncdo = Defer(self._observers, AsyncdoMessage)
+        self.asyncany = Defer(self._observers, AsyncanyMessage)
         self.once = Defer(self._observers, OnceMessage)
         self._name = name
 

@@ -144,6 +144,31 @@ class ObservableTest(TestCase):
         self.assertRaises(StopIteration, retval.next)
         self.assertEquals([True], called)
 
+    def testAsyncAnyNoSuchMessage(self):
+        observable = Observable()
+        try:
+            observable.asyncany.notExisting().next()
+            self.fail('fail')
+        except AttributeError, e:
+            self.assertEquals('None of the 0 observers responds to asyncany.notExisting(...)', str(e))
+
+    def testAsyncAny2(self):
+        observable = Observable()
+        def callable():
+            pass
+        class Listener(object):
+            def message(this):
+                yield callable
+                raise StopIteration('the answer')
+        observable.addObserver(Listener())
+        retval = observable.asyncany.message()
+        self.assertEquals(GeneratorType, type(retval))
+        self.assertEquals(callable, retval.next())
+        try:
+            retval.next()
+        except StopIteration, e:
+            self.assertEquals('the answer', e.__dict__)
+ 
     def testAddStrandEmptyList(self):
         observable = Observable()
         observable.addStrand((), [])
