@@ -34,6 +34,7 @@ from types import GeneratorType
 
 from meresco.core import Observable, TransactionScope, Transparant
 from meresco.core.observable import be
+from weightless import compose
 from cq2utils.calltrace import CallTrace
 from unittest import TestCase
 
@@ -154,20 +155,26 @@ class ObservableTest(TestCase):
 
     def testAsyncAny2(self):
         observable = Observable()
+        done = []
         def callable():
             pass
+        class Caller(Observable):
+            def useasyncany(this):
+                result = yield this.asyncany.message()
+                self.assertEquals("the answer", result)
+                yield
         class Listener(object):
             def message(this):
                 yield callable
-                raise StopIteration('the answer')
-        observable.addObserver(Listener())
-        retval = observable.asyncany.message()
-        self.assertEquals(GeneratorType, type(retval))
-        self.assertEquals(callable, retval.next())
-        try:
-            retval.next()
-        except StopIteration, e:
-            self.assertEquals('the answer', e.__dict__)
+                done.append(0)
+                raise StopIteration("the answer")
+        caller = Caller()
+        caller.addObserver(Listener())
+        observable.addObserver(caller)
+        generator = compose(observable.all.useasyncany())
+        self.assertEquals(callable, generator.next())
+        retval = generator.next()
+        self.assertEquals([0], done)
  
     def testAddStrandEmptyList(self):
         observable = Observable()

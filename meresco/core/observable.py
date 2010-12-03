@@ -124,9 +124,16 @@ class AsyncdoMessage(DeferredMessage):
 class AsyncanyMessage(DeferredMessage):
     def __call__(self, *args, **kwargs):
         try:
-            x = compose(DeferredMessage.__call__(self, *args, **kwargs))
-            yield x.next()
-        except StopIteration:
+            result = DeferredMessage.__call__(self, *args, **kwargs)
+            m = None
+            while True:
+                r = result.send(m) 
+                m = yield r
+                if not callable(m):
+                    raise StopIteration(m)
+        except StopIteration, e:
+            if e.args:
+                raise
             raise AttributeError('None of the %d observers responds to asyncany.%s(...)' % (len(self._observers), self._message))
 
 class OnceMessage(DeferredMessage):
