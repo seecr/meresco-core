@@ -1,0 +1,90 @@
+Changeset created on Fri Dec  3 09:45:31 CET 2010 by Seek You Too
+
+Description: Asyncany support
+
+    This changeset adds support for asynchronous any calls. These calls will not block the reactor but will be suspended and will be resumed once the call is done. 
+
+Baseline version: meresco-core/workingsets/3.1.1-TUD/version_0
+
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/meresco/core/observable.py version_0-asyncany/meresco/core/observable.py
+--- version_0/meresco/core/observable.py	2010-12-01 16:33:25.000000000 +0100
++++ version_0-asyncany/meresco/core/observable.py	2010-12-02 16:42:12.000000000 +0100
+@@ -121,6 +121,21 @@
+             exType, exValue, exTraceback = exc_info()
+             raise exType, exValue, exTraceback.tb_next # skip myself from traceback
+ 
++class AsyncanyMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            result = DeferredMessage.__call__(self, *args, **kwargs)
++            m = None
++            while True:
++                r = result.send(m) 
++                m = yield r
++                if not callable(m):
++                    raise StopIteration(m)
++        except StopIteration, e:
++            if e.args:
++                raise
++            raise AttributeError('None of the %d observers responds to asyncany.%s(...)' % (len(self._observers), self._message))
++
+ class OnceMessage(DeferredMessage):
+     def __call__(self, *args, **kwargs):
+         done = set()
+@@ -164,6 +179,7 @@
+         self.any = Defer(self._observers, AnyMessage)
+         self.do = Defer(self._observers, DoMessage)
+         self.asyncdo = Defer(self._observers, AsyncdoMessage)
++        self.asyncany = Defer(self._observers, AsyncanyMessage)
+         self.once = Defer(self._observers, OnceMessage)
+         self._name = name
+ 
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/test/observabletest.py version_0-asyncany/test/observabletest.py
+--- version_0/test/observabletest.py	2010-12-01 16:33:25.000000000 +0100
++++ version_0-asyncany/test/observabletest.py	2010-12-02 16:41:30.000000000 +0100
+@@ -34,6 +34,7 @@
+ 
+ from meresco.core import Observable, TransactionScope, Transparant
+ from meresco.core.observable import be
++from weightless import compose
+ from cq2utils.calltrace import CallTrace
+ from unittest import TestCase
+ 
+@@ -144,6 +145,37 @@
+         self.assertRaises(StopIteration, retval.next)
+         self.assertEquals([True], called)
+ 
++    def testAsyncAnyNoSuchMessage(self):
++        observable = Observable()
++        try:
++            observable.asyncany.notExisting().next()
++            self.fail('fail')
++        except AttributeError, e:
++            self.assertEquals('None of the 0 observers responds to asyncany.notExisting(...)', str(e))
++
++    def testAsyncAny2(self):
++        observable = Observable()
++        done = []
++        def callable():
++            pass
++        class Caller(Observable):
++            def useasyncany(this):
++                result = yield this.asyncany.message()
++                self.assertEquals("the answer", result)
++                yield
++        class Listener(object):
++            def message(this):
++                yield callable
++                done.append(0)
++                raise StopIteration("the answer")
++        caller = Caller()
++        caller.addObserver(Listener())
++        observable.addObserver(caller)
++        generator = compose(observable.all.useasyncany())
++        self.assertEquals(callable, generator.next())
++        retval = generator.next()
++        self.assertEquals([0], done)
++ 
+     def testAddStrandEmptyList(self):
+         observable = Observable()
+         observable.addStrand((), [])
