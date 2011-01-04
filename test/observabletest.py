@@ -45,7 +45,6 @@ class Interceptor(Observable):
         self.kwargs = kwargs
 
 class ObservableTest(TestCase):
-
     def testObserverInit(self):
         initcalled = [0]
         class MyObserver(object):
@@ -372,40 +371,38 @@ class ObservableTest(TestCase):
         try:
             observable.any.a()
         except Exception:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('A.a', str(exValue))
-            self.assertEquals(2, len(format_tb(exTraceback)))
+            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
         try:
             list(observable.all.a())
         except Exception:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('A.a', str(exValue))
-            self.assertEquals(2, len(format_tb(exTraceback)))
+            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
+
         try:
             observable.do.a()
         except Exception:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('A.a', str(exValue))
-            self.assertEquals(2, len(format_tb(exTraceback)))
+            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
+
         try:
             list(observable.asyncdo.a())
         except Exception:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('A.a', str(exValue))
-            self.assertEquals(2, len(format_tb(exTraceback)))
+            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
+
         try:
             observable.any.unknown('a')
         except Exception:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('A.a', str(exValue))
-            self.assertEquals(2, len(format_tb(exTraceback)))
+            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
+
         try:
             observable.any.somethingNotThereButHandledByUnknown('a')
         except Exception:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('A.a', str(exValue))
-            # unknown calls a(), so one extra traceback: 3
-            self.assertEquals(3, len(format_tb(exTraceback)))
+            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "unknown", "a")
+
+    def assertFunctionsOnTraceback(self, *args):
+        na, na, tb = exc_info()
+        for functionName in args:
+            self.assertEquals(functionName, tb.tb_frame.f_code.co_name)
+            tb = tb.tb_next
+        self.assertEquals(None, tb)
 
     def testMoreElaborateExceptionCleaning(self):
         class A(Observable):
@@ -426,19 +423,7 @@ class ObservableTest(TestCase):
             a.a()
             self.fail('should raise exception')
         except:
-            exType, exValue, exTraceback = exc_info()
-            self.assertEquals('D.d', str(exValue))
-            self.assertEquals('testMoreElaborateExceptionCleaning', exTraceback.tb_frame.f_code.co_name)
-            exTraceback = exTraceback.tb_next
-            self.assertEquals('a', exTraceback.tb_frame.f_code.co_name)
-            exTraceback = exTraceback.tb_next
-            self.assertEquals('b', exTraceback.tb_frame.f_code.co_name)
-            exTraceback = exTraceback.tb_next
-            self.assertEquals('c', exTraceback.tb_frame.f_code.co_name)
-            exTraceback = exTraceback.tb_next
-            self.assertEquals('d', exTraceback.tb_frame.f_code.co_name)
-            exTraceback = exTraceback.tb_next
-            self.assertEquals(None, exTraceback)
+            self.assertFunctionsOnTraceback("testMoreElaborateExceptionCleaning", "a", "b", "c", "d")
 
     def testOneTransactionPerGenerator(self):
         txId = []
