@@ -30,11 +30,10 @@
 
 from sys import exc_info
 from traceback import format_tb
-from types import GeneratorType
 
 from meresco.core import Observable, TransactionScope, Transparant
 from meresco.core.observable import be
-from weightless import compose
+from weightless.core import compose
 from cq2utils.calltrace import CallTrace
 from unittest import TestCase
 
@@ -57,7 +56,9 @@ class ObservableTest(TestCase):
     def testAllWithoutImplementers(self):
         observable = Observable()
         responses = observable.all.someMethodNobodyIsListeningTo()
-        self.assertEquals(GeneratorType, type(responses))
+        self.assertTrue(hasattr(responses, 'throw'))
+        self.assertTrue(hasattr(responses, 'send'))
+        self.assertTrue(hasattr(responses, 'close'))
 
     def testAllWithMoreImplementers(self):
         observable = Observable()
@@ -65,7 +66,9 @@ class ObservableTest(TestCase):
         observerTwo = CallTrace(returnValues={'aMethod': 'two'})
         root = be((observable, (observerOne,), (observerTwo,)))
         responses = root.all.aMethod()
-        self.assertEquals(GeneratorType, type(responses))
+        self.assertTrue(hasattr(responses, 'throw'))
+        self.assertTrue(hasattr(responses, 'send'))
+        self.assertTrue(hasattr(responses, 'close'))
         self.assertEquals(['one', 'two'], list(responses))
 
     def testAnyCallsFirstImplementer(self):
@@ -222,7 +225,10 @@ class ObservableTest(TestCase):
         a = A()
         b = B()
         a.addObserver(b)
-        self.assertEquals(GeneratorType, type(a.any.myThing()))
+        result = a.any.myThing()
+        self.assertTrue(hasattr(result, 'throw'))
+        self.assertTrue(hasattr(result, 'send'))
+        self.assertTrue(hasattr(result, 'close'))
         self.assertEquals(["data"], list(a.any.myThing()))
 
     def testAllUnknown(self):

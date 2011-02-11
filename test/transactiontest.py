@@ -30,7 +30,7 @@ from cq2utils import CallTrace
 from unittest import TestCase
 from meresco.core import ResourceManager, be, Observable, TransactionScope, TransactionException, Transaction
 
-from weightless import compose
+from weightless.core import compose
 
 class TransactionTest(TestCase):
     def testOne(self):

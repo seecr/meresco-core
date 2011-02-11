@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ## begin license ##
 #
 #    Meresco Core is an open-source library containing components to build

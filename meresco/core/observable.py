@@ -28,8 +28,7 @@
 #
 ## end license ##
 from sys import exc_info
-from weightless import compose
-from callstackscope import callstackscope
+from weightless.core import compose, local
 
 class Defer(object):
     def __init__(self, observers, defereeType):
@@ -167,7 +166,7 @@ def _beRecursive(helix, helicesDone):
 class Context(object):
     def __getattr__(self, name):
         try:
-            return callstackscope('__callstack_var_%s__' % name)
+            return local('__callstack_var_%s__' % name)
         except AttributeError:
             raise AttributeError("'%s' has no attribute '%s'" % (self, name))
 
