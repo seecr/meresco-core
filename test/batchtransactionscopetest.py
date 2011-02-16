@@ -28,7 +28,7 @@
 ## end license ##
 from cq2utils import CQ2TestCase, CallTrace
 from meresco.core import BatchTransactionScope, Observable
-from callstackscope import callstackscope
+from weightless.core import local
 
 class BatchTransactionScopeTest(CQ2TestCase):
     def testMessagePassesThrough(self):
@@ -50,7 +50,7 @@ class BatchTransactionScopeTest(CQ2TestCase):
         observer = CallTrace('observer')
         committer = CallTrace("committer")
         def begin():
-            tx = callstackscope('__callstack_var_tx__')
+            tx = local('__callstack_var_tx__')
             tx.join(committer)
         observer.methods['begin'] = begin
         observable.addObserver(batch)
@@ -67,7 +67,7 @@ class BatchTransactionScopeTest(CQ2TestCase):
         observer = CallTrace('observer')
         committer = CallTrace("committer")
         def begin():
-            tx = callstackscope('__callstack_var_tx__')
+            tx = local('__callstack_var_tx__')
             tx.join(committer)
         observer.methods['begin'] = begin
         observable.addObserver(batch)
@@ -91,7 +91,7 @@ class BatchTransactionScopeTest(CQ2TestCase):
         observer = CallTrace()
         committer = CallTrace("committer")
         def begin():
-            tx = callstackscope('__callstack_var_tx__')
+            tx = local('__callstack_var_tx__')
             tx.join(committer)
         observer.methods['begin'] = begin
         batch.addObserver(observer)
@@ -126,7 +126,7 @@ class BatchTransactionScopeTest(CQ2TestCase):
         observer1 = CallTrace('observer1')
         committer1 = CallTrace("committer1")
         def begin():
-            tx = callstackscope('__callstack_var_tx__')
+            tx = local('__callstack_var_tx__')
             tx.join(committer1)
         observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
         batch.addObserver(observer1)
@@ -172,7 +172,7 @@ class BatchTransactionScopeTest(CQ2TestCase):
         observer1 = CallTrace('observer1')
         committer1 = CallTrace("committer1")
         def begin():
-            tx = callstackscope('__callstack_var_tx__')
+            tx = local('__callstack_var_tx__')
             tx.join(committer1)
         observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
         batch.addObserver(observer1)

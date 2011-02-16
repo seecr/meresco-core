@@ -27,7 +27,6 @@
 #
 ## end license ##
 from observable import Observable
-from callstackscope import callstackscope
 
 class ResourceManager(Observable):
 
