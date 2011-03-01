@@ -1,0 +1,284 @@
+Changeset created on Tue Mar  1 14:43:38 CET 2011 by Seek You Too
+
+Description: Weightless Upgrade
+
+    Weightless is upgraded to version 0.5, therefor some imports changed and callstackscope was removed.
+
+Baseline version: meresco/meresco-core/tags/version_3.1.3
+
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/deps.txt version_1/deps.txt
+--- version_0/deps.txt	2011-02-11 12:18:51.000000000 +0100
++++ version_1/deps.txt	2011-03-01 14:39:35.000000000 +0100
+@@ -1,6 +1,4 @@
+-python-callstackscope (>=0.1)
+-python-callstackscope (<<0.2)
+ python-cq2utils (>=5.4.8)
+ python-cq2utils (<<5.5)
+-python-weightless (>=0.4.8)
+-python-weightless (<<0.5)
++python-weightless-core (>=0.5)
++python-weightless-core (<<0.6)
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/meresco/core/observable.py version_1/meresco/core/observable.py
+--- version_0/meresco/core/observable.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/meresco/core/observable.py	2011-03-01 14:41:45.000000000 +0100
+@@ -3,12 +3,12 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+-#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -28,8 +28,7 @@
+ #
+ ## end license ##
+ from sys import exc_info
+-from weightless import compose
+-from callstackscope import callstackscope
++from weightless.core import compose, local
+ 
+ class Defer(object):
+     def __init__(self, observers, defereeType):
+@@ -167,7 +166,7 @@
+ class Context(object):
+     def __getattr__(self, name):
+         try:
+-            return callstackscope('__callstack_var_%s__' % name)
++            return local('__callstack_var_%s__' % name)
+         except AttributeError:
+             raise AttributeError("'%s' has no attribute '%s'" % (self, name))
+ 
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/meresco/core/resourcemanager.py version_1/meresco/core/resourcemanager.py
+--- version_0/meresco/core/resourcemanager.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/meresco/core/resourcemanager.py	2011-03-01 14:42:14.000000000 +0100
+@@ -3,11 +3,12 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -27,7 +28,6 @@
+ #
+ ## end license ##
+ from observable import Observable
+-from callstackscope import callstackscope
+ 
+ class ResourceManager(Observable):
+ 
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/meresco/core/transaction.py version_1/meresco/core/transaction.py
+--- version_0/meresco/core/transaction.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/meresco/core/transaction.py	2011-03-01 14:42:24.000000000 +0100
+@@ -3,11 +3,11 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+-#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+ #
+ #    This file is part of Meresco Core.
+@@ -27,7 +27,6 @@
+ #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ #
+ ## end license ##
+-from callstackscope import callstackscope
+ 
+ class TransactionException(Exception):
+     pass
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/setup.py version_1/setup.py
+--- version_0/setup.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/setup.py	2011-03-01 14:39:35.000000000 +0100
+@@ -1,3 +1,4 @@
++#!/usr/bin/env python
+ ## begin license ##
+ #
+ #    Meresco Core is an open-source library containing components to build
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/test/batchtransactionscopetest.py version_1/test/batchtransactionscopetest.py
+--- version_0/test/batchtransactionscopetest.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/test/batchtransactionscopetest.py	2011-03-01 14:42:50.000000000 +0100
+@@ -3,11 +3,12 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -28,7 +29,7 @@
+ ## end license ##
+ from cq2utils import CQ2TestCase, CallTrace
+ from meresco.core import BatchTransactionScope, Observable
+-from callstackscope import callstackscope
++from weightless.core import local
+ 
+ class BatchTransactionScopeTest(CQ2TestCase):
+     def testMessagePassesThrough(self):
+@@ -50,7 +51,7 @@
+         observer = CallTrace('observer')
+         committer = CallTrace("committer")
+         def begin():
+-            tx = callstackscope('__callstack_var_tx__')
++            tx = local('__callstack_var_tx__')
+             tx.join(committer)
+         observer.methods['begin'] = begin
+         observable.addObserver(batch)
+@@ -67,7 +68,7 @@
+         observer = CallTrace('observer')
+         committer = CallTrace("committer")
+         def begin():
+-            tx = callstackscope('__callstack_var_tx__')
++            tx = local('__callstack_var_tx__')
+             tx.join(committer)
+         observer.methods['begin'] = begin
+         observable.addObserver(batch)
+@@ -91,7 +92,7 @@
+         observer = CallTrace()
+         committer = CallTrace("committer")
+         def begin():
+-            tx = callstackscope('__callstack_var_tx__')
++            tx = local('__callstack_var_tx__')
+             tx.join(committer)
+         observer.methods['begin'] = begin
+         batch.addObserver(observer)
+@@ -126,7 +127,7 @@
+         observer1 = CallTrace('observer1')
+         committer1 = CallTrace("committer1")
+         def begin():
+-            tx = callstackscope('__callstack_var_tx__')
++            tx = local('__callstack_var_tx__')
+             tx.join(committer1)
+         observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
+         batch.addObserver(observer1)
+@@ -172,7 +173,7 @@
+         observer1 = CallTrace('observer1')
+         committer1 = CallTrace("committer1")
+         def begin():
+-            tx = callstackscope('__callstack_var_tx__')
++            tx = local('__callstack_var_tx__')
+             tx.join(committer1)
+         observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
+         batch.addObserver(observer1)
+@@ -225,4 +226,4 @@
+         this.method()
+ 
+     def removeTimer(this, timer):
+-        pass
+\ No newline at end of file
++        pass
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/test/observabletest.py version_1/test/observabletest.py
+--- version_0/test/observabletest.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/test/observabletest.py	2011-03-01 14:43:04.000000000 +0100
+@@ -3,12 +3,12 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
+-#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -30,11 +30,10 @@
+ 
+ from sys import exc_info
+ from traceback import format_tb
+-from types import GeneratorType
+ 
+ from meresco.core import Observable, TransactionScope, Transparant
+ from meresco.core.observable import be
+-from weightless import compose
++from weightless.core import compose
+ from cq2utils.calltrace import CallTrace
+ from unittest import TestCase
+ 
+@@ -57,7 +56,9 @@
+     def testAllWithoutImplementers(self):
+         observable = Observable()
+         responses = observable.all.someMethodNobodyIsListeningTo()
+-        self.assertEquals(GeneratorType, type(responses))
++        self.assertTrue(hasattr(responses, 'throw'))
++        self.assertTrue(hasattr(responses, 'send'))
++        self.assertTrue(hasattr(responses, 'close'))
+ 
+     def testAllWithMoreImplementers(self):
+         observable = Observable()
+@@ -65,7 +66,9 @@
+         observerTwo = CallTrace(returnValues={'aMethod': 'two'})
+         root = be((observable, (observerOne,), (observerTwo,)))
+         responses = root.all.aMethod()
+-        self.assertEquals(GeneratorType, type(responses))
++        self.assertTrue(hasattr(responses, 'throw'))
++        self.assertTrue(hasattr(responses, 'send'))
++        self.assertTrue(hasattr(responses, 'close'))
+         self.assertEquals(['one', 'two'], list(responses))
+ 
+     def testAnyCallsFirstImplementer(self):
+@@ -222,7 +225,10 @@
+         a = A()
+         b = B()
+         a.addObserver(b)
+-        self.assertEquals(GeneratorType, type(a.any.myThing()))
++        result = a.any.myThing()
++        self.assertTrue(hasattr(result, 'throw'))
++        self.assertTrue(hasattr(result, 'send'))
++        self.assertTrue(hasattr(result, 'close'))
+         self.assertEquals(["data"], list(a.any.myThing()))
+ 
+     def testAllUnknown(self):
+diff --unidirectional-new-file --exclude='*.so' --exclude='*.o' --exclude=.svn --exclude='*.pyc' --exclude=deps.d --exclude=applied --recursive --unified version_0/test/transactiontest.py version_1/test/transactiontest.py
+--- version_0/test/transactiontest.py	2011-02-11 12:18:51.000000000 +0100
++++ version_1/test/transactiontest.py	2011-03-01 14:43:31.000000000 +0100
+@@ -2,11 +2,12 @@
+ #
+ #    Meresco Core is an open-source library containing components to build
+ #    searchengines, repositories and archives.
+-#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
+ #    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
+ #    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
+ #       http://www.kennisnetictopschool.nl
+ #    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
+ #
+ #    This file is part of Meresco Core.
+ #
+@@ -30,7 +31,7 @@
+ from unittest import TestCase
+ from meresco.core import ResourceManager, be, Observable, TransactionScope, TransactionException, Transaction
+ 
+-from weightless import compose
++from weightless.core import compose
+ 
+ class TransactionTest(TestCase):
+     def testOne(self):
