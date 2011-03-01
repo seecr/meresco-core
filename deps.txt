@@ -1,4 +1,4 @@
 python-cq2utils (>=5.4.8)
 python-cq2utils (<<5.5)
-python-weightless (>=0.5)
-python-weightless (<<0.6)
+python-weightless-core (>=0.5)
+python-weightless-core (<<0.6)
