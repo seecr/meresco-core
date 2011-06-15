@@ -54,10 +54,10 @@ class ResourceManager(Observable):
     def commit(self):
         tx = self.ctx.tx
         resourceTx = self.txs.pop(tx.getId())
-        resourceTx.commit()
+        return resourceTx.commit()
 
     def rollback(self):
         tx = self.ctx.tx
         resourceTx = self.txs.pop(tx.getId())
-        resourceTx.rollback()
+        return resourceTx.rollback()
 
