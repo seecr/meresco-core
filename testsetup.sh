@@ -28,15 +28,19 @@
 set -e
 
 rm -rf tmp build
+for pycmd in $(pyversions --installed); do
 
-python setup.py install --root tmp
+    $pycmd setup.py install --root tmp
 
-export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
-cp -r test tmp/test
+    if [ "$pycmd" == "python2.5" ]; then
+        export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
+    else
+        export PYTHONPATH=`pwd`/tmp/usr/local/lib/python2.6/dist-packages
+    fi
+    cp -r test tmp/test
 
-(
-cd tmp/test
-./alltests.sh
-)
-
-rm -rf tmp build
+    (
+        cd tmp/test
+        ./alltests.sh --${pycmd}
+    )
+done
