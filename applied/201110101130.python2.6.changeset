@@ -1,0 +1,3170 @@
+Changeset created on Mon Oct 10 11:30:06 UTC 2011 by Seecr (Seek You Too B.V.)
+
+Description: Python 2.6 support
+
+    Updated test suite to also run tests with python2.6
+
+Baseline version: https://meresco.svn.sourceforge.net/svnroot/meresco/meresco-core/workingsets/3.1.6-Seecr/version_0
+
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/batchtransactionscope.py version_1/build/lib/meresco/core/batchtransactionscope.py
+--- version_0/build/lib/meresco/core/batchtransactionscope.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/batchtransactionscope.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,87 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Observable
++from transaction import TransactionException, Transaction
++from warnings import warn
++
++class BatchTransactionScope(Observable):
++    def __init__(self, transactionName, reactor, batchSize=10, timeout=1):
++        warn("BatchTransactionScope is not fit for suspendable commits in timeOuts.", DeprecationWarning)
++        Observable.__init__(self, name=transactionName)
++        assert timeout > 0
++        self._reactor = reactor
++        self._batchSize = batchSize
++        self._timeout = timeout
++        self._currentTransaction = None
++
++    def unknown(self, message, *args, **kwargs):
++        __callstack_var_tx__ = transaction = self._currentTransaction
++        if transaction == None:
++            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self.observable_name())
++            transaction._batchCounter = 0
++            transaction._activeGenerators = 0
++            transaction._markedForCommit = False
++            transaction._timerToken = None
++            self.once.begin()
++        try:
++            transaction._activeGenerators += 1
++            results = self.all.unknown(message, *args, **kwargs)
++            for result in results:
++                yield result
++            transaction._activeGenerators -= 1
++
++            transaction._batchCounter += 1
++            if transaction._markedForCommit or transaction._batchCounter >= self._batchSize:
++                yield self._commit(transaction)
++            else:
++                self._removeTimer(transaction)
++                transaction._timerToken = self._reactor.addTimer(self._timeout,
++                                                                 lambda: self._doTimeout(transaction))
++        except TransactionException:
++            transaction.rollback()
++            self._currentTransaction = None
++        finally:
++            results = None
++
++    def _doTimeout(self, transaction):
++         transaction._timerToken = None
++         list(self._commit(transaction))
++
++    def _commit(self, transaction):
++        transaction._markedForCommit = True
++        self._removeTimer(transaction)
++        if transaction == self._currentTransaction:
++            self._currentTransaction = None
++        if transaction._activeGenerators == 0:
++            for result in transaction.commit():
++                yield result
++
++    def _removeTimer(self, transaction):
++        if transaction._timerToken != None:
++            self._reactor.removeTimer(transaction._timerToken)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/generatorutils.py version_1/build/lib/meresco/core/generatorutils.py
+--- version_0/build/lib/meresco/core/generatorutils.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/generatorutils.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,64 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from sys import exc_info
++
++def decorate(before, generator, after):
++    first = generator.next()
++    yield before
++    yield first
++    for value in generator:
++        yield value
++    yield after
++
++def decorateWith(before, after):
++    def _internal(g):
++        def newg(*args, **kwargs):
++            return decorate(before,
++                            g(*args, **kwargs),
++                            after)
++        return newg
++    return _internal
++
++
++class Peek:
++
++    def __init__(self, generator):
++        self._generator = generator
++        try:
++            self._first = generator.next()
++        except StopIteration:
++            pass
++
++    def empty(self):
++        return not hasattr(self, '_first')
++
++    def __iter__(self):
++        while True:
++            yield self._first
++            self._first = self._generator.next()
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/helix.py version_1/build/lib/meresco/core/helix.py
+--- version_0/build/lib/meresco/core/helix.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/helix.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,44 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Transparant
++
++def findHelix(dna, clazz):
++    component, dnas = dna[0], dna[1:]
++    if type(component) == clazz:
++        yield dna
++    for dna in dnas:
++        for helix in findHelix(dna, clazz):
++            yield helix
++
++def link(clazz):
++    def helper(helices):
++        for helix in helices:
++            if type(helix[0]) == clazz:
++                return helix
++        raise 'Invalid link: no such component %s' % clazz
++    return helper
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/__init__.py version_1/build/lib/meresco/core/__init__.py
+--- version_0/build/lib/meresco/core/__init__.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/__init__.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,44 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++if not __debug__:
++    raise AssertionError("Do not use optimized code, because Meresco uses assert statements. (See http://docs.python.org/release/2.5.2/ref/assert.html)")
++
++from sys import getdefaultencoding as _getdefaultencoding
++from locale import getdefaultlocale, _parse_localename
++assert _getdefaultencoding() == 'utf-8', 'Please ensure that the default encoding is utf-8'
++assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
++
++from observable import Observable, Transparant, be
++from observer import ObserverFunction
++from generatorutils import decorate, decorateWith
++from helix import findHelix, link
++from transaction import TransactionException, Transaction
++from transactionscope import TransactionScope
++from resourcemanager import ResourceManager
++from batchtransactionscope import BatchTransactionScope
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/observable.py version_1/build/lib/meresco/core/observable.py
+--- version_0/build/lib/meresco/core/observable.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/observable.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,216 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from sys import exc_info
++from weightless.core import compose, local
++
++class Defer(object):
++    def __init__(self, observers, defereeType):
++        self._observers = observers
++        self._defereeType = defereeType
++
++    def __getattr__(self, attr):
++        return self._defereeType(self._observers, attr)
++
++    def __getitem__(self, target):
++        return Defer([o for o in self._observers if hasattr(o, "observable_name") and o.observable_name() == target], self._defereeType)
++
++    def unknown(self, message, *args, **kwargs):
++        try:
++            return getattr(self, message)(*args, **kwargs)
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++
++class DeferredMessage(object):
++    def __init__(self, observers, message):
++        self._observers = observers
++        self._message = message
++
++    def __call__(self, *args, **kwargs):
++        return self._gatherResponses(*args, **kwargs)
++
++    def _gatherResponses(self, *args, **kwargs):
++        for observer in self._observers:
++            if hasattr(observer, self._message):
++                try:
++                    answer = getattr(observer, self._message)(*args, **kwargs)
++                    yield answer
++                except:
++                    exType, exValue, exTraceback = exc_info()
++                    raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++                finally:
++                    answer = None
++            elif hasattr(observer, 'unknown'):
++                try:
++                    responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
++                except TypeError, e:
++                    raise TypeError(str(e) + ' on ' + str(observer))
++                if responses:
++                    try:
++                        for response in responses:
++                            yield response
++                    except:
++                        exType, exValue, exTraceback = exc_info()
++                        raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++                    finally:
++                        responses.close()# avoid cycles, see http://www.python.org/dev/peps/pep-0342/
++                        responses = None # avoid cycles, see http://www.python.org/dev/peps/pep-0342/
++
++class AllMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        return compose(self._gatherResponses(*args, **kwargs))
++
++class AnyMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            results = DeferredMessage.__call__(self, *args, **kwargs)
++            return results.next()
++        except StopIteration:
++            raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++        finally:
++            results.close()
++            results = None
++
++class DoMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
++                pass
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++
++class AsyncdoMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            for value in compose(DeferredMessage.__call__(self, *args, **kwargs)):
++                if callable(value):
++                    yield value
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++
++class AsyncanyMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            result = DeferredMessage.__call__(self, *args, **kwargs)
++            m = None
++            while True:
++                r = result.send(m) 
++                m = yield r
++                if not callable(m):
++                    raise StopIteration(m)
++        except StopIteration, e:
++            if e.args:
++                raise
++            raise AttributeError('None of the %d observers responds to asyncany.%s(...)' % (len(self._observers), self._message))
++
++class OnceMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        done = set()
++        return self._callonce(self._observers, args, kwargs, done)
++
++    def _callonce(self, observers, args, kwargs, done):
++        for observer in observers:
++            if observer not in done:
++                done.add(observer)
++                if hasattr(observer, self._message):
++                    getattr(observer, self._message)(*args, **kwargs)
++                if isinstance(observer, Observable):
++                    self._callonce(observer._observers, args, kwargs, done)
++
++def be(strand):
++    helicesDone = set()
++    return _beRecursive(strand, helicesDone)
++
++def _beRecursive(helix, helicesDone):
++    if callable(helix):
++        helix = helix(helicesDone)
++    component = helix[0]
++    strand = helix[1:]
++    if not helix in helicesDone and strand:
++        component.addStrand(strand, helicesDone)
++        helicesDone.add(helix)
++    return component
++
++class Context(object):
++    def __getattr__(self, name):
++        try:
++            return local('__callstack_var_%s__' % name)
++        except AttributeError:
++            raise AttributeError("'%s' has no attribute '%s'" % (self, name))
++
++
++class Observable(object):
++    def __init__(self, name = None):
++        self._observers = []
++        self.all = Defer(self._observers, AllMessage)
++        self.any = Defer(self._observers, AnyMessage)
++        self.do = Defer(self._observers, DoMessage)
++        self.asyncdo = Defer(self._observers, AsyncdoMessage)
++        self.asyncany = Defer(self._observers, AsyncanyMessage)
++        self.once = Defer(self._observers, OnceMessage)
++        self._name = name
++
++        self.ctx = Context()
++    
++    def observable_name(self):
++        return self._name
++
++    def observable_setName(self, name):
++        self._name = name
++        return self
++
++    def addObserver(self, observer):
++        self._observers.append(observer)
++
++    def addStrand(self, strand, helicesDone):
++        for helix in strand:
++            self.addObserver(_beRecursive(helix, helicesDone))
++
++    def printTree(self, depth=0):
++        def printInColor(ident, color, text):
++            print ' '*ident, chr(27)+"[0;" + str(color) + "m", text, chr(27)+"[0m"
++        print ' ' * depth, self.__repr__()
++        for observer in self._observers:
++            if hasattr(observer, 'printTree'):
++                observer.printTree(depth=depth+1)
++            else:
++                printInColor(depth+1, 31, observer)
++
++    def __repr__(self):
++        return "%s(name=%s)" % (self.__class__.__name__, repr(self._name))
++
++class Transparant(Observable):
++    def unknown(self, message, *args, **kwargs):
++        return self.all.unknown(message, *args, **kwargs)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/observer.py version_1/build/lib/meresco/core/observer.py
+--- version_0/build/lib/meresco/core/observer.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/observer.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,36 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++class ObserverFunction(object):
++    def __init__(self, function, name = None):
++        self._function = function
++        self._name = name
++    def unknown(self, name, *args, **kwargs):
++        if name != self._function.func_name and name != self._name:
++            raise StopIteration()
++        yield self._function(*args, **kwargs)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/processtools.py version_1/build/lib/meresco/core/processtools.py
+--- version_0/build/lib/meresco/core/processtools.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/processtools.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,35 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2011 Seek You Too (CQ2) http://www.cq2.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from signal import SIGINT, SIGTERM, SIG_IGN, SIG_DFL, signal, getsignal
++
++def setSignalHandlers():
++    if getsignal(SIGINT) == SIG_IGN:
++        print 'SIGINT was ignored, restoring to defaulthandler'
++        signal(SIGINT, SIG_DFL)
++
++    if getsignal(SIGTERM) == SIG_IGN:
++        print 'SIGTERM was ignored, restoring to defaulthandler'
++        signal(SIGTERM, SIG_DFL)
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/resourcemanager.py version_1/build/lib/meresco/core/resourcemanager.py
+--- version_0/build/lib/meresco/core/resourcemanager.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/resourcemanager.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,63 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Observable
++
++class ResourceManager(Observable):
++
++    def __init__(self, transactionName, resourceTxFactory, name=None):
++        Observable.__init__(self, name)
++        self._resourceTxFactory = resourceTxFactory
++        self._transactionName = transactionName
++        self.txs = {}
++
++    def begin(self):
++        tx = self.ctx.tx
++        if tx.name != self._transactionName:
++            return
++        resourceTx = self._resourceTxFactory(self)
++        tx.join(self)
++        self.txs[tx.getId()] = resourceTx
++
++    def unknown(self, message, *args, **kwargs):
++        tx = self.ctx.tx
++        method = getattr(self.txs[tx.getId()], message, None)
++        if method != None:
++            yield method(*args, **kwargs)
++
++    def commit(self):
++        tx = self.ctx.tx
++        resourceTx = self.txs.pop(tx.getId())
++        return resourceTx.commit()
++
++    def rollback(self):
++        tx = self.ctx.tx
++        resourceTx = self.txs.pop(tx.getId())
++        return resourceTx.rollback()
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/transaction.py version_1/build/lib/meresco/core/transaction.py
+--- version_0/build/lib/meresco/core/transaction.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/transaction.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,59 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++class TransactionException(Exception):
++    pass
++
++class Transaction(object):
++
++    def __init__(self, name):
++        self._resourceManagers = []
++        self.locals = {}
++        self.name = name
++
++    def getId(self):
++        return id(self)
++
++    def join(self, resourceManager):
++        if resourceManager not in self._resourceManagers:
++            self._resourceManagers.append(resourceManager)
++
++    def commit(self):
++        while self._resourceManagers:
++            resourceManager = self._resourceManagers.pop(0)
++            yield resourceManager.commit()
++
++    def rollback(self):
++        while self._resourceManagers:
++            resourceManager = self._resourceManagers.pop(0)
++            yield resourceManager.rollback()
++
++    def abort(self):
++        raise TransactionException()
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/core/transactionscope.py version_1/build/lib/meresco/core/transactionscope.py
+--- version_0/build/lib/meresco/core/transactionscope.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/core/transactionscope.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,53 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Observable
++from transaction import TransactionException, Transaction
++
++class TransactionScope(Observable):
++    def __init__(self, transactionName):
++        Observable.__init__(self, name=transactionName)
++
++    def unknown(self, message, *args, **kwargs):
++        __callstack_var_tx__ = Transaction(self.observable_name())
++        self.once.begin()
++        try:
++            results = self.all.unknown(message, *args, **kwargs)
++            for result in results:
++                yield result
++            results = __callstack_var_tx__.commit()
++            for result in results:
++                yield result
++        except TransactionException:
++            results = __callstack_var_tx__.rollback()
++            for result in results:
++                yield result
++        finally:
++            results = None
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/build/lib/meresco/__init__.py version_1/build/lib/meresco/__init__.py
+--- version_0/build/lib/meresco/__init__.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/build/lib/meresco/__init__.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,29 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from pkgutil import extend_path
++__path__ = extend_path(__path__, __name__)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/doc/MerescoTechnicalConcepts.txt version_1/doc/MerescoTechnicalConcepts.txt
+--- version_0/doc/MerescoTechnicalConcepts.txt	2011-10-10 11:58:09.000000000 +0200
++++ version_1/doc/MerescoTechnicalConcepts.txt	2011-10-10 11:59:21.000000000 +0200
+@@ -7,8 +7,8 @@
+ ---------------------------------------------------------
+  About Components, Application DNA and Jackson Pipelines
+ ---------------------------------------------------------
+-:Date: $Date: 2011-10-10 11:58:09 +0200 (Mon, 10 Oct 2011) $
+-:Revision: $Revision: 3853 $
++:Date: $Date: 2011-10-10 11:59:20 +0200 (Mon, 10 Oct 2011) $
++:Revision: $Revision: 3854 $
+ :Authors: Seek You Too
+ :Last changed by: $LastChangedBy: thijsj $
+ :Contact: info@cq2.nl
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/_alltests.py version_1/test/_alltests.py
+--- version_0/test/_alltests.py	2011-10-10 11:57:23.000000000 +0200
++++ version_1/test/_alltests.py	2011-10-10 12:02:54.000000000 +0200
+@@ -1,4 +1,3 @@
+-#!/usr/bin/env python2.5
+ ## begin license ##
+ #
+ #    Meresco Core is an open-source library containing components to build
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/test/alltests.sh version_1/test/alltests.sh
+--- version_0/test/alltests.sh	2011-10-10 11:57:23.000000000 +0200
++++ version_1/test/alltests.sh	2011-10-10 12:02:34.000000000 +0200
+@@ -23,5 +23,16 @@
+ #
+ ## end license ##
+ 
++export LANG=en_US.UTF-8
+ export PYTHONPATH=.:"$PYTHONPATH"
+-python2.5 _alltests.py "$@"
++option=$1
++pyversions="$(pyversions --installed)"
++if [ "${option:0:10}" == "--python2." ]; then
++    shift
++    pyversions="${option:2}"
++fi
++
++for pycmd in $pyversions; do
++    echo "================ $pycmd _alltests.py $@ ================"
++    $pycmd _alltests.py "$@"
++done
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/testsetup.sh version_1/testsetup.sh
+--- version_0/testsetup.sh	2011-10-10 11:57:23.000000000 +0200
++++ version_1/testsetup.sh	2011-10-10 12:14:20.000000000 +0200
+@@ -28,15 +28,19 @@
+ set -e
+ 
+ rm -rf tmp build
++for pycmd in $(pyversions --installed); do
+ 
+-python setup.py install --root tmp
++    $pycmd setup.py install --root tmp
+ 
+-export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
+-cp -r test tmp/test
++    if [ "$pycmd" == "python2.5" ]; then
++        export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages
++    else
++        export PYTHONPATH=`pwd`/tmp/usr/local/lib/python2.6/dist-packages
++    fi
++    cp -r test tmp/test
+ 
+-(
+-cd tmp/test
+-./alltests.sh
+-)
+-
+-rm -rf tmp build
++    (
++        cd tmp/test
++        ./alltests.sh --${pycmd}
++    )
++done
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/_alltests.py version_1/tmp/test/_alltests.py
+--- version_0/tmp/test/_alltests.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/_alltests.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,51 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from os import system                              #DO_NOT_DISTRIBUTE
++from sys import path as sysPath                    #DO_NOT_DISTRIBUTE
++system('find .. -name "*.pyc" | xargs rm -f')      #DO_NOT_DISTRIBUTE
++                                                   #DO_NOT_DISTRIBUTE
++from glob import glob                              #DO_NOT_DISTRIBUTE
++for path in glob('../deps.d/*'):                   #DO_NOT_DISTRIBUTE
++    sysPath.insert(0, path)                        #DO_NOT_DISTRIBUTE
++                                                   #DO_NOT_DISTRIBUTE
++sysPath.insert(0, "..")                            #DO_NOT_DISTRIBUTE
++
++import unittest
++
++from helixtest import HelixTest
++from generatorutilstest import GeneratorUtilsTest
++from observabletest import ObservableTest
++from observabledirectedmessagingtest import ObservableDirectedMessagingTest
++from transactiontest import TransactionTest
++from batchtransactionscopetest import BatchTransactionScopeTest
++
++if __name__ == '__main__':
++    unittest.main()
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/alltests.sh version_1/tmp/test/alltests.sh
+--- version_0/tmp/test/alltests.sh	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/alltests.sh	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,38 @@
++#!/bin/bash
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++export LANG=en_US.UTF-8
++export PYTHONPATH=.:"$PYTHONPATH"
++option=$1
++pyversions="$(pyversions --installed)"
++if [ "${option:0:10}" == "--python2." ]; then
++    shift
++    pyversions="${option:2}"
++fi
++
++for pycmd in $pyversions; do
++    echo "================ $pycmd _alltests.py $@ ================"
++    $pycmd _alltests.py "$@"
++done
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/batchtransactionscopetest.py version_1/tmp/test/batchtransactionscopetest.py
+--- version_0/tmp/test/batchtransactionscopetest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/batchtransactionscopetest.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,229 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from cq2utils import CQ2TestCase, CallTrace
++from meresco.core import BatchTransactionScope, Observable
++from weightless.core import local
++
++class BatchTransactionScopeTest(CQ2TestCase):
++    def testMessagePassesThrough(self):
++        observer = CallTrace("observer")
++
++        batchTransactionScope = BatchTransactionScope("batch", reactor=CallTrace("reactor"))
++        batchTransactionScope.addObserver(observer)
++
++        observable = Observable()
++        observable.addObserver(batchTransactionScope)
++
++        observable.do.exoticMethod()
++
++        self.assertEquals(["begin", "exoticMethod"], [m.name for m in observer.calledMethods])
++
++    def testBatchSize1(self):
++        observable = Observable()
++        batch = BatchTransactionScope("batch", reactor=CallTrace("reactor"), batchSize=1, timeout=99999999)
++        observer = CallTrace('observer')
++        committer = CallTrace("committer")
++        def begin():
++            tx = local('__callstack_var_tx__')
++            tx.join(committer)
++        observer.methods['begin'] = begin
++        observable.addObserver(batch)
++        batch.addObserver(observer)
++
++        observable.do.addDocument("aDocument")
++
++        self.assertEquals(["begin", "addDocument"], [m.name for m in observer.calledMethods])
++        self.assertEquals(['commit'], [m.name for m in committer.calledMethods])
++
++    def testBatched(self):
++        observable = Observable()
++        batch = BatchTransactionScope("batch", reactor=CallTrace("reactor"), batchSize=2, timeout=99999999)
++        observer = CallTrace('observer')
++        committer = CallTrace("committer")
++        def begin():
++            tx = local('__callstack_var_tx__')
++            tx.join(committer)
++        observer.methods['begin'] = begin
++        observable.addObserver(batch)
++        batch.addObserver(observer)
++
++        observable.do.addDocument("aDocument")
++
++        self.assertEquals(['begin', "addDocument"], [m.name for m in observer.calledMethods])
++        self.assertEquals([], [m.name for m in committer.calledMethods])
++
++        observable.do.addDocument("aDocument")
++
++        self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer.calledMethods])
++        self.assertEquals(["commit"], [m.name for m in committer.calledMethods])
++
++    def testBatchedWithTimeout(self):
++        observable = Observable()
++        reactor = MockReactor()
++        batch = BatchTransactionScope("batch", reactor=reactor, batchSize=3, timeout='dummy timeout')
++        observable.addObserver(batch)
++        observer = CallTrace()
++        committer = CallTrace("committer")
++        def begin():
++            tx = local('__callstack_var_tx__')
++            tx.join(committer)
++        observer.methods['begin'] = begin
++        batch.addObserver(observer)
++
++        observable.do.addDocument('aDocument')
++        observable.do.delete('aDocument')
++
++        self.assertEquals(['begin', "addDocument", "delete"], [m.name for m in observer.calledMethods])
++        self.assertEquals([], [m.name for m in committer.calledMethods])
++
++        reactor.doTimeout()
++
++        self.assertEquals(['begin', "addDocument", "delete"], [m.name for m in observer.calledMethods])
++        self.assertEquals(['commit'], [m.name for m in committer.calledMethods])
++
++
++    def testAssertionErrorOnInvalidTimeout(self):
++        self.assertRaises(AssertionError,
++                          lambda: BatchTransactionScope("batch", reactor=None, batchSize=2, timeout=-100))
++
++
++    def testActiveGeneratorsPreventCommit(self):
++        observable = Observable()
++        reactor = MockReactor()
++        batch = BatchTransactionScope("batch", reactor=reactor, batchSize=1, timeout='dummy timeout')
++        observable.addObserver(batch)
++
++        def mockAddDocument(doc):
++            for i in range(0, 3):
++                yield i
++
++        observer1 = CallTrace('observer1')
++        committer1 = CallTrace("committer1")
++        def begin():
++            tx = local('__callstack_var_tx__')
++            tx.join(committer1)
++        observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
++        batch.addObserver(observer1)
++
++        call1 = observable.all.addDocument('aDocument1')
++        call1.next()
++
++        self.assertEquals(['begin', "addDocument"], [m.name for m in observer1.calledMethods])
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        call2 = observable.all.addDocument('aDocument2')
++        call2.next()
++        self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        for result in call1:
++            pass
++
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        call3 = observable.all.addDocument('aDocument3')
++
++        for result in call2:
++            pass
++
++        self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
++
++        for result in call3:
++            pass
++        self.assertEquals(['commit', 'commit'], [m.name for m in committer1.calledMethods])
++
++
++    def testActiveGeneratorsPreventCommitOnTimeout(self):
++        observable = Observable()
++        reactor = MockReactor()
++        batch = BatchTransactionScope("batch", reactor=reactor, batchSize=5, timeout='dummy timeout')
++        observable.addObserver(batch)
++
++        def mockAddDocument(doc):
++            for i in range(0, 3):
++                yield i
++
++        observer1 = CallTrace('observer1')
++        committer1 = CallTrace("committer1")
++        def begin():
++            tx = local('__callstack_var_tx__')
++            tx.join(committer1)
++        observer1.methods = dict(begin=begin, addDocument=mockAddDocument)
++        batch.addObserver(observer1)
++
++        call1 = observable.all.addDocument('aDocument1')
++        call1.next()
++
++        self.assertEquals(['begin', "addDocument"], [m.name for m in observer1.calledMethods])
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        call2 = observable.all.addDocument('aDocument2')
++        call2.next()
++        self.assertEquals(['begin', "addDocument", "addDocument"], [m.name for m in observer1.calledMethods])
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        for result in call1:
++            pass
++
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++        reactor.doTimeout()
++        self.assertEquals([], [m.name for m in committer1.calledMethods])
++
++        call3 = observable.all.addDocument('aDocument3')
++
++        for result in call2:
++            pass
++
++        self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
++
++        for result in call3:
++            pass
++        self.assertEquals(['commit'], [m.name for m in committer1.calledMethods])
++        reactor.doTimeout()
++        self.assertEquals(['commit', 'commit'], [m.name for m in committer1.calledMethods])
++
++
++class MockReactor(object):
++    def __init__(this):
++        def error():
++            raise Exception("Timer not set")
++        this.method = error
++
++    def addTimer(this, timeout, method):
++        this.method = method
++        return "TOKEN"
++
++    def doTimeout(this):
++        this.method()
++
++    def removeTimer(this, timer):
++        pass
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/generatorutilstest.py version_1/tmp/test/generatorutilstest.py
+--- version_0/tmp/test/generatorutilstest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/generatorutilstest.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,65 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from unittest import TestCase, main
++
++from meresco.core.generatorutils import Peek, decorate, decorateWith
++
++class GeneratorUtilsTest(TestCase):
++
++    def testEmptyGenerator(self):
++        responses = Peek((i for i in []))
++        self.assertTrue(responses.empty())
++
++    def testNonEmptyGenerator(self):
++        responses = Peek((i for i in [1,2,3]))
++        self.assertFalse(responses.empty())
++        result = list(responses)
++        self.assertEquals([1,2,3], result)
++
++    def testAlternativePeekNotEmpty(self):
++        result = list(decorate(1, (i for i in [2]), 3))
++        self.assertEquals([1,2,3], result)
++
++    def testAlternativePeekEmpty(self):
++        result = list(decorate(1, (i for i in []), 3))
++        self.assertEquals([], result)
++
++    def testDecorateWith(self):
++        def gen(yieldSomething=True):
++            if yieldSomething :
++                yield 'something'
++        self.assertEquals("something", "".join(gen()))
++        self.assertEquals("", "".join(gen(yieldSomething=False)))
++
++        @decorateWith("This is ", ", isn't it?")
++        def tobedecorated1(*args, **kwargs):
++            return gen(*args, **kwargs)
++        self.assertEquals("This is something, isn't it?", "".join(tobedecorated1()))
++        self.assertEquals("", "".join(tobedecorated1(yieldSomething=False)))
++
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/helixtest.py version_1/tmp/test/helixtest.py
+--- version_0/tmp/test/helixtest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/helixtest.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,86 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from unittest import TestCase
++from meresco.core import Observable, findHelix, link, be
++
++class HelixTest(TestCase):
++
++    def testTupleOrObject(self):
++        class MyComponent(Observable): pass
++        class HisComponent(Observable): pass
++        component1 = MyComponent()
++        component2 = HisComponent()
++        component3 = MyComponent()
++        dna = (component1, (component2, (component3,)))
++        helix = findHelix(dna, MyComponent)
++        self.assertEquals((component1,(component2, (component3,))), helix.next())
++        self.assertEquals((component3,), helix.next())
++
++    def testSimple(self):
++        class MyComponent(Observable): pass
++        component1 = MyComponent()
++        component2 = MyComponent()
++        dna = (component1, (component2,))
++        helix = findHelix(dna, MyComponent)
++        self.assertEquals((component1, (component2,)), helix.next())
++        self.assertEquals((component2,), helix.next())
++
++    def testDifferentClasses(self):
++        class MyComponent(Observable): pass
++        class HisComponent(Observable): pass
++        component1 = MyComponent()
++        component2 = HisComponent()
++        dna = (component1, (component2,))
++        helix = findHelix(dna, MyComponent)
++        self.assertEquals((component1, (component2,)), helix.next())
++        helix = findHelix(dna, HisComponent)
++        self.assertEquals((component2,), helix.next())
++
++    def testLayeredClasses(self):
++        class MyComponent(Observable): pass
++        class HisComponent(Observable): pass
++        component1 = MyComponent()
++        component2 = HisComponent()
++        component3 = MyComponent()
++        dna = (component1, (component2, (component3,)))
++        helix = findHelix(dna, MyComponent)
++        self.assertEquals((component1, (component2, (component3,))), helix.next())
++        self.assertEquals((component3,), helix.next())
++        helix = findHelix(dna, HisComponent)
++        self.assertEquals((component2, (component3,)), helix.next())
++        self.fail()
++
++    def testLink(self):
++        class MyComponent(Observable): pass
++        class HisComponent(Observable): pass
++        component1 = MyComponent()
++        component2 = HisComponent()
++        component3 = MyComponent()
++        dna = (component1, (component2, (component3,)), link(HisComponent))
++        lifeForm = be(dna)
++        self.assertEquals([component2, component2], lifeForm._observers)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/__init__.py version_1/tmp/test/__init__.py
+--- version_0/tmp/test/__init__.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/__init__.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,27 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/observabledirectedmessagingtest.py version_1/tmp/test/observabledirectedmessagingtest.py
+--- version_0/tmp/test/observabledirectedmessagingtest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/observabledirectedmessagingtest.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,123 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from unittest import TestCase
++
++from meresco.core import Observable
++
++class ObservableDirectedMessagingTest(TestCase):
++
++    def testDirectedObserverMessagingDoesNotBreakUndirectedCall(self):
++        observable = Observable()
++        called = []
++        class A(Observable):
++            def method(this):
++                called.append("A")
++        observable.addObserver(A("name"))
++
++        list(observable.all["name"].method())
++        
++        self.assertEquals(["A"], called)
++
++    def testDirectedObserverMessagingIgnoresNonObservableObservers(self):
++        observable = Observable()
++        called = []
++        class Z(object):
++            def method(this):
++                called.append("Z")
++        observable.addObserver(Z())
++
++        list(observable.all["name"].method())
++        
++        self.assertEquals([], called)
++
++        list(observable.all.method())
++
++        self.assertEquals(["Z"], called)
++
++    def testDirectedMessagesCanAlsoBeAcceptedByObjects(self):
++        observable = Observable()
++        called = []
++        class Y(object):
++            def method(this):
++                called.append("Y")
++            def observable_name(this):
++                return 'name'
++        class Z(object):
++            def method(this):
++                called.append("Z")
++        observable.addObserver(Y())
++        observable.addObserver(Z())
++
++        list(observable.all["name"].method())
++        
++        self.assertEquals(['Y'], called)
++
++        del called[:]
++
++        list(observable.all.method())
++
++        self.assertEquals(['Y', "Z"], called)
++
++        del called[:]
++
++        list(observable.all["other"].method())
++
++        self.assertEquals([], called)
++
++
++    def testUndirectedObserverMessagingIsUnaffectedByObserverName(self):
++        observable = Observable()
++        called = []
++        class A(Observable):
++            def method(this):
++                called.append(("A", this.observable_name()))
++        
++        class B(Observable):
++            def method(this):
++                called.append(("B", this.observable_name()))
++
++        observable.addObserver(A("name"))
++        observable.addObserver(A().observable_setName("anothername"))
++        observable.addObserver(B("anothername"))
++        observable.addObserver(B())
++
++        list(observable.all.method())
++        
++        self.assertEquals([("A", "name"), 
++            ("A", "anothername"), 
++            ("B", "anothername"), 
++            ("B", None)], called)
++        del called[:]
++
++        list(observable.all["name"].method())
++        self.assertEquals([("A", "name")], called)
++
++    def testSetName(self):
++        observable = Observable().observable_setName('name')
++        self.assertEquals('name', observable.observable_name())
++
++
++    # observable_setName('name')
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/observabletest.py version_1/tmp/test/observabletest.py
+--- version_0/tmp/test/observabletest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/observabletest.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,685 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from sys import exc_info
++from traceback import format_tb
++
++from meresco.core import Observable, TransactionScope, Transparant
++from meresco.core.observable import be
++from weightless.core import compose
++from cq2utils.calltrace import CallTrace
++from unittest import TestCase
++
++class Interceptor(Observable):
++    def unknown(self, message, *args, **kwargs):
++        self.message = message
++        self.args = args
++        self.kwargs = kwargs
++
++class ObservableTest(TestCase):
++    def testObserverInit(self):
++        initcalled = [0]
++        class MyObserver(object):
++            def observer_init(self):
++                initcalled[0] += 1
++        root = be((Observable(), (MyObserver(),)))
++        root.once.observer_init()
++        self.assertEquals([1], initcalled)
++
++    def testAllWithoutImplementers(self):
++        observable = Observable()
++        responses = observable.all.someMethodNobodyIsListeningTo()
++        self.assertTrue(hasattr(responses, 'throw'))
++        self.assertTrue(hasattr(responses, 'send'))
++        self.assertTrue(hasattr(responses, 'close'))
++
++    def testAllWithMoreImplementers(self):
++        observable = Observable()
++        observerOne = CallTrace(returnValues={'aMethod': 'one'})
++        observerTwo = CallTrace(returnValues={'aMethod': 'two'})
++        root = be((observable, (observerOne,), (observerTwo,)))
++        responses = root.all.aMethod()
++        self.assertTrue(hasattr(responses, 'throw'))
++        self.assertTrue(hasattr(responses, 'send'))
++        self.assertTrue(hasattr(responses, 'close'))
++        self.assertEquals(['one', 'two'], list(responses))
++
++    def testAnyCallsFirstImplementer(self):
++        observable = Observable()
++        observerA = ObserverA()
++        observerAB = ObserverAB()
++        root = be((observable, (observerA,), (observerAB,)))
++        resultA = root.any.methodA(0)
++        resultB = root.any.methodB(1, 2)
++        self.assertEquals([("Method A", (0,))], observerA.notifications)
++        self.assertEquals([("Method B", (1, 2))], observerAB.notifications)
++        self.assertEquals("A.methodA", resultA)
++        self.assertEquals("AB.methodB", resultB)
++
++    def testAllException(self):
++        observable = Observable()
++        class ExceptionRaiser(MockObserver):
++            def mayRaiseException(self, *args):
++                raise TestException
++        class Safe(MockObserver):
++            def mayRaiseException(self, *args):
++                self.notifications.append(("mayRaiseException", args))
++        observable.addObserver(ExceptionRaiser())
++        safe = Safe()
++        observable.addObserver(safe)
++        try:
++            list(observable.all.mayRaiseException())
++            self.fail()
++        except TestException:
++            pass
++        self.assertEquals([], safe.notifications)
++
++    def testDo(self):
++        observable = Observable()
++        retvalIsAlwaysNone = observable.do.oneWayMethodWithoutReturnValue()
++        self.assertEquals(None, retvalIsAlwaysNone)
++        observer = CallTrace("Observer")
++        observer.something = lambda x,y: x.append(y)
++        observable.addObserver(observer)
++        value = []
++        observable.do.something(value, 1)
++        self.assertEquals([1], value)
++
++    def testAsyncdoReturnsGenerator(self):
++        observable = Observable()
++        retval = observable.asyncdo.oneWayMethodWithoutReturnValue()
++        self.assertRaises(StopIteration, retval.next)
++
++    def testAsyncdoEmptyGenerator(self):
++        observable = Observable()
++        called=[]
++        class Listener(object):
++            def message(this):
++                yield 'a'
++                called.append(True)
++                yield 'b'
++        observable.addObserver(Listener())
++        retval = observable.asyncdo.message()
++        self.assertRaises(StopIteration, retval.next)
++        self.assertEquals([True], called)
++
++    def testAsyncdoYieldsCallables(self):
++        observable = Observable()
++        called=[]
++        def callable():
++            pass
++        class Listener(object):
++            def message(this):
++                yield 'a'
++                yield callable
++                yield 'b'
++                called.append(True)
++        observable.addObserver(Listener())
++        retval = observable.asyncdo.message()
++        self.assertEquals(callable, retval.next())
++        self.assertRaises(StopIteration, retval.next)
++        self.assertEquals([True], called)
++
++    def testAsyncAnyNoSuchMessage(self):
++        observable = Observable()
++        try:
++            observable.asyncany.notExisting().next()
++            self.fail('fail')
++        except AttributeError, e:
++            self.assertEquals('None of the 0 observers responds to asyncany.notExisting(...)', str(e))
++
++    def testAsyncAny2(self):
++        observable = Observable()
++        done = []
++        def callable():
++            pass
++        class Caller(Observable):
++            def useasyncany(this):
++                result = yield this.asyncany.message()
++                self.assertEquals("the answer", result)
++                yield
++        class Listener(object):
++            def message(this):
++                yield callable
++                done.append(0)
++                raise StopIteration("the answer")
++        caller = Caller()
++        caller.addObserver(Listener())
++        observable.addObserver(caller)
++        generator = compose(observable.all.useasyncany())
++        self.assertEquals(callable, generator.next())
++        retval = generator.next()
++        self.assertEquals([0], done)
++ 
++    def testAddStrandEmptyList(self):
++        observable = Observable()
++        observable.addStrand((), [])
++        self.assertEquals([], observable._observers)
++
++    def testBeOne(self):
++        observer = CallTrace()
++        root = be((observer,))
++        self.assertEquals(root, observer)
++
++    def testBeTwo(self):
++        observable = Observable()
++        child0 = Observable()
++        child1 = Observable()
++        root = be((observable, (child0,), (child1,)))
++        self.assertEquals([child0, child1], observable._observers)
++
++    def testBeTree(self):
++        observable = Observable()
++        child0 = Observable(name='child0')
++        child1 = Observable(name='child1')
++        strand = (observable, (child0, (child1,)))
++        root = be(strand)
++        self.assertEquals([child0], root._observers)
++        self.assertEquals([child1], child0._observers)
++
++    def testBeToExplainTheIdeaWhithoutTestingSomethingNew(self):
++        observable = Observable()
++        child0 = Observable(name='child0')
++        child1 = Observable(name='child1')
++        child2 = Observable(name='child2')
++        tree = (observable, (child0, (child1, (child2,))))
++        root = be(tree)
++        self.assertEquals([child0], observable._observers)
++        self.assertEquals([child1], child0._observers)
++        self.assertEquals([child2], child1._observers)
++
++    def testAny(self):
++        class A(Observable):
++            def myThing(self):
++                return self.any.myThing()
++        class B(Observable):
++            def myThing(self):
++                yield "data"
++        a = A()
++        b = B()
++        a.addObserver(b)
++        result = a.any.myThing()
++        self.assertTrue(hasattr(result, 'throw'))
++        self.assertTrue(hasattr(result, 'send'))
++        self.assertTrue(hasattr(result, 'close'))
++        self.assertEquals(["data"], list(a.any.myThing()))
++
++    def testAllUnknown(self):
++        class Interceptor(Observable):
++            def unknown(self, message, *args, **kwargs):
++                self.message = message
++                self.args = args
++                self.kwargs = kwargs
++        interceptor = Interceptor()
++        root = Observable()
++        root.addObserver(interceptor)
++        list(root.all.anUnknownMessage('with', unknown='arguments'))
++
++        self.assertEquals('anUnknownMessage', interceptor.message)
++        self.assertEquals(('with',), interceptor.args)
++        self.assertEquals({'unknown': 'arguments'}, interceptor.kwargs)
++
++    def testUnknownDispatchingNoImplementation(self):
++        observable = Observable()
++        class Listener(object):
++            pass
++        observable.addObserver(Listener())
++        retval = observable.all.unknown('non_existing_method', 'one')
++        self.assertEquals([], list(retval))
++
++    def testUnknownDispatching(self):
++        observable = Observable()
++        class Listener(object):
++            def method(inner, one):
++                return one + " another"
++        observable.addObserver(Listener())
++        retval = observable.any.unknown('method', 'one')
++        self.assertEquals('one another', retval)
++
++    def testUnknownDispatchingBackToUnknown(self):
++        observable = Observable()
++        class Listener(object):
++            def unknown(self, methodName, one):
++                return ("via unknown " + one for x in [1])
++        observable.addObserver(Listener())
++        retval = observable.any.unknown('non_existing_method', 'one')
++        self.assertEquals("via unknown one", retval)
++
++    def testUnknownIsEquivalentToNormalCall(self):
++        observable = Observable()
++        class Listener(object):
++            def normal(self):
++                return 'normal'
++            def unknown(self, message, *args, **kwargs):
++                yield self.normal()
++        observable.addObserver(Listener())
++        result1 = observable.any.unknown('normal')
++        result2 = observable.any.unknown('other')
++        self.assertEquals(result1, result2)
++
++    def testSyntacticSugarIsPreserved(self):
++        class WithUnknown(Observable):
++            def unknown(self, methodName, *args):
++                return self.all.unknown(methodName, "extra arg", *args)
++
++        observer = CallTrace("Observer")
++
++        withUnknown = WithUnknown()
++        withUnknown.addObserver(observer)
++
++        source = Observable()
++        source.addObserver(withUnknown)
++        source.do.someMethod("original arg")
++        #if syntactic sugar (i.e. "do") is preseverd, it would force the call self.all.unknown directly
++        self.assertEquals(1, len(observer.calledMethods))
++        self.assertEquals("someMethod('extra arg', 'original arg')", str(observer.calledMethods[0]))
++
++    def testProperErrorMessage(self):
++        observable = Observable()
++        try:
++            answer = observable.any.gimmeAnswer('please')
++            self.fail('shoud raise AttributeError')
++        except AttributeError, e:
++            self.assertEquals('None of the 0 observers responds to any.gimmeAnswer(...)', str(e))
++
++    def testProperErrorMessageWhenArgsDoNotMatch(self):
++        from traceback import print_exc
++        observable = Observable()
++        class YesObserver:
++            def yes(self, oneArg): pass
++        observable.addObserver(YesObserver())
++        try:
++            answer = observable.any.yes()
++            self.fail('shoud raise AttributeError')
++        except TypeError, e:
++            self.assertEquals('yes() takes exactly 2 arguments (1 given)', str(e))
++
++    def testNestedAllWithDo(self):
++        self.done = False
++        class A(Observable):
++            def a(this):
++                return this.all.a()
++        class B(Observable):
++            def a(this):
++                return this.all.a()
++        class C(Observable):
++            def a(this):
++                self.done = True
++        a = A()
++        b = B()
++        c = C()
++        a.addObserver(b)
++        b.addObserver(c)
++        result = a.do.a()
++        self.assertEquals(None, result)
++        self.assertTrue(self.done)
++
++    # JJ/KvS: wij achten deze test niet nuttig. Wat wordt er hier getest?
++    def xxtestNestedAllWithAny(self):
++        class A(Observable):
++            def a(this):
++                return this.any.a()
++
++        class B(Observable):
++            def a(this):
++                return this.all.a()
++        class C(Observable):
++            def a(this):
++                return 1
++        class D(Observable):
++            def a(this):
++                return 2
++        a = A()
++        b = B()
++        c = C()
++        d = D()
++        a.addObserver(b)
++        b.addObserver(c)
++        b.addObserver(d)
++        result = a.a()
++        self.assertEquals(1, result)
++
++    def testFixUpExceptionTraceBack(self):
++        class A:
++            def a(self):
++                raise Exception('A.a')
++            def unknown(self, msg, *args, **kwargs):
++                yield self.a()
++        observable = Observable()
++        observable.addObserver(A())
++        try:
++            observable.any.a()
++        except Exception:
++            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
++        try:
++            list(observable.all.a())
++        except Exception:
++            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
++
++        try:
++            observable.do.a()
++        except Exception:
++            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
++
++        try:
++            list(observable.asyncdo.a())
++        except Exception:
++            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
++
++        try:
++            observable.any.unknown('a')
++        except Exception:
++            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "a")
++
++        try:
++            observable.any.somethingNotThereButHandledByUnknown('a')
++        except Exception:
++            self.assertFunctionsOnTraceback("testFixUpExceptionTraceBack", "unknown", "a")
++
++    def assertFunctionsOnTraceback(self, *args):
++        na, na, tb = exc_info()
++        for functionName in args:
++            self.assertEquals(functionName, tb.tb_frame.f_code.co_name)
++            tb = tb.tb_next
++        self.assertEquals(None, tb)
++
++    def testMoreElaborateExceptionCleaning(self):
++        class A(Observable):
++            def a(self): return self.any.b()
++        class B(Observable):
++            def b(self): return self.any.c()
++        class C(Observable):
++            def c(self): return self.any.d()
++        class D:
++            def d(self): raise Exception('D.d')
++        a = A()
++        b = B()
++        c = C()
++        a.addObserver(b)
++        b.addObserver(c)
++        c.addObserver(D())
++        try:
++            a.a()
++            self.fail('should raise exception')
++        except:
++            self.assertFunctionsOnTraceback("testMoreElaborateExceptionCleaning", "a", "b", "c", "d")
++
++    def testOneTransactionPerGenerator(self):
++        txId = []
++        class MyTxParticipant(Observable):
++            def doSomething(self):
++                txId.append(self.ctx.tx.getId())
++                yield 'A'
++                txId.append(self.ctx.tx.getId())
++                yield 'B'
++        dna = \
++            (Observable(),
++                (TransactionScope('name'),
++                    (MyTxParticipant(),)
++                )
++            )
++        body = be(dna)
++        scope1 = body.all.doSomething()
++        scope2 = body.all.doSomething()
++        scope1.next()
++        scope2.next()
++        scope1.next()
++        scope2.next()
++        self.assertTrue(txId[0] != txId[1])
++        self.assertTrue(txId[1] > 0)
++        self.assertTrue(txId[0] > 0)
++        self.assertEquals(txId[0], txId[2])
++        self.assertEquals(txId[1], txId[3])
++
++    def testTransactionCommit(self):
++        collected = {}
++        class MyFirstTxParticipant(Transparant):
++            def begin(self):
++                self.ctx.tx.join(self)
++            def doSomething(self):
++                collected[self.ctx.tx.getId()] = ['first']
++                yield self.any.doSomething()
++            def commit(self):
++                collected[self.ctx.tx.getId()].append('done 1')
++        class MySecondTxParticipant(Observable):
++            def begin(self):
++                self.ctx.tx.join(self)
++            def doSomething(self):
++                collected[self.ctx.tx.getId()].append('second')
++                yield 'second'
++            def commit(self):
++                collected[self.ctx.tx.getId()].append('done 2')
++        dna = \
++            (Observable(),
++                (TransactionScope('name'),
++                    (MyFirstTxParticipant(),
++                        (MySecondTxParticipant(),)
++                    )
++                )
++            )
++        body = be(dna)
++        list(body.all.doSomething())
++        self.assertEquals(['first', 'second', 'done 1', 'done 2'], collected.values()[0])
++
++    def testAddObserversOnce(self):
++        class  MyObservable(Observable):
++            pass
++        o1 = MyObservable(name='O1')
++        o2 = MyObservable(name='O2')
++        o3 = MyObservable(name='O3')
++        o4 = MyObservable(name='O4')
++        o5 = MyObservable(name='O5')
++        helix = \
++            (o1,
++                (o2, )
++            )
++        dna =   (o3,
++                    helix,
++                    (o4,),
++                    (o5, helix)
++                 )
++        root = be(dna)
++        self.assertEquals([o2], o1._observers)
++        self.assertEquals([], o2._observers)
++        self.assertEquals([o1, o4, o5], o3._observers)
++        self.assertEquals([], o4._observers)
++        self.assertEquals([o1], o5._observers)
++
++    def testResolveCallStackVariables(self):
++        class StackVarHolder(Observable):
++            def unknown(self, name, *args, **kwargs):
++                __callstack_var_myvar__ = []
++                for result in self.all.unknown(name, *args, **kwargs):
++                    pass
++                yield __callstack_var_myvar__
++
++        class StackVarUser(Observable):
++            def useVariable(self):
++                self.ctx.myvar.append('Thingy')
++
++        dna = \
++            (Observable(),
++                (StackVarHolder(),
++                    (StackVarUser(),)
++                )
++            )
++        root = be(dna)
++        self.assertEquals(['Thingy'], root.any.useVariable())
++
++    def testOnceAndOnlyOnce(self):
++        class MyObserver(Observable):
++            def methodOnlyCalledOnce(self, aList):
++                aList.append('once')
++        once = MyObserver()
++        dna = \
++            (Observable(),
++                (once,),
++                (once,)
++            )
++        root = be(dna)
++        collector = []
++        root.once.methodOnlyCalledOnce(collector)
++        self.assertEquals(['once'], collector)
++
++    def testOnceInDiamondWithTransparant(self):
++        class MyObserver(Observable):
++            def methodOnlyCalledOnce(self, aList):
++                aList.append('once')
++        once = MyObserver()
++        diamond = \
++            (Transparant(),
++                (Transparant(),
++                    (once,)
++                ),
++                (Transparant(),
++                    (once,)
++                )
++            )
++        root = be(diamond)
++        collector = []
++        root.once.methodOnlyCalledOnce(collector)
++        self.assertEquals(['once'], collector)
++
++    def testPropagateThroughAllObservablesInDiamondWithNONTransparantObservablesWithoutUnknownMethodDelegatingUnknownCalls(self):
++        class MyObserver(Observable):
++            def methodOnlyCalledOnce(self, aList):
++                aList.append('once')
++        once = MyObserver()
++        diamond = \
++            (Observable(),
++                (Observable(),
++                    (once,)
++                ),
++                (Observable(),
++                    (once,)
++                )
++            )
++        root = be(diamond)
++        collector = []
++        root.once.methodOnlyCalledOnce(collector)
++        self.assertEquals(['once'], collector)
++
++    def testNonObservableInTreeWithOnce(self):
++        class MyObserver(object):
++            def methodOnNonObservableSubclass(self, aList):
++                aList.append('once')
++        once = MyObserver()
++        dna =   (Observable(),
++                    (once,)
++                )
++        root = be(dna)
++        collector = []
++        root.once.methodOnNonObservableSubclass(collector)
++        self.assertEquals(['once'], collector)
++
++    def testOnceAndOnlyOnceForMutuallyObservingObservables(self):
++        class MyObserver(Observable):
++            def methodOnlyCalledOnce(self, aList):
++                aList.append(self)
++        ownobserverobserver = MyObserver()
++        dna = \
++            (Observable(),
++                (ownobserverobserver,
++                    (Observable("observer"),
++                        (ownobserverobserver,),
++                    )
++                )
++            )
++        root = be(dna)
++        collector = []
++        root.once.methodOnlyCalledOnce(collector)
++        self.assertEquals([ownobserverobserver], collector)
++
++    def testNoLeakingGeneratorsInCycle(self):
++        import gc
++        from weakref import ref
++        gc.collect()
++        merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
++        self.assertEquals([], merescoTrackedObjects, 'Start situation is not clean: [] != %s' % merescoTrackedObjects)
++
++        class Responder(Observable):
++            def message(self):
++                return 'response'
++        obs = Observable()
++        obs.addObserver(Responder())
++        result = obs.all.message().next()
++        self.assertEquals('response',result)
++        del obs
++        gc.collect()
++        merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
++        self.assertEquals([], merescoTrackedObjects)
++
++    def testNoLeakingGeneratorsInMultiTransparants(self):
++        import gc
++        from weakref import ref
++        class Responder(Observable):
++            def message(self):
++                return 'response'
++        obs = Observable()
++        t1 = Transparant()
++        t2 = Transparant()
++        obs.addObserver(t1)
++        t1.addObserver(t2)
++        t2.addObserver(Responder())
++        result = obs.any.message()
++        self.assertEquals('response', result)
++        del obs, t1, t2
++        gc.collect()
++        merescoTrackedObjects = [ref(o) for o in gc.get_objects() if 'AllMessage' in str(type(o))]
++        self.assertEquals([], merescoTrackedObjects)
++
++class TestException(Exception):
++    pass
++
++class MockObserver:
++
++    def __init__(self):
++        self.notifications = []
++
++class ObserverA(MockObserver):
++
++    def methodA(self, *args):
++        self.notifications.append(("Method A", args))
++        return "A.methodA"
++
++class ObserverAB(MockObserver):
++
++    def methodA(self, *args):
++        self.notifications.append(("Method A", args))
++        return "AB.methodA"
++
++    def methodB(self, *args):
++        self.notifications.append(("Method B", args))
++        return "AB.methodB"
++
++class DoesNotReturn(MockObserver):
++
++    def methodA(self, *args):
++        self.notifications.append(("Method A", args))
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/sitecustomize.py version_1/tmp/test/sitecustomize.py
+--- version_0/tmp/test/sitecustomize.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/sitecustomize.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,25 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2010 Seek You Too (CQ2) http://www.cq2.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from sys import setdefaultencoding
++setdefaultencoding('utf-8')
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/test/transactiontest.py version_1/tmp/test/transactiontest.py
+--- version_0/tmp/test/transactiontest.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/test/transactiontest.py	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,156 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from cq2utils import CallTrace
++from unittest import TestCase
++from meresco.core import ResourceManager, be, Observable, TransactionScope, TransactionException, Transaction
++
++from weightless.core import compose
++
++class TransactionTest(TestCase):
++    def testOne(self):
++        traces = []
++        def factoryMethod(tx):
++            trace = CallTrace('transaction')
++            trace.returnValues['methodOne'] = 'one'
++            trace.returnValues['methodTwo'] = 'two'
++            trace.returnValues['commit'] = (f for f in [])
++            traces.append(trace)
++            return trace
++
++        class CallTwoMethods(Observable):
++            def twice(self, argument1, argument2):
++                yield self.all.methodOne(argument1)
++                yield self.all.methodTwo(argument2)
++
++        dna = \
++            (Observable(),
++                (TransactionScope("transactionName"),
++                    (CallTwoMethods(),
++                        (ResourceManager("transactionName", factoryMethod),)
++                    )
++                )
++            )
++        body = be(dna)
++
++        result = list(compose(body.all.twice('one', 'two')))
++
++        self.assertEquals(1, len(traces))
++        self.assertEquals(['methodOne', 'methodTwo', 'commit'], [m.name for m in traces[0].calledMethods])
++        self.assertEquals(['one', 'two'], result)
++
++    def testResourceManagerHandlesAttributeError(self):
++        class ResourceTransaction(object):
++            def __init__(self, tx):
++                pass
++        txfactory = ResourceManager('transaction', ResourceTransaction)
++        __callstack_var_tx__ = CallTrace('TransactionScope')
++        txfactory.begin()
++        try:
++            txfactory.unknown('doesnotexist')
++        except AttributeError:
++            self.fail('ResourceManager must ignore unknown methods.')
++
++    def testJoinOnlyOnce(self):
++        commitCalled = []
++        class MockResource(object):
++            def commit(self):
++                commitCalled.append(1)
++        tx = Transaction('name')
++        resource = MockResource()
++        tx.join(resource)
++        tx.join(resource)
++        list(tx.commit())
++        self.assertEquals(1, len(commitCalled))
++
++    def testFreeTransaction(self):
++        resourceManager = ResourceManager('name', lambda resourceManager: CallTrace())
++        dna = \
++            (Observable(),
++                (TransactionScope('name'),
++                    (resourceManager,)
++                )
++            )
++        body = be(dna)
++        self.assertEquals(0, len(resourceManager.txs))
++        body.do.something()
++        self.assertEquals(0, len(resourceManager.txs))
++
++    def testTransactionExceptionRollsbackTransaction(self):
++        resourceTxs = []
++        def factoryMethod(tx):
++            resourceTx = CallTrace('resourceTx')
++            resourceTxs.append(resourceTx)
++            return resourceTx
++
++        class CallTwoMethods(Observable):
++            def twice(self, argument1, argument2):
++                yield self.all.methodOne(argument1)
++                self.ctx.tx.abort()
++                yield self.all.methodTwo(argument2)
++
++        dna = \
++            (Observable(),
++                (TransactionScope('name'),
++                    (CallTwoMethods(),
++                        (ResourceManager('name', factoryMethod),)
++                    )
++                )
++            )
++        body = be(dna)
++        list(compose(body.all.twice('one', 'two')))
++        self.assertEquals(1, len(resourceTxs), resourceTxs)
++        self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
++
++    def testTransactionLocals(self):
++        tx = Transaction('name')
++        tx.locals['myvar'] = 'value'
++        self.assertEquals('value', tx.locals['myvar'])
++
++    def testTransactionScopeName(self):
++        scope = TransactionScope("name")
++        self.assertEquals("name", scope.observable_name())
++
++    def testTransactionYieldsCallablesInCommits(self):
++        callable = lambda: None
++        class Committer(Observable):
++            def begin(inner):
++                inner.ctx.tx.join(inner)
++            def commit(inner):
++                yield callable
++
++        observable = Observable()
++        scope = TransactionScope("name")
++        observable.addObserver(scope)
++        scope.addObserver(Committer())
++
++        result = list(observable.all.someMethod())
++
++        self.assertTrue(callable in result)
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/batchtransactionscope.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/batchtransactionscope.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/batchtransactionscope.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/batchtransactionscope.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,87 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Observable
++from transaction import TransactionException, Transaction
++from warnings import warn
++
++class BatchTransactionScope(Observable):
++    def __init__(self, transactionName, reactor, batchSize=10, timeout=1):
++        warn("BatchTransactionScope is not fit for suspendable commits in timeOuts.", DeprecationWarning)
++        Observable.__init__(self, name=transactionName)
++        assert timeout > 0
++        self._reactor = reactor
++        self._batchSize = batchSize
++        self._timeout = timeout
++        self._currentTransaction = None
++
++    def unknown(self, message, *args, **kwargs):
++        __callstack_var_tx__ = transaction = self._currentTransaction
++        if transaction == None:
++            self._currentTransaction = __callstack_var_tx__ = transaction = Transaction(self.observable_name())
++            transaction._batchCounter = 0
++            transaction._activeGenerators = 0
++            transaction._markedForCommit = False
++            transaction._timerToken = None
++            self.once.begin()
++        try:
++            transaction._activeGenerators += 1
++            results = self.all.unknown(message, *args, **kwargs)
++            for result in results:
++                yield result
++            transaction._activeGenerators -= 1
++
++            transaction._batchCounter += 1
++            if transaction._markedForCommit or transaction._batchCounter >= self._batchSize:
++                yield self._commit(transaction)
++            else:
++                self._removeTimer(transaction)
++                transaction._timerToken = self._reactor.addTimer(self._timeout,
++                                                                 lambda: self._doTimeout(transaction))
++        except TransactionException:
++            transaction.rollback()
++            self._currentTransaction = None
++        finally:
++            results = None
++
++    def _doTimeout(self, transaction):
++         transaction._timerToken = None
++         list(self._commit(transaction))
++
++    def _commit(self, transaction):
++        transaction._markedForCommit = True
++        self._removeTimer(transaction)
++        if transaction == self._currentTransaction:
++            self._currentTransaction = None
++        if transaction._activeGenerators == 0:
++            for result in transaction.commit():
++                yield result
++
++    def _removeTimer(self, transaction):
++        if transaction._timerToken != None:
++            self._reactor.removeTimer(transaction._timerToken)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/generatorutils.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/generatorutils.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/generatorutils.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/generatorutils.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,64 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from sys import exc_info
++
++def decorate(before, generator, after):
++    first = generator.next()
++    yield before
++    yield first
++    for value in generator:
++        yield value
++    yield after
++
++def decorateWith(before, after):
++    def _internal(g):
++        def newg(*args, **kwargs):
++            return decorate(before,
++                            g(*args, **kwargs),
++                            after)
++        return newg
++    return _internal
++
++
++class Peek:
++
++    def __init__(self, generator):
++        self._generator = generator
++        try:
++            self._first = generator.next()
++        except StopIteration:
++            pass
++
++    def empty(self):
++        return not hasattr(self, '_first')
++
++    def __iter__(self):
++        while True:
++            yield self._first
++            self._first = self._generator.next()
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/helix.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/helix.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/helix.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/helix.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,44 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Transparant
++
++def findHelix(dna, clazz):
++    component, dnas = dna[0], dna[1:]
++    if type(component) == clazz:
++        yield dna
++    for dna in dnas:
++        for helix in findHelix(dna, clazz):
++            yield helix
++
++def link(clazz):
++    def helper(helices):
++        for helix in helices:
++            if type(helix[0]) == clazz:
++                return helix
++        raise 'Invalid link: no such component %s' % clazz
++    return helper
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/__init__.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/__init__.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/__init__.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/__init__.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,44 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++if not __debug__:
++    raise AssertionError("Do not use optimized code, because Meresco uses assert statements. (See http://docs.python.org/release/2.5.2/ref/assert.html)")
++
++from sys import getdefaultencoding as _getdefaultencoding
++from locale import getdefaultlocale, _parse_localename
++assert _getdefaultencoding() == 'utf-8', 'Please ensure that the default encoding is utf-8'
++assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
++
++from observable import Observable, Transparant, be
++from observer import ObserverFunction
++from generatorutils import decorate, decorateWith
++from helix import findHelix, link
++from transaction import TransactionException, Transaction
++from transactionscope import TransactionScope
++from resourcemanager import ResourceManager
++from batchtransactionscope import BatchTransactionScope
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/observable.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/observable.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/observable.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/observable.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,216 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from sys import exc_info
++from weightless.core import compose, local
++
++class Defer(object):
++    def __init__(self, observers, defereeType):
++        self._observers = observers
++        self._defereeType = defereeType
++
++    def __getattr__(self, attr):
++        return self._defereeType(self._observers, attr)
++
++    def __getitem__(self, target):
++        return Defer([o for o in self._observers if hasattr(o, "observable_name") and o.observable_name() == target], self._defereeType)
++
++    def unknown(self, message, *args, **kwargs):
++        try:
++            return getattr(self, message)(*args, **kwargs)
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++
++class DeferredMessage(object):
++    def __init__(self, observers, message):
++        self._observers = observers
++        self._message = message
++
++    def __call__(self, *args, **kwargs):
++        return self._gatherResponses(*args, **kwargs)
++
++    def _gatherResponses(self, *args, **kwargs):
++        for observer in self._observers:
++            if hasattr(observer, self._message):
++                try:
++                    answer = getattr(observer, self._message)(*args, **kwargs)
++                    yield answer
++                except:
++                    exType, exValue, exTraceback = exc_info()
++                    raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++                finally:
++                    answer = None
++            elif hasattr(observer, 'unknown'):
++                try:
++                    responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
++                except TypeError, e:
++                    raise TypeError(str(e) + ' on ' + str(observer))
++                if responses:
++                    try:
++                        for response in responses:
++                            yield response
++                    except:
++                        exType, exValue, exTraceback = exc_info()
++                        raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++                    finally:
++                        responses.close()# avoid cycles, see http://www.python.org/dev/peps/pep-0342/
++                        responses = None # avoid cycles, see http://www.python.org/dev/peps/pep-0342/
++
++class AllMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        return compose(self._gatherResponses(*args, **kwargs))
++
++class AnyMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            results = DeferredMessage.__call__(self, *args, **kwargs)
++            return results.next()
++        except StopIteration:
++            raise AttributeError('None of the %d observers responds to any.%s(...)' % (len(self._observers), self._message))
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++        finally:
++            results.close()
++            results = None
++
++class DoMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            for ignore in compose(DeferredMessage.__call__(self, *args, **kwargs)):
++                pass
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++
++class AsyncdoMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            for value in compose(DeferredMessage.__call__(self, *args, **kwargs)):
++                if callable(value):
++                    yield value
++        except:
++            exType, exValue, exTraceback = exc_info()
++            raise exType, exValue, exTraceback.tb_next # skip myself from traceback
++
++class AsyncanyMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        try:
++            result = DeferredMessage.__call__(self, *args, **kwargs)
++            m = None
++            while True:
++                r = result.send(m) 
++                m = yield r
++                if not callable(m):
++                    raise StopIteration(m)
++        except StopIteration, e:
++            if e.args:
++                raise
++            raise AttributeError('None of the %d observers responds to asyncany.%s(...)' % (len(self._observers), self._message))
++
++class OnceMessage(DeferredMessage):
++    def __call__(self, *args, **kwargs):
++        done = set()
++        return self._callonce(self._observers, args, kwargs, done)
++
++    def _callonce(self, observers, args, kwargs, done):
++        for observer in observers:
++            if observer not in done:
++                done.add(observer)
++                if hasattr(observer, self._message):
++                    getattr(observer, self._message)(*args, **kwargs)
++                if isinstance(observer, Observable):
++                    self._callonce(observer._observers, args, kwargs, done)
++
++def be(strand):
++    helicesDone = set()
++    return _beRecursive(strand, helicesDone)
++
++def _beRecursive(helix, helicesDone):
++    if callable(helix):
++        helix = helix(helicesDone)
++    component = helix[0]
++    strand = helix[1:]
++    if not helix in helicesDone and strand:
++        component.addStrand(strand, helicesDone)
++        helicesDone.add(helix)
++    return component
++
++class Context(object):
++    def __getattr__(self, name):
++        try:
++            return local('__callstack_var_%s__' % name)
++        except AttributeError:
++            raise AttributeError("'%s' has no attribute '%s'" % (self, name))
++
++
++class Observable(object):
++    def __init__(self, name = None):
++        self._observers = []
++        self.all = Defer(self._observers, AllMessage)
++        self.any = Defer(self._observers, AnyMessage)
++        self.do = Defer(self._observers, DoMessage)
++        self.asyncdo = Defer(self._observers, AsyncdoMessage)
++        self.asyncany = Defer(self._observers, AsyncanyMessage)
++        self.once = Defer(self._observers, OnceMessage)
++        self._name = name
++
++        self.ctx = Context()
++    
++    def observable_name(self):
++        return self._name
++
++    def observable_setName(self, name):
++        self._name = name
++        return self
++
++    def addObserver(self, observer):
++        self._observers.append(observer)
++
++    def addStrand(self, strand, helicesDone):
++        for helix in strand:
++            self.addObserver(_beRecursive(helix, helicesDone))
++
++    def printTree(self, depth=0):
++        def printInColor(ident, color, text):
++            print ' '*ident, chr(27)+"[0;" + str(color) + "m", text, chr(27)+"[0m"
++        print ' ' * depth, self.__repr__()
++        for observer in self._observers:
++            if hasattr(observer, 'printTree'):
++                observer.printTree(depth=depth+1)
++            else:
++                printInColor(depth+1, 31, observer)
++
++    def __repr__(self):
++        return "%s(name=%s)" % (self.__class__.__name__, repr(self._name))
++
++class Transparant(Observable):
++    def unknown(self, message, *args, **kwargs):
++        return self.all.unknown(message, *args, **kwargs)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/observer.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/observer.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/observer.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/observer.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,36 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++class ObserverFunction(object):
++    def __init__(self, function, name = None):
++        self._function = function
++        self._name = name
++    def unknown(self, name, *args, **kwargs):
++        if name != self._function.func_name and name != self._name:
++            raise StopIteration()
++        yield self._function(*args, **kwargs)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/processtools.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/processtools.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/processtools.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/processtools.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,35 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2011 Seek You Too (CQ2) http://www.cq2.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++from signal import SIGINT, SIGTERM, SIG_IGN, SIG_DFL, signal, getsignal
++
++def setSignalHandlers():
++    if getsignal(SIGINT) == SIG_IGN:
++        print 'SIGINT was ignored, restoring to defaulthandler'
++        signal(SIGINT, SIG_DFL)
++
++    if getsignal(SIGTERM) == SIG_IGN:
++        print 'SIGTERM was ignored, restoring to defaulthandler'
++        signal(SIGTERM, SIG_DFL)
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/resourcemanager.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/resourcemanager.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/resourcemanager.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/resourcemanager.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,63 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#    Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Observable
++
++class ResourceManager(Observable):
++
++    def __init__(self, transactionName, resourceTxFactory, name=None):
++        Observable.__init__(self, name)
++        self._resourceTxFactory = resourceTxFactory
++        self._transactionName = transactionName
++        self.txs = {}
++
++    def begin(self):
++        tx = self.ctx.tx
++        if tx.name != self._transactionName:
++            return
++        resourceTx = self._resourceTxFactory(self)
++        tx.join(self)
++        self.txs[tx.getId()] = resourceTx
++
++    def unknown(self, message, *args, **kwargs):
++        tx = self.ctx.tx
++        method = getattr(self.txs[tx.getId()], message, None)
++        if method != None:
++            yield method(*args, **kwargs)
++
++    def commit(self):
++        tx = self.ctx.tx
++        resourceTx = self.txs.pop(tx.getId())
++        return resourceTx.commit()
++
++    def rollback(self):
++        tx = self.ctx.tx
++        resourceTx = self.txs.pop(tx.getId())
++        return resourceTx.rollback()
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/transaction.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/transaction.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/transaction.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/transaction.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,59 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2010-2011 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++
++class TransactionException(Exception):
++    pass
++
++class Transaction(object):
++
++    def __init__(self, name):
++        self._resourceManagers = []
++        self.locals = {}
++        self.name = name
++
++    def getId(self):
++        return id(self)
++
++    def join(self, resourceManager):
++        if resourceManager not in self._resourceManagers:
++            self._resourceManagers.append(resourceManager)
++
++    def commit(self):
++        while self._resourceManagers:
++            resourceManager = self._resourceManagers.pop(0)
++            yield resourceManager.commit()
++
++    def rollback(self):
++        while self._resourceManagers:
++            resourceManager = self._resourceManagers.pop(0)
++            yield resourceManager.rollback()
++
++    def abort(self):
++        raise TransactionException()
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/transactionscope.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/transactionscope.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/core/transactionscope.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/core/transactionscope.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,53 @@
++# -*- coding: utf-8 -*-
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from observable import Observable
++from transaction import TransactionException, Transaction
++
++class TransactionScope(Observable):
++    def __init__(self, transactionName):
++        Observable.__init__(self, name=transactionName)
++
++    def unknown(self, message, *args, **kwargs):
++        __callstack_var_tx__ = Transaction(self.observable_name())
++        self.once.begin()
++        try:
++            results = self.all.unknown(message, *args, **kwargs)
++            for result in results:
++                yield result
++            results = __callstack_var_tx__.commit()
++            for result in results:
++                yield result
++        except TransactionException:
++            results = __callstack_var_tx__.rollback()
++            for result in results:
++                yield result
++        finally:
++            results = None
++
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco/__init__.py version_1/tmp/usr/lib/python2.5/site-packages/meresco/__init__.py
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco/__init__.py	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco/__init__.py	2011-10-10 11:58:56.000000000 +0200
+@@ -0,0 +1,29 @@
++## begin license ##
++#
++#    Meresco Core is an open-source library containing components to build
++#    searchengines, repositories and archives.
++#    Copyright (C) 2007-2009 Seek You Too (CQ2) http://www.cq2.nl
++#    Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
++#    Copyright (C) 2007-2009 Stichting Kennisnet Ict op school.
++#       http://www.kennisnetictopschool.nl
++#    Copyright (C) 2007 SURFnet. http://www.surfnet.nl
++#
++#    This file is part of Meresco Core.
++#
++#    Meresco Core is free software; you can redistribute it and/or modify
++#    it under the terms of the GNU General Public License as published by
++#    the Free Software Foundation; either version 2 of the License, or
++#    (at your option) any later version.
++#
++#    Meresco Core is distributed in the hope that it will be useful,
++#    but WITHOUT ANY WARRANTY; without even the implied warranty of
++#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++#    GNU General Public License for more details.
++#
++#    You should have received a copy of the GNU General Public License
++#    along with Meresco Core; if not, write to the Free Software
++#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
++#
++## end license ##
++from pkgutil import extend_path
++__path__ = extend_path(__path__, __name__)
+diff --unidirectional-new-file --recursive --unified '--exclude=*.so' '--exclude=*.o' '--exclude=.svn' '--exclude=*.pyc' '--exclude=deps.d' '--exclude=applied' version_0/tmp/usr/lib/python2.5/site-packages/meresco_core-_VERSION_.egg-info version_1/tmp/usr/lib/python2.5/site-packages/meresco_core-_VERSION_.egg-info
+--- version_0/tmp/usr/lib/python2.5/site-packages/meresco_core-_VERSION_.egg-info	1970-01-01 01:00:00.000000000 +0100
++++ version_1/tmp/usr/lib/python2.5/site-packages/meresco_core-_VERSION_.egg-info	2011-10-10 12:14:54.000000000 +0200
+@@ -0,0 +1,10 @@
++Metadata-Version: 1.0
++Name: meresco-core
++Version: %VERSION%
++Summary: Meresco Core is an open-source library containing components to build searchengines, repositories and archives.
++Home-page: http://www.meresco.org
++Author: Seek You Too
++Author-email: info@cq2.nl
++License: GNU Public License
++Description: Meresco Core is an open-source library containing components to build searchengines, repositories and archives.
++Platform: all
