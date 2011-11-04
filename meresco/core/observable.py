@@ -57,11 +57,20 @@ class DeferredMessage(object):
         return self._gatherResponses(*args, **kwargs)
 
     def _gatherResponses(self, *args, **kwargs):
+        #from sys import stdout
         for observer in self._observers:
             if hasattr(observer, self._message):
                 try:
                     answer = getattr(observer, self._message)(*args, **kwargs)
-                    yield answer
+                    #print '!!known->answer: type(answer), answer: %s, %s' % (type(answer), answer)
+                    #from weightless.core.compose import tostring
+                    #print '>>>START\n', tostring(answer)
+                    #print '<<<END'
+                    #stdout.flush()
+                    shouldBeNone = yield answer
+                    #assert shouldBeNone is None, 'DeferredMessage._gatherResponses() shouldBeNone is: %s' % shouldBeNone
+                    if shouldBeNone is not None:
+                        raise StopIteration(shouldBeNone)
                 except:
                     exType, exValue, exTraceback = exc_info()
                     raise exType, exValue, exTraceback.tb_next # skip myself from traceback
@@ -70,12 +79,20 @@ class DeferredMessage(object):
             elif hasattr(observer, 'unknown'):
                 try:
                     responses = getattr(observer, 'unknown')(self._message, *args, **kwargs)
+                    #print 'FIX ME !!!!'
+                    #stdout.flush()
                 except TypeError, e:
                     raise TypeError(str(e) + ' on ' + str(observer))
                 if responses:
                     try:
-                        for response in responses:
-                            yield response
+                        #print 'unknown->responses: type(responses), responses: %s, %s' % (type(responses), responses)
+                        #from weightless.core.compose import tostring
+                        #print '>>>START\n', tostring(responses)
+                        #print '<<<END'
+                        #stdout.flush()
+                        shouldBeNone = yield responses
+                        if shouldBeNone is not None:
+                            raise StopIteration(shouldBeNone)
                     except:
                         exType, exValue, exTraceback = exc_info()
                         raise exType, exValue, exTraceback.tb_next # skip myself from traceback
