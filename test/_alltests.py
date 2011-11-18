@@ -43,7 +43,6 @@ import unittest
 from helixtest import HelixTest
 from generatorutilstest import GeneratorUtilsTest
 from observabletest import ObservableTest
-from observabledirectedmessagingtest import ObservableDirectedMessagingTest
 from transactiontest import TransactionTest
 from batchtransactionscopetest import BatchTransactionScopeTest
 

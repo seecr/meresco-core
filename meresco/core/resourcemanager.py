@@ -31,21 +31,19 @@ from observable import Observable
 
 class ResourceManager(Observable):
 
-    def __init__(self, transactionName, resourceTxFactory, name=None):
+    def __init__(self, name):
         Observable.__init__(self, name)
-        self._resourceTxFactory = resourceTxFactory
-        self._transactionName = transactionName
         self.txs = {}
 
     def begin(self):
         tx = self.ctx.tx
-        if tx.name != self._transactionName:
+        if tx.name != self.observable_name():
             return
-        resourceTx = self._resourceTxFactory(self)
+        myTransaction = yield self.any.beginTransaction()
         tx.join(self)
-        self.txs[tx.getId()] = resourceTx
+        self.txs[tx.getId()] = myTransaction
 
-    def unknown(self, message, *args, **kwargs):
+    def all_unknown(self, message, *args, **kwargs):
         tx = self.ctx.tx
         method = getattr(self.txs[tx.getId()], message, None)
         if method != None:

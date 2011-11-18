@@ -31,23 +31,28 @@ from observable import Observable
 from transaction import TransactionException, Transaction
 
 class TransactionScope(Observable):
-    def __init__(self, transactionName):
-        Observable.__init__(self, name=transactionName)
+   
+    @identify
+    def driver(self, gen):
+        this = yield
+        g = compose(gen)
+        for _ in g:
+            assert _ in (None, Yield, Callable)
+            if callable(_):
+                _(reactor, this.next)
+            yield
 
-    def unknown(self, message, *args, **kwargs):
+    def timerfired(self, reactor):
+        def process(self):
+            yield __callstack_var_tx__.commit()
+            yield Reactor.removeProcess
+        reactor.addProcess(self.driver(self.process()).next)
+
+    def all_unknown(self, reactor, message, *args, **kwargs):
         __callstack_var_tx__ = Transaction(self.observable_name())
-        self.once.begin()
+        yield self.once.begin()
         try:
-            results = self.all.unknown(message, *args, **kwargs)
-            for result in results:
-                yield result
-            results = __callstack_var_tx__.commit()
-            for result in results:
-                yield result
+            yield self.all.unknown(message, *args, **kwargs)
+            yield __callstack_var_tx__.commit()
         except TransactionException:
-            results = __callstack_var_tx__.rollback()
-            for result in results:
-                yield result
-        finally:
-            results = None
-
+            yield __callstack_var_tx__.rollback()

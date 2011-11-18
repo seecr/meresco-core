@@ -36,34 +36,34 @@ from weightless.core import compose
 class TransactionTest(TestCase):
     def testOne(self):
         traces = []
-        def factoryMethod(tx):
-            trace = CallTrace('transaction')
-            trace.returnValues['methodOne'] = 'one'
-            trace.returnValues['methodTwo'] = 'two'
-            trace.returnValues['commit'] = (f for f in [])
-            traces.append(trace)
-            return trace
-
-        class CallTwoMethods(Observable):
-            def twice(self, argument1, argument2):
-                yield self.all.methodOne(argument1)
-                yield self.all.methodTwo(argument2)
-
+        class AResource(object):
+            class MyTransaction(object):
+                def g(self):
+                    traces.append('g')
+                def commit(self):
+                    traces.append('commit')
+            def beginTransaction(self):
+                traces.append('begin')
+                raise StopIteration(AResource.MyTransaction())
+                yield
+        class InBetween(Observable):
+            def f(self):
+                yield self.all.g()
+                yield self.all.g()
         dna = \
             (Observable(),
-                (TransactionScope("transactionName"),
-                    (CallTwoMethods(),
-                        (ResourceManager("transactionName", factoryMethod),)
+                (TransactionScope(""),
+                    (InBetween(),
+                        (ResourceManager(""),
+                            (AResource(),)
+                        )
                     )
                 )
             )
         body = be(dna)
-
-        result = list(compose(body.all.twice('one', 'two')))
-
-        self.assertEquals(1, len(traces))
-        self.assertEquals(['methodOne', 'methodTwo', 'commit'], [m.name for m in traces[0].calledMethods])
-        self.assertEquals(['one', 'two'], result)
+        result = list(compose(body.all.f()))
+        self.assertEquals(4, len(traces))
+        self.assertEquals(['begin', 'g', 'g', 'commit'], traces)
 
     def testResourceManagerHandlesAttributeError(self):
         class ResourceTransaction(object):
