@@ -31,15 +31,19 @@ from observable import Observable
 from transaction import TransactionException, Transaction
 
 class TransactionScope(Observable):
+
+    def __init__(self, reactor, name=None):
+        Observable.__init__(self, name=name)
+        self._reactor = reactor
    
     @identify
     def driver(self, gen):
         this = yield
-        g = compose(gen)
-        for _ in g:
-            assert _ in (None, Yield, Callable)
-            if callable(_):
-                _(reactor, this.next)
+        g = compose(gen, filter=callable)
+        for response in g:
+            assert response in (None, Yield, Callable)
+            if callable(response):
+                response(self._reactor, this.next)
             yield
 
     def timerfired(self, reactor):
@@ -48,7 +52,7 @@ class TransactionScope(Observable):
             yield Reactor.removeProcess
         reactor.addProcess(self.driver(self.process()).next)
 
-    def all_unknown(self, reactor, message, *args, **kwargs):
+    def all_unknown(self, message, *args, **kwargs):
         __callstack_var_tx__ = Transaction(self.observable_name())
         yield self.once.begin()
         try:
