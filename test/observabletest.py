@@ -28,9 +28,12 @@
 #
 ## end license ##
 
+from unittest import TestCase
+
+from weightless.core import compose
+
 from meresco.core import Observable, TransactionScope, Transparent
 from meresco.core.observable import be
-from unittest import TestCase
 
 class ObservableTest(TestCase):
 
@@ -49,8 +52,8 @@ class ObservableTest(TestCase):
                 )
             )
         body = be(dna)
-        scope1 = body.all.doSomething()
-        scope2 = body.all.doSomething()
+        scope1 = compose(body.all.doSomething())
+        scope2 = compose(body.all.doSomething())
         scope1.next()
         scope2.next()
         scope1.next()
@@ -64,21 +67,21 @@ class ObservableTest(TestCase):
     def testTransactionCommit(self):
         collected = {}
         class MyFirstTxParticipant(Transparent):
-            def begin(self):
+            def begin(self, name):
                 self.ctx.tx.join(self)
             def doSomething(self):
                 collected[self.ctx.tx.getId()] = ['first']
                 yield self.any.doSomething()
-            def commit(self):
-                collected[self.ctx.tx.getId()].append('done 1')
+            def commit(self, id):
+                collected[id].append('done 1')
         class MySecondTxParticipant(Observable):
-            def begin(self):
+            def begin(self, name):
                 self.ctx.tx.join(self)
             def doSomething(self):
                 collected[self.ctx.tx.getId()].append('second')
                 yield 'second'
-            def commit(self):
-                collected[self.ctx.tx.getId()].append('done 2')
+            def commit(self, id):
+                collected[id].append('done 2')
         dna = \
             (Observable(),
                 (TransactionScope('name'),
@@ -88,20 +91,30 @@ class ObservableTest(TestCase):
                 )
             )
         body = be(dna)
-        list(body.all.doSomething())
+        list(compose(body.all.doSomething()))
         self.assertEquals(['first', 'second', 'done 1', 'done 2'], collected.values()[0])
 
     def testResolveCallStackVariables(self):
         class StackVarHolder(Observable):
-            def unknown(self, name, *args, **kwargs):
+            def all_unknown(self, message, *args, **kwargs):
                 __callstack_var_myvar__ = []
-                for result in self.all.unknown(name, *args, **kwargs):
-                    pass
+                yield self.all.unknown(message, *args, **kwargs)
                 yield __callstack_var_myvar__
 
+            def any_unknown(self, message, *args, **kwargs):
+                __callstack_var_myvar__ = []
+                result = yield self.any.unknown(message, *args, **kwargs)
+                raise StopIteration(__callstack_var_myvar__)
+
         class StackVarUser(Observable):
-            def useVariable(self):
+            def useVariableAll(self):
                 self.ctx.myvar.append('Thingy')
+                yield 'stuffed'
+
+            def useVariableAny(self):
+                self.ctx.myvar.append('Thingy')
+                return
+                yield
 
         dna = \
             (Observable(),
@@ -110,4 +123,11 @@ class ObservableTest(TestCase):
                 )
             )
         root = be(dna)
-        self.assertEquals(['Thingy'], root.any.useVariable())
+        self.assertEquals(['stuffed', ['Thingy']], list(compose(root.all.useVariableAll())))
+        composed = compose(root.any.useVariableAny())
+        try:
+            while True:
+                composed.next()
+        except StopIteration, e:
+            self.assertEquals((['Thingy'],), e.args)
+

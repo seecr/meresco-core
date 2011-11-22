@@ -27,7 +27,7 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from weightless.core import Observable as Observable_orig, Transparent, local, be
+from weightless.core import Observable as Observable_orig, Transparent as Transparent_orig, local, be
 
 class Context(object):
     def __getattr__(self, name):
@@ -40,3 +40,9 @@ class Observable(Observable_orig):
     def __init__(self, *args, **kwargs):
         Observable_orig.__init__(self, *args, **kwargs)
         self.ctx = Context()
+
+class Transparent(Transparent_orig):
+    def __init__(self, *args, **kwargs):
+        Transparent_orig.__init__(self, *args, **kwargs)
+        self.ctx = Context()
+

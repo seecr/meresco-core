@@ -29,10 +29,20 @@
 ## end license ##
 from observable import Observable
 
+class DispatchToTransaction(Observable):
+	def __init__(self, transaction):
+		Observable.__init__(name=transaction.getId())
+        self._transaction = transaction
+    
+    def all_unknown(self, message, *args, **kwargs):
+        txMethod = getattr(self._transaction, message, None)
+        if txMethod is not None:
+            yield txMethod(*args, **kwargs)
+
 
 class ResourceManager(Observable):
 
-    def __init__(self, name):  # TRANSACTIONNAME
+    def __init__(self, name):
         Observable.__init__(self, name)
         self.txs = {}
 
@@ -44,18 +54,23 @@ class ResourceManager(Observable):
         self.txs[tx.getId()] = resourceTx
         tx.join(self)
 
+        self.addObserver(DispatchToTransaction(resourceTx))
+
     # any_unknown, .... ook!
     def all_unknown(self, message, *args, **kwargs):
-        tx = self.ctx.tx
-        method = getattr(self.txs[tx.getId()], message, None)
-        if method != None:
-            yield method(*args, **kwargs)
+        yield self.all[transaction].unknown(message, *args, **kwargs)
+#        tx = self.ctx.tx
+#        method = getattr(self.txs[tx.getId()], message, None)
+#        if method != None:
+#            yield method(*args, **kwargs)
 
     def commit(self, id):
         resourceTx = self.txs.pop(id)
+        self.removeObserver(resourceTx)
         return resourceTx.commit()
 
     def rollback(self, id):
         resourceTx = self.txs.pop(id)
+        self.removeObserver(resourceTx)
         return resourceTx.rollback()
 

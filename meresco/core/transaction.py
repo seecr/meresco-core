@@ -48,12 +48,13 @@ class Transaction(object):
     def commit(self):
         while self._resourceManagers:
             resourceManager = self._resourceManagers.pop(0)
-            yield resourceManager.commit()
+            yield resourceManager.commit(self.getId())
 
     def rollback(self):
         while self._resourceManagers:
             resourceManager = self._resourceManagers.pop(0)
-            yield resourceManager.rollback()
+            yield resourceManager.rollback(self.getId())
 
     def abort(self):
         raise TransactionException()
+

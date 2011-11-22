@@ -52,9 +52,9 @@ class TransactionTest(TestCase):
                 yield self.all.g()
         dna = \
             (Observable(),
-                (TransactionScope(""),
+                (TransactionScope("transactionName"),
                     (InBetween(),
-                        (ResourceManager(""),
+                        (ResourceManager("transactionName"),
                             (AResource(),)
                         )
                     )
@@ -66,48 +66,61 @@ class TransactionTest(TestCase):
         self.assertEquals(['begin', 'g', 'g', 'commit'], traces)
 
     def testResourceManagerHandlesAttributeError(self):
-        class ResourceTransaction(object):
-            def __init__(self, tx):
-                pass
-        txfactory = ResourceManager('transaction', ResourceTransaction)
+        class Resource(object):
+            def beginTransaction(self):
+                raise StopIteration(object())
+                yield
+        rm = ResourceManager('transaction')
+        rm.addObserver(Resource())
         __callstack_var_tx__ = CallTrace('TransactionScope')
-        txfactory.begin()
+        list(compose(rm.begin('transaction')))
         try:
-            txfactory.unknown('doesnotexist')
+            list(compose(rm.all.unknown('doesnotexist')))
         except AttributeError:
             self.fail('ResourceManager must ignore unknown methods.')
 
     def testJoinOnlyOnce(self):
         commitCalled = []
-        class MockResource(object):
-            def commit(self):
-                commitCalled.append(1)
+        class MockResourceManager(object):
+            def commit(self, id):
+                commitCalled.append(id)
         tx = Transaction('name')
-        resource = MockResource()
+        resource = MockResourceManager()
         tx.join(resource)
         tx.join(resource)
         list(tx.commit())
         self.assertEquals(1, len(commitCalled))
+        self.assertEquals(tx.getId(), commitCalled[0])
 
     def testFreeTransaction(self):
-        resourceManager = ResourceManager('name', lambda resourceManager: CallTrace())
+        resourceManager = ResourceManager('name')
+        resourceTx = CallTrace('resourceTx')
+        class Resource(object):
+            def beginTransaction(self):
+                raise StopIteration(resourceTx)
+                yield
         dna = \
             (Observable(),
                 (TransactionScope('name'),
-                    (resourceManager,)
+                    (resourceManager,
+                        (Resource(),)
+                    ),
                 )
             )
         body = be(dna)
         self.assertEquals(0, len(resourceManager.txs))
-        body.do.something()
+        list(compose(body.all.something()))
         self.assertEquals(0, len(resourceManager.txs))
+        self.assertEquals(['something', 'commit'], [m.name for m in resourceTx.calledMethods])
 
     def testTransactionExceptionRollsbackTransaction(self):
         resourceTxs = []
-        def factoryMethod(tx):
-            resourceTx = CallTrace('resourceTx')
-            resourceTxs.append(resourceTx)
-            return resourceTx
+        class Resource(object):
+            def beginTransaction(self):
+                resourceTx = CallTrace('resourceTx')
+                resourceTxs.append(resourceTx)
+                raise StopIteration(resourceTx)
+                yield
 
         class CallTwoMethods(Observable):
             def twice(self, argument1, argument2):
@@ -119,7 +132,9 @@ class TransactionTest(TestCase):
             (Observable(),
                 (TransactionScope('name'),
                     (CallTwoMethods(),
-                        (ResourceManager('name', factoryMethod),)
+                        (ResourceManager('name'),
+                            (Resource(),),
+                        )
                     )
                 )
             )
@@ -135,14 +150,14 @@ class TransactionTest(TestCase):
 
     def testTransactionScopeName(self):
         scope = TransactionScope("name")
-        self.assertEquals("name", scope.observable_name())
+        self.assertEquals("name", scope._transactionName)
 
     def testTransactionYieldsCallablesInCommits(self):
         callable = lambda: None
         class Committer(Observable):
-            def begin(inner):
+            def begin(inner, name):
                 inner.ctx.tx.join(inner)
-            def commit(inner):
+            def commit(inner, id):
                 yield callable
 
         observable = Observable()
@@ -150,7 +165,7 @@ class TransactionTest(TestCase):
         observable.addObserver(scope)
         scope.addObserver(Committer())
 
-        result = list(observable.all.someMethod())
+        result = list(compose(observable.all.someMethod()))
 
         self.assertTrue(callable in result)
 
