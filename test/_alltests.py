@@ -44,7 +44,8 @@ from helixtest import HelixTest
 from generatorutilstest import GeneratorUtilsTest
 from observabletest import ObservableTest
 from transactiontest import TransactionTest
-from batchtransactionscopetest import BatchTransactionScopeTest
+print 'BatchTransactionScopeTest is disabled for now!'
+#from batchtransactionscopetest import BatchTransactionScopeTest
 
 if __name__ == '__main__':
     unittest.main()

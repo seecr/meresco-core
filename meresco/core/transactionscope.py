@@ -27,8 +27,10 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
 from observable import Observable
 from transaction import TransactionException, Transaction
+
 
 class TransactionScope(Observable):
 
@@ -42,6 +44,16 @@ class TransactionScope(Observable):
         try:
             yield self.all.unknown(message, *args, **kwargs)
             yield __callstack_var_tx__.commit()
+        except TransactionException:
+            yield __callstack_var_tx__.rollback()
+
+    def any_unknown(self, message, *args, **kwargs):
+        __callstack_var_tx__ = Transaction(name=self._transactionName)
+        yield self.once.begin(self._transactionName)
+        try:
+            response = yield self.any.unknown(message, *args, **kwargs)
+            yield __callstack_var_tx__.commit()
+            raise StopIteration(response)
         except TransactionException:
             yield __callstack_var_tx__.rollback()
 

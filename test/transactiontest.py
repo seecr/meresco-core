@@ -34,14 +34,18 @@ from meresco.core import ResourceManager, be, Observable, TransactionScope, Tran
 from weightless.core import compose
 
 class TransactionTest(TestCase):
-    def testOne(self):
+    def testTransaction_AllUnknowned(self):
         traces = []
         class AResource(object):
             class MyTransaction(object):
                 def g(self):
                     traces.append('g')
+                    return
+                    yield
                 def commit(self):
                     traces.append('commit')
+                    return
+                    yield
             def beginTransaction(self):
                 traces.append('begin')
                 raise StopIteration(AResource.MyTransaction())
@@ -62,8 +66,91 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         result = list(compose(body.all.f()))
+        self.assertEquals([], result)
         self.assertEquals(4, len(traces))
         self.assertEquals(['begin', 'g', 'g', 'commit'], traces)
+
+    def testTransaction_AnyUnknowned(self):
+        traces = []
+        class AResource(object):
+            class MyTransaction(object):
+                def g(self):
+                    traces.append('g')
+                    raise StopIteration('MyTx.g')
+                    yield
+                def commit(self):
+                    traces.append('commit')
+                    return
+                    yield
+            def beginTransaction(self):
+                traces.append('begin')
+                raise StopIteration(AResource.MyTransaction())
+                yield
+
+        class InBetween(Observable):
+            def f(self):
+                response = yield self.any.g()
+                raise StopIteration(response)
+
+        dna = \
+            (Observable(),
+                (TransactionScope("transactionName"),
+                    (InBetween(),
+                        (ResourceManager("transactionName"),
+                            (AResource(),)
+                        )
+                    )
+                )
+            )
+        body = be(dna)
+        composed = compose(body.any.f())
+        try:
+            composed.next()
+            self.fail("Should not come here")
+        except StopIteration, e:
+            self.assertEquals(('MyTx.g',), e.args)
+        self.assertEquals(3, len(traces))
+        self.assertEquals(['begin', 'g', 'commit'], traces)
+
+    def testResourceManagerAllUnknown_asserts_NoResponse(self):
+        # Exactly like Observable, but the Transaction objects
+        # are no Observers, so the assertion had to be reimplemented here.
+        class Resource(object):
+            class NotAnObservable(object):
+                def allLike(self):
+                    yield 'allResult'
+
+                def asyncAnyLike(self):
+                    raise StopIteration('anyResult')
+                    yield
+
+                def commit(self):
+                    return
+                    yield
+
+            def beginTransaction(self):
+                raise StopIteration(Resource.NotAnObservable())
+                yield
+
+        dna = (Observable(),
+            (TransactionScope('notImportantHere'),
+                (ResourceManager('notImportantHere'),
+                    (Resource(),),
+                )
+            )
+        )
+        server = be(dna)
+
+        composed = compose(server.all.allLike())
+        self.assertEquals(['allResult'], list(composed))
+
+        composed = compose(server.all.asyncAnyLike())
+        try:
+            list(composed)
+        except AssertionError, e:
+            self.assertTrue("> returned 'anyResult'" in str(e), str(e))
+        else:
+            self.fail("Should not come here")
 
     def testResourceManagerHandlesAttributeError(self):
         class Resource(object):
@@ -75,7 +162,7 @@ class TransactionTest(TestCase):
         __callstack_var_tx__ = CallTrace('TransactionScope')
         list(compose(rm.begin('transaction')))
         try:
-            list(compose(rm.all.unknown('doesnotexist')))
+            result = list(compose(rm.all.unknown('doesnotexist')))
         except AttributeError:
             self.fail('ResourceManager must ignore unknown methods.')
 

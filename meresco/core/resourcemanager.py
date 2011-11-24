@@ -27,29 +27,40 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
-from observable import Observable
 
+from observable import Observable
+from weightless.core import methodOrMethodPartialStr
 
 class ResourceManager(Observable):
 
-    def __init__(self, name):  # TRANSACTIONNAME
-        Observable.__init__(self, name)
+    def __init__(self, transactionName, name=None):
+        Observable.__init__(self, name=name)
+        self._transactionName = transactionName
         self.txs = {}
 
     def begin(self, name):
-        if name != self.observable_name():
+        if name != self._transactionName:
             return
         tx = self.ctx.tx
         resourceTx = yield self.any.beginTransaction()
         self.txs[tx.getId()] = resourceTx
         tx.join(self)
 
-    # any_unknown, .... ook!
     def all_unknown(self, message, *args, **kwargs):
         tx = self.ctx.tx
         method = getattr(self.txs[tx.getId()], message, None)
         if method != None:
-            yield method(*args, **kwargs)
+            _ = yield method(*args, **kwargs)
+            # assert required as Transaction is no Observable
+            assert _ is None, "%s returned '%s'" % (methodOrMethodPartialStr(method), _)
+
+    def any_unknown(self, message, *args, **kwargs):
+        tx = self.ctx.tx
+        method = getattr(self.txs[tx.getId()], message, None)
+        if method != None:
+            # must be asynchronous any!
+            response = yield method(*args, **kwargs)
+            raise StopIteration(response)
 
     def commit(self, id):
         resourceTx = self.txs.pop(id)
