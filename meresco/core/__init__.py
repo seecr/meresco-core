@@ -34,7 +34,6 @@ from locale import getdefaultlocale, _parse_localename
 assert _getdefaultencoding() == 'utf-8', 'Please ensure that the default encoding is utf-8'
 assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
 
-from observable import Observable, Transparent, be
 from generatorutils import decorate, decorateWith
 from helix import findHelix, link
 from transaction import TransactionException, Transaction

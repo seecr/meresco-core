@@ -28,8 +28,7 @@
 #
 ## end license ##
 
-from observable import Observable
-from weightless.core import methodOrMethodPartialStr
+from weightless.core import Observable, methodOrMethodPartialStr
 
 class ResourceManager(Observable):
 

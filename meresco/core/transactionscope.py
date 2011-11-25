@@ -28,7 +28,7 @@
 #
 ## end license ##
 
-from observable import Observable
+from weightless.core import Observable
 from transaction import TransactionException, Transaction
 
 

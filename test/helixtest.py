@@ -25,8 +25,10 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
 from unittest import TestCase
-from meresco.core import Observable, findHelix, link, be
+from meresco.core import findHelix, link
+from weightless.core import Observable, be
 
 class HelixTest(TestCase):
 

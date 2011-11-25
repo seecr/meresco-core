@@ -27,9 +27,10 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
 from cq2utils import CQ2TestCase, CallTrace
-from meresco.core import BatchTransactionScope, Observable
-from weightless.core import local
+from meresco.core import BatchTransactionScope
+from weightless.core import Observable, local
 
 class BatchTransactionScopeTest(CQ2TestCase):
     def testMessagePassesThrough(self):

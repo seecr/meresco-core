@@ -29,11 +29,12 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.core import ResourceManager, be, Observable, TransactionScope, TransactionException, Transaction
+from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction
 
-from weightless.core import compose
+from weightless.core import compose, Observable, Transparent, be
 
 class TransactionTest(TestCase):
+
     def testTransaction_AllUnknowned(self):
         traces = []
         class AResource(object):
@@ -255,4 +256,61 @@ class TransactionTest(TestCase):
         result = list(compose(observable.all.someMethod()))
 
         self.assertTrue(callable in result)
+
+    def testOneTransactionPerGenerator(self):
+        txId = []
+        class MyTxParticipant(Observable):
+            def doSomething(self):
+                txId.append(self.ctx.tx.getId())
+                yield 'A'
+                txId.append(self.ctx.tx.getId())
+                yield 'B'
+        dna = \
+            (Observable(),
+                (TransactionScope('name'),
+                    (MyTxParticipant(),)
+                )
+            )
+        body = be(dna)
+        scope1 = compose(body.all.doSomething())
+        scope2 = compose(body.all.doSomething())
+        scope1.next()
+        scope2.next()
+        scope1.next()
+        scope2.next()
+        self.assertTrue(txId[0] != txId[1])
+        self.assertTrue(txId[1] > 0)
+        self.assertTrue(txId[0] > 0)
+        self.assertEquals(txId[0], txId[2])
+        self.assertEquals(txId[1], txId[3])
+
+    def testTransactionCommit(self):
+        collected = {}
+        class MyFirstTxParticipant(Transparent):
+            def begin(self, name):
+                self.ctx.tx.join(self)
+            def doSomething(self):
+                collected[self.ctx.tx.getId()] = ['first']
+                yield self.any.doSomething()
+            def commit(self, id):
+                collected[id].append('done 1')
+        class MySecondTxParticipant(Observable):
+            def begin(self, name):
+                self.ctx.tx.join(self)
+            def doSomething(self):
+                collected[self.ctx.tx.getId()].append('second')
+                yield 'second'
+            def commit(self, id):
+                collected[id].append('done 2')
+        dna = \
+            (Observable(),
+                (TransactionScope('name'),
+                    (MyFirstTxParticipant(),
+                        (MySecondTxParticipant(),)
+                    )
+                )
+            )
+        body = be(dna)
+        list(compose(body.all.doSomething()))
+        self.assertEquals(['first', 'second', 'done 1', 'done 2'], collected.values()[0])
 
