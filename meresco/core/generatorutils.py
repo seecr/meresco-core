@@ -45,7 +45,7 @@ def decorateWith(before, after):
     return _internal
 
 
-class Peek:
+class Peek(object):
 
     def __init__(self, generator):
         self._generator = generator
