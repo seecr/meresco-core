@@ -28,7 +28,9 @@
 #
 ## end license ##
 
-from weightless.core import Observable, methodOrMethodPartialStr
+from meresco.core import Observable
+
+from weightless.core import methodOrMethodPartialStr
 
 class ResourceManager(Observable):
 

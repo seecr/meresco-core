@@ -40,8 +40,9 @@ sysPath.insert(0, "..")                            #DO_NOT_DISTRIBUTE
 
 import unittest
 
-from helixtest import HelixTest
 from generatorutilstest import GeneratorUtilsTest
+from helixtest import HelixTest
+from observabletest import ObservableTest
 from transactiontest import TransactionTest
 print 'BatchTransactionScopeTest is disabled for now!'
 #from batchtransactionscopetest import BatchTransactionScopeTest

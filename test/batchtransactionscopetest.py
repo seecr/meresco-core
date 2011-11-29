@@ -30,7 +30,8 @@
 
 from cq2utils import CQ2TestCase, CallTrace
 from meresco.core import BatchTransactionScope
-from weightless.core import Observable, local
+from meresco.core import Observable
+from weightless.core import local
 
 class BatchTransactionScopeTest(CQ2TestCase):
     def testMessagePassesThrough(self):

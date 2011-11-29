@@ -29,9 +29,9 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction
+from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent
 
-from weightless.core import compose, Observable, Transparent, be
+from weightless.core import compose, be
 
 class TransactionTest(TestCase):
 

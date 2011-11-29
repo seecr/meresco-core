@@ -27,8 +27,8 @@
 ## end license ##
 
 from unittest import TestCase
-from meresco.core import findHelix, link
-from weightless.core import Observable, be
+from meresco.core import Observable, findHelix, link
+from weightless.core import be
 
 class HelixTest(TestCase):
 

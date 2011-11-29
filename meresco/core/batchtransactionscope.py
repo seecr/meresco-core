@@ -27,7 +27,7 @@
 #
 ## end license ##
 
-from weightless.core import Observable
+from meresco.core import Observable
 from transaction import TransactionException, Transaction
 from warnings import warn
 
