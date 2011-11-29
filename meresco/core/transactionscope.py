@@ -49,7 +49,7 @@ class TransactionScope(Observable):
 
     def any_unknown(self, message, *args, **kwargs):
         __callstack_var_tx__ = Transaction(name=self._transactionName)
-        yield self.once.begin(self._transactionName)
+        yield self.once.begin(name=self._transactionName)
         try:
             response = yield self.any.unknown(message, *args, **kwargs)
             yield __callstack_var_tx__.commit()
