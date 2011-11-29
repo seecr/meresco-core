@@ -59,7 +59,6 @@ class ResourceManager(Observable):
         tx = self.ctx.tx
         method = getattr(self.txs[tx.getId()], message, None)
         if method != None:
-            # must be asynchronous any!
             response = yield method(*args, **kwargs)
             raise StopIteration(response)
 
