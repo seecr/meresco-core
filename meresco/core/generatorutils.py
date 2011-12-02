@@ -26,6 +26,7 @@
 #
 ## end license ##
 from sys import exc_info
+from functools import wraps
 
 def decorate(before, generator, after):
     first = generator.next()
@@ -44,6 +45,12 @@ def decorateWith(before, after):
         return newg
     return _internal
 
+def functionAsGenerator(g):
+    @wraps(g)
+    def newg(*args, **kwargs):
+        raise StopIteration(g(*args, **kwargs))
+        yield
+    return newg
 
 class Peek(object):
 

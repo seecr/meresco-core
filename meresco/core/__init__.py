@@ -36,7 +36,7 @@ assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the de
 
 from observable import Observable, Transparent
 
-from generatorutils import decorate, decorateWith
+from generatorutils import decorate, decorateWith, functionAsGenerator
 from helix import findHelix, link
 from transaction import TransactionException, Transaction
 from transactionscope import TransactionScope
