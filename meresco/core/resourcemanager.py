@@ -62,6 +62,12 @@ class ResourceManager(Observable):
             response = yield method(*args, **kwargs)
             raise StopIteration(response)
 
+    def do_unknown(self, message, *args, **kwargs):
+        tx = self.ctx.tx
+        method = getattr(self.txs[tx.getId()], message, None)
+        if method != None:
+            return method(*args, **kwargs)
+
     def commit(self, id):
         resourceTx = self.txs.pop(id)
         return resourceTx.commit()
