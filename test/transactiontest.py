@@ -29,7 +29,7 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent
+from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent, sync
 
 from weightless.core import compose, be
 
@@ -70,6 +70,91 @@ class TransactionTest(TestCase):
         self.assertEquals([], result)
         self.assertEquals(4, len(traces))
         self.assertEquals(['begin', 'g', 'g', 'commit'], traces)
+
+    def testTransaction_DoUnknowned(self):
+        traces = []
+        class AResource(object):
+            class MyTransaction(object):
+                def g(self):
+                    traces.append('g')
+                def commit(self):
+                    traces.append('commit')
+                    return
+                    yield
+            def beginTransaction(self):
+                traces.append('begin')
+                raise StopIteration(AResource.MyTransaction())
+                yield
+
+        class AllToDo(Observable):
+            def add(self):
+                self.do.f()
+                return
+                yield
+
+        class InBetween(Observable):
+            def f(self):
+                self.do.g()
+
+        dna = \
+            (Observable(),
+                (TransactionScope("transactionName"),
+                    (AllToDo(),
+                        (InBetween(),
+                            (ResourceManager("transactionName"),
+                                (AResource(),)
+                            )
+                        )
+                    )
+                )
+            )
+        body = be(dna)
+        list(compose(body.all.add()))
+        self.assertEquals(3, len(traces))
+        self.assertEquals(['begin', 'g', 'commit'], traces)
+
+    def testTransaction_CallUnknowned(self):
+        traces = []
+        class AResource(object):
+            class MyTransaction(object):
+                def g(self):
+                    traces.append('g')
+                    return 'retval'
+                def commit(self):
+                    traces.append('commit')
+                    return
+                    yield
+            def beginTransaction(self):
+                traces.append('begin')
+                raise StopIteration(AResource.MyTransaction())
+                yield
+
+        class AllToCall(Observable):
+            def add(self):
+                retval = self.call.f()
+                yield retval
+
+        class InBetween(Observable):
+            def f(self):
+                return self.call.g()
+
+        dna = \
+            (Observable(),
+                (TransactionScope("transactionName"),
+                    (AllToCall(),
+                        (InBetween(),
+                            (ResourceManager("transactionName"),
+                                (AResource(),)
+                            )
+                        )
+                    )
+                )
+            )
+        body = be(dna)
+        result = list(compose(body.all.add()))
+        self.assertEquals(['retval'], result)
+        self.assertEquals(3, len(traces))
+        self.assertEquals(['begin', 'g', 'commit'], traces)
 
     def testTransaction_AnyUnknowned(self):
         traces = []

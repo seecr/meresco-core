@@ -66,6 +66,12 @@ class ResourceManager(Observable):
         tx = self.ctx.tx
         method = getattr(self.txs[tx.getId()], message, None)
         if method != None:
+            method(*args, **kwargs)
+
+    def call_unknown(self, message, *args, **kwargs):
+        tx = self.ctx.tx
+        method = getattr(self.txs[tx.getId()], message, None)
+        if method != None:
             return method(*args, **kwargs)
 
     def commit(self, id):

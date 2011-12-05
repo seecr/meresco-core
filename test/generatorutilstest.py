@@ -28,7 +28,7 @@
 
 from unittest import TestCase, main
 
-from meresco.core.generatorutils import Peek, decorate, decorateWith
+from meresco.core.generatorutils import Peek, decorate, decorateWith, asyncreturn
 
 class GeneratorUtilsTest(TestCase):
 
@@ -63,4 +63,51 @@ class GeneratorUtilsTest(TestCase):
         self.assertEquals("This is something, isn't it?", "".join(tobedecorated1()))
         self.assertEquals("", "".join(tobedecorated1(yieldSomething=False)))
 
+    def testAsyncreturn(self):
+        @asyncreturn
+        def f():
+            return 5
+        
+        class A(object):
+            @asyncreturn
+            def meth(self):
+                return 5
+
+            @classmethod
+            @asyncreturn
+            def classMeth(cls):
+                return 5
+
+            @staticmethod
+            @asyncreturn
+            def staticMeth():
+                return 5
+
+        try: f().next()
+        except StopIteration, e: self.assertEquals((5,), e.args)
+        else: self.fail('Should not happen.')
+
+        try: A().meth().next()
+        except StopIteration, e: self.assertEquals((5,), e.args)
+        else: self.fail('Should not happen.')
+
+        try: A.classMeth().next()
+        except StopIteration, e: self.assertEquals((5,), e.args)
+        else: self.fail('Should not happen.')
+
+        try: A.staticMeth().next()
+        except StopIteration, e: self.assertEquals((5,), e.args)
+        else: self.fail('Should not happen.')
+
+    def testAsyncreturnFailsOnGenerator(self):
+        @asyncreturn
+        def f():
+            yield
+        
+        try:
+            f().next()
+        except AssertionError, e:
+            self.assertEquals('?'. str(e))
+        else:
+            self.fail('Should not happen.')
 

@@ -25,8 +25,15 @@
 #    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 #
 ## end license ##
+
 from sys import exc_info
 from functools import wraps
+try:
+    from inspect import isgeneratorfunction
+except ImportError:
+    def isgeneratorfunction(func):
+        return bool(func.func_code.co_flags & int('0x20', 16))
+
 
 def decorate(before, generator, after):
     first = generator.next()
@@ -45,9 +52,16 @@ def decorateWith(before, after):
         return newg
     return _internal
 
-def functionAsGenerator(g):
+def sync(g):
+    def wrap(g):
+        response = yield g
+        yield response
+    return compose(wrap(g)).next()
+
+def asyncreturn(g):
     @wraps(g)
     def newg(*args, **kwargs):
+        assert not isgeneratorfunction(g), 'Only use for non-generators.'
         raise StopIteration(g(*args, **kwargs))
         yield
     return newg
