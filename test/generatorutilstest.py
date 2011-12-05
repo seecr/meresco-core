@@ -107,7 +107,7 @@ class GeneratorUtilsTest(TestCase):
         try:
             f().next()
         except AssertionError, e:
-            self.assertEquals('?'. str(e))
+            self.assertEquals('Only use for non-generators.', str(e))
         else:
             self.fail('Should not happen.')
 
