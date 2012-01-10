@@ -41,5 +41,4 @@ from helix import findHelix, link
 from transaction import TransactionException, Transaction
 from transactionscope import TransactionScope
 from resourcemanager import ResourceManager
-from batchtransactionscope import BatchTransactionScope
 
