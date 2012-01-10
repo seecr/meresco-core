@@ -29,7 +29,7 @@
 
 from cq2utils import CallTrace
 from unittest import TestCase
-from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent, sync
+from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent
 
 from weightless.core import compose, be
 

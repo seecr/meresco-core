@@ -52,12 +52,6 @@ def decorateWith(before, after):
         return newg
     return _internal
 
-def sync(g):
-    def wrap(g):
-        response = yield g
-        yield response
-    return compose(wrap(g)).next()
-
 def asyncreturn(g):
     @wraps(g)
     def newg(*args, **kwargs):

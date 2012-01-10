@@ -36,7 +36,7 @@ assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the de
 
 from observable import Observable, Transparent
 
-from generatorutils import decorate, decorateWith, asyncreturn, sync
+from generatorutils import decorate, decorateWith, asyncreturn
 from transaction import TransactionException, Transaction
 from transactionscope import TransactionScope
 from resourcemanager import ResourceManager
