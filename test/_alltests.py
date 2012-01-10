@@ -41,7 +41,6 @@ sysPath.insert(0, "..")                            #DO_NOT_DISTRIBUTE
 import unittest
 
 from generatorutilstest import GeneratorUtilsTest
-from helixtest import HelixTest
 from observabletest import ObservableTest
 from transactiontest import TransactionTest
 
