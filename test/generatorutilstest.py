@@ -28,7 +28,7 @@
 
 from unittest import TestCase, main
 
-from meresco.core.generatorutils import Peek, decorate, decorateWith, asyncreturn
+from meresco.core.generatorutils import decorate, decorateWith, asyncreturn
 
 class GeneratorUtilsTest(TestCase):
 
