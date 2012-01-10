@@ -66,20 +66,3 @@ def asyncreturn(g):
         yield
     return newg
 
-class Peek(object):
-
-    def __init__(self, generator):
-        self._generator = generator
-        try:
-            self._first = generator.next()
-        except StopIteration:
-            pass
-
-    def empty(self):
-        return not hasattr(self, '_first')
-
-    def __iter__(self):
-        while True:
-            yield self._first
-            self._first = self._generator.next()
-
