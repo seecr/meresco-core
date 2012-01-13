@@ -27,8 +27,8 @@
 #
 ## end license ##
 
-from cq2utils import CallTrace
 from unittest import TestCase
+from seecr.test import CallTrace
 from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent
 
 from weightless.core import compose, be

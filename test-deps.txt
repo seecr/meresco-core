@@ -1,2 +1,2 @@
-python-cq2utils (>= 5.4.18)
-python-cq2utils (<< 5.5)
+seecr-test (>= 1.0)
+seecr-test (<< 1.1)
