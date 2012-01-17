@@ -28,12 +28,7 @@
 
 from sys import exc_info
 from functools import wraps
-try:
-    from inspect import isgeneratorfunction
-except ImportError:
-    def isgeneratorfunction(func):
-        return bool(func.func_code.co_flags & int('0x20', 16))
-
+from weightless.core.utils import isgeneratorfunction
 
 def decorate(before, generator, after):
     first = generator.next()

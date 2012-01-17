@@ -330,6 +330,8 @@ class TransactionTest(TestCase):
         class Committer(Observable):
             def begin(inner, name):
                 inner.ctx.tx.join(inner)
+                return
+                yield
             def commit(inner, id):
                 yield callable
 
@@ -374,19 +376,27 @@ class TransactionTest(TestCase):
         class MyFirstTxParticipant(Transparent):
             def begin(self, name):
                 self.ctx.tx.join(self)
+                return
+                yield
             def doSomething(self):
                 collected[self.ctx.tx.getId()] = ['first']
                 yield self.any.doSomething()
             def commit(self, id):
                 collected[id].append('done 1')
+                return
+                yield
         class MySecondTxParticipant(Observable):
             def begin(self, name):
                 self.ctx.tx.join(self)
+                return
+                yield
             def doSomething(self):
                 collected[self.ctx.tx.getId()].append('second')
                 yield 'second'
             def commit(self, id):
                 collected[id].append('done 2')
+                return
+                yield
         dna = \
             (Observable(),
                 (TransactionScope('name'),

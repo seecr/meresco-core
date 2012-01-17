@@ -35,9 +35,14 @@ assert _getdefaultencoding() == 'utf-8', 'Please ensure that the default encodin
 assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
 
 from observable import Observable, Transparent
+from weightless.core import be as _be
 
 from generatorutils import decorate, decorateWith, asyncreturn
 from transaction import TransactionException, Transaction
 from transactionscope import TransactionScope
 from resourcemanager import ResourceManager
 
+def be(*args, **kwargs):
+    from warnings import warn
+    warn("be from meresco.core is deprecated. Please use be from weightless.core.", DeprecationWarning)
+    return _be(*args, **kwargs)
