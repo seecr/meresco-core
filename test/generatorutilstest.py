@@ -28,7 +28,7 @@
 
 from unittest import TestCase, main
 
-from meresco.core.generatorutils import decorate, decorateWith, asyncreturn
+from meresco.core import decorate, decorateWith, asyncreturn, asyncnoreturnvalue
 
 class GeneratorUtilsTest(TestCase):
 
@@ -98,6 +98,65 @@ class GeneratorUtilsTest(TestCase):
             f().next()
         except AssertionError, e:
             self.assertEquals('Only use for non-generators.', str(e))
+        else:
+            self.fail('Should not happen.')
+
+    def testAsyncNoReturnValue(self):
+        @asyncnoreturnvalue
+        def f():
+            pass
+        
+        class A(object):
+            @asyncnoreturnvalue
+            def meth(self):
+                pass
+
+            @classmethod
+            @asyncnoreturnvalue
+            def classMeth(cls):
+                return
+
+            @staticmethod
+            @asyncnoreturnvalue
+            def staticMeth():
+                return None
+
+        try: f().next()
+        except StopIteration, e: self.assertEquals((), e.args)
+        else: self.fail('Should not happen.')
+
+        try: A().meth().next()
+        except StopIteration, e: self.assertEquals((), e.args)
+        else: self.fail('Should not happen.')
+
+        try: A.classMeth().next()
+        except StopIteration, e: self.assertEquals((), e.args)
+        else: self.fail('Should not happen.')
+
+        try: A.staticMeth().next()
+        except StopIteration, e: self.assertEquals((), e.args)
+        else: self.fail('Should not happen.')
+
+    def testAsyncNoReturnValueFailsOnNotNoneRetval(self):
+        @asyncnoreturnvalue
+        def f():
+            return ''
+        
+        @asyncnoreturnvalue
+        def g():
+            return 42
+        
+        try:
+            f().next()
+        except AssertionError, e:
+            self.assertEquals("Only use for functions that don't return anything.", str(e))
+        else:
+            self.fail('Should not happen.')
+
+        try:
+            g().next()
+        except AssertionError, e:
+            self.assertEquals("Only use for functions that don't return anything.", str(e))
         else:
             self.fail('Should not happen.')
 

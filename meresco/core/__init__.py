@@ -37,7 +37,7 @@ assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the de
 from observable import Observable, Transparent
 from weightless.core import be as _be
 
-from generatorutils import decorate, decorateWith, asyncreturn
+from generatorutils import decorate, decorateWith, asyncreturn, asyncnoreturnvalue
 from transaction import TransactionException, Transaction
 from transactionscope import TransactionScope
 from resourcemanager import ResourceManager

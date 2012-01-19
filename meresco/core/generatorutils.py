@@ -55,3 +55,13 @@ def asyncreturn(g):
         yield
     return newg
 
+def asyncnoreturnvalue(g):
+    @wraps(g)
+    def newg(*args, **kwargs):
+        _ = g(*args, **kwargs)
+        assert _ is None, "Only use for functions that don't return anything."
+        return
+        yield
+    return newg
+
+
