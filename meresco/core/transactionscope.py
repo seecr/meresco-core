@@ -28,6 +28,7 @@
 # 
 ## end license ##
 
+from weightless.core import NoneOfTheObserversRespond, DeclineMessage
 from meresco.core import Observable
 from transaction import TransactionException, Transaction
 
@@ -51,7 +52,10 @@ class TransactionScope(Observable):
         __callstack_var_tx__ = Transaction(name=self._transactionName)
         yield self.once.begin(name=self._transactionName)
         try:
-            response = yield self.any.unknown(message, *args, **kwargs)
+            try:            
+                response = yield self.any.unknown(message, *args, **kwargs)
+            except NoneOfTheObserversRespond:
+                raise DeclineMessage
             yield __callstack_var_tx__.commit()
             raise StopIteration(response)
         except TransactionException:

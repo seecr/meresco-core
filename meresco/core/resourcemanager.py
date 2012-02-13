@@ -30,7 +30,7 @@
 
 from meresco.core import Observable
 
-from weightless.core import methodOrMethodPartialStr
+from weightless.core import DeclineMessage, methodOrMethodPartialStr
 
 class ResourceManager(Observable):
 
@@ -61,6 +61,7 @@ class ResourceManager(Observable):
         if method != None:
             response = yield method(*args, **kwargs)
             raise StopIteration(response)
+        raise DeclineMessage
 
     def do_unknown(self, message, *args, **kwargs):
         tx = self.ctx.tx
@@ -73,6 +74,7 @@ class ResourceManager(Observable):
         method = getattr(self.txs[tx.getId()], message, None)
         if method != None:
             return method(*args, **kwargs)
+        raise DeclineMessage
 
     def commit(self, id):
         resourceTx = self.txs.pop(id)

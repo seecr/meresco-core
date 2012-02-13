@@ -29,6 +29,7 @@
 
 from unittest import TestCase
 from seecr.test import CallTrace
+from weightless.core import NoneOfTheObserversRespond, DeclineMessage
 from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent
 
 from weightless.core import compose, be
@@ -197,6 +198,71 @@ class TransactionTest(TestCase):
             self.assertEquals(('MyTx.g',), e.args)
         self.assertEquals(3, len(traces))
         self.assertEquals(['begin', 'g', 'commit'], traces)
+
+    def testContinueOnNoneOfTheObserversRespond(self):
+        class Responder(object):
+            def __init__(self, value):
+                self.value = value
+            def call_unknown(self, message, *args, **kwargs):
+                return self.value
+            def any_unknown(self, message, *args, **kwargs):
+                yield self.value
+                raise StopIteration(self.value)
+
+        class AResource(object):
+            class MyTransaction(object):
+                def commit(self):
+                    return
+                    yield
+            def beginTransaction(self):
+                raise StopIteration(AResource.MyTransaction())
+                yield
+
+        dna = \
+            (Observable(),
+                (TransactionScope("transactionName"),
+                    (ResourceManager("transactionName"),
+                        (AResource(),)
+                    ),
+                ),
+                (Responder(42),)
+            )
+        body = be(dna)
+        self.assertEquals([42], list(compose(body.any.f())))
+
+        dna = \
+            (Observable(),
+                (TransactionScope("transactionName"),
+                    (ResourceManager("transactionName"),
+                        (AResource(),)
+                    ),
+                    (Responder(42),)
+                ),
+            )
+        body = be(dna)
+        self.assertEquals([42], list(compose(body.any.f())))
+        
+        class Any2Call(Observable):
+            def any_unknown(self, message, *args, **kwargs):
+                try:
+                    yield self.call.unknown(message, *args, **kwargs)
+                except NoneOfTheObserversRespond:
+                    raise DeclineMessage
+
+        dna = \
+            (Observable(),
+                (TransactionScope("transactionName"),
+                    (Any2Call(),
+                        (ResourceManager("transactionName"),
+                            (AResource(),)
+                        ),
+                        (Responder(42),)
+                    )
+                ),
+            )
+        body = be(dna)
+        self.assertEquals([42], list(compose(body.any.f())))
+
 
     def testResourceManagerAllUnknown_asserts_NoResponse(self):
         # Exactly like Observable, but the Transaction objects
