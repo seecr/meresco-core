@@ -26,14 +26,4 @@
 
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
-option=$1
-pyversions="$(pyversions --installed)"
-if [ "${option:0:10}" == "--python2." ]; then
-    shift
-    pyversions="${option:2}"
-fi
-
-for pycmd in $pyversions; do
-    echo "================ $pycmd _alltests.py $@ ================"
-    $pycmd _alltests.py "$@"
-done
+python2.6 _alltests.py "$@"

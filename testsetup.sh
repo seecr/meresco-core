@@ -29,27 +29,27 @@
 set -o errexit
 
 rm -rf tmp build
-for pycmd in $(pyversions --installed); do
 
-    $pycmd setup.py install --root tmp
+python2.6 setup.py install --root tmp
 
-    VERSION="x.y.z"
+VERSION="x.y.z"
 
-    find tmp -name '*.py' -exec sed -r -e \
-        "/DO_NOT_DISTRIBUTE/ d;
-        s/\\\$Version:[^\\\$]*\\\$/\\\$Version: ${VERSION}\\\$/" -i '{}' \;
+find tmp -name '*.py' -exec sed -r -e \
+    "/DO_NOT_DISTRIBUTE/ d;
+    s/\\\$Version:[^\\\$]*\\\$/\\\$Version: ${VERSION}\\\$/" -i '{}' \;
 
-    if [ "$pycmd" == "python2.5" ]; then
-        export PYTHONPATH=`pwd`/tmp/usr/lib/python2.5/site-packages:${PYTHONPATH}
-    else
-        export PYTHONPATH=`pwd`/tmp/usr/local/lib/python2.6/dist-packages:${PYTHONPATH}
-    fi
-    cp -r test tmp/test
+if [ -f /etc/debian_version ]; then
+    SITE_PACKAGE_DIR=`pwd`/tmp/usr/local/lib/${fullPythonVersion}/dist-packages
+else
+    SITE_PACKAGE_DIR=`pwd`/tmp/usr/lib/${fullPythonVersion}/site-packages
+fi
 
-    set +o errexit
-    (
-        cd tmp/test
-        ./alltests.sh --${pycmd}
-    )
-    set -o errexit
-done
+export PYTHONPATH=${SITE_PACKAGE_DIR}:${PYTHONPATH}
+cp -r test tmp/test
+
+set +o errexit
+(
+    cd tmp/test
+    ./alltests.sh
+)
+set -o errexit
