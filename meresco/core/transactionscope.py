@@ -36,7 +36,7 @@ from transaction import TransactionException, Transaction
 class TransactionScope(Observable):
 
     def __init__(self, transactionName, name=None):
-        Observable.__init__(self, name=name)
+        Observable.__init__(self, name=transactionName if name is None else name)
         self._transactionName = transactionName
 
     def all_unknown(self, message, *args, **kwargs):
