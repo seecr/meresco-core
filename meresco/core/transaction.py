@@ -28,11 +28,11 @@
 # 
 ## end license ##
 
+
 class TransactionException(Exception):
     pass
 
 class Transaction(object):
-
     def __init__(self, name):
         self._resourceManagers = []
         self.locals = {}
@@ -58,3 +58,5 @@ class Transaction(object):
     def abort(self):
         raise TransactionException()
 
+    def objectScope(self, o):
+        return self.locals.setdefault('%s@%s' % (o.__class__.__name__, id(o)), {})

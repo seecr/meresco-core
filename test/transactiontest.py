@@ -475,8 +475,16 @@ class TransactionTest(TestCase):
         list(compose(body.all.doSomething()))
         self.assertEquals(['first', 'second', 'done 1', 'done 2'], collected.values()[0])
 
-
-    def testTransactionScopeName(self):
+    def testTransactionScopeObservableName(self):
         self.assertEquals('name', TransactionScope('name').observable_name())
         self.assertEquals('name', TransactionScope(transactionName='name').observable_name())
         self.assertEquals('name', TransactionScope(transactionName='transaction', name='name').observable_name())
+
+    def testObjectScope(self):
+        o1 = object()
+        tx = Transaction('transactionScopeName')
+        tx.objectScope(o1)['key'] = 'value'
+        self.assertEquals({'key': 'value'}, tx.objectScope(o1))
+        o2 = object()
+        self.assertEquals({}, tx.objectScope(o2))
+
