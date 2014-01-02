@@ -28,10 +28,10 @@ from signal import SIGINT, SIGTERM, SIG_IGN, SIG_DFL, signal, getsignal
 
 def setSignalHandlers():
     if getsignal(SIGINT) == SIG_IGN:
-        print 'SIGINT was ignored, restoring to defaulthandler'
+        print('SIGINT was ignored, restoring to defaulthandler')
         signal(SIGINT, SIG_DFL)
 
     if getsignal(SIGTERM) == SIG_IGN:
-        print 'SIGTERM was ignored, restoring to defaulthandler'
+        print('SIGTERM was ignored, restoring to defaulthandler')
         signal(SIGTERM, SIG_DFL)
 

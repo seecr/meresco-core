@@ -192,9 +192,9 @@ class TransactionTest(TestCase):
         body = be(dna)
         composed = compose(body.any.f())
         try:
-            composed.next()
+            next(composed)
             self.fail("Should not come here")
-        except StopIteration, e:
+        except StopIteration as e:
             self.assertEquals(('MyTx.g',), e.args)
         self.assertEquals(3, len(traces))
         self.assertEquals(['begin', 'g', 'commit'], traces)
@@ -299,7 +299,7 @@ class TransactionTest(TestCase):
         composed = compose(server.all.asyncAnyLike())
         try:
             list(composed)
-        except AssertionError, e:
+        except AssertionError as e:
             self.assertTrue("> returned 'anyResult'" in str(e), str(e))
         else:
             self.fail("Should not come here")
@@ -427,10 +427,10 @@ class TransactionTest(TestCase):
         body = be(dna)
         scope1 = compose(body.all.doSomething())
         scope2 = compose(body.all.doSomething())
-        scope1.next()
-        scope2.next()
-        scope1.next()
-        scope2.next()
+        next(scope1)
+        next(scope2)
+        next(scope1)
+        next(scope2)
         self.assertTrue(txId[0] != txId[1])
         self.assertTrue(txId[1] > 0)
         self.assertTrue(txId[0] > 0)
@@ -473,7 +473,7 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.doSomething()))
-        self.assertEquals(['first', 'second', 'done 1', 'done 2'], collected.values()[0])
+        self.assertEquals(['first', 'second', 'done 1', 'done 2'], list(collected.values())[0])
 
     def testTransactionScopeObservableName(self):
         self.assertEquals('name', TransactionScope('name').observable_name())
