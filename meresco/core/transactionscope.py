@@ -30,7 +30,7 @@
 
 from weightless.core import NoneOfTheObserversRespond, DeclineMessage
 from meresco.core import Observable
-from transaction import TransactionException, Transaction
+from .transaction import TransactionException, Transaction
 
 
 class TransactionScope(Observable):

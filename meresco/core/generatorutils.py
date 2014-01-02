@@ -31,7 +31,7 @@ from functools import wraps
 from weightless.core.utils import isgeneratorfunction
 
 def decorate(before, generator, after):
-    first = generator.next()
+    first = next(generator)
     yield before
     yield first
     for value in generator:

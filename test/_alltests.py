@@ -39,9 +39,9 @@ sysPath.insert(0, "..")                            #DO_NOT_DISTRIBUTE
 
 import unittest
 
-from generatorutilstest import GeneratorUtilsTest
-from observabletest import ObservableTest
-from transactiontest import TransactionTest
+from .generatorutilstest import GeneratorUtilsTest
+from .observabletest import ObservableTest
+from .transactiontest import TransactionTest
 
 if __name__ == '__main__':
     unittest.main()

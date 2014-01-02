@@ -73,20 +73,20 @@ class GeneratorUtilsTest(TestCase):
             def staticMeth():
                 return 5
 
-        try: f().next()
-        except StopIteration, e: self.assertEquals((5,), e.args)
+        try: next(f())
+        except StopIteration as e: self.assertEquals((5,), e.args)
         else: self.fail('Should not happen.')
 
-        try: A().meth().next()
-        except StopIteration, e: self.assertEquals((5,), e.args)
+        try: next(A().meth())
+        except StopIteration as e: self.assertEquals((5,), e.args)
         else: self.fail('Should not happen.')
 
-        try: A.classMeth().next()
-        except StopIteration, e: self.assertEquals((5,), e.args)
+        try: next(A.classMeth())
+        except StopIteration as e: self.assertEquals((5,), e.args)
         else: self.fail('Should not happen.')
 
-        try: A.staticMeth().next()
-        except StopIteration, e: self.assertEquals((5,), e.args)
+        try: next(A.staticMeth())
+        except StopIteration as e: self.assertEquals((5,), e.args)
         else: self.fail('Should not happen.')
 
     def testAsyncreturnFailsOnGenerator(self):
@@ -95,8 +95,8 @@ class GeneratorUtilsTest(TestCase):
             yield
         
         try:
-            f().next()
-        except AssertionError, e:
+            next(f())
+        except AssertionError as e:
             self.assertEquals('Only use for non-generators.', str(e))
         else:
             self.fail('Should not happen.')
@@ -121,20 +121,20 @@ class GeneratorUtilsTest(TestCase):
             def staticMeth():
                 return None
 
-        try: f().next()
-        except StopIteration, e: self.assertEquals((), e.args)
+        try: next(f())
+        except StopIteration as e: self.assertEquals((), e.args)
         else: self.fail('Should not happen.')
 
-        try: A().meth().next()
-        except StopIteration, e: self.assertEquals((), e.args)
+        try: next(A().meth())
+        except StopIteration as e: self.assertEquals((), e.args)
         else: self.fail('Should not happen.')
 
-        try: A.classMeth().next()
-        except StopIteration, e: self.assertEquals((), e.args)
+        try: next(A.classMeth())
+        except StopIteration as e: self.assertEquals((), e.args)
         else: self.fail('Should not happen.')
 
-        try: A.staticMeth().next()
-        except StopIteration, e: self.assertEquals((), e.args)
+        try: next(A.staticMeth())
+        except StopIteration as e: self.assertEquals((), e.args)
         else: self.fail('Should not happen.')
 
     def testAsyncNoReturnValueFailsOnNotNoneRetval(self):
@@ -147,15 +147,15 @@ class GeneratorUtilsTest(TestCase):
             return 42
         
         try:
-            f().next()
-        except AssertionError, e:
+            next(f())
+        except AssertionError as e:
             self.assertEquals("Only use for functions that don't return anything.", str(e))
         else:
             self.fail('Should not happen.')
 
         try:
-            g().next()
-        except AssertionError, e:
+            next(g())
+        except AssertionError as e:
             self.assertEquals("Only use for functions that don't return anything.", str(e))
         else:
             self.fail('Should not happen.')

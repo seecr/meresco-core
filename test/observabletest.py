@@ -84,8 +84,8 @@ class ObservableTest(TestCase):
         composed = compose(root.any.useVariableAny())
         try:
             while True:
-                composed.next()
-        except StopIteration, e:
+                next(composed)
+        except StopIteration as e:
             self.assertEquals((['Thingy'],), e.args)
 
         self.assertEquals('called', root.call.useVariableCall())
