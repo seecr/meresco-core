@@ -79,18 +79,18 @@ class ObservableTest(TestCase):
                 )
             )
         root = be(dna)
-        self.assertEquals(['stuffed', ['Thingy']], list(compose(root.all.useVariableAll())))
+        self.assertEqual(['stuffed', ['Thingy']], list(compose(root.all.useVariableAll())))
 
         composed = compose(root.any.useVariableAny())
         try:
             while True:
                 next(composed)
         except StopIteration as e:
-            self.assertEquals((['Thingy'],), e.args)
+            self.assertEqual((['Thingy'],), e.args)
 
-        self.assertEquals('called', root.call.useVariableCall())
-        self.assertEquals([['Thingy']], call_result)
+        self.assertEqual('called', root.call.useVariableCall())
+        self.assertEqual([['Thingy']], call_result)
 
-        self.assertEquals(None, root.do.useVariableDo())
-        self.assertEquals([['Thingy']], do_result)
+        self.assertEqual(None, root.do.useVariableDo())
+        self.assertEqual([['Thingy']], do_result)
 
