@@ -1,36 +1,36 @@
 ## begin license ##
-# 
-# "Meresco Core" is an open-source library containing components to build searchengines, repositories and archives. 
-# 
+#
+# "Meresco Core" is an open-source library containing components to build searchengines, repositories and archives.
+#
 # Copyright (C) 2007-2009 SURF Foundation. http://www.surf.nl
 # Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 # Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
-# Copyright (C) 2011-2012 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
-# 
+#
 # This file is part of "Meresco Core"
-# 
+#
 # "Meresco Core" is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2 of the License, or
 # (at your option) any later version.
-# 
+#
 # "Meresco Core" is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with "Meresco Core"; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-# 
+#
 ## end license ##
 
 from unittest import TestCase
 from seecr.test import CallTrace
 from weightless.core import NoneOfTheObserversRespond, DeclineMessage
-from meresco.core import ResourceManager, TransactionScope, TransactionException, Transaction, Observable, Transparent
+from meresco.core import ResourceManager, TransactionScope, Transaction, Observable, Transparent
 
 from weightless.core import compose, be
 
@@ -68,9 +68,9 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         result = list(compose(body.all.f()))
-        self.assertEquals([], result)
-        self.assertEquals(4, len(traces))
-        self.assertEquals(['begin', 'g', 'g', 'commit'], traces)
+        self.assertEqual([], result)
+        self.assertEqual(4, len(traces))
+        self.assertEqual(['begin', 'g', 'g', 'commit'], traces)
 
     def testTransaction_DoUnknowned(self):
         traces = []
@@ -111,8 +111,8 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.add()))
-        self.assertEquals(3, len(traces))
-        self.assertEquals(['begin', 'g', 'commit'], traces)
+        self.assertEqual(3, len(traces))
+        self.assertEqual(['begin', 'g', 'commit'], traces)
 
     def testTransaction_CallUnknowned(self):
         traces = []
@@ -153,9 +153,9 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         result = list(compose(body.all.add()))
-        self.assertEquals(['retval'], result)
-        self.assertEquals(3, len(traces))
-        self.assertEquals(['begin', 'g', 'commit'], traces)
+        self.assertEqual(['retval'], result)
+        self.assertEqual(3, len(traces))
+        self.assertEqual(['begin', 'g', 'commit'], traces)
 
     def testTransaction_AnyUnknowned(self):
         traces = []
@@ -195,9 +195,9 @@ class TransactionTest(TestCase):
             next(composed)
             self.fail("Should not come here")
         except StopIteration as e:
-            self.assertEquals(('MyTx.g',), e.args)
-        self.assertEquals(3, len(traces))
-        self.assertEquals(['begin', 'g', 'commit'], traces)
+            self.assertEqual(('MyTx.g',), e.args)
+        self.assertEqual(3, len(traces))
+        self.assertEqual(['begin', 'g', 'commit'], traces)
 
     def testContinueOnNoneOfTheObserversRespond(self):
         class Responder(object):
@@ -228,7 +228,7 @@ class TransactionTest(TestCase):
                 (Responder(42),)
             )
         body = be(dna)
-        self.assertEquals([42], list(compose(body.any.f())))
+        self.assertEqual([42], list(compose(body.any.f())))
 
         dna = \
             (Observable(),
@@ -240,8 +240,8 @@ class TransactionTest(TestCase):
                 ),
             )
         body = be(dna)
-        self.assertEquals([42], list(compose(body.any.f())))
-        
+        self.assertEqual([42], list(compose(body.any.f())))
+
         class Any2Call(Observable):
             def any_unknown(self, message, *args, **kwargs):
                 try:
@@ -261,7 +261,7 @@ class TransactionTest(TestCase):
                 ),
             )
         body = be(dna)
-        self.assertEquals([42], list(compose(body.any.f())))
+        self.assertEqual([42], list(compose(body.any.f())))
 
 
     def testResourceManagerAllUnknown_asserts_NoResponse(self):
@@ -294,7 +294,7 @@ class TransactionTest(TestCase):
         server = be(dna)
 
         composed = compose(server.all.allLike())
-        self.assertEquals(['allResult'], list(composed))
+        self.assertEqual(['allResult'], list(composed))
 
         composed = compose(server.all.asyncAnyLike())
         try:
@@ -328,8 +328,8 @@ class TransactionTest(TestCase):
         tx.join(resource)
         tx.join(resource)
         list(tx.commit())
-        self.assertEquals(1, len(commitCalled))
-        self.assertEquals(tx.getId(), commitCalled[0])
+        self.assertEqual(1, len(commitCalled))
+        self.assertEqual(tx.getId(), commitCalled[0])
 
     def testFreeTransaction(self):
         resourceManager = ResourceManager('name')
@@ -347,10 +347,10 @@ class TransactionTest(TestCase):
                 )
             )
         body = be(dna)
-        self.assertEquals(0, len(resourceManager.txs))
+        self.assertEqual(0, len(resourceManager.txs))
         list(compose(body.all.something()))
-        self.assertEquals(0, len(resourceManager.txs))
-        self.assertEquals(['something', 'commit'], [m.name for m in resourceTx.calledMethods])
+        self.assertEqual(0, len(resourceManager.txs))
+        self.assertEqual(['something', 'commit'], [m.name for m in resourceTx.calledMethods])
 
     def testTransactionExceptionRollsbackTransaction(self):
         resourceTxs = []
@@ -379,17 +379,17 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.twice('one', 'two')))
-        self.assertEquals(1, len(resourceTxs), resourceTxs)
-        self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
+        self.assertEqual(1, len(resourceTxs), resourceTxs)
+        self.assertEqual(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
 
     def testTransactionLocals(self):
         tx = Transaction('name')
         tx.locals['myvar'] = 'value'
-        self.assertEquals('value', tx.locals['myvar'])
+        self.assertEqual('value', tx.locals['myvar'])
 
     def testTransactionScopeName(self):
         scope = TransactionScope("name")
-        self.assertEquals("name", scope._transactionName)
+        self.assertEqual("name", scope._transactionName)
 
     def testTransactionYieldsCallablesInCommits(self):
         callable = lambda: None
@@ -434,8 +434,8 @@ class TransactionTest(TestCase):
         self.assertTrue(txId[0] != txId[1])
         self.assertTrue(txId[1] > 0)
         self.assertTrue(txId[0] > 0)
-        self.assertEquals(txId[0], txId[2])
-        self.assertEquals(txId[1], txId[3])
+        self.assertEqual(txId[0], txId[2])
+        self.assertEqual(txId[1], txId[3])
 
     def testTransactionCommit(self):
         collected = {}
@@ -473,18 +473,18 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.doSomething()))
-        self.assertEquals(['first', 'second', 'done 1', 'done 2'], list(collected.values())[0])
+        self.assertEqual(['first', 'second', 'done 1', 'done 2'], list(collected.values())[0])
 
     def testTransactionScopeObservableName(self):
-        self.assertEquals('name', TransactionScope('name').observable_name())
-        self.assertEquals('name', TransactionScope(transactionName='name').observable_name())
-        self.assertEquals('name', TransactionScope(transactionName='transaction', name='name').observable_name())
+        self.assertEqual('name', TransactionScope('name').observable_name())
+        self.assertEqual('name', TransactionScope(transactionName='name').observable_name())
+        self.assertEqual('name', TransactionScope(transactionName='transaction', name='name').observable_name())
 
     def testObjectScope(self):
         o1 = object()
         tx = Transaction('transactionScopeName')
         tx.objectScope(o1)['key'] = 'value'
-        self.assertEquals({'key': 'value'}, tx.objectScope(o1))
+        self.assertEqual({'key': 'value'}, tx.objectScope(o1))
         o2 = object()
-        self.assertEquals({}, tx.objectScope(o2))
+        self.assertEqual({}, tx.objectScope(o2))
 
