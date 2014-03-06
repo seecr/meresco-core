@@ -26,6 +26,7 @@
 
 export LANG=en_US.UTF-8
 export PYTHONPATH=.:"$PYTHONPATH"
+export WEIGHTLESS_COMPOSE_TEST="PYTHON"
 pyversions="python2.6"
 if [ -e /usr/bin/python2.7 ]; then
     pyversions="$pyversions python2.7"
