@@ -36,5 +36,5 @@ def setSignalHandlers():
         signal(SIGTERM, SIG_DFL)
 
 
-def registerShutdownHandler(stateDir, server, reactor):
-    return ShutdownHandler(stateDir, server, reactor)
+def registerShutdownHandler(*args, **kwargs):
+    return ShutdownHandler(*args, **kwargs)

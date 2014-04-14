@@ -35,15 +35,16 @@ from weightless.core import compose
 
 
 class ShutdownHandler(object):
-    def __init__(self, stateDir, server, reactor):
+    def __init__(self, stateDir, server, reactor, exitOnError=True):
         self._server = server
         self._reactor = reactor
         self._runningMarkerFile = join(stateDir, 'running.marker')
         if isfile(self._runningMarkerFile):
-            print "The '%s' process was not previously shutdown to a consistent persistent state; NOT starting from an unknown state." % argv[0]
+            print "The '%s' process was not previously shutdown to a consistent persistent state." % argv[0]
             sys.stdout.flush()
-            self._sleep(3600)
-            exit(1)
+            if exitOnError:
+                print "NOT starting from an unknown state."
+                exit(1)
         self._previouslyRegisteredHandlers = {}
         for signalnum in [SIGTERM, SIGINT, SIGUSR2]:
             self._previouslyRegisteredHandlers[signalnum] = signal(signalnum, self._handleShutdown)
@@ -66,6 +67,7 @@ class ShutdownHandler(object):
 
         previousHandler = self._previouslyRegisteredHandlers[signum]
         if previousHandler not in [SIG_DFL, SIG_IGN, None]:
+            print previousHandler
             previousHandler()
         if signum == SIGUSR2:
             return
