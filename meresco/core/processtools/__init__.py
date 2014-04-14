@@ -2,8 +2,7 @@
 #
 # "Meresco Core" is an open-source library containing components to build searchengines, repositories and archives.
 #
-# Copyright (C) 2011-2014 Seecr (Seek You Too B.V.) http://seecr.nl
-# Copyright (C) 2011 Seek You Too (CQ2) http://www.cq2.nl
+# Copyright (C) 2014 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Meresco Core"
 #
@@ -23,18 +22,5 @@
 #
 ## end license ##
 
-from signal import SIGINT, SIGTERM, SIG_IGN, SIG_DFL, signal, getsignal
-from .shutdownhandler import ShutdownHandler
-
-def setSignalHandlers():
-    if getsignal(SIGINT) == SIG_IGN:
-        print 'SIGINT was ignored, restoring to defaulthandler'
-        signal(SIGINT, SIG_DFL)
-
-    if getsignal(SIGTERM) == SIG_IGN:
-        print 'SIGTERM was ignored, restoring to defaulthandler'
-        signal(SIGTERM, SIG_DFL)
-
-
-def registerShutdownHandler(*args, **kwargs):
-    return ShutdownHandler(*args, **kwargs)
+from .signalhelpers import setSignalHandlers
+from .shutdownhandler import registerShutdownHandler

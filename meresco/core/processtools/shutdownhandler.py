@@ -31,11 +31,20 @@ from time import sleep
 from signal import signal, SIGTERM, SIGINT, SIGUSR2, SIG_DFL, SIG_IGN
 from functools import partial
 
-from weightless.core import compose
+from weightless.core import consume
 
 
-class ShutdownHandler(object):
+def registerShutdownHandler(*args, **kwargs):
+    return _ShutdownHandler(*args, **kwargs)
+
+
+class _ShutdownHandler(object):
+    handlerRegistered = False
+
     def __init__(self, stateDir, server, reactor, exitOnError=True):
+        if _ShutdownHandler.handlerRegistered:
+            raise AssertionError('Handler already registered, aborting.')
+
         self._server = server
         self._reactor = reactor
         self._runningMarkerFile = join(stateDir, 'running.marker')
@@ -45,19 +54,31 @@ class ShutdownHandler(object):
             if exitOnError:
                 print "NOT starting from an unknown state."
                 exit(1)
+
+        self._register()
+
+    def _register(self):
         self._previouslyRegisteredHandlers = {}
         for signalnum in [SIGTERM, SIGINT, SIGUSR2]:
             self._previouslyRegisteredHandlers[signalnum] = signal(signalnum, self._handleShutdown)
         open(self._runningMarkerFile, 'w').write("written by registerShutdownHandler method in '%s' process" % argv[0])
 
+        _ShutdownHandler.handlerRegistered = True
+
+    def unregister(self):
+        for signalnum, previousHandler in self._previouslyRegisteredHandlers.items():
+            currentHandler = signal(signalnum, previousHandler)
+
+        _ShutdownHandler.handlerRegistered = False
+
     def _handleShutdown(self, signum, frame):
-        self._reactor.addTimer(0, partial(self._deferredHandleShutdown, signum=signum))
+        self._reactor.addTimer(0, partial(self._deferredHandleShutdown, signum=signum))  # , frame=frame))
         print 'scheduled for immediate shutdown'
         sys.stdout.flush()
 
-    def _deferredHandleShutdown(self, signum):
+    def _deferredHandleShutdown(self, signum): # , frame):
         assert isfile(self._runningMarkerFile)
-        list(compose(self._server.once.handleShutdown()))
+        consume(self._server.once.handleShutdown())
         if signum == SIGUSR2:
             print 'state persisted'
         else:
@@ -67,8 +88,8 @@ class ShutdownHandler(object):
 
         previousHandler = self._previouslyRegisteredHandlers[signum]
         if previousHandler not in [SIG_DFL, SIG_IGN, None]:
-            print previousHandler
-            previousHandler()
+            print previousHandler  # TODO: Remove me
+            previousHandler()  # (signum, frame)
         if signum == SIGUSR2:
             return
         if signum == SIGINT:
@@ -78,4 +99,8 @@ class ShutdownHandler(object):
 
     def _sleep(self, t):
         sleep(t)
+
+
+PERSIST_SIGNALS = [SIGUSR2]
+SHUTDOWN_SIGNALS = [SIGTERM, SIGINT]
 
