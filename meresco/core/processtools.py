@@ -24,6 +24,7 @@
 ## end license ##
 
 from signal import SIGINT, SIGTERM, SIG_IGN, SIG_DFL, signal, getsignal
+from .shutdownhandler import ShutdownHandler
 
 def setSignalHandlers():
     if getsignal(SIGINT) == SIG_IGN:
@@ -34,3 +35,6 @@ def setSignalHandlers():
         print 'SIGTERM was ignored, restoring to defaulthandler'
         signal(SIGTERM, SIG_DFL)
 
+
+def registerShutdownHandler(stateDir, server, reactor):
+    return ShutdownHandler(stateDir, server, reactor)

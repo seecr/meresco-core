@@ -42,6 +42,7 @@ import unittest
 from generatorutilstest import GeneratorUtilsTest
 from observabletest import ObservableTest
 from transactiontest import TransactionTest
+from shutdownhandlertest import ShutdownHandlerTest
 
 if __name__ == '__main__':
     unittest.main()
