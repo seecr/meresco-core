@@ -92,7 +92,7 @@ class _ShutdownHandler(object):
         if signum == SIGINT:
             raise KeyboardInterrupt()
         else:
-            exit(signum)
+            exit(0)
 
 
 class ShutdownFailedException(SystemExit):

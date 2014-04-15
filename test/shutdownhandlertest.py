@@ -116,8 +116,8 @@ class ShutdownHandlerTest(SeecrTestCase):
                 kill(getpid(), SIGTERM)
                 reactor.loop()
                 self.fail('should terminate')
-            except ShutdownFailedException:
-                pass
+            except SystemExit, e:
+                self.assertEquals((0,), e.args)
 
             self.assertTrue('Scheduled for immediate shutdown.\n' in output.getvalue(), output.getvalue())
             self.assertTrue('Shutdown completed.\n' in output.getvalue(), output.getvalue())
