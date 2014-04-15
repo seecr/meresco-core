@@ -34,6 +34,7 @@ setup(
     packages=[
         'meresco',
         'meresco.core',
+        'meresco.core.processtools',
     ],
     version='%VERSION%',
     url='http://www.meresco.org',
