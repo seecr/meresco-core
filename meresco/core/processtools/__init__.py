@@ -23,4 +23,4 @@
 ## end license ##
 
 from .signalhelpers import setSignalHandlers
-from .shutdownhandler import registerShutdownHandler
+from .shutdownhandler import registerShutdownHandler, ShutdownFailedException

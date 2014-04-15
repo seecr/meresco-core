@@ -25,16 +25,19 @@
 from seecr.test import SeecrTestCase, CallTrace
 from seecr.test.io import stdout_replaced
 
+from inspect import currentframe
 from os import kill, getpid
 from os.path import join, isfile
-from signal import getsignal
+from signal import getsignal, signal
 from signal import SIGUSR1, SIGINT, SIGTERM
+from time import sleep
 
 from weightless.core import be, consume
+from weightless.io import Reactor
 
 from meresco.core import Observable
-from meresco.core.processtools import registerShutdownHandler
-from meresco.core.processtools.shutdownhandler import _ShutdownHandler, PERSIST_SIGNALS, SHUTDOWN_SIGNALS
+from meresco.core.processtools import registerShutdownHandler, ShutdownFailedException
+from meresco.core.processtools.shutdownhandler import _ShutdownHandler, SHUTDOWN_SIGNALS
 
 
 class ShutdownHandlerTest(SeecrTestCase):
@@ -50,37 +53,124 @@ class ShutdownHandlerTest(SeecrTestCase):
 
     def _createShutdownHandler(self, *args, **kwargs):
         self._shutdownHandler = registerShutdownHandler(*args, **kwargs)
+        return self._shutdownHandler
 
-    def testInit(self):
-        shutdownHandler = self._createShutdownHandler(stateDir=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
+    def testShouldWriteRunningMarkerOnInit(self):
+        shutdownHandler = self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
         self.assertTrue(isfile(join(self.tempdir, 'running.marker')))
 
-    def testInitIfRunningMarkerStillThere(self):
+    def testShouldAbortInitWithExceptionIfRunningMarkerStillThere(self):
+        # Subclassed SystemExit for ShutdownFailedException to ensure a service quits when left in an inconsistent state,
+        # even if it needs to traverse "except (SystemExit, KeyboardInterrupt, AssertionError)" catch-statements.
+        self.assertTrue(issubclass(ShutdownFailedException, SystemExit))
+
         open(join(self.tempdir, 'running.marker'), 'w').write('already there')
         with stdout_replaced() as output:
             try:
-                registerShutdownHandler(stateDir=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
+                self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
                 self.fail('should terminate')
-            except SystemExit:
-                print 'TODO: delegate to something else.'
-                #pass
+            except ShutdownFailedException:
+                pass
 
-            self.assertTrue("process was not previously shutdown to a consistent persistent state.")
+            self.assertTrue("process was not previously shutdown to a consistent persistent state." in output.getvalue(), output.getvalue())
             self.assertTrue("NOT starting from an unknown state." in output.getvalue(), output.getvalue())
 
+        with stdout_replaced() as output:
+            try:
+                self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
+                self.fail('should terminate')
+            except SystemExit:
+                pass
+
+    def testShouldContinueAfterCrashIfShutdownMustSucceedFlagFalse(self):
+        open(join(self.tempdir, 'running.marker'), 'w').write('already there')
+        with stdout_replaced() as output:
+            try:
+                self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'), shutdownMustSucceed=False)
+            except SystemExit:
+                self.fail('should not happen')
+
+            self.assertTrue("process was not previously shutdown to a consistent persistent state." in output.getvalue(), output.getvalue())
+            self.assertFalse("NOT starting from an unknown state." in output.getvalue(), output.getvalue())
+
     def testShouldNotRegisteredTwice(self):
-        self._createShutdownHandler(stateDir=self.tempdir, server='ignored', reactor='ignored')
+        reactor = Reactor()
+        trace = CallTrace('Observer')
+        top = be((Observable(),
+            (Observable(),  # Only once calls walk the observer tree.
+                (trace,),
+            ),
+        ))
+        shutdownHandler = self._createShutdownHandler(statePath=self.tempdir, server=top, reactor=reactor)
+
         try:
-            self._createShutdownHandler(stateDir=self.tempdir, server='ignored', reactor='ignored')
+            registerShutdownHandler(statePath=self.tempdir, server='ignored', reactor='ignored')
         except AssertionError, e:
             self.assertEquals('Handler already registered, aborting.', str(e))
         else:
             self.fail()
 
+        reactor.addTimer(0.01, lambda: None)
+        with stdout_replaced() as output:
+            try:
+                kill(getpid(), SIGTERM)
+                reactor.loop()
+                self.fail('should terminate')
+            except ShutdownFailedException:
+                pass
+
+            self.assertTrue('Scheduled for immediate shutdown.\n' in output.getvalue(), output.getvalue())
+            self.assertTrue('Shutdown completed.\n' in output.getvalue(), output.getvalue())
+
+        # Only once!
+        self.assertEquals(['handleShutdown'], trace.calledMethodNames())
+        self.assertEquals(((), {}), (trace.calledMethods[0].args, trace.calledMethods[0].kwargs))
+
+    def testShouldCallPreviouslyRegisteredSignalHandlersAfterHandleShutdown(self):
+        reactor = Reactor()
+        called = []
+        def handleShutdown():
+            called.append('handleShutdown')
+
+        testCoName = currentframe().f_code.co_name
+        def prevIntHandler(signum, frame):
+            self.assertEquals(SIGINT, signum)
+            self.assertEquals(testCoName, frame.f_code.co_name)
+            called.append('prevIntHandler')
+
+        trace = CallTrace('Observer', methods={'handleShutdown': handleShutdown})
+        top = be((Observable(),
+            (Observable(),  # Only once calls walk the observer tree.
+                (trace,),
+            ),
+        ))
+
+        origIntHandler = signal(SIGINT, prevIntHandler)
+        try:
+            shutdownHandler = registerShutdownHandler(statePath=self.tempdir, server=top, reactor=reactor)
+            reactor.addTimer(0.01, lambda: None)
+            with stdout_replaced() as output:
+                try:
+                    kill(getpid(), SIGINT)
+                    reactor.loop()
+                    self.fail('should terminate')
+                except KeyboardInterrupt:
+                    pass
+
+                self.assertTrue('Scheduled for immediate shutdown.\n' in output.getvalue(), output.getvalue())
+                self.assertTrue('Shutdown completed.\n' in output.getvalue(), output.getvalue())
+        finally:
+            shutdownHandler.unregister()
+            signal(SIGINT, origIntHandler)
+
+        self.assertEquals(['handleShutdown'], trace.calledMethodNames())
+        self.assertEquals(((), {}), (trace.calledMethods[0].args, trace.calledMethods[0].kwargs))
+        self.assertEquals(['handleShutdown', 'prevIntHandler'], called)
+
     def testShouldUnregister(self):
         # ... for testing purposes.
         def getRelevantHandlers():
-            return [getsignal(sh) for sh in PERSIST_SIGNALS + SHUTDOWN_SIGNALS]  # SIGUSR2, SIGTERM, SIGINT
+            return [getsignal(sh) for sh in SHUTDOWN_SIGNALS]  # SIGTERM, SIGINT
 
         persistable = CallTrace('Observer', emptyGeneratorMethods=['handleShutdown'])
         top = be((Observable(),
@@ -89,7 +179,7 @@ class ShutdownHandlerTest(SeecrTestCase):
         reactor = CallTrace('reactor')
 
         pre = getRelevantHandlers()
-        handler = registerShutdownHandler(stateDir=self.tempdir, server=top, reactor=reactor)
+        handler = registerShutdownHandler(statePath=self.tempdir, server=top, reactor=reactor)
 
         _with = getRelevantHandlers()
         handler.unregister()
@@ -104,6 +194,7 @@ class ShutdownHandlerTest(SeecrTestCase):
         # shutdownHandler removed on .unregister()
         self.assertEquals(pre, post)
 
+        # shutdownHandler is who he's supposed to be.
         self.assertEquals('_handleShutdown', ourHandler.__func__.func_name)
         self.assertEquals(handler, ourHandler.__self__)
 
