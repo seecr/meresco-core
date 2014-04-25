@@ -32,12 +32,13 @@ from signal import getsignal, signal
 from signal import SIGUSR1, SIGINT, SIGTERM
 from time import sleep
 
-from weightless.core import be, consume
+from weightless.core import be
+
 from weightless.io import Reactor
 
 from meresco.core import Observable
 from meresco.core.processtools import registerShutdownHandler, ShutdownFailedException
-from meresco.core.processtools.shutdownhandler import _ShutdownHandler, SHUTDOWN_SIGNALS
+from meresco.core.processtools.shutdownhandler import _ShutdownHandler, SHUTDOWN_SIGNALS, compose
 
 
 class ShutdownHandlerTest(SeecrTestCase):

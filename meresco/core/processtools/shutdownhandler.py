@@ -31,7 +31,14 @@ from time import sleep
 from signal import signal, SIGTERM, SIGINT, SIG_DFL, SIG_IGN
 from functools import partial
 
-from weightless.core import consume
+try:
+    from weightless.core import consume
+except ImportError:
+    # For compatibility with weightless-core 0.8.3
+    from weightless.core import compose
+    def consume(generator):
+        for _ in compose(generator):
+            pass
 
 
 def registerShutdownHandler(**kwargs):
