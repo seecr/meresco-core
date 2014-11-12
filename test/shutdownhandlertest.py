@@ -29,8 +29,7 @@ from inspect import currentframe
 from os import kill, getpid
 from os.path import join, isfile
 from signal import getsignal, signal
-from signal import SIGUSR1, SIGINT, SIGTERM
-from time import sleep
+from signal import SIGINT, SIGTERM
 
 from weightless.core import be
 
@@ -38,7 +37,7 @@ from weightless.io import Reactor
 
 from meresco.core import Observable
 from meresco.core.processtools import registerShutdownHandler, ShutdownFailedException
-from meresco.core.processtools.shutdownhandler import _ShutdownHandler, SHUTDOWN_SIGNALS, compose
+from meresco.core.processtools.shutdownhandler import SHUTDOWN_SIGNALS
 
 
 class ShutdownHandlerTest(SeecrTestCase):
@@ -57,7 +56,7 @@ class ShutdownHandlerTest(SeecrTestCase):
         return self._shutdownHandler
 
     def testShouldWriteRunningMarkerOnInit(self):
-        shutdownHandler = self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
+        self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
         self.assertTrue(isfile(join(self.tempdir, 'running.marker')))
 
     def testShouldAbortInitWithExceptionIfRunningMarkerStillThere(self):
@@ -102,7 +101,7 @@ class ShutdownHandlerTest(SeecrTestCase):
                 (trace,),
             ),
         ))
-        shutdownHandler = self._createShutdownHandler(statePath=self.tempdir, server=top, reactor=reactor)
+        self._createShutdownHandler(statePath=self.tempdir, server=top, reactor=reactor)
 
         try:
             registerShutdownHandler(statePath=self.tempdir, server='ignored', reactor='ignored')
