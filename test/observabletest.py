@@ -27,6 +27,7 @@ from unittest import TestCase
 from meresco.core import Observable, Transparent
 
 from weightless.core import compose, be
+from seecr.test import CallTrace
 
 class ObservableTest(TestCase):
     def testResolveCallStackVariables(self):
@@ -93,4 +94,20 @@ class ObservableTest(TestCase):
 
         self.assertEqual(None, root.do.useVariableDo())
         self.assertEqual([['Thingy']], do_result)
+
+    def testObservableCall(self):
+        o = Observable()
+        calltrace = CallTrace('calltrace')
+        o.addObserver(calltrace)
+
+        result = o.call.getSomething()
+        self.assertEqual(None, result)
+        self.assertEqual(['getSomething'], calltrace.calledMethodNames())
+        calltrace.calledMethods.reset()
+
+        calltrace.returnValues['getSomething'] = 'RESULT'
+        result = o.call.getSomething()
+        self.assertEqual('RESULT', result)
+        self.assertEqual(['getSomething'], calltrace.calledMethodNames()) 
+
 
