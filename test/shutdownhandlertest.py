@@ -64,7 +64,9 @@ class ShutdownHandlerTest(SeecrTestCase):
         # even if it needs to traverse "except (SystemExit, KeyboardInterrupt, AssertionError)" catch-statements.
         self.assertTrue(issubclass(ShutdownFailedException, SystemExit))
 
-        open(join(self.tempdir, 'running.marker'), 'w').write('already there')
+        with open(join(self.tempdir, 'running.marker'), 'w') as fp:
+            fp.write('already there')
+
         with stdout_replaced() as output:
             try:
                 self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'))
@@ -83,7 +85,9 @@ class ShutdownHandlerTest(SeecrTestCase):
                 pass
 
     def testShouldContinueAfterCrashIfShutdownMustSucceedFlagFalse(self):
-        open(join(self.tempdir, 'running.marker'), 'w').write('already there')
+        with open(join(self.tempdir, 'running.marker'), 'w') as fp:
+            fp.write('already there')
+
         with stdout_replaced() as output:
             try:
                 self._createShutdownHandler(statePath=self.tempdir, server=CallTrace('server'), reactor=CallTrace('reactor'), shutdownMustSucceed=False)
@@ -105,8 +109,8 @@ class ShutdownHandlerTest(SeecrTestCase):
 
         try:
             registerShutdownHandler(statePath=self.tempdir, server='ignored', reactor='ignored')
-        except AssertionError, e:
-            self.assertEquals('Handler already registered, aborting.', str(e))
+        except AssertionError as e:
+            self.assertEqual('Handler already registered, aborting.', str(e))
         else:
             self.fail()
 
@@ -116,15 +120,15 @@ class ShutdownHandlerTest(SeecrTestCase):
                 kill(getpid(), SIGTERM)
                 reactor.loop()
                 self.fail('should terminate')
-            except SystemExit, e:
-                self.assertEquals((0,), e.args)
+            except SystemExit as e:
+                self.assertEqual((0,), e.args)
 
             self.assertTrue('Scheduled for immediate shutdown.\n' in output.getvalue(), output.getvalue())
             self.assertTrue('Shutdown completed.\n' in output.getvalue(), output.getvalue())
 
         # Only once!
-        self.assertEquals(['handleShutdown'], trace.calledMethodNames())
-        self.assertEquals(((), {}), (trace.calledMethods[0].args, trace.calledMethods[0].kwargs))
+        self.assertEqual(['handleShutdown'], trace.calledMethodNames())
+        self.assertEqual(((), {}), (trace.calledMethods[0].args, trace.calledMethods[0].kwargs))
 
     def testShouldCallPreviouslyRegisteredSignalHandlersAfterHandleShutdown(self):
         reactor = Reactor()
@@ -134,8 +138,8 @@ class ShutdownHandlerTest(SeecrTestCase):
 
         testCoName = currentframe().f_code.co_name
         def prevIntHandler(signum, frame):
-            self.assertEquals(SIGINT, signum)
-            self.assertEquals(testCoName, frame.f_code.co_name)
+            self.assertEqual(SIGINT, signum)
+            self.assertEqual(testCoName, frame.f_code.co_name)
             called.append('prevIntHandler')
 
         trace = CallTrace('Observer', methods={'handleShutdown': handleShutdown})
@@ -163,9 +167,9 @@ class ShutdownHandlerTest(SeecrTestCase):
             shutdownHandler.unregister()
             signal(SIGINT, origIntHandler)
 
-        self.assertEquals(['handleShutdown'], trace.calledMethodNames())
-        self.assertEquals(((), {}), (trace.calledMethods[0].args, trace.calledMethods[0].kwargs))
-        self.assertEquals(['handleShutdown', 'prevIntHandler'], called)
+        self.assertEqual(['handleShutdown'], trace.calledMethodNames())
+        self.assertEqual(((), {}), (trace.calledMethods[0].args, trace.calledMethods[0].kwargs))
+        self.assertEqual(['handleShutdown', 'prevIntHandler'], called)
 
     def testShouldUnregister(self):
         # ... for testing purposes.
@@ -188,13 +192,13 @@ class ShutdownHandlerTest(SeecrTestCase):
 
         # shutdownHandler set
         ourHandlerSet = set(_with).difference(set(pre))
-        self.assertEquals(1, len(ourHandlerSet))
+        self.assertEqual(1, len(ourHandlerSet))
         ourHandler = ourHandlerSet.pop()
 
         # shutdownHandler removed on .unregister()
-        self.assertEquals(pre, post)
+        self.assertEqual(pre, post)
 
         # shutdownHandler is who he's supposed to be.
-        self.assertEquals('_handleShutdown', ourHandler.__func__.func_name)
-        self.assertEquals(handler, ourHandler.__self__)
+        self.assertEqual('_handleShutdown', ourHandler.__func__.__name__)
+        self.assertEqual(handler, ourHandler.__self__)
 

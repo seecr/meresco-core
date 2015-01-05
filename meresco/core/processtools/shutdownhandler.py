@@ -56,10 +56,10 @@ class _ShutdownHandler(object):
         self._reactor = reactor
         self._runningMarkerFile = join(statePath, 'running.marker')
         if isfile(self._runningMarkerFile):
-            print "The '%s' process was not previously shutdown to a consistent persistent state." % argv[0]
+            print("The '%s' process was not previously shutdown to a consistent persistent state." % argv[0])
             sys.stdout.flush()
             if shutdownMustSucceed:
-                print "NOT starting from an unknown state."
+                print("NOT starting from an unknown state.")
                 sys.stdout.flush()
                 raise ShutdownFailedException()
 
@@ -69,13 +69,14 @@ class _ShutdownHandler(object):
         self._previouslyRegisteredHandlers = {}
         for signalnum in SHUTDOWN_SIGNALS:
             self._previouslyRegisteredHandlers[signalnum] = signal(signalnum, self._handleShutdown)
-        open(self._runningMarkerFile, 'w').write("written by registerShutdownHandler method in '%s' process" % argv[0])
+        with open(self._runningMarkerFile, 'w') as fp:
+            fp.write("written by registerShutdownHandler method in '%s' process" % argv[0])
 
         _ShutdownHandler.handlerRegistered = True
 
     def unregister(self):
         """For testing purposes"""
-        for signalnum, previousHandler in self._previouslyRegisteredHandlers.items():
+        for signalnum, previousHandler in list(self._previouslyRegisteredHandlers.items()):
             currentHandler = signal(signalnum, previousHandler)
 
         self._previouslyRegisteredHandlers.clear()
@@ -83,14 +84,14 @@ class _ShutdownHandler(object):
 
     def _handleShutdown(self, signum, frame):
         self._reactor.addTimer(0, partial(self._deferredHandleShutdown, signum=signum, frame=frame))
-        print 'Scheduled for immediate shutdown.'
+        print('Scheduled for immediate shutdown.')
         sys.stdout.flush()
 
     def _deferredHandleShutdown(self, signum, frame):
         assert isfile(self._runningMarkerFile)
         consume(self._server.once.handleShutdown())
         remove(self._runningMarkerFile)
-        print 'Shutdown completed.'
+        print('Shutdown completed.')
         sys.stdout.flush()
 
         previousHandler = self._previouslyRegisteredHandlers[signum]
