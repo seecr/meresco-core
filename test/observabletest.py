@@ -2,7 +2,7 @@
 #
 # "Meresco Core" is an open-source library containing components to build searchengines, repositories and archives.
 #
-# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2014 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Meresco Core"
 #
@@ -41,7 +41,7 @@ class ObservableTest(TestCase):
 
             def any_unknown(self, message, *args, **kwargs):
                 __callstack_var_myvar__ = []
-                result = yield self.any.unknown(message, *args, **kwargs)
+                yield self.any.unknown(message, *args, **kwargs)
                 raise StopIteration(__callstack_var_myvar__)
 
             def call_unknown(self, message, *args, **kwargs):

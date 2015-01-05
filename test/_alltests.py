@@ -7,7 +7,7 @@
 # Copyright (C) 2007-2010 Seek You Too (CQ2) http://www.cq2.nl
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
 # Copyright (C) 2010 Stichting Kennisnet http://www.kennisnet.nl
-# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2014 Seecr (Seek You Too B.V.) http://seecr.nl
 #
 # This file is part of "Meresco Core"
 #
@@ -42,6 +42,7 @@ import unittest
 from generatorutilstest import GeneratorUtilsTest
 from observabletest import ObservableTest
 from transactiontest import TransactionTest
+from shutdownhandlertest import ShutdownHandlerTest
 
 if __name__ == '__main__':
     unittest.main()

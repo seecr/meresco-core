@@ -6,7 +6,7 @@
 # Copyright (C) 2007 SURFnet. http://www.surfnet.nl
 # Copyright (C) 2007-2011 Seek You Too (CQ2) http://www.cq2.nl
 # Copyright (C) 2007-2009 Stichting Kennisnet Ict op school. http://www.kennisnetictopschool.nl
-# Copyright (C) 2011-2013 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2011-2014 Seecr (Seek You Too B.V.) http://seecr.nl
 # Copyright (C) 2011 Stichting Kennisnet http://www.kennisnet.nl
 #
 # This file is part of "Meresco Core"
@@ -314,7 +314,7 @@ class TransactionTest(TestCase):
         __callstack_var_tx__ = CallTrace('TransactionScope')
         list(compose(rm.begin('transaction')))
         try:
-            result = list(compose(rm.all.unknown('doesnotexist')))
+            list(compose(rm.all.unknown('doesnotexist')))
         except AttributeError:
             self.fail('ResourceManager must ignore unknown methods.')
 
