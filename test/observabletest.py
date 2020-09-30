@@ -41,7 +41,7 @@ class ObservableTest(TestCase):
             def any_unknown(self, message, *args, **kwargs):
                 __callstack_var_myvar__ = []
                 yield self.any.unknown(message, *args, **kwargs)
-                raise StopIteration(__callstack_var_myvar__)
+                return __callstack_var_myvar__
 
             def call_unknown(self, message, *args, **kwargs):
                 __callstack_var_myvar__ = []
@@ -79,18 +79,18 @@ class ObservableTest(TestCase):
                 )
             )
         root = be(dna)
-        self.assertEquals(['stuffed', ['Thingy']], list(compose(root.all.useVariableAll())))
+        self.assertEqual(['stuffed', ['Thingy']], list(compose(root.all.useVariableAll())))
 
         composed = compose(root.any.useVariableAny())
         try:
             while True:
-                composed.next()
-        except StopIteration, e:
-            self.assertEquals((['Thingy'],), e.args)
+                next(composed)
+        except StopIteration as e:
+            self.assertEqual((['Thingy'],), e.args)
 
-        self.assertEquals('called', root.call.useVariableCall())
-        self.assertEquals([['Thingy']], call_result)
+        self.assertEqual('called', root.call.useVariableCall())
+        self.assertEqual([['Thingy']], call_result)
 
-        self.assertEquals(None, root.do.useVariableDo())
-        self.assertEquals([['Thingy']], do_result)
+        self.assertEqual(None, root.do.useVariableDo())
+        self.assertEqual([['Thingy']], do_result)
 

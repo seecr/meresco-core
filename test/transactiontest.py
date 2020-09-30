@@ -50,7 +50,7 @@ class TransactionTest(TestCase):
                     yield
             def beginTransaction(self):
                 traces.append('begin')
-                raise StopIteration(AResource.MyTransaction())
+                return AResource.MyTransaction()
                 yield
         class InBetween(Observable):
             def f(self):
@@ -68,9 +68,9 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         result = list(compose(body.all.f()))
-        self.assertEquals([], result)
-        self.assertEquals(4, len(traces))
-        self.assertEquals(['begin', 'g', 'g', 'commit'], traces)
+        self.assertEqual([], result)
+        self.assertEqual(4, len(traces))
+        self.assertEqual(['begin', 'g', 'g', 'commit'], traces)
 
     def testTransaction_DoUnknowned(self):
         traces = []
@@ -84,7 +84,7 @@ class TransactionTest(TestCase):
                     yield
             def beginTransaction(self):
                 traces.append('begin')
-                raise StopIteration(AResource.MyTransaction())
+                return AResource.MyTransaction()
                 yield
 
         class AllToDo(Observable):
@@ -111,8 +111,8 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.add()))
-        self.assertEquals(3, len(traces))
-        self.assertEquals(['begin', 'g', 'commit'], traces)
+        self.assertEqual(3, len(traces))
+        self.assertEqual(['begin', 'g', 'commit'], traces)
 
     def testTransaction_CallUnknowned(self):
         traces = []
@@ -127,7 +127,7 @@ class TransactionTest(TestCase):
                     yield
             def beginTransaction(self):
                 traces.append('begin')
-                raise StopIteration(AResource.MyTransaction())
+                return AResource.MyTransaction()
                 yield
 
         class AllToCall(Observable):
@@ -153,9 +153,9 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         result = list(compose(body.all.add()))
-        self.assertEquals(['retval'], result)
-        self.assertEquals(3, len(traces))
-        self.assertEquals(['begin', 'g', 'commit'], traces)
+        self.assertEqual(['retval'], result)
+        self.assertEqual(3, len(traces))
+        self.assertEqual(['begin', 'g', 'commit'], traces)
 
     def testTransaction_AnyUnknowned(self):
         traces = []
@@ -163,7 +163,7 @@ class TransactionTest(TestCase):
             class MyTransaction(object):
                 def g(self):
                     traces.append('g')
-                    raise StopIteration('MyTx.g')
+                    return 'MyTx.g'
                     yield
                 def commit(self):
                     traces.append('commit')
@@ -171,13 +171,13 @@ class TransactionTest(TestCase):
                     yield
             def beginTransaction(self):
                 traces.append('begin')
-                raise StopIteration(AResource.MyTransaction())
+                return AResource.MyTransaction()
                 yield
 
         class InBetween(Observable):
             def f(self):
                 response = yield self.any.g()
-                raise StopIteration(response)
+                return response
 
         dna = \
             (Observable(),
@@ -192,12 +192,12 @@ class TransactionTest(TestCase):
         body = be(dna)
         composed = compose(body.any.f())
         try:
-            composed.next()
+            next(composed)
             self.fail("Should not come here")
-        except StopIteration, e:
-            self.assertEquals(('MyTx.g',), e.args)
-        self.assertEquals(3, len(traces))
-        self.assertEquals(['begin', 'g', 'commit'], traces)
+        except StopIteration as e:
+            self.assertEqual(('MyTx.g',), e.args)
+        self.assertEqual(3, len(traces))
+        self.assertEqual(['begin', 'g', 'commit'], traces)
 
     def testContinueOnNoneOfTheObserversRespond(self):
         class Responder(object):
@@ -207,7 +207,7 @@ class TransactionTest(TestCase):
                 return self.value
             def any_unknown(self, message, *args, **kwargs):
                 yield self.value
-                raise StopIteration(self.value)
+                return self.value
 
         class AResource(object):
             class MyTransaction(object):
@@ -215,7 +215,7 @@ class TransactionTest(TestCase):
                     return
                     yield
             def beginTransaction(self):
-                raise StopIteration(AResource.MyTransaction())
+                return AResource.MyTransaction()
                 yield
 
         dna = \
@@ -228,7 +228,7 @@ class TransactionTest(TestCase):
                 (Responder(42),)
             )
         body = be(dna)
-        self.assertEquals([42], list(compose(body.any.f())))
+        self.assertEqual([42], list(compose(body.any.f())))
 
         dna = \
             (Observable(),
@@ -240,7 +240,7 @@ class TransactionTest(TestCase):
                 ),
             )
         body = be(dna)
-        self.assertEquals([42], list(compose(body.any.f())))
+        self.assertEqual([42], list(compose(body.any.f())))
 
         class Any2Call(Observable):
             def any_unknown(self, message, *args, **kwargs):
@@ -261,7 +261,7 @@ class TransactionTest(TestCase):
                 ),
             )
         body = be(dna)
-        self.assertEquals([42], list(compose(body.any.f())))
+        self.assertEqual([42], list(compose(body.any.f())))
 
 
     def testResourceManagerAllUnknown_asserts_NoResponse(self):
@@ -273,7 +273,7 @@ class TransactionTest(TestCase):
                     yield 'allResult'
 
                 def asyncAnyLike(self):
-                    raise StopIteration('anyResult')
+                    return 'anyResult'
                     yield
 
                 def commit(self):
@@ -281,7 +281,7 @@ class TransactionTest(TestCase):
                     yield
 
             def beginTransaction(self):
-                raise StopIteration(Resource.NotAnObservable())
+                return Resource.NotAnObservable()
                 yield
 
         dna = (Observable(),
@@ -294,12 +294,12 @@ class TransactionTest(TestCase):
         server = be(dna)
 
         composed = compose(server.all.allLike())
-        self.assertEquals(['allResult'], list(composed))
+        self.assertEqual(['allResult'], list(composed))
 
         composed = compose(server.all.asyncAnyLike())
         try:
             list(composed)
-        except AssertionError, e:
+        except AssertionError as e:
             self.assertTrue("> returned 'anyResult'" in str(e), str(e))
         else:
             self.fail("Should not come here")
@@ -307,7 +307,7 @@ class TransactionTest(TestCase):
     def testResourceManagerHandlesAttributeError(self):
         class Resource(object):
             def beginTransaction(self):
-                raise StopIteration(object())
+                return object()
                 yield
         rm = ResourceManager('transaction')
         rm.addObserver(Resource())
@@ -328,15 +328,15 @@ class TransactionTest(TestCase):
         tx.join(resource)
         tx.join(resource)
         list(tx.commit())
-        self.assertEquals(1, len(commitCalled))
-        self.assertEquals(tx.getId(), commitCalled[0])
+        self.assertEqual(1, len(commitCalled))
+        self.assertEqual(tx.getId(), commitCalled[0])
 
     def testFreeTransaction(self):
         resourceManager = ResourceManager('name')
         resourceTx = CallTrace('resourceTx')
         class Resource(object):
             def beginTransaction(self):
-                raise StopIteration(resourceTx)
+                return resourceTx
                 yield
         dna = \
             (Observable(),
@@ -347,10 +347,10 @@ class TransactionTest(TestCase):
                 )
             )
         body = be(dna)
-        self.assertEquals(0, len(resourceManager.txs))
+        self.assertEqual(0, len(resourceManager.txs))
         list(compose(body.all.something()))
-        self.assertEquals(0, len(resourceManager.txs))
-        self.assertEquals(['something', 'commit'], [m.name for m in resourceTx.calledMethods])
+        self.assertEqual(0, len(resourceManager.txs))
+        self.assertEqual(['something', 'commit'], [m.name for m in resourceTx.calledMethods])
 
     def testTransactionExceptionRollsbackTransaction(self):
         resourceTxs = []
@@ -358,7 +358,7 @@ class TransactionTest(TestCase):
             def beginTransaction(self):
                 resourceTx = CallTrace('resourceTx')
                 resourceTxs.append(resourceTx)
-                raise StopIteration(resourceTx)
+                return resourceTx
                 yield
 
         class CallTwoMethods(Observable):
@@ -379,17 +379,17 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.twice('one', 'two')))
-        self.assertEquals(1, len(resourceTxs), resourceTxs)
-        self.assertEquals(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
+        self.assertEqual(1, len(resourceTxs), resourceTxs)
+        self.assertEqual(['methodOne', 'rollback'], [m.name for m in resourceTxs[0].calledMethods])
 
     def testTransactionLocals(self):
         tx = Transaction('name')
         tx.locals['myvar'] = 'value'
-        self.assertEquals('value', tx.locals['myvar'])
+        self.assertEqual('value', tx.locals['myvar'])
 
     def testTransactionScopeName(self):
         scope = TransactionScope("name")
-        self.assertEquals("name", scope._transactionName)
+        self.assertEqual("name", scope._transactionName)
 
     def testTransactionYieldsCallablesInCommits(self):
         callable = lambda: None
@@ -427,15 +427,15 @@ class TransactionTest(TestCase):
         body = be(dna)
         scope1 = compose(body.all.doSomething())
         scope2 = compose(body.all.doSomething())
-        scope1.next()
-        scope2.next()
-        scope1.next()
-        scope2.next()
+        next(scope1)
+        next(scope2)
+        next(scope1)
+        next(scope2)
         self.assertTrue(txId[0] != txId[1])
         self.assertTrue(txId[1] > 0)
         self.assertTrue(txId[0] > 0)
-        self.assertEquals(txId[0], txId[2])
-        self.assertEquals(txId[1], txId[3])
+        self.assertEqual(txId[0], txId[2])
+        self.assertEqual(txId[1], txId[3])
 
     def testTransactionCommit(self):
         collected = {}
@@ -473,18 +473,18 @@ class TransactionTest(TestCase):
             )
         body = be(dna)
         list(compose(body.all.doSomething()))
-        self.assertEquals(['first', 'second', 'done 1', 'done 2'], collected.values()[0])
+        self.assertEqual(['first', 'second', 'done 1', 'done 2'], list(collected.values())[0])
 
     def testTransactionScopeObservableName(self):
-        self.assertEquals('name', TransactionScope('name').observable_name())
-        self.assertEquals('name', TransactionScope(transactionName='name').observable_name())
-        self.assertEquals('name', TransactionScope(transactionName='transaction', name='name').observable_name())
+        self.assertEqual('name', TransactionScope('name').observable_name())
+        self.assertEqual('name', TransactionScope(transactionName='name').observable_name())
+        self.assertEqual('name', TransactionScope(transactionName='transaction', name='name').observable_name())
 
     def testObjectScope(self):
         o1 = object()
         tx = Transaction('transactionScopeName')
         tx.objectScope(o1)['key'] = 'value'
-        self.assertEquals({'key': 'value'}, tx.objectScope(o1))
+        self.assertEqual({'key': 'value'}, tx.objectScope(o1))
         o2 = object()
-        self.assertEquals({}, tx.objectScope(o2))
+        self.assertEqual({}, tx.objectScope(o2))
 
