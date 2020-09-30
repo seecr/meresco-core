@@ -29,17 +29,23 @@
 set -o errexit
 rm -rf tmp build
 mydir=$(cd $(dirname $0); pwd)
-source /usr/share/seecr-test/functions
 
 VERSION="x.y.z"
-pyton3 setup.py install --root tmp
+python3 setup.py install --root tmp
 
 cp -r test tmp/test
-removeDoNotDistribute tmp
 find tmp -name '*.py' -exec sed -r -e "
+    /DO_NOT_DISTRIBUTE/d;
     s/\\\$Version:[^\\\$]*\\\$/\\\$Version: ${VERSION}\\\$/;
     " -i '{}' \;
 
-cp -r test tmp/test
-runtests "$@"
+(
+    cd ${mydir}/tmp/test
+    PACKAGES_DIR=$(find ${mydir}/tmp -type d -name dist-packages -o -name site-packages)
+    if [ -z "${PACKAGES_DIR}" ]; then
+        echo "Unable to find packages"
+        exit 1
+    fi
+    PYTHONPATH=${PACKAGES_DIR}:${PYTHONPATH} ./alltests.sh "$@"
+)
 rm -rf tmp build
