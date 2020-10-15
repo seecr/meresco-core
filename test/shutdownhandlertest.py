@@ -2,7 +2,7 @@
 #
 # "Meresco Core" is an open-source library containing components to build searchengines, repositories and archives.
 #
-# Copyright (C) 2013-2014 Seecr (Seek You Too B.V.) http://seecr.nl
+# Copyright (C) 2013-2014, 2020 Seecr (Seek You Too B.V.) https://seecr.nl
 #
 # This file is part of "Meresco Core"
 #
