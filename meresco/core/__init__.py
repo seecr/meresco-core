@@ -34,9 +34,9 @@ if not __debug__:
     raise AssertionError("Do not use optimized code, because Meresco uses assert statements. (See http://docs.python.org/release/2.5.2/ref/assert.html)")
 
 from sys import getdefaultencoding as _getdefaultencoding
-from locale import getdefaultlocale, _parse_localename
+from locale import getlocale, _parse_localename
 assert _getdefaultencoding() == 'utf-8', 'Please ensure that the default encoding is utf-8'
-assert getdefaultlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
+assert getlocale() == _parse_localename('en_US.UTF-8'), "We expect the default locale to be set to utf-8, e.g. use the environment setting LANG=en_US.UTF-8"
 
 from .observable import Observable, Transparent
 from weightless.core import be as _be
